@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.schemas.rag_analyst import RAGSource
-from app.services.embedding import EmbeddingService
+import app.services.embedding as embedding_service
 from app.services.llm_providers import BaseLLMProvider, get_llm_provider
 
 log = structlog.get_logger()
@@ -37,7 +37,7 @@ class AssistantService:
         self.max_context_entities = settings.RAG_MAX_CONTEXT_ENTITIES
         self.max_history = settings.RAG_MAX_CONVERSATION_HISTORY
         self.session_ttl = settings.ASSISTANT_SESSION_TTL_SECONDS
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = embedding_service.EmbeddingService()
 
     def is_available(self) -> bool:
         """Check if the underlying LLM provider is available."""

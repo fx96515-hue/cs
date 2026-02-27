@@ -1,6 +1,6 @@
 """Auto-outreach API routes."""
 
-from typing import Literal
+from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -16,12 +16,17 @@ from app.services import auto_outreach
 
 router = APIRouter()
 
+ERROR_RESPONSES = {
+    400: {"description": "Invalid request"},
+    500: {"description": "Server error"},
+}
 
-@router.post("/campaign", response_model=CampaignOut)
+
+@router.post("/campaign", response_model=CampaignOut, responses=ERROR_RESPONSES)
 def create_campaign(
     payload: CreateCampaignIn,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     """Create and launch an outreach campaign."""
     try:
@@ -49,12 +54,12 @@ def create_campaign(
         raise HTTPException(status_code=500, detail="Campaign creation failed")
 
 
-@router.get("/suggestions", response_model=list[OutreachSuggestionOut])
+@router.get("/suggestions", response_model=list[OutreachSuggestionOut], responses=ERROR_RESPONSES)
 def get_suggestions(
     entity_type: Literal["cooperative", "roaster"],
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
     limit: int = Query(20, le=100),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
 ):
     """Get AI-suggested outreach targets."""
     try:
@@ -71,12 +76,16 @@ def get_suggestions(
         )
 
 
-@router.get("/status/{entity_type}/{entity_id}", response_model=EntityOutreachStatusOut)
+@router.get(
+    "/status/{entity_type}/{entity_id}",
+    response_model=EntityOutreachStatusOut,
+    responses=ERROR_RESPONSES,
+)
 def get_entity_status(
     entity_type: Literal["cooperative", "roaster"],
     entity_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     """Get outreach status for a specific entity."""
     try:

@@ -45,6 +45,10 @@ def _normalize_url(u: str) -> str:
     return u
 
 
+def _split_csv(value: str | None) -> list[str]:
+    return [v.strip() for v in (value or "").split(",") if v.strip()]
+
+
 def _is_allowed_host(hostname: str) -> bool:
     """
     Return True if the given hostname is allowed for outbound HTTP requests.
@@ -64,13 +68,11 @@ def _is_allowed_host(hostname: str) -> bool:
         "www.coffee.studio",
         "www.coffeestudio.app",
     ]
-
-    # Expect a sequence of hostnames / domain suffixes, e.g.:
-    # ["example.com", ".example.com", "api.someservice.com"]
-    configured = getattr(settings, "ENRICHMENT_ALLOWED_HOSTS", None) or []
+    configured_hosts = _split_csv(getattr(settings, "ENRICH_ALLOWED_HOSTS", None))
+    configured_domains = _split_csv(getattr(settings, "ENRICH_ALLOWED_DOMAINS", None))
 
     # Combine built-in allowlist with any configured values, removing empties.
-    allowed = [h for h in (builtin_allowed + list(configured)) if h]
+    allowed = [h for h in (builtin_allowed + configured_hosts + configured_domains) if h]
     if not allowed:
         # With an empty combined allowlist, deny by default to avoid SSRF.
         return False
@@ -80,11 +82,17 @@ def _is_allowed_host(hostname: str) -> bool:
         pattern = (pattern or "").lower().strip()
         if not pattern:
             continue
+        if pattern.startswith("."):
+            # Suffix match for subdomains, allow patterns like ".example.com"
+            if hostname.endswith(pattern):
+                return True
+            continue
+
         # Exact match
         if hostname == pattern:
             return True
-        # Suffix match for subdomains, allow patterns like ".example.com"
-        if pattern.startswith(".") and hostname.endswith(pattern):
+        # Allow suffix matches for domains provided without leading dot.
+        if hostname.endswith("." + pattern):
             return True
     return False
 
@@ -106,23 +114,8 @@ def _validate_public_http_url(url: str) -> str:
         raise ValueError("invalid URL: missing host")
 
     hostname = parsed.hostname.lower()
-
-    # If an allow-list of hosts/domains is configured, enforce it here.
-    allowed_hosts = getattr(settings, "ENRICH_ALLOWED_HOSTS", None) or []
-    allowed_domains = getattr(settings, "ENRICH_ALLOWED_DOMAINS", None) or []
-
-    if allowed_hosts or allowed_domains:
-        host_allowed = False
-        if hostname in {h.lower() for h in allowed_hosts}:
-            host_allowed = True
-        else:
-            for domain in allowed_domains:
-                d = (domain or "").lower().lstrip(".")
-                if d and (hostname == d or hostname.endswith("." + d)):
-                    host_allowed = True
-                    break
-        if not host_allowed:
-            raise ValueError("URL host is not allowed")
+    if not _is_allowed_host(hostname):
+        raise ValueError("URL host is not allowed")
 
     # Optionally restrict ports to typical HTTP(S) ports. If no port is given,
     # httpx will use defaults based on the scheme.
@@ -480,7 +473,7 @@ def enrich_entity(
                     WebExtract.entity_id == entity_id,
                     WebExtract.url == final_url,
                 )
-                we = db.scalar(stmt_retry)
+                _ = db.scalar(stmt_retry)
                 if we is None:
                     # If still missing, re-raise the original exception.
                     raise
@@ -872,7 +865,7 @@ def enrich_entity(
         except Exception:
             # If even recording the failed extract fails, swallow to preserve
             # original error path and return failure payload below.
-            we = None
+            pass
 
         return {
             "status": "failed",

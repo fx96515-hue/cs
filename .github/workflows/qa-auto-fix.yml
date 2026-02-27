@@ -20,13 +20,12 @@ on:
         required: false
         default: '90'
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   qa-analysis:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
       - uses: actions/checkout@v4
@@ -51,16 +50,18 @@ jobs:
           DATABASE_URL: "sqlite:///:memory:"
           REDIS_URL: "redis://localhost:6379/1"
           JWT_SECRET: test_jwt_secret_key
+          AUTO_FIX_INPUT: ${{ github.event.inputs.auto_fix }}
+          CONFIDENCE_INPUT: ${{ github.event.inputs.confidence_threshold }}
         run: |
           cd apps/api
           
           # Determine auto-fix setting
           AUTO_FIX_FLAG=""
-          if [ "${{ github.event.inputs.auto_fix }}" = "true" ]; then
+          if [ "$AUTO_FIX_INPUT" = "true" ]; then
             AUTO_FIX_FLAG="--auto-fix"
           fi
           
-          CONFIDENCE="${{ github.event.inputs.confidence_threshold }}"
+          CONFIDENCE="$CONFIDENCE_INPUT"
           if [ -z "$CONFIDENCE" ]; then
             CONFIDENCE="90"
           fi

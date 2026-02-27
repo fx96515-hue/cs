@@ -16,14 +16,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   lint-and-type-check:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +51,8 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -89,6 +89,8 @@ jobs:
     name: Production Build
     runs-on: ubuntu-latest
     needs: [lint-and-type-check, test]
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -129,21 +131,26 @@ jobs:
     name: E2E Tests (Docker Stack)
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
       
       - name: Create .env file for testing
         run: |
+          DB_PASSWORD="$(openssl rand -hex 16)"
+          BOOTSTRAP_PASSWORD="$(openssl rand -hex 16)"
           cat > .env << EOF
           APP_ENV=test
-          DATABASE_URL=postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio
+          POSTGRES_PASSWORD=${DB_PASSWORD}
+          DATABASE_URL=postgresql+psycopg://coffeestudio:${DB_PASSWORD}@postgres:5432/coffeestudio
           REDIS_URL=redis://redis:6379/0
           JWT_SECRET=test_secret_key_for_e2e_tests_minimum_32_characters_long
           JWT_ISSUER=coffeestudio
           JWT_AUDIENCE=coffeestudio-users
           BOOTSTRAP_ADMIN_EMAIL=admin@coffeestudio.com
-          BOOTSTRAP_ADMIN_PASSWORD=test123
+          BOOTSTRAP_ADMIN_PASSWORD=${BOOTSTRAP_PASSWORD}
           NEXT_PUBLIC_API_URL=http://localhost:8000
           EOF
       

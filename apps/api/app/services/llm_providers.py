@@ -34,7 +34,7 @@ class BaseLLMProvider(ABC):
         Returns:
             Dict with 'content' (str) and 'tokens_used' (int | None)
         """
-        ...
+        raise NotImplementedError
 
     async def stream_chat_completion(
         self, messages: list[dict], temperature: float, model: str
@@ -60,12 +60,12 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     def is_available(self) -> bool:
         """Check if provider is configured and available."""
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def provider_name(self) -> str:
         """Return provider name."""
-        ...
+        raise NotImplementedError
 
 
 class OllamaProvider(BaseLLMProvider):

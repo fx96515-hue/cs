@@ -27,6 +27,29 @@ from app.models.freight_history import FreightHistory  # noqa: F401
 from app.models.coffee_price_history import CoffeePriceHistory  # noqa: F401
 from app.models.ml_model import MLModel  # noqa: F401
 
+MODEL_IMPORTS = (
+    User,
+    Cooperative,
+    Roaster,
+    Source,
+    MarketObservation,
+    Report,
+    Lot,
+    MarginRun,
+    EntityEvidence,
+    EntityAlias,
+    EntityEvent,
+    WebExtract,
+    NewsItem,
+    PeruRegion,
+    Region,
+    KnowledgeDoc,
+    CuppingResult,
+    FreightHistory,
+    CoffeePriceHistory,
+    MLModel,
+)
+
 config = context.config
 fileConfig(str(config.config_file_name))
 

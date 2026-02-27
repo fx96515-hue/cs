@@ -41,6 +41,7 @@ infra/env/enterprise.env
 
 # --- Backups / artifacts ---
 backups/
+.patch_backups/
 # Secrets / env
 .env
 .env.*

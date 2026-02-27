@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.roaster import RoasterCreate, RoasterOut, RoasterUpdate
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -41,13 +42,14 @@ def create_roaster(
     )
 
     # Queue embedding generation task (async, non-blocking)
-    try:
-        from app.workers.tasks import update_entity_embedding
+    if settings.SEMANTIC_SEARCH_ENABLED and settings.EMBEDDING_TASKS_ENABLED:
+        try:
+            from app.workers.tasks import update_entity_embedding
 
-        update_entity_embedding.delay("roaster", r.id)
-    except Exception:
-        # Graceful degradation - don't fail entity creation if task queue fails
-        pass
+            update_entity_embedding.delay("roaster", r.id)
+        except Exception:
+            # Graceful degradation - don't fail entity creation if task queue fails
+            pass
 
     return r
 
@@ -94,13 +96,14 @@ def update_roaster(
     )
 
     # Queue embedding generation task (async, non-blocking)
-    try:
-        from app.workers.tasks import update_entity_embedding
+    if settings.SEMANTIC_SEARCH_ENABLED and settings.EMBEDDING_TASKS_ENABLED:
+        try:
+            from app.workers.tasks import update_entity_embedding
 
-        update_entity_embedding.delay("roaster", roaster_id)
-    except Exception:
-        # Graceful degradation - don't fail entity update if task queue fails
-        pass
+            update_entity_embedding.delay("roaster", roaster_id)
+        except Exception:
+            # Graceful degradation - don't fail entity update if task queue fails
+            pass
 
     return r
 

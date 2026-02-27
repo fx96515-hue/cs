@@ -5,9 +5,10 @@ import os
 import re
 import time
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 
 SONAR_API_BASE = (os.getenv("SONAR_API_BASE") or "https://sonarcloud.io/api").rstrip("/")
@@ -16,9 +17,7 @@ SONAR_TOKEN = (os.getenv("SONAR_TOKEN") or "").strip()
 PROJECT_KEY = (os.getenv("SONAR_PROJECT_KEY") or "").strip()
 BRANCH = (os.getenv("SONAR_BRANCH") or "main").strip()
 
-# Empty = all
 SEVERITIES = (os.getenv("SONAR_SEVERITIES") or "").strip()
-# Default: open-like
 STATUSES = (os.getenv("SONAR_STATUSES") or "OPEN,REOPENED,CONFIRMED").strip()
 
 MAX_CREATE = int((os.getenv("SONAR_MAX_CREATE") or "30").strip())
@@ -64,25 +63,29 @@ def _http_json(
     timeout: int = 60,
 ) -> Any:
     hdrs = dict(headers or {})
-    data = None
-    if payload is not None:
-        data = json.dumps(payload).encode("utf-8")
-        hdrs["Content-Type"] = "application/json"
 
     for attempt in range(retries):
-        req = urllib.request.Request(url, data=data, headers=hdrs, method=method)
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                raw = resp.read().decode("utf-8", errors="replace")
-                return json.loads(raw) if raw else {}
-        except urllib.error.HTTPError as e:
-            body = e.read().decode("utf-8", errors="replace")
+            response = httpx.request(
+                method,
+                url,
+                headers=hdrs,
+                json=payload,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            if not response.text:
+                return {}
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            status = e.response.status_code
+            body = e.response.text
             # Rate limiting / transient
-            if e.code in (429, 502, 503, 504) and attempt < retries - 1:
+            if status in (429, 502, 503, 504) and attempt < retries - 1:
                 time.sleep(2 * (attempt + 1))
                 continue
-            raise RuntimeError(f"HTTP {e.code} for {url}\n{body}") from None
-        except urllib.error.URLError as e:
+            raise RuntimeError(f"HTTP {status} for {url}\n{body}") from None
+        except httpx.RequestError as e:
             if attempt < retries - 1:
                 time.sleep(2 * (attempt + 1))
                 continue
@@ -106,7 +109,14 @@ def _sonar_headers() -> Dict[str, str]:
 
 def _gh_request(method: str, path: str, payload: Optional[Dict[str, Any]] = None) -> Any:
     url = f"https://api.github.com{path}"
-    return _http_json(url, method=method, headers=_gh_api_headers(), payload=payload, retries=4, timeout=60)
+    return _http_json(
+        url,
+        method=method,
+        headers=_gh_api_headers(),
+        payload=payload,
+        retries=4,
+        timeout=60,
+    )
 
 
 def _gh_paginate(path: str) -> List[Dict[str, Any]]:
@@ -279,16 +289,13 @@ def _needs_update(existing: GhIssueRef, new_title: str, new_body: str) -> bool:
     return False
 
 
-def main() -> int:
-    _require_env()
-    owner, repo = GH_REPO.split("/", 1)
-
-    _ensure_label(owner, repo, LABEL)
-
-    existing = _existing_mapping(owner, repo, LABEL)
-    sonar_open = _sonar_search_open()
-    open_keys = {str(i.get("key")) for i in sonar_open if i.get("key")}
-
+def _sync_open_issues(
+    *,
+    owner: str,
+    repo: str,
+    existing: Dict[str, GhIssueRef],
+    sonar_open: List[Dict[str, Any]],
+) -> tuple[int, int, int]:
     created = 0
     updated = 0
     skipped = 0
@@ -304,7 +311,11 @@ def main() -> int:
         if key in existing:
             ref = existing[key]
             if _needs_update(ref, title, body):
-                _gh_request("PATCH", f"/repos/{owner}/{repo}/issues/{ref.number}", {"title": title, "body": body})
+                _gh_request(
+                    "PATCH",
+                    f"/repos/{owner}/{repo}/issues/{ref.number}",
+                    {"title": title, "body": body},
+                )
                 updated += 1
             continue
 
@@ -319,13 +330,58 @@ def main() -> int:
         )
         created += 1
 
-    if AUTO_CLOSE and existing:
-        for key, ref in existing.items():
-            if ref.state == "open" and key not in open_keys:
-                _gh_request("PATCH", f"/repos/{owner}/{repo}/issues/{ref.number}", {"state": "closed"})
+    return created, updated, skipped
+
+
+def _auto_close_issues(
+    *,
+    owner: str,
+    repo: str,
+    existing: Dict[str, GhIssueRef],
+    open_keys: set[str],
+) -> int:
+    if not AUTO_CLOSE or not existing:
+        return 0
+
+    closed = 0
+    for key, ref in existing.items():
+        if ref.state == "open" and key not in open_keys:
+            _gh_request(
+                "PATCH",
+                f"/repos/{owner}/{repo}/issues/{ref.number}",
+                {"state": "closed"},
+            )
+            closed += 1
+
+    return closed
+
+
+def main() -> int:
+    _require_env()
+    owner, repo = GH_REPO.split("/", 1)
+
+    _ensure_label(owner, repo, LABEL)
+
+    existing = _existing_mapping(owner, repo, LABEL)
+    sonar_open = _sonar_search_open()
+    open_keys = {str(i.get("key")) for i in sonar_open if i.get("key")}
+    created, updated, skipped = _sync_open_issues(
+        owner=owner,
+        repo=repo,
+        existing=existing,
+        sonar_open=sonar_open,
+    )
+    closed = _auto_close_issues(
+        owner=owner,
+        repo=repo,
+        existing=existing,
+        open_keys=open_keys,
+    )
 
     print(
-        f"Done. created={created} updated={updated} skipped={skipped} sonar_open={len(sonar_open)} auto_close={AUTO_CLOSE}"
+        "Done. "
+        f"created={created} updated={updated} skipped={skipped} "
+        f"sonar_open={len(sonar_open)} auto_close={AUTO_CLOSE} closed={closed}"
     )
     return 0
 

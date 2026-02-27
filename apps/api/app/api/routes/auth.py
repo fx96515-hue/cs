@@ -21,6 +21,7 @@ router = APIRouter()
 logger = structlog.get_logger(__name__)
 
 limiter = Limiter(key_func=get_remote_address)
+INVALID_CREDENTIALS_DETAIL = "Invalid credentials"
 
 
 @router.post("/login")
@@ -45,7 +46,10 @@ def login(
             success=False,
             reason="Invalid credentials",
         )
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=INVALID_CREDENTIALS_DETAIL,
+        )
 
     if not user.is_active:
         ip_address = request.client.host if request.client else "unknown"
@@ -60,7 +64,10 @@ def login(
             success=False,
             reason="Inactive account",
         )
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=INVALID_CREDENTIALS_DETAIL,
+        )
 
     ip_address = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent", "unknown")

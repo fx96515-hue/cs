@@ -1,12 +1,26 @@
+import os
 from celery import Celery
 from celery.schedules import crontab
 
 from app.core.config import settings
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+broker_url = os.getenv("CELERY_BROKER_URL", settings.REDIS_URL)
+result_backend = os.getenv("CELERY_RESULT_BACKEND", settings.REDIS_URL)
+task_always_eager = _env_flag("CELERY_TASK_ALWAYS_EAGER", False)
+task_eager_propagates = _env_flag("CELERY_TASK_EAGER_PROPAGATES", True)
+task_ignore_result = _env_flag("CELERY_TASK_IGNORE_RESULT", False)
+
 celery = Celery(
     "coffeestudio",
-    broker=settings.REDIS_URL,
-    backend=settings.REDIS_URL,
+    broker=broker_url,
+    backend=result_backend,
 )
 
 celery.conf.update(
@@ -15,6 +29,9 @@ celery.conf.update(
     task_track_started=True,
     task_time_limit=60 * 10,
     broker_connection_retry_on_startup=True,
+    task_always_eager=task_always_eager,
+    task_eager_propagates=task_eager_propagates,
+    task_ignore_result=task_ignore_result,
 )
 
 
@@ -104,5 +121,5 @@ def _build_schedule() -> dict:
 
 celery.conf.beat_schedule = _build_schedule()
 
-# Ensure task modules are imported/registered when running Celery via -A app.workers.celery_app.celery
-from app.workers import tasks  # noqa: F401, E402
+# Ensure task modules are discovered without creating an import cycle.
+celery.autodiscover_tasks(["app.workers"])

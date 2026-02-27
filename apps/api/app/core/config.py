@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     PERPLEXITY_MODEL_DISCOVERY: str = "sonar-pro"
     PERPLEXITY_TIMEOUT_SECONDS: int = 60
 
+    # --- Enrichment HTTP allowlists (SSRF protection) ---
+    # Comma-separated hostnames and/or domain suffixes for fetch_text().
+    # Example hosts: "www.example.com,api.example.org"
+    # Example domains: ".example.com,.example.org"
+    ENRICH_ALLOWED_HOSTS: str = ""
+    ENRICH_ALLOWED_DOMAINS: str = ""
+
     # --- Data freshness defaults (days) ---
     KOOPS_STALE_DAYS: int = 60
     ROESTER_STALE_DAYS: int = 90
@@ -82,6 +89,8 @@ class Settings(BaseSettings):
     SENTIMENT_ENABLED: bool = True
     # Set REALTIME_PRICE_FEED_ENABLED=false to disable real-time price feeds.
     REALTIME_PRICE_FEED_ENABLED: bool = True
+    # Set EMBEDDING_TASKS_ENABLED=false to skip background embedding updates.
+    EMBEDDING_TASKS_ENABLED: bool = True
 
     # --- Anomaly Detection ---
     # Daily anomaly scan schedule (HH:MM, Europe/Berlin)

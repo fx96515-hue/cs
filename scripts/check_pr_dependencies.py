@@ -7,10 +7,8 @@ This script checks:
 3. CI status of each PR
 4. Dependency order for safe merging
 """
-import json
 import sys
 from typing import Dict, List, Set
-from pathlib import Path
 
 # Simulated PR file changes (in production, fetch from GitHub API)
 PR_FILES: Dict[int, Set[str]] = {

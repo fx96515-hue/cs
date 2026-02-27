@@ -41,12 +41,14 @@ def auth_token(wait_for_services) -> str:
     
     # Login with correct password (adminadmin or from env)
     import os
-    password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "adminadmin")
+    password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD")
     email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@coffeestudio.com")
+
+    if not password:
+        pytest.skip("BOOTSTRAP_ADMIN_PASSWORD not set for e2e login")
     
     response = requests.post(
         f"{BASE_URL}/auth/login",
-        json={"email": "admin@coffeestudio.com", "password": "adminadmin"},
         json={"email": email, "password": password},
         headers={"Content-Type": "application/json"}
     )

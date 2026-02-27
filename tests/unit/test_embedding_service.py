@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.services.embedding import EmbeddingService
+import app.services.embedding as embedding_service
 from app.models.cooperative import Cooperative
 from app.models.roaster import Roaster
 
@@ -32,13 +32,13 @@ def mock_settings_no_key():
 @pytest.fixture
 def service(mock_settings):
     """Create EmbeddingService with mocked settings."""
-    return EmbeddingService()
+    return embedding_service.EmbeddingService()
 
 
 @pytest.fixture
 def service_no_key(mock_settings_no_key):
     """Create EmbeddingService without API key."""
-    return EmbeddingService()
+    return embedding_service.EmbeddingService()
 
 
 @pytest.fixture

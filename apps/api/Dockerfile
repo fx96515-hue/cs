@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install dependencies in a virtual environment for easy copying
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+RUN python -m pip install --upgrade pip==26.0
 
 # Copy only requirements first for better layer caching
 COPY requirements.txt ./
@@ -42,6 +43,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Keep system pip patched for vulnerability scans (even if unused at runtime).
+RUN python -m pip install --upgrade pip==26.0
 
 WORKDIR /app
 

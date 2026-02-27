@@ -22,6 +22,10 @@ jobs:
     env:
       HAS_PRODUCTION_CONFIG: ${{ secrets.PRODUCTION_SSH_KEY != '' && secrets.PRODUCTION_HOST != '' && secrets.PRODUCTION_USER != '' }}
       HAS_SLACK: ${{ secrets.SLACK_WEBHOOK != '' }}
+      DEPLOY_VERSION: ${{ inputs.version || github.ref_name }}
+      DEPLOY_REF: ${{ inputs.version || github.ref }}
+      GIT_SHA: ${{ github.sha }}
+      GIT_ACTOR: ${{ github.actor }}
     environment:
       name: production
       url: https://coffeestudio.example.com
@@ -62,21 +66,21 @@ jobs:
       - name: Deploy to Production
         if: env.HAS_PRODUCTION_CONFIG == 'true'
         run: |
-          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
-            set -e
-            cd /opt/coffeestudio
-            echo "Fetching latest tags..."
-            git fetch --tags
-            echo "Checking out version ${{ inputs.version || github.ref_name }}..."
-            git checkout ${{ inputs.version || github.ref_name }}
-            echo "Pulling Docker images..."
-            docker compose pull
-            echo "Starting services..."
-            docker compose up -d
-            echo "Running database migrations..."
-            docker compose exec -T backend alembic upgrade head
-            echo "Deployment complete!"
-          EOF
+          VERSION="$DEPLOY_VERSION"
+          ssh "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}" \
+            "set -e; \
+             cd /opt/coffeestudio; \
+             echo 'Fetching latest tags...'; \
+             git fetch --tags; \
+             echo \"Checking out version ${VERSION}...\"; \
+             git checkout \"${VERSION}\"; \
+             echo 'Pulling Docker images...'; \
+             docker compose pull; \
+             echo 'Starting services...'; \
+             docker compose up -d; \
+             echo 'Running database migrations...'; \
+             docker compose exec -T backend alembic upgrade head; \
+             echo 'Deployment complete!'"
       
       - name: Deploy (No SSH - Placeholder)
         if: env.HAS_PRODUCTION_CONFIG != 'true'
@@ -88,8 +92,8 @@ jobs:
           echo "  - PRODUCTION_HOST: Production server hostname"
           echo "  - PRODUCTION_USER: SSH user for production server"
           echo ""
-          echo "Version: ${{ inputs.version || github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
+          echo "Version: $DEPLOY_VERSION"
+          echo "Commit: $GIT_SHA"
       
       - name: Wait for Deployment
         run: sleep 45
