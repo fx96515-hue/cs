@@ -1,0 +1,28 @@
+﻿name: Sonar Scan (manual, optional)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    # Skip instead of fail if not configured
+    if: ${{ vars.SONAR_PROJECT_KEY != '' && secrets.SONAR_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Official scanner action for SonarQube Server + SonarQube Cloud
+      - name: Sonar scan
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # For SonarCloud you can set this to https://sonarcloud.io in secrets, or keep a SonarQube server URL
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            "-Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}"
+            "-Dsonar.sources=apps/api/app,apps/web"
