@@ -1,0 +1,63 @@
+name: "Bug / P0 Incident"
+description: "Kritischer Fehler oder Produktionsproblem"
+title: "[P0] "
+labels: ["p0-critical", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bitte so konkret wie möglich beschreiben. Fokus auf Reproduzierbarkeit und Impact.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Was ist kaputt? Welcher Impact?
+      placeholder: API Health rot / Frontend 502 / Login schlägt fehl ...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduktionsschritte
+      placeholder: 1. docker compose up ... 2. GET /health ... 3. Fehler ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Tatsächliches Verhalten / Fehlermeldungen
+    validations:
+      required: true
+  - type: dropdown
+    id: components
+    attributes:
+      label: Betroffene Komponente
+      options:
+        - Backend
+        - Frontend
+        - Docker/Infra
+        - CI/CD
+        - Security
+        - Docs/Config
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevante Logs / Hinweise
+      description: Keine Secrets einfügen
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vorprüfung
+      options:
+        - label: Lokale Reproduktion versucht
+        - label: Health-Endpunkte geprüft
+        - label: CI/Workflow Status geprüft
+        - label: Env/Config geprüft

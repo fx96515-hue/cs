@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: coffeestudio
+      POSTGRES_USER: coffeestudio
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    env_file:
+      - ../env/enterprise.env.example
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+
+  worker:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    env_file:
+      - ../env/enterprise.env.example
+    command: celery -A app.workers.celery_app.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  pgdata:

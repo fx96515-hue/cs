@@ -1,0 +1,88 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+  actions: read
+
+jobs:
+  # This job serves as a status check for branch protection
+  check-all:
+    name: All CI Checks
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [backend-ci, frontend-ci, security-scan, docker-build]
+    
+    steps:
+      - name: Check all jobs
+        run: |
+          echo "Backend CI: ${{ needs.backend-ci.result }}"
+          echo "Frontend CI: ${{ needs.frontend-ci.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "Docker Build: ${{ needs.docker-build.result }}"
+          
+          # Check for failures (success or skipped are both acceptable)
+          if [ "${{ needs.backend-ci.result }}" != "success" ] || \
+             [ "${{ needs.frontend-ci.result }}" != "success" ]; then
+            echo "❌ CI checks failed"
+            exit 1
+          fi
+          
+          # Docker build is only required on push events
+          if [ "${{ needs.docker-build.result }}" == "failure" ]; then
+            echo "❌ Docker build failed"
+            exit 1
+          fi
+          
+          # Security scan is optional - success or skipped is OK
+          if [ "${{ needs.security-scan.result }}" == "failure" ]; then
+            echo "⚠️ Security scan failed"
+            # Don't fail the overall CI for security scan failures - they should be reviewed separately
+          fi
+          
+          echo "✅ All CI checks passed"
+  
+  backend-ci:
+    name: Backend Tests
+    uses: ./.github/workflows/ci-backend.yml
+    permissions:
+      contents: read
+      pull-requests: write
+
+  frontend-ci:
+    name: Frontend Tests
+    uses: ./.github/workflows/ci-frontend.yml
+    permissions:
+      contents: read
+      pull-requests: write
+
+  security-scan:
+    name: Security Scans
+    uses: ./.github/workflows/ci-security.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    secrets: inherit
+
+  docker-build:
+    name: Docker Build
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      push_images: true
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit

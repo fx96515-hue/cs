@@ -1,0 +1,23 @@
+# Feature Flags for Testing
+GRAPH_ENABLED=true
+SENTIMENT_ENABLED=true
+
+# Database (test uses sqlite:///:memory: by default)
+DATABASE_URL=sqlite:///:memory:
+
+# Redis (optional for tests)
+REDIS_URL=redis://localhost:6379/0
+
+# ML Model Type
+ML_MODEL_TYPE=xgboost
+
+# Security
+SECRET_KEY=test-secret-key-do-not-use-in-production
+JWT_ALGORITHM=HS256
+
+# API Keys (test tokens)
+PERPLEXITY_API_KEY=test-key-do-not-use
+
+# Feature toggles
+REALTIME_PRICE_FEED_ENABLED=true
+ANOMALY_DETECTION_ENABLED=true

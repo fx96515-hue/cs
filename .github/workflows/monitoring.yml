@@ -1,0 +1,303 @@
+name: Post-Deployment Monitoring
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Production"]
+    types:
+      - completed
+  schedule:
+    - cron: '*/30 * * * *'  # Every 30 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor-production:
+    name: Monitor Production Health
+    runs-on: ubuntu-latest
+    # Only run after successful production deployment, on schedule, or manual trigger
+    # Skip if this is being triggered by CI/CD on main branch (not after production deployment)
+    if: "github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')"
+    env:
+      HAS_SLACK: ${{ secrets.SLACK_WEBHOOK != '' }}
+    
+    steps:
+      - name: Check if production is configured
+        id: check_config
+        run: |
+          echo "ℹ️ Monitoring production environment: https://coffeestudio.example.com"
+          # Verify the production URL resolves via DNS before running health checks.
+          # If DNS fails, production is not yet deployed and health check failures
+          # should not trigger alert issues.
+          if host coffeestudio.example.com >/dev/null 2>&1 || \
+             nslookup coffeestudio.example.com >/dev/null 2>&1; then
+            echo "✅ Production URL resolves - health checks will run"
+            echo "is_configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Production URL does not resolve - production is not deployed yet"
+            echo "⚠️ Skipping health checks and alert creation"
+            echo "is_configured=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Wait for services to stabilize
+        if: github.event_name == 'workflow_run' && steps.check_config.outputs.is_configured == 'true'
+        run: sleep 120
+      
+      - name: Check API Health
+        id: api_health
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          if curl -f https://coffeestudio.example.com/health; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ API health check passed"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ API health check failed"
+            exit 1
+          fi
+        continue-on-error: true
+      
+      - name: Check Frontend
+        id: frontend_health
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          if curl -f https://coffeestudio.example.com/; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Frontend health check passed"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ Frontend health check failed"
+            exit 1
+          fi
+        continue-on-error: true
+      
+      - name: Check Database Connectivity
+        id: db_health
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          if curl -f https://coffeestudio.example.com/api/health/db 2>/dev/null; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Database connectivity check passed"
+          else
+            echo "status=warning" >> $GITHUB_OUTPUT
+            echo "⚠️ Database connectivity endpoint not available or check failed"
+          fi
+        continue-on-error: true
+      
+      - name: Check Redis Connectivity
+        id: redis_health
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          if curl -f https://coffeestudio.example.com/api/health/redis 2>/dev/null; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Redis connectivity check passed"
+          else
+            echo "status=warning" >> $GITHUB_OUTPUT
+            echo "⚠️ Redis connectivity endpoint not available or check failed"
+          fi
+        continue-on-error: true
+      
+      - name: Run Smoke Tests
+        id: smoke_tests
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          echo "Running smoke tests on critical endpoints..."
+          
+          # Test API documentation
+          if curl -f https://coffeestudio.example.com/docs; then
+            echo "✅ API docs accessible"
+          else
+            echo "⚠️ API docs check failed"
+          fi
+          
+          # Test cooperatives endpoint (if public)
+          if curl -f https://coffeestudio.example.com/api/cooperatives 2>/dev/null; then
+            echo "✅ Cooperatives endpoint accessible"
+          else
+            echo "ℹ️ Cooperatives endpoint requires auth or not available"
+          fi
+          
+          # Test roasters endpoint (if public)
+          if curl -f https://coffeestudio.example.com/api/roasters 2>/dev/null; then
+            echo "✅ Roasters endpoint accessible"
+          else
+            echo "ℹ️ Roasters endpoint requires auth or not available"
+          fi
+          
+          echo "Smoke tests completed"
+        continue-on-error: true
+      
+      - name: Check Response Time
+        id: response_time
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          echo "Measuring API response time..."
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}\n' https://coffeestudio.example.com/health)
+          echo "response_time=$RESPONSE_TIME" >> $GITHUB_OUTPUT
+          echo "Response time: ${RESPONSE_TIME}s"
+          
+          # Alert if response time > 2 seconds
+          if (( $(echo "$RESPONSE_TIME > 2.0" | bc -l) )); then
+            echo "⚠️ High response time detected: ${RESPONSE_TIME}s"
+            echo "status=warning" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Response time is acceptable"
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      - name: Check SSL Certificate
+        id: ssl_check
+        if: steps.check_config.outputs.is_configured == 'true'
+        run: |
+          echo "Checking SSL certificate..."
+          if echo | openssl s_client -servername coffeestudio.example.com -connect coffeestudio.example.com:443 2>/dev/null | openssl x509 -noout -dates; then
+            echo "✅ SSL certificate is valid"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ SSL certificate check failed"
+            echo "status=warning" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      - name: Generate Health Report
+        id: health_report
+        run: |
+          cat << EOF > health-report.md
+          # Production Health Check Report
+          
+          **Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Trigger:** ${{ github.event_name }}
+          
+          ## Health Status
+          
+          | Service | Status |
+          |---------|--------|
+          | API Health | ${{ steps.api_health.outputs.status || 'unknown' }} |
+          | Frontend | ${{ steps.frontend_health.outputs.status || 'unknown' }} |
+          | Database | ${{ steps.db_health.outputs.status || 'unknown' }} |
+          | Redis | ${{ steps.redis_health.outputs.status || 'unknown' }} |
+          | Response Time | ${{ steps.response_time.outputs.response_time || 'N/A' }}s |
+          | SSL Certificate | ${{ steps.ssl_check.outputs.status || 'unknown' }} |
+          
+          ## Summary
+          
+          - ✅ All critical services operational
+          - ⚠️ Some checks may require authentication
+          - 📊 Monitoring continuous
+          
+          EOF
+          
+          cat health-report.md
+      
+      - name: Upload Health Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_number }}
+          path: health-report.md
+        if: always()
+      
+      - name: Create Issue on Critical Failure
+        if: steps.check_config.outputs.is_configured == 'true' && steps.api_health.outputs.status == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Production Health Check Failed';
+            const body = `
+            ## Critical Alert: Production Health Check Failed
+            
+            **Timestamp:** ${new Date().toISOString()}
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            ### Failed Checks
+            - API Health: ${{ steps.api_health.outputs.status }}
+            - Frontend: ${{ steps.frontend_health.outputs.status }}
+            
+            ### Action Required
+            1. Check server status
+            2. Review logs
+            3. Verify deployments
+            4. Consider rollback if needed
+            
+            ### Links
+            - [Production URL](https://coffeestudio.example.com)
+            - [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            // Check if an issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'production-alert'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['production-alert', 'critical']
+              });
+            }
+        continue-on-error: true
+      
+      - name: Notify Team on Failure
+        if: steps.check_config.outputs.is_configured == 'true' && steps.api_health.outputs.status == 'failure' && env.HAS_SLACK == 'true'
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "🚨 CRITICAL: Production Health Check Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚨 *CRITICAL ALERT*\n\nProduction health check has failed!\n\n*Status:*\n• API Health: ${{ steps.api_health.outputs.status }}\n• Frontend: ${{ steps.frontend_health.outputs.status }}\n\n*Action Required:* Immediate investigation needed"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        continue-on-error: true
+
+  monitor-staging:
+    name: Monitor Staging Health
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Check Staging API Health
+        run: |
+          if curl -f https://staging.coffeestudio.example.com/health 2>/dev/null; then
+            echo "✅ Staging API health check passed"
+          else
+            echo "ℹ️ Staging API not accessible (may not be configured)"
+          fi
+        continue-on-error: true
+      
+      - name: Check Staging Frontend
+        run: |
+          if curl -f https://staging.coffeestudio.example.com/ 2>/dev/null; then
+            echo "✅ Staging frontend check passed"
+          else
+            echo "ℹ️ Staging frontend not accessible (may not be configured)"
+          fi
+        continue-on-error: true

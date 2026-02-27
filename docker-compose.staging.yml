@@ -1,0 +1,60 @@
+# Docker Compose configuration for Staging environment
+# This extends the base docker-compose.yml with staging-specific settings
+
+services:
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-fx96515-hue/coffeestudio-platform}/backend:develop-${GITHUB_SHA:-latest}
+    environment:
+      - APP_ENV=staging
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=${JWT_ISSUER:-coffeestudio}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-coffeestudio-users}
+      - ALLOWED_ORIGINS=https://staging.coffeestudio.example.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-fx96515-hue/coffeestudio-platform}/frontend:develop-${GITHUB_SHA:-latest}
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.staging.coffeestudio.example.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    restart: unless-stopped
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-coffeestudio_staging}
+      - POSTGRES_USER=${POSTGRES_USER:-coffeestudio}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+  redis:
+    restart: unless-stopped
+    volumes:
+      - redis_data_staging:/data
+
+  worker:
+    image: ghcr.io/${GITHUB_REPOSITORY:-fx96515-hue/coffeestudio-platform}/backend:develop-${GITHUB_SHA:-latest}
+    restart: unless-stopped
+
+  beat:
+    image: ghcr.io/${GITHUB_REPOSITORY:-fx96515-hue/coffeestudio-platform}/backend:develop-${GITHUB_SHA:-latest}
+    restart: unless-stopped
+
+volumes:
+  postgres_data_staging:
+  redis_data_staging:

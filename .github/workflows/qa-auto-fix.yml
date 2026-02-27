@@ -1,0 +1,136 @@
+name: AI-Powered QA & Auto-Fix
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      auto_fix:
+        description: 'Enable auto-fix'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      confidence_threshold:
+        description: 'Confidence threshold for auto-fix (0-100)'
+        required: false
+        default: '90'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  qa-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: apps/api/requirements.txt
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r apps/api/requirements.txt
+          pip install -r apps/api/requirements-dev.txt
+      
+      - name: Run Tests with QA Analysis
+        id: qa_analysis
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATABASE_URL: "sqlite:///:memory:"
+          REDIS_URL: "redis://localhost:6379/1"
+          JWT_SECRET: test_jwt_secret_key
+        run: |
+          cd apps/api
+          
+          # Determine auto-fix setting
+          AUTO_FIX_FLAG=""
+          if [ "${{ github.event.inputs.auto_fix }}" = "true" ]; then
+            AUTO_FIX_FLAG="--auto-fix"
+          fi
+          
+          CONFIDENCE="${{ github.event.inputs.confidence_threshold }}"
+          if [ -z "$CONFIDENCE" ]; then
+            CONFIDENCE="90"
+          fi
+          
+          # Run QA analysis
+          python -m app.qa analyze-failures \
+            --test-path tests/ \
+            $AUTO_FIX_FLAG \
+            --confidence-threshold "$CONFIDENCE" \
+            --max-fixes 5 \
+          || echo "QA analysis completed with findings"
+      
+      - name: Generate QA Report
+        if: always()
+        env:
+          DATABASE_URL: "sqlite:///:memory:"
+          REDIS_URL: "redis://localhost:6379/1"
+          JWT_SECRET: test_jwt_secret_key
+        run: |
+          cd apps/api
+          python -m app.qa generate-report \
+            --test-path tests/ \
+            --output .qa_reports/summary.md
+      
+      - name: Upload QA Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-analysis-report
+          path: apps/api/.qa_reports/
+          retention-days: 30
+      
+      - name: Comment PR with Analysis
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'apps/api/.qa_reports/summary.md';
+            
+            let report = '## 🤖 AI QA Analysis\n\n';
+            
+            try {
+              if (fs.existsSync(reportPath)) {
+                const content = fs.readFileSync(reportPath, 'utf8');
+                report += content;
+              } else {
+                report += '⚠️ Report file not found. Check workflow logs for details.';
+              }
+            } catch (error) {
+              report += `⚠️ Error reading report: ${error.message}`;
+            }
+            
+            // Add link to artifacts
+            report += '\n\n---\n';
+            report += `📎 [View full QA report in artifacts](${context.payload.repository.html_url}/actions/runs/${context.runId})`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+      
+      - name: Health Check
+        if: always()
+        env:
+          DATABASE_URL: "sqlite:///:memory:"
+          REDIS_URL: "redis://localhost:6379/1"
+          JWT_SECRET: test_jwt_secret_key
+        run: |
+          cd apps/api
+          python -m app.qa health-check

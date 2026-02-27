@@ -1,0 +1,377 @@
+﻿name: coffeestudio
+
+# CoffeeStudio MAX STACK (single entrypoint via Traefik)
+# Run (Windows PowerShell):
+#   $env:COMPOSE_PROFILES="stack"; docker compose -f docker-compose.yml -f docker-compose.stack.yml up -d --build
+# Or use: scripts\win\03_max_stack_up.ps1
+#
+# No hosts-file edits needed: we use *.localhost domains.
+#
+# Access (HTTP):
+#   http://ui.localhost           (Next.js UI)
+#   http://api.localhost/docs     (FastAPI)
+#   http://traefik.localhost      (Traefik dashboard)
+#   http://docker.localhost       (Portainer)
+#   http://ops.localhost          (Grafana)
+#   http://prom.localhost         (Prometheus)
+#   http://bi.localhost           (Metabase)
+#   http://auth.localhost         (Keycloak)
+#   http://apps.localhost         (Appsmith)
+#   http://flows.localhost        (n8n)
+#   http://llm.localhost          (Open WebUI)
+#   http://llm-api.localhost      (LiteLLM API)
+#   http://langfuse.localhost     (Langfuse)
+#   http://wud.localhost          (WUD - image updates)
+
+services:
+  # --- Reverse proxy / single entrypoint ---
+  traefik:
+    image: traefik:v3.6.4
+    user: "0:0"
+    restart: unless-stopped
+    profiles: ["stack"]
+    command:
+      - --api=true
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --accesslog=true
+      - --log.level=${TRAEFIK_LOG_LEVEL:-INFO}
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.enable=true
+      # Traefik dashboard (no extra port published)
+      - traefik.http.routers.traefik.rule=Host(`traefik.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      - traefik.http.routers.traefik.entrypoints=web
+      - traefik.http.routers.traefik.service=api@internal
+
+  # --- App services (stack mode: routed via Traefik, no direct ports) ---
+  backend:
+    profiles: ["stack"]
+    ports: []
+    environment:
+      # allow the UI origin when routed through traefik
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://ui.localhost}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.localhost`)
+      - traefik.http.routers.api.entrypoints=web
+      - traefik.http.services.api.loadbalancer.server.port=8000
+
+  frontend:
+    profiles: ["stack"]
+    ports: []
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ui.rule=Host(`ui.localhost`)
+      - traefik.http.routers.ui.entrypoints=web
+      - traefik.http.services.ui.loadbalancer.server.port=3000
+
+  # --- Ops: Container management ---
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.rule=Host(`docker.localhost`)
+      - traefik.http.routers.portainer.entrypoints=web
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+
+  # --- Observability: Metrics / Logs / Traces ---
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - prometheus_data:/prometheus
+      - ./infra/observability/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.prom.rule=Host(`prom.localhost`)
+      - traefik.http.routers.prom.entrypoints=web
+      - traefik.http.services.prom.loadbalancer.server.port=9090
+
+  loki:
+    image: grafana/loki:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - loki_data:/loki
+    labels:
+      - traefik.enable=false
+
+  promtail:
+    image: grafana/promtail:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./infra/observability/config/promtail.yml:/etc/promtail/config.yml:ro
+    command: ["-config.file=/etc/promtail/config.yml"]
+    labels:
+      - traefik.enable=false
+
+  tempo:
+    image: grafana/tempo:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - tempo_data:/var/tempo
+      - ./infra/observability/config/tempo.yml:/etc/tempo.yml:ro
+    labels:
+      - traefik.enable=false
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=${GRAFANA_ANON_ENABLED:-true}
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=${GRAFANA_ANON_ROLE:-Viewer}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-adminadmin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/observability/config/grafana_datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`ops.localhost`)
+      - traefik.http.routers.grafana.entrypoints=web
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+
+  blackbox:
+    image: prom/blackbox-exporter:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - ./infra/observability/config/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command: ["--config.file=/etc/blackbox_exporter/config.yml"]
+    labels:
+      - traefik.enable=false
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    labels:
+      - traefik.enable=false
+
+  nodeexporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    pid: host
+    command: ["--path.rootfs=/host"]
+    volumes:
+      - /:/host:ro
+    labels:
+      - traefik.enable=false
+
+  # --- BI / internal tools ---
+  metabase:
+    image: metabase/metabase:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=coffeestudio
+      - MB_DB_PORT=5432
+      - MB_DB_USER=coffeestudio
+      - MB_DB_PASS=coffeestudio
+      - MB_DB_HOST=postgres
+    depends_on:
+      - postgres
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.metabase.rule=Host(`bi.localhost`)
+      - traefik.http.routers.metabase.entrypoints=web
+      - traefik.http.services.metabase.loadbalancer.server.port=3000
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.7
+    restart: unless-stopped
+    profiles: ["stack"]
+    command: ["start-dev", "--http-enabled=true", "--hostname=auth.localhost"]
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-adminadmin}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak.rule=Host(`auth.localhost`)
+      - traefik.http.routers.keycloak.entrypoints=web
+      - traefik.http.services.keycloak.loadbalancer.server.port=8080
+
+  appsmith:
+    image: appsmith/appsmith-ce:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - appsmith_stacks:/appsmith-stacks
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.appsmith.rule=Host(`apps.localhost`)
+      - traefik.http.routers.appsmith.entrypoints=web
+      - traefik.http.services.appsmith.loadbalancer.server.port=80
+
+  # --- Automations / Workflows ---
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - N8N_HOST=flows.localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://flows.localhost/
+      - GENERIC_TIMEZONE=${APP_TIMEZONE:-Europe/Berlin}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=coffeestudio
+      - DB_POSTGRESDB_USER=coffeestudio
+      - DB_POSTGRESDB_PASSWORD=coffeestudio
+    depends_on:
+      - postgres
+    volumes:
+      - n8n_data:/home/node/.n8n
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`flows.localhost`)
+      - traefik.http.routers.n8n.entrypoints=web
+      - traefik.http.services.n8n.loadbalancer.server.port=5678
+
+  # --- LLM (local-first) ---
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - ollama_data:/root/.ollama
+    labels:
+      - traefik.enable=false
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_NAME=CoffeeStudio LLM
+    depends_on:
+      - ollama
+    volumes:
+      - openwebui_data:/app/apps/api/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.openwebui.rule=Host(`llm.localhost`)
+      - traefik.http.routers.openwebui.entrypoints=web
+      - traefik.http.services.openwebui.loadbalancer.server.port=8080
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-}
+      - DATABASE_URL=postgresql://coffeestudio:coffeestudio@postgres:5432/coffeestudio
+      - STORE_MODEL_IN_DB=true
+    command: ["--port", "4000", "--host", "0.0.0.0"]
+    depends_on:
+      - postgres
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.litellm.rule=Host(`llm-api.localhost`)
+      - traefik.http.routers.litellm.entrypoints=web
+      - traefik.http.services.litellm.loadbalancer.server.port=4000
+
+  # --- LLM Observability ---
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    restart: unless-stopped
+    profiles: ["stack"]
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    labels:
+      - traefik.enable=false
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - DATABASE_URL=postgresql://coffeestudio:coffeestudio@postgres:5432/coffeestudio
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - NEXTAUTH_URL=http://langfuse.localhost
+      - NEXTAUTH_SECRET=${LANGFUSE_NEXTAUTH_SECRET:-}
+      - SALT=${LANGFUSE_SALT:-}
+      - TELEMETRY_ENABLED=false
+    depends_on:
+      - postgres
+      - clickhouse
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.langfuse.rule=Host(`langfuse.localhost`)
+      - traefik.http.routers.langfuse.entrypoints=web
+      - traefik.http.services.langfuse.loadbalancer.server.port=3000
+
+  # --- Update visibility / optional auto-update ---
+  wud:
+    image: ghcr.io/getwud/wud:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - WUD_WATCHER_LOCAL_SOCKET=/var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.wud.rule=Host(`wud.localhost`)
+      - traefik.http.routers.wud.entrypoints=web
+      - traefik.http.services.wud.loadbalancer.server.port=3000
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    profiles: ["stack"]
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL:-86400}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Disable by default: require explicit opt-in
+    command: ["--label-enable"]
+
+volumes:
+  portainer_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
+  appsmith_stacks:
+  n8n_data:
+  ollama_data:
+  openwebui_data:
+  clickhouse_data:
+
+
+
+

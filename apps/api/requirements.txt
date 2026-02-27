@@ -1,0 +1,47 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+# Pydantic email validation requires the optional extra.
+pydantic[email]==2.10.3
+email-validator==2.2.0
+pydantic-settings==2.6.1
+python-jose[cryptography]==3.3.0
+# IMPORTANT: do NOT depend on bcrypt in this project (Windows/Docker stability).
+# Using argon2 as the secure, cross-platform password hashing backend.
+passlib[argon2]==1.7.4
+argon2-cffi==23.1.0
+sqlalchemy==2.0.36
+psycopg[binary]==3.2.3
+alembic==1.14.0
+httpx==0.28.1
+redis==5.2.0
+celery==5.4.0
+tenacity==9.0.0
+python-dateutil==2.9.0.post0
+prometheus-fastapi-instrumentator==7.0.0
+structlog==24.4.0
+
+# Data enrichment / dedup
+beautifulsoup4==4.12.3
+rapidfuzz==3.10.1
+
+# Rate limiting
+slowapi==0.1.9
+
+# Machine Learning
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+joblib>=1.3.0
+xgboost>=2.0.0
+
+# Local embeddings (CPU-only sentence-transformers for pgvector semantic search)
+# Uses sentence-transformers/all-MiniLM-L6-v2 (384 dims) by default.
+# torch is pulled in transitively; CPU wheels are sufficient (no GPU required).
+sentence-transformers>=2.7.0
+
+# pgvector for semantic search
+pgvector>=0.3.0
+openai>=1.0.0
+
+# Knowledge graph analysis
+networkx>=3.2

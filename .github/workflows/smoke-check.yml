@@ -1,0 +1,24 @@
+name: Post-deploy Smoke Check
+
+on:
+  workflow_run:
+    workflows: ["Integration Tests", "Unit Tests"]
+    types: [completed]
+
+jobs:
+  smoke:
+    name: Smoke Health Check
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for services
+        run: |
+          echo 'Sleeping 10s to allow services to become healthy'
+          sleep 10
+      - name: Backend health
+        run: |
+          curl -f http://localhost:8000/health || (echo 'Backend health failed' && exit 1)
+      - name: API docs
+        run: |
+          curl -f http://localhost:8000/docs || echo 'docs missing'

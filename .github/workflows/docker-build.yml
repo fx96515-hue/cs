@@ -1,0 +1,251 @@
+name: Build & Push Docker Images
+
+on:
+  push:
+    branches: [main, develop]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+  workflow_call:  # Allow this workflow to be called by other workflows
+    inputs:
+      push_images:
+        description: 'Push built images to registries (true on push to main, false otherwise)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-backend:
+    name: Build & Push Backend Image
+    runs-on: ubuntu-latest
+    env:
+      HAS_DOCKER_HUB: ${{ secrets.DOCKER_USERNAME != '' }}
+      DO_PUSH: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.push_images == true) }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Log in to GitHub Container Registry
+        if: env.DO_PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/backend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Extract metadata (Docker Hub)
+        if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
+        id: meta-dockerhub
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/coffeestudio-backend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      # PR build: build only, do not push, single-platform
+      - name: Build only (PR)
+        if: env.DO_PUSH != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api
+          push: false
+          tags: coffeestudio-backend:pr-build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+      
+      # Build with Docker Hub tags when available
+      - name: Build and push (with Docker Hub)
+        if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.meta-dockerhub.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      # Build without Docker Hub tags when not available
+      - name: Build and push (GHCR only)
+        if: env.DO_PUSH == 'true' && env.HAS_DOCKER_HUB != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Image digest
+        if: env.DO_PUSH == 'true'
+        run: echo "Built images with tags ${{ steps.meta.outputs.tags }}"
+
+  build-frontend:
+    name: Build & Push Frontend Image
+    runs-on: ubuntu-latest
+    env:
+      HAS_DOCKER_HUB: ${{ secrets.DOCKER_USERNAME != '' }}
+      DO_PUSH: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.push_images == true) }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Log in to GitHub Container Registry
+        if: env.DO_PUSH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/frontend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Extract metadata (Docker Hub)
+        if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
+        id: meta-dockerhub
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/coffeestudio-frontend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      # PR build: build only, do not push, single-platform
+      - name: Build only (PR)
+        if: env.DO_PUSH != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          push: false
+          tags: coffeestudio-frontend:pr-build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+      
+      # Build with Docker Hub tags when available
+      - name: Build and push (with Docker Hub)
+        if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.meta-dockerhub.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      # Build without Docker Hub tags when not available
+      - name: Build and push (GHCR only)
+        if: env.DO_PUSH == 'true' && env.HAS_DOCKER_HUB != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Image digest
+        if: env.DO_PUSH == 'true'
+        run: echo "Built images with tags ${{ steps.meta.outputs.tags }}"
+
+  scan-images:
+    name: Scan Pushed Images
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.push_images == true)
+    
+    strategy:
+      matrix:
+        image: ['backend', 'frontend']
+    
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ github.ref_name }}-${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-${{ matrix.image }}-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+      
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-${{ matrix.image }}-results.sarif'
+          category: 'trivy-${{ matrix.image }}-pushed'
+        if: always()

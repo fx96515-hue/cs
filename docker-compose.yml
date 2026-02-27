@@ -1,0 +1,148 @@
+name: coffeestudio
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: coffeestudio
+      POSTGRES_USER: coffeestudio
+      POSTGRES_PASSWORD: coffeestudio
+    ports:
+    - 5432:5432
+    volumes:
+    - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U coffeestudio -d coffeestudio
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:7
+    ports:
+    - 6379:6379
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    env_file:
+    - ./.env
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-coffeestudio-users}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      TZ: ${APP_TIMEZONE:-Europe/Berlin}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@coffeestudio.com}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      PERPLEXITY_BASE_URL: ${PERPLEXITY_BASE_URL:-https://api.perplexity.ai}
+      PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
+      PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
+    ports:
+    - 8000:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -fsS http://localhost:8000/health >/dev/null || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    command:
+    - sh
+    - -c
+    - alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    command:
+    - sh
+    - -c
+    - celery -A app.workers.celery_app.celery worker --loglevel=info
+    env_file:
+    - ./.env
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-coffeestudio-users}
+      TZ: ${APP_TIMEZONE:-Europe/Berlin}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      PERPLEXITY_BASE_URL: ${PERPLEXITY_BASE_URL:-https://api.perplexity.ai}
+      PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
+      PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+  beat:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    command:
+    - sh
+    - -c
+    - celery -A app.workers.celery_app.celery beat --loglevel=info
+    env_file:
+    - ./.env
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-coffeestudio-users}
+      TZ: ${APP_TIMEZONE:-Europe/Berlin}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      PERPLEXITY_BASE_URL: ${PERPLEXITY_BASE_URL:-https://api.perplexity.ai}
+      PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
+      PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+  frontend:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    env_file:
+    - ./.env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+    - 3000:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    command:
+    - sh
+    - -c
+    - node server.js
+volumes:
+  pgdata: null

@@ -1,0 +1,43 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "coffeestudio-overview",
+    "title": "CoffeeStudio - Overview",
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "panels": [
+      {
+        "type": "stat",
+        "title": "HTTP Requests Total",
+        "targets": [
+          {
+            "expr": "sum by (path) (rate(http_requests_total[5m]))",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "h": 6, "w": 12, "x": 0, "y": 0 }
+      }
+      ,
+      {
+        "type": "graph",
+        "title": "Request Rate (all paths)",
+        "targets": [
+          { "expr": "sum(rate(http_requests_total[1m]))", "refId": "B", "format": "time_series" }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "type": "graph",
+        "title": "Request Latency (placeholder)",
+        "description": "If you instrument request duration histogram as http_request_duration_seconds_bucket, this panel will show p95 latency.",
+        "targets": [
+          { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "refId": "C", "format": "time_series" }
+        ],
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 }
+      }
+    ]
+  },
+  "overwrite": true
+}

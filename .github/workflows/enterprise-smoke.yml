@@ -1,0 +1,53 @@
+name: Enterprise smoke-check
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Docker and Compose CLI plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io curl
+          DOCKER_COMPOSE_VERSION="v2.20.2"
+          mkdir -p ~/.docker/cli-plugins
+          curl -SL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose
+          chmod +x ~/.docker/cli-plugins/docker-compose
+          docker --version
+          docker compose version
+
+      - name: CI Debug Info
+        run: |
+          echo "=== CI DEBUG INFO ==="
+          python --version || true
+          pip --version || true
+          pip freeze | sed -n '1,100p' || true
+          df -h || true
+          echo "Environment (selected):"
+          env | grep -E 'CI|GITHUB|DOCKER' || true
+          echo "====================="
+
+      - name: Make CI script executable
+        run: chmod +x ./scripts/ci_start_enterprise.sh
+
+      - name: Start enterprise stack and run health checks
+        run: |
+          ./scripts/ci_start_enterprise.sh ops/deploy/docker-compose.enterprise.yml http://localhost:8000/health
+
+      - name: Run smoke tests
+        run: |
+          python -m pip install -r apps/api/requirements.txt
+          pip install pytest pytest-asyncio
+          pytest -q apps/api/tests -k smoke
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose -f ops/deploy/docker-compose.enterprise.yml down -v

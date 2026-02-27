@@ -1,0 +1,11 @@
+﻿services:
+  frontend:
+    command: ["node", "server.js"]
+    environment:
+      NODE_ENV: "production"
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+
+  backend:
+    environment:
+      CORS_ORIGINS: "http://ui.localhost,http://localhost:3000,http://localhost,http://127.0.0.1:3000,http://api.localhost,http://localhost:8000,http://127.0.0.1:8000"
