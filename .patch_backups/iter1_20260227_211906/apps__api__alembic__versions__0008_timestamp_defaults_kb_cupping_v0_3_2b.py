@@ -13,8 +13,6 @@ down_revision = "0007_market_observation_uniques_v0_3_1"
 branch_labels = None
 depends_on = None
 
-NOW = sa.text("now()")
-
 
 def upgrade() -> None:
     bind = op.get_bind()
@@ -36,14 +34,14 @@ def upgrade() -> None:
         "knowledge_docs",
         "created_at",
         existing_type=sa.DateTime(timezone=True),
-        server_default=NOW,
+        server_default=sa.text("now()"),
         existing_nullable=False,
     )
     op.alter_column(
         "knowledge_docs",
         "updated_at",
         existing_type=sa.DateTime(timezone=True),
-        server_default=NOW,
+        server_default=sa.text("now()"),
         existing_nullable=False,
     )
 
@@ -51,14 +49,14 @@ def upgrade() -> None:
         "cupping_results",
         "created_at",
         existing_type=sa.DateTime(timezone=True),
-        server_default=NOW,
+        server_default=sa.text("now()"),
         existing_nullable=False,
     )
     op.alter_column(
         "cupping_results",
         "updated_at",
         existing_type=sa.DateTime(timezone=True),
-        server_default=NOW,
+        server_default=sa.text("now()"),
         existing_nullable=False,
     )
 

@@ -13,8 +13,6 @@ down_revision = "0008_timestamp_defaults_kb_cupping_v0_3_2b"
 branch_labels = None
 depends_on = None
 
-NOW = sa.text("now()")
-
 
 def upgrade() -> None:
     # Create freight_history table
@@ -37,13 +35,13 @@ def upgrade() -> None:
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=False,
         ),
     )
@@ -69,13 +67,13 @@ def upgrade() -> None:
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=False,
         ),
     )
@@ -100,13 +98,13 @@ def upgrade() -> None:
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=False,
         ),
     )
