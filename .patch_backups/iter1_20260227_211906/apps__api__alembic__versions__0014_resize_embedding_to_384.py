@@ -33,7 +33,7 @@ def upgrade():
 
     if not _pgvector_available(conn):
         warnings.warn(
-            "pgvector extension not available â€“ skipping embedding column resize. "
+            "pgvector extension not available – skipping embedding column resize. "
             "Semantic search features will be unavailable."
         )
         return
@@ -71,7 +71,7 @@ def downgrade():
 
     if not _pgvector_available(conn):
         warnings.warn(
-            "pgvector extension not available â€“ skipping embedding column downgrade."
+            "pgvector extension not available – skipping embedding column downgrade."
         )
         return
 

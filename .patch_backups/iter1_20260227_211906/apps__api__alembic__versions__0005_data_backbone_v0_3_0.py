@@ -14,8 +14,6 @@ down_revision = "0004_roaster_contact_email"
 branch_labels = None
 depends_on = None
 
-NOW = sa.text("now()")
-
 
 def upgrade():
     # --- Extend entity_evidence ---
@@ -39,13 +37,13 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column("entity_type", sa.String(length=32), nullable=False),
@@ -71,13 +69,13 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column("entity_type", sa.String(length=32), nullable=False),
@@ -108,13 +106,13 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column("entity_type", sa.String(length=32), nullable=False),
@@ -153,13 +151,13 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column("topic", sa.String(length=128), nullable=False),
@@ -191,13 +189,13 @@ def upgrade():
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
-            server_default=NOW,
+            server_default=sa.text("now()"),
             nullable=True,
         ),
         sa.Column("code", sa.String(length=32), nullable=False),
