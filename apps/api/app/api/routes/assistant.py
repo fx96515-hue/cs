@@ -1,14 +1,16 @@
-"""Assistant Chat API endpoints (POST /assistant/chat, GET /assistant/status)."""
-
+"""
+Assistant Chat API endpoints (POST /assistant/chat, GET /assistant/status).
+"""
 from __future__ import annotations
 
-import structlog
+from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_auth
 from app.core.config import settings
@@ -17,38 +19,35 @@ from app.services.assistant import AssistantService
 
 router = APIRouter()
 log = structlog.get_logger()
-
 limiter = Limiter(key_func=get_remote_address)
 
 
-@router.post("/chat")
+@router.post(
+    "/chat",
+    responses={
+        503: {
+            "description": "Assistant ist deaktiviert (Feature-Flag) oder Provider ist nicht verfügbar."
+        }
+    },
+)
 @limiter.limit("20/minute")
 async def chat(
     request: Request,
     body: ChatRequest,
-    db: Session = Depends(get_db),
-    auth_info: dict = Depends(require_auth),
+    db: Annotated[Session, Depends(get_db)],
+    auth_info: Annotated[dict, Depends(require_auth)],
 ) -> StreamingResponse:
-    """Stream a chat response from the RAG AI Assistant.
+    """
+    Stream a chat response from the RAG AI Assistant.
 
     Returns Server-Sent Events (SSE) stream with the following event types:
-
-    - ``{"type": "session", "session_id": "..."}``           – first event
-    - ``{"type": "chunk",   "content":    "..."}``           – token chunks
-    - ``{"type": "done",    "sources": [...], "model": ""}`` – final event
-    - ``{"type": "error",   "message":    "..."}``           – on failure
-
-    Args:
-        request: FastAPI request (for rate limiting)
-        body: Chat request with message and optional session_id
-        db: Database session
-        auth_info: Authenticated user info
-
-    Returns:
-        StreamingResponse with ``text/event-stream`` media type
+    - {"type": "session", "session_id": "..."}  – first event
+    - {"type": "chunk", "content": "..."}       – token chunks
+    - {"type": "done", "sources": [...], "model": ""} – final event
+    - {"type": "error", "message": "..."}       – on failure
 
     Raises:
-        HTTPException 503: If feature flag disabled or provider unavailable
+      HTTPException(503): If feature flag disabled or provider unavailable.
     """
     if not settings.ASSISTANT_ENABLED:
         raise HTTPException(
@@ -57,19 +56,11 @@ async def chat(
         )
 
     service = AssistantService()
-
     if not service.is_available():
         provider_info = service.get_provider_info()
         provider = provider_info["provider"]
-        log.warning(
-            "assistant_unavailable",
-            provider=provider,
-            user=auth_info.get("email"),
-        )
-        raise HTTPException(
-            status_code=503,
-            detail=_provider_error(provider),
-        )
+        log.warning("assistant_unavailable", provider=provider, user=auth_info.get("email"))
+        raise HTTPException(status_code=503, detail=_provider_error(provider))
 
     log.info(
         "assistant_chat_request",
@@ -79,34 +70,19 @@ async def chat(
     )
 
     return StreamingResponse(
-        service.stream_chat(
-            message=body.message,
-            session_id=body.session_id,
-            db=db,
-        ),
+        service.stream_chat(message=body.message, session_id=body.session_id, db=db),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
-@router.get("/status", response_model=AssistantStatusResponse)
+@router.get("/status")
 async def get_status(
-    _: dict = Depends(require_auth),
+    _: Annotated[dict, Depends(require_auth)],
 ) -> AssistantStatusResponse:
-    """Return the status of the Assistant Chat service.
-
-    Args:
-        _: Authenticated user info
-
-    Returns:
-        Service availability and provider details
-    """
+    """Return the status of the Assistant Chat service."""
     service = AssistantService()
     provider_info = service.get_provider_info()
-
     return AssistantStatusResponse(
         available=service.is_available(),
         enabled=settings.ASSISTANT_ENABLED,
@@ -116,10 +92,10 @@ async def get_status(
 
 
 def _provider_error(provider: str) -> str:
-    messages = {
+    messages: dict[str, str] = {
         "ollama": (
-            "Assistant nicht verfügbar. "
-            "Starte Ollama: `ollama serve` und lade ein Modell: `ollama pull llama3.1:8b`"
+            "Assistant nicht verfügbar. Starte Ollama: `ollama serve` "
+            "und lade ein Modell: `ollama pull llama3.1:8b`"
         ),
         "openai": "Assistant nicht verfügbar. OPENAI_API_KEY ist nicht konfiguriert.",
         "groq": "Assistant nicht verfügbar. GROQ_API_KEY ist nicht konfiguriert.",

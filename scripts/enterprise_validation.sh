@@ -23,43 +23,43 @@ API_DIR="$REPO_ROOT/apps/api"
 
 # Function to print section header
 print_header() {
-    echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "\n${BLUE}â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”${NC}"
     echo -e "${BLUE}$1${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+    echo -e "${BLUE}â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”${NC}\n"
 }
 
 # Function to print success
 print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
+    echo -e "${GREEN}âœ“ $1${NC}"
     ((PASSED_CHECKS++))
 }
 
 # Function to print error
 print_error() {
-    echo -e "${RED}✗ $1${NC}"
+    echo -e "${RED}âœ— $1${NC}"
     ((FAILED_CHECKS++))
 }
 
 # Function to print warning
 print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
+    echo -e "${YELLOW}âš  $1${NC}"
 }
 
-if [ ! -d "$API_DIR" ]; then
+if [[ ! -d "$API_DIR" ]]; then
     echo -e "${RED}API directory not found: $API_DIR${NC}" >&2
     exit 2
 fi
 
-print_header "🚀 ENTERPRISE VALIDATION SUITE"
+print_header "ðŸš€ ENTERPRISE VALIDATION SUITE"
 echo "Starting comprehensive quality assurance checks..."
 echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
 echo "Repo: $REPO_ROOT"
 echo "API:  $API_DIR"
 
-# ═══════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # 1. CODE QUALITY & FORMATTING
-# ═══════════════════════════════════════════════════════════════════
-print_header "📝 Code Quality & Formatting"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+print_header "ðŸ“ Code Quality & Formatting"
 
 cd "$API_DIR" || exit 1
 
@@ -79,10 +79,10 @@ else
     print_error "Ruff formatting failed - code needs formatting"
 fi
 
-# ═══════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # 2. TYPE CHECKING
-# ═══════════════════════════════════════════════════════════════════
-print_header "🔍 Type Checking"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+print_header "ðŸ” Type Checking"
 
 ((TOTAL_CHECKS++))
 echo "Running mypy type checker..."
@@ -92,10 +92,10 @@ else
     print_error "Type checking failed - type errors detected"
 fi
 
-# ═══════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # 3. TEST SUITE
-# ═══════════════════════════════════════════════════════════════════
-print_header "🧪 Test Suite Validation"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+print_header "ðŸ§ª Test Suite Validation"
 
 ((TOTAL_CHECKS++))
 echo "Running full test suite with coverage..."
@@ -103,14 +103,14 @@ echo "Running full test suite with coverage..."
 TEST_OUTPUT=$(pytest tests/ -v --cov=app --cov-report=term --cov-report=html 2>&1)
 TEST_EXIT_CODE=$?
 
-if [ $TEST_EXIT_CODE -eq 0 ]; then
+if [[ $TEST_EXIT_CODE -eq 0 ]]; then
     print_success "All tests passed"
 
     # Extract coverage percentage from captured output
     COVERAGE=$(echo "$TEST_OUTPUT" | grep "TOTAL" | awk '{print $NF}' | sed 's/%//')
-    if [ -n "$COVERAGE" ]; then
-        if [ "${COVERAGE%.*}" -ge 57 ]; then
-            print_success "Code coverage: ${COVERAGE}% (target: ≥57%)"
+    if [[ -n "$COVERAGE" ]]; then
+        if [[ "${COVERAGE%.*}" -ge 57 ]]; then
+            print_success "Code coverage: ${COVERAGE}% (target: â‰¥57%)"
         else
             print_warning "Code coverage: ${COVERAGE}% (below target of 57%)"
         fi
@@ -120,10 +120,10 @@ else
     echo "$TEST_OUTPUT"
 fi
 
-# ═══════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # 4. SECURITY VALIDATION
-# ═══════════════════════════════════════════════════════════════════
-print_header "🔒 Security Validation"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+print_header "ðŸ”’ Security Validation"
 
 ((TOTAL_CHECKS++))
 echo "Validating security middleware..."
@@ -149,16 +149,16 @@ else
     print_error "Audit logging tests failed"
 fi
 
-# ═══════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # 5. CONFIGURATION VALIDATION
-# ═══════════════════════════════════════════════════════════════════
-print_header "⚙️ Configuration Validation"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+print_header "âš™ï¸ Configuration Validation"
 
 ((TOTAL_CHECKS++))
 echo "Checking .env.example completeness..."
 ENV_EXAMPLE="$REPO_ROOT/.env.example"
 
-if [ ! -f "$ENV_EXAMPLE" ]; then
+if [[ ! -f "$ENV_EXAMPLE" ]]; then
     print_error ".env.example missing at repo root"
 else
     # Core required variables
@@ -173,7 +173,7 @@ else
         fi
     done
 
-    if [ ${#MISSING_VARS[@]} -eq 0 ]; then
+    if [[ ${#MISSING_VARS[@]} -eq 0 ]]; then
         print_success "All required environment variables present in .env.example"
     else
         print_error "Missing required variables in .env.example: ${MISSING_VARS[*]}"
@@ -186,19 +186,19 @@ else
     done
 fi
 
-# ═══════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # SUMMARY
-# ═══════════════════════════════════════════════════════════════════
-print_header "📊 Validation Summary"
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+print_header "ðŸ“Š Validation Summary"
 
 echo -e "Total Checks:  ${TOTAL_CHECKS}"
 echo -e "Passed:        ${GREEN}${PASSED_CHECKS}${NC}"
 echo -e "Failed:        ${RED}${FAILED_CHECKS}${NC}"
 
-if [ "$FAILED_CHECKS" -eq 0 ]; then
-    echo -e "\n${GREEN}✅ ENTERPRISE VALIDATION PASSED${NC}"
+if [[ "$FAILED_CHECKS" -eq 0 ]]; then
+    echo -e "\n${GREEN}âœ… ENTERPRISE VALIDATION PASSED${NC}"
     exit 0
 else
-    echo -e "\n${RED}❌ ENTERPRISE VALIDATION FAILED${NC}"
+    echo -e "\n${RED}âŒ ENTERPRISE VALIDATION FAILED${NC}"
     exit 1
 fi
