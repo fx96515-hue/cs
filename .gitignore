@@ -73,3 +73,8 @@ diagnostics/
 # QA System artifacts
 .qa_backups/
 .qa_reports/
+
+# --- Patch / merge artifacts ---
+*.patch
+*.rej
+*.orig
