@@ -1,15 +1,14 @@
 ﻿import json
 import os
 import re
-import sys
 import time
 import urllib.parse
 import urllib.request
 from typing import Dict, List, Optional, Tuple
 
 SONAR_API_BASE = os.getenv("SONAR_API_BASE", "https://sonarcloud.io/api").rstrip("/")
-SONAR_TOKEN = os.getenv("SONAR_TOKEN", "").strip()
-PROJECT_KEY = os.getenv("SONAR_PROJECT_KEY", "").strip()
+SONAR_TOKEN = (os.getenv("SONAR_TOKEN") or "").strip()
+PROJECT_KEY = (os.getenv("SONAR_PROJECT_KEY") or "").strip()
 
 BRANCH = (os.getenv("SONAR_BRANCH") or "main").strip()
 SEVERITIES = (os.getenv("SONAR_SEVERITIES") or "").strip()  # empty = all
@@ -18,25 +17,26 @@ MAX_CREATE = int((os.getenv("SONAR_MAX_CREATE") or "30").strip())
 AUTO_CLOSE = (os.getenv("SONAR_AUTO_CLOSE") or "false").strip().lower() == "true"
 LABEL = (os.getenv("SONAR_LABEL") or "sonarcloud").strip()
 
-GH_TOKEN = os.getenv("GITHUB_TOKEN", "").strip()
-GH_REPO = os.getenv("GITHUB_REPOSITORY", "").strip()  # owner/repo
+GH_TOKEN = (os.getenv("GITHUB_TOKEN") or "").strip()
+GH_REPO = (os.getenv("GITHUB_REPOSITORY") or "").strip()  # owner/repo
 
 ISSUE_KEY_RE = re.compile(r"(?im)^\s*Sonar Issue Key:\s*([A-Za-z0-9_\-:]+)\s*$")
+
 
 def http_json(url: str, headers: Dict[str, str], retries: int = 3) -> dict:
     for attempt in range(retries):
         req = urllib.request.Request(url, headers=headers, method="GET")
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:
-                data = resp.read().decode("utf-8", errors="replace")
-                return json.loads(data)
+                return json.loads(resp.read().decode("utf-8", errors="replace"))
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace")
             if e.code == 429 and attempt < retries - 1:
                 time.sleep(3 * (attempt + 1))
                 continue
             raise RuntimeError(f"HTTP {e.code} for {url}\n{body}") from None
-    raise RuntimeError(f"Failed after retries for {url}")
+    raise RuntimeError("Failed after retries")
+
 
 def gh_request(method: str, path: str, payload: Optional[dict] = None) -> dict:
     url = f"https://api.github.com{path}"
@@ -55,8 +55,8 @@ def gh_request(method: str, path: str, payload: Optional[dict] = None) -> dict:
         out = resp.read().decode("utf-8", errors="replace")
         return json.loads(out) if out else {}
 
+
 def gh_paginate(path: str) -> List[dict]:
-    # Simple page-based pagination for /issues listing
     out: List[dict] = []
     page = 1
     while True:
@@ -78,15 +78,15 @@ def gh_paginate(path: str) -> List[dict]:
         page += 1
     return out
 
+
 def ensure_label(owner: str, repo: str, name: str) -> None:
-    # Create label if missing. Ignore if already exists.
     try:
         gh_request("POST", f"/repos/{owner}/{repo}/labels", {"name": name, "color": "0e8a16"})
     except Exception:
-        # could be 422 already exists or permissions; safe to ignore
         pass
 
-def get_existing_sonar_issues(owner: str, repo: str, label: str) -> Dict[str, Tuple[int, str]]:
+
+def existing_mapping(owner: str, repo: str, label: str) -> Dict[str, Tuple[int, str]]:
     items = gh_paginate(f"/repos/{owner}/{repo}/issues?state=all&labels={urllib.parse.quote(label)}")
     mapping: Dict[str, Tuple[int, str]] = {}
     for it in items:
@@ -98,25 +98,22 @@ def get_existing_sonar_issues(owner: str, repo: str, label: str) -> Dict[str, Tu
             mapping[m.group(1)] = (int(it["number"]), it.get("state", "open"))
     return mapping
 
+
 def sonar_headers() -> Dict[str, str]:
-    # SonarCloud recommends Bearer auth. :contentReference[oaicite:3]{index=3}
+    # SonarCloud recommends bearer authentication for Web API
     return {"Authorization": f"Bearer {SONAR_TOKEN}"}
 
+
 def sonar_issue_url(issue_key: str) -> str:
-    # Reliable linking format. :contentReference[oaicite:4]{index=4}
     return f"https://sonarcloud.io/project/issues?id={urllib.parse.quote(PROJECT_KEY)}&open={urllib.parse.quote(issue_key)}"
 
-def fetch_sonar_issues_open() -> List[dict]:
-    if not PROJECT_KEY:
-        return []
 
+def fetch_open() -> List[dict]:
     issues: List[dict] = []
-    page = 1
-    ps = 100
-    # SonarCloud issues/search has 10k cap; keep filters tight if needed. :contentReference[oaicite:5]{index=5}
+    page, ps = 1, 100
     while True:
         params = {
-            "projects": PROJECT_KEY,     # 'projects' is accepted; 'projectKeys' is deprecated in some contexts.
+            "projects": PROJECT_KEY,
             "branch": BRANCH,
             "statuses": STATUSES,
             "ps": str(ps),
@@ -127,84 +124,71 @@ def fetch_sonar_issues_open() -> List[dict]:
 
         url = f"{SONAR_API_BASE}/issues/search?{urllib.parse.urlencode(params)}"
         data = http_json(url, headers=sonar_headers())
-
         chunk = data.get("issues") or []
         issues.extend(chunk)
 
         paging = data.get("paging") or {}
         total = int(paging.get("total", 0))
-        page_index = int(paging.get("pageIndex", page))
-        page_size = int(paging.get("pageSize", ps))
-
-        if page_index * page_size >= total:
+        pi = int(paging.get("pageIndex", page))
+        psz = int(paging.get("pageSize", ps))
+        if pi * psz >= total:
             break
         page += 1
-
-        if page > 200:  # hard guard
+        if page > 200:
             break
-
     return issues
+
 
 def truncate(s: str, n: int) -> str:
     s = (s or "").strip()
     return s if len(s) <= n else s[: n - 1] + "…"
 
-def mk_title(issue: dict) -> str:
-    sev = issue.get("severity", "NA")
-    typ = issue.get("type", "ISSUE")
-    msg = truncate(issue.get("message", "Sonar issue"), 110)
-    comp = issue.get("component", "")
-    line = issue.get("line")
+
+def mk_title(it: dict) -> str:
+    sev = it.get("severity", "NA")
+    typ = it.get("type", "ISSUE")
+    msg = truncate(it.get("message", "Sonar issue"), 110)
+    comp = truncate(it.get("component", ""), 60)
+    line = it.get("line")
     loc = f"{comp}:{line}" if line else comp
-    loc = truncate(loc, 60)
     return truncate(f"Sonar [{sev}][{typ}] {msg} ({loc})", 180)
 
-def mk_body(issue: dict) -> str:
-    key = issue.get("key", "")
-    rule = issue.get("rule", "")
-    sev = issue.get("severity", "")
-    typ = issue.get("type", "")
-    comp = issue.get("component", "")
-    line = issue.get("line", "")
-    status = issue.get("status", "")
-    created = issue.get("creationDate", "")
-    updated = issue.get("updateDate", "")
-    url = sonar_issue_url(key)
 
+def mk_body(it: dict) -> str:
+    key = it.get("key", "")
     return f"""## SonarCloud Issue
 
 - **Project:** `{PROJECT_KEY}`
 - **Key:** `{key}`
-- **Severity:** `{sev}`
-- **Type:** `{typ}`
-- **Status:** `{status}`
-- **Rule:** `{rule}`
-- **Component:** `{comp}`
-- **Line:** `{line}`
-- **Created:** `{created}`
-- **Updated:** `{updated}`
+- **Severity:** `{it.get('severity','')}`
+- **Type:** `{it.get('type','')}`
+- **Status:** `{it.get('status','')}`
+- **Rule:** `{it.get('rule','')}`
+- **Component:** `{it.get('component','')}`
+- **Line:** `{it.get('line','')}`
 
-**Sonar Link:** {url}
+**Sonar Link:** {sonar_issue_url(key)}
 
 Sonar Issue Key: {key}
 """
 
+
 def main() -> int:
-    if not SONAR_TOKEN or not PROJECT_KEY or not GH_TOKEN or not GH_REPO:
-        print("Sonar/GitHub not configured (missing SONAR_TOKEN / SONAR_PROJECT_KEY / GITHUB_TOKEN). Skipping.")
-        return 0
+    if not SONAR_TOKEN:
+        raise SystemExit("Missing SONAR_TOKEN (GitHub Secret).")
+    if not PROJECT_KEY:
+        raise SystemExit("Missing SONAR_PROJECT_KEY (GitHub Actions Variable).")
+    if not GH_TOKEN or not GH_REPO:
+        raise SystemExit("Missing GitHub token/repository context.")
 
     owner, repo = GH_REPO.split("/", 1)
-
     ensure_label(owner, repo, LABEL)
-    existing = get_existing_sonar_issues(owner, repo, LABEL)
+    existing = existing_mapping(owner, repo, LABEL)
 
-    sonar_open = fetch_sonar_issues_open()
+    sonar_open = fetch_open()
     open_keys = {i.get("key") for i in sonar_open if i.get("key")}
 
-    created = 0
-    updated = 0
-    skipped = 0
+    created = updated = skipped = 0
 
     for it in sonar_open:
         key = it.get("key")
@@ -215,10 +199,8 @@ def main() -> int:
         body = mk_body(it)
 
         if key in existing:
-            # Minimal update: keep it in sync (title/body) if needed
-            number, _state = existing[key]
-            # We won't fetch existing body to compare (extra calls). Just patch title.
-            gh_request("PATCH", f"/repos/{owner}/{repo}/issues/{number}", {"title": title})
+            num, _state = existing[key]
+            gh_request("PATCH", f"/repos/{owner}/{repo}/issues/{num}", {"title": title})
             updated += 1
             continue
 
@@ -226,26 +208,21 @@ def main() -> int:
             skipped += 1
             continue
 
-        payload = {
-            "title": title,
-            "body": body,
-            "labels": [LABEL],
-        }
-        gh_request("POST", f"/repos/{owner}/{repo}/issues", payload)
+        gh_request(
+            "POST",
+            f"/repos/{owner}/{repo}/issues",
+            {"title": title, "body": body, "labels": [LABEL]},
+        )
         created += 1
 
-    # Optional: auto-close GitHub issues that are open but no longer open in Sonar
     if AUTO_CLOSE:
-        for key, (num, state) in list(existing.items()):
-            if state != "open":
-                continue
-            if key in open_keys:
-                continue
-            gh_request("PATCH", f"/repos/{owner}/{repo}/issues/{num}", {"state": "closed"})
-        print("AUTO_CLOSE enabled: closed GitHub issues that are no longer open in Sonar (best-effort).")
+        for key, (num, state) in existing.items():
+            if state == "open" and key not in open_keys:
+                gh_request("PATCH", f"/repos/{owner}/{repo}/issues/{num}", {"state": "closed"})
 
-    print(f"Done. created={created}, updated={updated}, skipped_due_to_limit={skipped}, existing={len(existing)}, sonar_open={len(sonar_open)}")
+    print(f"Done. created={created} updated={updated} skipped={skipped} sonar_open={len(sonar_open)}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

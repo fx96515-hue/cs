@@ -33,5 +33,6 @@ jobs:
           SONAR_AUTO_CLOSE: ${{ vars.SONAR_AUTO_CLOSE }}
           SONAR_LABEL: ${{ vars.SONAR_LABEL }}
 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python scripts/automation/sonar_sync_issues.py
