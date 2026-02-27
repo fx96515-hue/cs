@@ -24,6 +24,12 @@ os.environ.setdefault("REALTIME_PRICE_FEED_ENABLED", "true")
 os.environ.setdefault("ANOMALY_DETECTION_ENABLED", "true")
 os.environ.setdefault("SEMANTIC_SEARCH_ENABLED", "true")
 os.environ.setdefault("ASSISTANT_ENABLED", "true")
+os.environ.setdefault("EMBEDDING_TASKS_ENABLED", "false")
+os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "true")
+os.environ.setdefault("CELERY_TASK_EAGER_PROPAGATES", "true")
+os.environ.setdefault("CELERY_TASK_IGNORE_RESULT", "true")
+os.environ.setdefault("CELERY_BROKER_URL", "memory://")
+os.environ.setdefault("CELERY_RESULT_BACKEND", "cache+memory://")
 
 
 # Import after env vars are set
@@ -106,6 +112,7 @@ def client(db):
         try:
             app.state.limiter._storage.storage.clear()
         except AttributeError:
+            # Optional limiter storage not available in this test context.
             pass
 
     # Also clear the auth-module rate limiter to prevent cross-test contamination
@@ -119,6 +126,7 @@ def client(db):
             elif hasattr(_s, "reset"):
                 _s.reset()
     except (ImportError, AttributeError):
+        # Auth module or limiter not available in this test context.
         pass
 
     yield TestClient(app)

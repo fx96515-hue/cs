@@ -19,7 +19,10 @@ from app.schemas.semantic_search import (
     SimilarEntityResponse,
     SimilarEntityResult,
 )
-from app.services.embedding import EmbeddingService
+import app.services.embedding as embedding_service
+
+# Alias for patching in tests without importing a mutable attribute directly.
+EmbeddingService = embedding_service.EmbeddingService
 
 router = APIRouter(prefix="/search", tags=["semantic-search"])
 log = structlog.get_logger()

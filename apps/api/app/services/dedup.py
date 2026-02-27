@@ -143,12 +143,9 @@ def merge_entities(
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
 
-    # Get entities with proper typing using Union to avoid type mismatch
-    EntityType = Union[Cooperative, Roaster]
-
     if entity_type == "cooperative":
-        keep_entity: EntityType = cast(Cooperative, db.get(Cooperative, keep_id))
-        merge_entity: EntityType = cast(Cooperative, db.get(Cooperative, merge_id))
+        keep_entity = cast(Cooperative, db.get(Cooperative, keep_id))
+        merge_entity = cast(Cooperative, db.get(Cooperative, merge_id))
     else:
         keep_entity = cast(Roaster, db.get(Roaster, keep_id))
         merge_entity = cast(Roaster, db.get(Roaster, merge_id))

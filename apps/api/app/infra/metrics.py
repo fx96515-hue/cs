@@ -1,9 +1,13 @@
+import logging
+
 try:
     from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
     from fastapi import FastAPI
     from starlette.responses import Response
-except Exception:
+except Exception as exc:
     # prometheus_client or FastAPI not installed; provide no-op
+    logging.getLogger(__name__).debug("prometheus_instrumentation_unavailable", exc_info=exc)
+
     def instrument_app(app):
         return
 else:
@@ -24,9 +28,13 @@ else:
         async def _metrics_middleware(request, call_next):
             response = await call_next(request)
             try:
-                REQUEST_COUNTER.labels(request.method, request.url.path, str(response.status_code)).inc()
-            except Exception:
-                pass
+                REQUEST_COUNTER.labels(
+                    request.method, request.url.path, str(response.status_code)
+                ).inc()
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "prometheus_metrics_increment_failed", exc_info=exc
+                )
             return response
 
         @app.get("/metrics")

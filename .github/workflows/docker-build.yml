@@ -17,14 +17,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
   build-backend:
     name: Build & Push Backend Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       HAS_DOCKER_HUB: ${{ secrets.DOCKER_USERNAME != '' }}
       DO_PUSH: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.push_images == true) }}
@@ -122,6 +121,9 @@ jobs:
   build-frontend:
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       HAS_DOCKER_HUB: ${{ secrets.DOCKER_USERNAME != '' }}
       DO_PUSH: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.push_images == true) }}
@@ -221,6 +223,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_call' && inputs.push_images == true)
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
     
     strategy:
       matrix:

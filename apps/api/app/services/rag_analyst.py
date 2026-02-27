@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.schemas.rag_analyst import RAGResponse, RAGSource, ConversationMessage
-from app.services.embedding import EmbeddingService
+import app.services.embedding as embedding_service
 from app.services.llm_providers import get_llm_provider, BaseLLMProvider
 
 log = structlog.get_logger()
@@ -28,7 +28,7 @@ class RAGAnalystService:
         self.temperature = settings.RAG_TEMPERATURE
         self.max_context_entities = settings.RAG_MAX_CONTEXT_ENTITIES
         self.max_history = settings.RAG_MAX_CONVERSATION_HISTORY
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = embedding_service.EmbeddingService()
 
     def is_available(self) -> bool:
         """Check if RAG service is available (provider configured and reachable)."""

@@ -10,15 +10,12 @@ on:
   workflow_dispatch:
   workflow_call:  # Allow this workflow to be called by other workflows
 
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-
 jobs:
   bandit:
     name: Bandit (Python Security)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +45,9 @@ jobs:
   trivy-fs:
     name: Trivy (Filesystem Security)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +73,9 @@ jobs:
   trivy-backend-image:
     name: Trivy (Backend Container)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +104,9 @@ jobs:
   trivy-frontend-image:
     name: Trivy (Frontend Container)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - uses: actions/checkout@v4
@@ -134,6 +140,8 @@ jobs:
     name: Snyk (Dependency Security)
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -157,6 +165,10 @@ jobs:
   codeql:
     name: CodeQL (SAST)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     
     strategy:
       fail-fast: false
@@ -183,6 +195,9 @@ jobs:
   semgrep:
     name: Semgrep (SAST)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - uses: actions/checkout@v4

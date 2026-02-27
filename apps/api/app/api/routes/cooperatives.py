@@ -1,5 +1,8 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+import structlog
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -10,13 +13,19 @@ from app.schemas.cooperative import CooperativeCreate, CooperativeOut, Cooperati
 from app.services.scoring import recompute_and_persist_cooperative
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
+from app.core.config import settings
 
 router = APIRouter()
+log = structlog.get_logger()
+
+NOT_FOUND_DETAIL = "Not found"
+NOT_FOUND_RESPONSES = {404: {"description": "Cooperative not found"}}
 
 
 @router.get("/", response_model=list[CooperativeOut])
 def list_coops(
-    db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst", "viewer"))
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     return db.query(Cooperative).order_by(Cooperative.name.asc()).all()
 
@@ -24,8 +33,8 @@ def list_coops(
 @router.post("/", response_model=CooperativeOut)
 def create_coop(
     payload: CooperativeCreate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     coop = Cooperative(**payload.model_dump())
     db.add(coop)
@@ -42,39 +51,52 @@ def create_coop(
     )
 
     # Queue embedding generation task (async, non-blocking)
-    try:
-        from app.workers.tasks import update_entity_embedding
+    if settings.SEMANTIC_SEARCH_ENABLED and settings.EMBEDDING_TASKS_ENABLED:
+        try:
+            from app.workers.tasks import update_entity_embedding
 
-        update_entity_embedding.delay("cooperative", coop.id)
-    except Exception:
-        # Graceful degradation - don't fail entity creation if task queue fails
-        pass
+            update_entity_embedding.delay("cooperative", coop.id)
+        except Exception as exc:
+            # Graceful degradation - don't fail entity creation if task queue fails
+            log.warning(
+                "cooperative_embedding_enqueue_failed",
+                coop_id=coop.id,
+                error=str(exc),
+            )
 
     return coop
 
 
-@router.get("/{coop_id}", response_model=CooperativeOut)
+@router.get(
+    "/{coop_id}",
+    response_model=CooperativeOut,
+    responses=NOT_FOUND_RESPONSES,
+)
 def get_coop(
     coop_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
     if not coop:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return coop
 
 
-@router.patch("/{coop_id}", response_model=CooperativeOut)
+@router.patch(
+    "/{coop_id}",
+    response_model=CooperativeOut,
+    responses=NOT_FOUND_RESPONSES,
+)
 def update_coop(
     coop_id: int,
     payload: CooperativeUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
     if not coop:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture old data for audit log
     old_data = {
@@ -97,26 +119,34 @@ def update_coop(
     )
 
     # Queue embedding generation task (async, non-blocking)
-    try:
-        from app.workers.tasks import update_entity_embedding
+    if settings.SEMANTIC_SEARCH_ENABLED and settings.EMBEDDING_TASKS_ENABLED:
+        try:
+            from app.workers.tasks import update_entity_embedding
 
-        update_entity_embedding.delay("cooperative", coop_id)
-    except Exception:
-        # Graceful degradation - don't fail entity update if task queue fails
-        pass
+            update_entity_embedding.delay("cooperative", coop_id)
+        except Exception as exc:
+            # Graceful degradation - don't fail entity update if task queue fails
+            log.warning(
+                "cooperative_embedding_enqueue_failed",
+                coop_id=coop_id,
+                error=str(exc),
+            )
 
     return coop
 
 
-@router.delete("/{coop_id}")
+@router.delete(
+    "/{coop_id}",
+    responses=NOT_FOUND_RESPONSES,
+)
 def delete_coop(
     coop_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
     if not coop:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture data before deletion for audit log
     entity_data = {
@@ -140,23 +170,26 @@ def delete_coop(
     return {"status": "deleted"}
 
 
-@router.post("/{coop_id}/recompute_score")
+@router.post(
+    "/{coop_id}/recompute_score",
+    responses=NOT_FOUND_RESPONSES,
+)
 def recompute_score(
     coop_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
     if not coop:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     breakdown = recompute_and_persist_cooperative(db, coop)
     return {"status": "ok", "coop_id": coop_id, "breakdown": breakdown.__dict__}
 
 
 @router.get("/export/csv", response_class=StreamingResponse)
 def export_cooperatives_csv(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Export all cooperatives to CSV format."""
     cooperatives = db.query(Cooperative).order_by(Cooperative.name.asc()).all()

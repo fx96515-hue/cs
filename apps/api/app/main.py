@@ -76,14 +76,14 @@ app.include_router(api_router)
 # Additional Prometheus instrumentation helper (safe no-op if dependency missing)
 try:
     instrument_app(app)
-except Exception:
-    pass
+except Exception as exc:
+    log.debug("prometheus_instrumentation_unavailable", exc_info=exc)
 
 # Keep existing Instrumentator instrumentation if available
 try:
     Instrumentator().instrument(app).expose(app)
-except Exception:
-    pass
+except Exception as exc:
+    log.debug("prometheus_instrumentator_unavailable", exc_info=exc)
 
 
 # Startup event for auto-seeding

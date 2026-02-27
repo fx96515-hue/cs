@@ -129,7 +129,8 @@ def market_task_status(
     payload = None
     try:
         payload = r.result if r.ready() else None
-    except Exception:
+    except Exception as exc:
+        log.warning("market_task_status_failed", task_id=task_id, error=str(exc))
         payload = None
     return {"task_id": task_id, "state": r.state, "ready": r.ready(), "result": payload}
 

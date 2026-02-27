@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -12,9 +14,9 @@ router = APIRouter()
 
 @router.get("/", response_model=list[CuppingOut])
 def list_cuppings(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
     limit: int = Query(200, ge=1, le=500),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     return (
         db.query(CuppingResult)
@@ -27,8 +29,8 @@ def list_cuppings(
 @router.post("/", response_model=CuppingOut)
 def create(
     payload: CuppingCreate,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     row = CuppingResult(**payload.model_dump())
     db.add(row)

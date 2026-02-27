@@ -191,8 +191,12 @@ class CircuitBreaker:
         if last_failure_str and isinstance(last_failure_str, bytes):
             try:
                 last_failure = last_failure_str.decode("utf-8")
-            except Exception:
-                pass
+            except Exception as exc:
+                log.warning(
+                    "circuit_breaker_last_failure_decode_failed",
+                    provider=self.provider_name,
+                    error=str(exc),
+                )
 
         return {
             "provider": self.provider_name,

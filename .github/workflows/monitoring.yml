@@ -9,14 +9,13 @@ on:
     - cron: '*/30 * * * *'  # Every 30 minutes
   workflow_dispatch:
 
-permissions:
-  contents: read
-  issues: write
-
 jobs:
   monitor-production:
     name: Monitor Production Health
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     # Only run after successful production deployment, on schedule, or manual trigger
     # Skip if this is being triggered by CI/CD on main branch (not after production deployment)
     if: "github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')"
@@ -282,6 +281,8 @@ jobs:
     name: Monitor Staging Health
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
     
     steps:
       - name: Check Staging API Health

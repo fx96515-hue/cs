@@ -4,17 +4,11 @@ from __future__ import annotations
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-
-from app.services.embedding_providers import (
-    OllamaEmbeddingProvider,
-    OpenAIEmbeddingProvider,
-    LocalEmbeddingProvider,
-    get_embedding_provider,
-)
+import app.services.embedding_providers as embedding_providers
 
 
 class TestOllamaEmbeddingProvider:
-    """Test OllamaEmbeddingProvider functionality."""
+    """Test embedding_providers.OllamaEmbeddingProvider functionality."""
 
     @pytest.fixture
     def mock_settings(self):
@@ -26,8 +20,8 @@ class TestOllamaEmbeddingProvider:
 
     @pytest.fixture
     def provider(self, mock_settings):
-        """Create OllamaEmbeddingProvider with mocked settings."""
-        return OllamaEmbeddingProvider()
+        """Create embedding_providers.OllamaEmbeddingProvider with mocked settings."""
+        return embedding_providers.OllamaEmbeddingProvider()
 
     def test_provider_name(self, provider):
         """Test provider_name returns 'ollama'."""
@@ -100,7 +94,7 @@ class TestOllamaEmbeddingProvider:
 
 
 class TestOpenAIEmbeddingProvider:
-    """Test OpenAIEmbeddingProvider functionality."""
+    """Test embedding_providers.OpenAIEmbeddingProvider functionality."""
 
     @pytest.fixture
     def mock_settings_with_key(self):
@@ -120,13 +114,13 @@ class TestOpenAIEmbeddingProvider:
 
     @pytest.fixture
     def provider(self, mock_settings_with_key):
-        """Create OpenAIEmbeddingProvider with API key."""
-        return OpenAIEmbeddingProvider()
+        """Create embedding_providers.OpenAIEmbeddingProvider with API key."""
+        return embedding_providers.OpenAIEmbeddingProvider()
 
     @pytest.fixture
     def provider_no_key(self, mock_settings_no_key):
-        """Create OpenAIEmbeddingProvider without API key."""
-        return OpenAIEmbeddingProvider()
+        """Create embedding_providers.OpenAIEmbeddingProvider without API key."""
+        return embedding_providers.OpenAIEmbeddingProvider()
 
     def test_provider_name(self, provider):
         """Test provider_name returns 'openai'."""
@@ -185,27 +179,27 @@ class TestOpenAIEmbeddingProvider:
 
 
 class TestGetEmbeddingProvider:
-    """Test get_embedding_provider factory function."""
+    """Test embedding_providers.get_embedding_provider factory function."""
 
     def test_get_ollama_provider(self):
-        """Test factory returns OllamaEmbeddingProvider."""
+        """Test factory returns embedding_providers.OllamaEmbeddingProvider."""
         with patch("app.services.embedding_providers.settings") as mock:
             mock.RAG_EMBEDDING_PROVIDER = "ollama"
             mock.OLLAMA_BASE_URL = "http://localhost:11434"
             mock.RAG_EMBEDDING_MODEL = "nomic-embed-text"
 
-            provider = get_embedding_provider()
-            assert isinstance(provider, OllamaEmbeddingProvider)
+            provider = embedding_providers.get_embedding_provider()
+            assert isinstance(provider, embedding_providers.OllamaEmbeddingProvider)
 
     def test_get_openai_provider(self):
-        """Test factory returns OpenAIEmbeddingProvider."""
+        """Test factory returns embedding_providers.OpenAIEmbeddingProvider."""
         with patch("app.services.embedding_providers.settings") as mock:
             mock.RAG_EMBEDDING_PROVIDER = "openai"
             mock.OPENAI_API_KEY = "test-key"
             mock.RAG_EMBEDDING_MODEL = "text-embedding-3-small"
 
-            provider = get_embedding_provider()
-            assert isinstance(provider, OpenAIEmbeddingProvider)
+            provider = embedding_providers.get_embedding_provider()
+            assert isinstance(provider, embedding_providers.OpenAIEmbeddingProvider)
 
     def test_get_unknown_provider(self):
         """Test factory raises ValueError for unknown provider."""
@@ -213,7 +207,7 @@ class TestGetEmbeddingProvider:
             mock.RAG_EMBEDDING_PROVIDER = "unknown"
 
             with pytest.raises(ValueError) as exc_info:
-                get_embedding_provider()
+                embedding_providers.get_embedding_provider()
 
             assert "Unknown embedding provider" in str(exc_info.value)
 
@@ -224,22 +218,22 @@ class TestGetEmbeddingProvider:
             mock.OLLAMA_BASE_URL = "http://localhost:11434"
             mock.RAG_EMBEDDING_MODEL = "nomic-embed-text"
 
-            provider = get_embedding_provider()
-            assert isinstance(provider, OllamaEmbeddingProvider)
+            provider = embedding_providers.get_embedding_provider()
+            assert isinstance(provider, embedding_providers.OllamaEmbeddingProvider)
 
     def test_get_local_provider(self):
-        """Test factory returns LocalEmbeddingProvider."""
+        """Test factory returns embedding_providers.LocalEmbeddingProvider."""
         with patch("app.services.embedding_providers.settings") as mock:
             mock.RAG_EMBEDDING_PROVIDER = "local"
             mock.EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
             mock.SENTENCE_TRANSFORMERS_CACHE = None
 
-            provider = get_embedding_provider()
-            assert isinstance(provider, LocalEmbeddingProvider)
+            provider = embedding_providers.get_embedding_provider()
+            assert isinstance(provider, embedding_providers.LocalEmbeddingProvider)
 
 
 class TestLocalEmbeddingProvider:
-    """Tests for LocalEmbeddingProvider (sentence-transformers, CPU-only).
+    """Tests for embedding_providers.LocalEmbeddingProvider (sentence-transformers, CPU-only).
 
     All tests mock the SentenceTransformer class so no model download is
     required in CI.
@@ -248,12 +242,10 @@ class TestLocalEmbeddingProvider:
     @pytest.fixture(autouse=True)
     def reset_singleton(self):
         """Reset the module-level singleton before each test."""
-        import app.services.embedding_providers as ep
-
-        original = ep._local_st_model
-        ep._local_st_model = None
+        original = embedding_providers._local_st_model
+        embedding_providers._local_st_model = None
         yield
-        ep._local_st_model = original
+        embedding_providers._local_st_model = original
 
     @pytest.fixture
     def mock_st_settings(self):
@@ -274,15 +266,13 @@ class TestLocalEmbeddingProvider:
 
     @pytest.fixture
     def provider(self, mock_st_settings, mock_model):
-        """LocalEmbeddingProvider with a pre-loaded mock model singleton.
+        """embedding_providers.LocalEmbeddingProvider with a pre-loaded mock model singleton.
 
         Sets the module-level singleton directly so no sentence_transformers
         import is triggered during the test.
         """
-        import app.services.embedding_providers as ep
-
-        ep._local_st_model = mock_model
-        yield LocalEmbeddingProvider(
+        embedding_providers._local_st_model = mock_model
+        yield embedding_providers.LocalEmbeddingProvider(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
 
@@ -331,24 +321,22 @@ class TestLocalEmbeddingProvider:
     def test_is_importable_when_installed(self):
         """is_importable() returns True when sentence_transformers is present."""
         with patch.dict("sys.modules", {"sentence_transformers": MagicMock()}):
-            assert LocalEmbeddingProvider.is_importable() is True
+            assert embedding_providers.LocalEmbeddingProvider.is_importable() is True
 
     def test_is_importable_when_missing(self):
         """is_importable() returns False when sentence_transformers is absent."""
         with patch.dict("sys.modules", {"sentence_transformers": None}):
-            assert LocalEmbeddingProvider.is_importable() is False
+            assert embedding_providers.LocalEmbeddingProvider.is_importable() is False
 
     def test_encode_model_error_returns_none(self, mock_model):
         """encode() returns None and does not raise on model error."""
-        import app.services.embedding_providers as ep
-
         mock_model.encode.side_effect = RuntimeError("OOM")
-        ep._local_st_model = mock_model
+        embedding_providers._local_st_model = mock_model
 
         with patch("app.services.embedding_providers.settings") as mock_settings:
             mock_settings.EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
             mock_settings.SENTENCE_TRANSFORMERS_CACHE = None
-            provider = LocalEmbeddingProvider(
+            provider = embedding_providers.LocalEmbeddingProvider(
                 model_name="sentence-transformers/all-MiniLM-L6-v2"
             )
 

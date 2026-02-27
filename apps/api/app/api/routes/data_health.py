@@ -4,6 +4,8 @@ Provides visibility into data freshness, circuit breaker status,
 and manual pipeline triggers.
 """
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 import redis
 from sqlalchemy.orm import Session
@@ -25,8 +27,8 @@ def _get_redis() -> redis.Redis:
 
 @router.get("/status")
 def data_health_status(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Return freshness status of all data sources.
 
@@ -43,8 +45,8 @@ def data_health_status(
 
 @router.get("/sources")
 def list_data_sources(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """List all configured data sources and their circuit breaker status.
 
@@ -71,8 +73,8 @@ def list_data_sources(
 
 @router.post("/refresh-all")
 def trigger_full_refresh(
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Trigger complete data pipeline refresh.
 
@@ -107,8 +109,8 @@ def trigger_full_refresh(
 
 @router.post("/refresh-market")
 def trigger_market_refresh(
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Trigger market data refresh only (FX + coffee prices).
 
@@ -131,8 +133,8 @@ def trigger_market_refresh(
 
 @router.post("/refresh-intelligence")
 def trigger_intelligence_refresh(
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Trigger intelligence pipeline refresh (Peru weather + news).
 
@@ -156,8 +158,8 @@ def trigger_intelligence_refresh(
 @router.post("/reset-circuit/{provider}")
 def reset_circuit_breaker(
     provider: str,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     """Reset a circuit breaker to closed state.
 

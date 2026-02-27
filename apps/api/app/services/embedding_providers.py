@@ -35,7 +35,7 @@ class BaseEmbeddingProvider(ABC):
         Returns:
             Embedding vector or None if generation failed
         """
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def embedding_dimensions(self) -> int:
@@ -44,12 +44,12 @@ class BaseEmbeddingProvider(ABC):
         Returns:
             Number of dimensions in embedding vectors
         """
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def provider_name(self) -> str:
         """Return provider name."""
-        ...
+        raise NotImplementedError
 
 
 class OllamaEmbeddingProvider(BaseEmbeddingProvider):

@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: coffeestudio
       POSTGRES_USER: coffeestudio
-      POSTGRES_PASSWORD: coffeestudio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeestudio}
     ports:
     - 5432:5432
     volumes:
@@ -37,7 +37,7 @@ services:
     - ./.env
     environment:
       APP_ENV: ${APP_ENV:-dev}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       JWT_SECRET: ${JWT_SECRET:-dev_change_me}
       JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
@@ -81,7 +81,7 @@ services:
     - ./.env
     environment:
       APP_ENV: ${APP_ENV:-dev}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       JWT_SECRET: ${JWT_SECRET:-dev_change_me}
       JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
@@ -110,7 +110,7 @@ services:
     - ./.env
     environment:
       APP_ENV: ${APP_ENV:-dev}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       JWT_SECRET: ${JWT_SECRET:-dev_change_me}
       JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}

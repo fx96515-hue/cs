@@ -280,14 +280,12 @@ class TestModelFactory:
 
         import app.ml.model_factory as factory_module
 
-        importlib.reload(factory_module)
-
-        from app.ml.model_factory import create_price_model, create_freight_model
+        factory_module = importlib.reload(factory_module)
         from app.ml.price_model import CoffeePriceModel
         from app.ml.freight_model import FreightCostModel
 
-        assert isinstance(create_price_model(), CoffeePriceModel)
-        assert isinstance(create_freight_model(), FreightCostModel)
+        assert isinstance(factory_module.create_price_model(), CoffeePriceModel)
+        assert isinstance(factory_module.create_freight_model(), FreightCostModel)
 
     def test_xgboost_flag_returns_xgboost(self, monkeypatch):
         """With ML_MODEL_TYPE=xgboost, factory returns XGBoost models."""
@@ -300,14 +298,12 @@ class TestModelFactory:
 
         import app.ml.model_factory as factory_module
 
-        importlib.reload(factory_module)
-
-        from app.ml.model_factory import create_price_model, create_freight_model
+        factory_module = importlib.reload(factory_module)
         from app.ml.xgboost_price_model import XGBoostCoffeePriceModel
         from app.ml.xgboost_freight_model import XGBoostFreightCostModel
 
-        assert isinstance(create_price_model(), XGBoostCoffeePriceModel)
-        assert isinstance(create_freight_model(), XGBoostFreightCostModel)
+        assert isinstance(factory_module.create_price_model(), XGBoostCoffeePriceModel)
+        assert isinstance(factory_module.create_freight_model(), XGBoostFreightCostModel)
 
     def test_unknown_model_type_falls_back_to_rf(self, monkeypatch):
         """Unknown ML_MODEL_TYPE should fall back to random_forest."""
@@ -320,12 +316,10 @@ class TestModelFactory:
 
         import app.ml.model_factory as factory_module
 
-        importlib.reload(factory_module)
-
-        from app.ml.model_factory import create_price_model
+        factory_module = importlib.reload(factory_module)
         from app.ml.price_model import CoffeePriceModel
 
-        assert isinstance(create_price_model(), CoffeePriceModel)
+        assert isinstance(factory_module.create_price_model(), CoffeePriceModel)
 
     def test_algorithm_for_model_rf(self, monkeypatch):
         monkeypatch.setenv("ML_MODEL_TYPE", "random_forest")
@@ -337,12 +331,10 @@ class TestModelFactory:
 
         import app.ml.model_factory as factory_module
 
-        importlib.reload(factory_module)
+        factory_module = importlib.reload(factory_module)
 
-        from app.ml.model_factory import algorithm_for_model, create_price_model
-
-        model = create_price_model()
-        assert algorithm_for_model(model) == "random_forest"
+        model = factory_module.create_price_model()
+        assert factory_module.algorithm_for_model(model) == "random_forest"
 
     def test_algorithm_for_model_xgboost(self, monkeypatch):
         monkeypatch.setenv("ML_MODEL_TYPE", "xgboost")
@@ -354,9 +346,7 @@ class TestModelFactory:
 
         import app.ml.model_factory as factory_module
 
-        importlib.reload(factory_module)
+        factory_module = importlib.reload(factory_module)
 
-        from app.ml.model_factory import algorithm_for_model, create_price_model
-
-        model = create_price_model()
-        assert algorithm_for_model(model) == "xgboost"
+        model = factory_module.create_price_model()
+        assert factory_module.algorithm_for_model(model) == "xgboost"

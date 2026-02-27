@@ -8,8 +8,7 @@ from pathlib import Path
 try:
     import click
 except ImportError:
-    print("ERROR: click package is required. Install with: pip install click")
-    sys.exit(1)
+    raise SystemExit("ERROR: click package is required. Install with: pip install click")
 
 from .failure_analyzer import AIFailureAnalyzer
 from .auto_fixer import AutoFixer
