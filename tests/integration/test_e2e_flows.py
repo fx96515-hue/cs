@@ -158,13 +158,6 @@ def test_e2e_margin_calculation(auth_token):
         "selling_currency": "EUR"
     }
     margin_resp = requests.post(
-        f"{BASE_URL}/margins/calc",
-        "roast_and_pack_costs_per_kg": 1.20,
-        "yield_factor": 0.84,
-        "selling_price_per_kg": 12.0,
-        "selling_currency": "EUR"
-    }
-    margin_resp = requests.post(
         f"{BASE_URL}/margins/calc",  # Fixed endpoint
         json=margin_data,
         headers=headers
