@@ -201,7 +201,7 @@ jobs:
       
       - name: Create Issue on Critical Failure
         if: steps.check_config.outputs.is_configured == 'true' && steps.api_health.outputs.status == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '🚨 Production Health Check Failed';
