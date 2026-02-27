@@ -1,5 +1,5 @@
 fastapi==0.115.6
-uvicorn[standard]==0.32.1
+uvicorn[standard]==0.41.0
 # Pydantic email validation requires the optional extra.
 pydantic[email]==2.10.3
 email-validator==2.2.0
