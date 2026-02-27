@@ -45,6 +45,39 @@ def _normalize_url(u: str) -> str:
     return u
 
 
+def _is_allowed_host(hostname: str) -> bool:
+    """
+    Return True if the given hostname is allowed for outbound HTTP requests.
+
+    This uses an application-level allowlist to prevent the service from
+    becoming an arbitrary HTTP proxy (full SSRF). The allowlist is expected
+    to be configured via settings, for example as a list of hostnames or
+    domain suffixes.
+    """
+    if not hostname:
+        return False
+
+    # Expect a sequence of hostnames / domain suffixes, e.g.:
+    # ["example.com", ".example.com", "api.someservice.com"]
+    allowed = getattr(settings, "ENRICHMENT_ALLOWED_HOSTS", None) or []
+    if not allowed:
+        # With an empty allowlist, deny by default to avoid SSRF.
+        return False
+
+    hostname = hostname.lower()
+    for pattern in allowed:
+        pattern = (pattern or "").lower().strip()
+        if not pattern:
+            continue
+        # Exact match
+        if hostname == pattern:
+            return True
+        # Suffix match for subdomains, allow patterns like ".example.com"
+        if pattern.startswith(".") and hostname.endswith(pattern):
+            return True
+    return False
+
+
 def _validate_public_http_url(url: str) -> str:
     """
     Normalize and validate that the URL uses http(s), that the hostname is
