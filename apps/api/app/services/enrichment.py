@@ -57,11 +57,22 @@ def _is_allowed_host(hostname: str) -> bool:
     if not hostname:
         return False
 
+    # Built-in, conservative defaults for hosts this service is expected to call.
+    # These are combined with any project-specific allowlist from settings.
+    builtin_allowed = [
+        "coffee.studio",
+        "www.coffee.studio",
+        "www.coffeestudio.app",
+    ]
+
     # Expect a sequence of hostnames / domain suffixes, e.g.:
     # ["example.com", ".example.com", "api.someservice.com"]
-    allowed = getattr(settings, "ENRICHMENT_ALLOWED_HOSTS", None) or []
+    configured = getattr(settings, "ENRICHMENT_ALLOWED_HOSTS", None) or []
+
+    # Combine built-in allowlist with any configured values, removing empties.
+    allowed = [h for h in (builtin_allowed + list(configured)) if h]
     if not allowed:
-        # With an empty allowlist, deny by default to avoid SSRF.
+        # With an empty combined allowlist, deny by default to avoid SSRF.
         return False
 
     hostname = hostname.lower()
