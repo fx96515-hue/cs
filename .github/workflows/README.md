@@ -251,7 +251,7 @@ develop (staging)
 cd apps/api
 pip install -r requirements.txt -r requirements-dev.txt
 ruff check app/ tests/
-mypy --config-file ../mypy.ini app/
+mypy --config-file ../../mypy.ini app/
 pytest tests/ --cov=app
 ```
 

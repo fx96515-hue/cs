@@ -1,4 +1,4 @@
-<#
+﻿<#
 Start the enterprise Docker Compose stack and run basic health checks.
 
 Usage:
@@ -11,11 +11,35 @@ It requires Docker and Docker Compose available in PATH.
 #>
 
 param(
-    [ValidateSet('start','stop','logs','status','restart','help')]
+    [ValidateSet('start','stop','logs','status','restart','help')
+$ErrorActionPreference = 'Stop'
+
+
+function Assert-DockerEngine {
+    try {
+        $null = docker version --format "{{.Server.Version}}" 2>$null
+    } catch {
+        Write-Error "Docker CLI is installed but the Docker engine is not reachable.
+
+Fix:
+- Start Docker Desktop
+- Ensure it is set to Linux containers (WSL2 backend)
+- Then re-run this script.
+
+Diagnostic commands:
+  docker context ls
+  docker context show
+  docker version
+"
+        exit 10
+    }
+}
+
+]
     [string]$action = 'start',
     [string]$composeFile = 'infra/deploy/docker-compose.enterprise.yml',
     [string]$envExample = 'infra/env/enterprise.env.example',
-    [string]$envFile = '.env.enterprise',
+    [string]$envFile = 'infra/env/enterprise.env',
     [string]$healthUrl = 'http://localhost:8000/health',
     [int]$timeoutSec = 120,
     [switch]$FollowLogs
@@ -29,6 +53,7 @@ function Ensure-Command($name, $installUrl) {
 }
 
 Ensure-Command -name 'docker' -installUrl 'https://www.docker.com/'
+Assert-DockerEngine
 
 if (-not (Test-Path $composeFile)) {
     Write-Error "Compose file not found: $composeFile"
@@ -36,29 +61,20 @@ if (-not (Test-Path $composeFile)) {
 }
 
 if (-not (Test-Path $envFile)) {
+    New-Item -ItemType Directory -Path (Split-Path $envFile) -Force | Out-Null
     if (Test-Path $envExample) {
         Write-Host "Copying $envExample -> $envFile"
         Copy-Item $envExample $envFile -Force
     } else {
-        Write-Warning "No $envFile or $envExample found. Creating empty $envFile. Review and populate required vars."
-        New-Item -Path $envFile -ItemType File -Force | Out-Null
-    }
-}
-
-# Also ensure compose-expected env at ops/infra/env/enterprise.env.example exists (some compose files reference it)
-$composeDir = Join-Path -Path (Split-Path -Path $composeFile -Parent) -ChildPath '..' | Resolve-Path -ErrorAction SilentlyContinue
-if ($composeDir) {
-    $expectedEnv = Join-Path -Path $composeDir -ChildPath 'infra/env/enterprise.env.example'
-    if (-not (Test-Path $expectedEnv)) {
-        if (Test-Path $envExample) {
-            Write-Host "Copying $envExample -> $expectedEnv"
-            New-Item -ItemType Directory -Path (Split-Path $expectedEnv) -Force | Out-Null
-            Copy-Item $envExample $expectedEnv -Force
-        } else {
-            Write-Warning "Creating empty $expectedEnv (no example found)."
-            New-Item -ItemType Directory -Path (Split-Path $expectedEnv) -Force | Out-Null
-            New-Item -Path $expectedEnv -ItemType File -Force | Out-Null
-        }
+        Write-Warning "No $envFile or $envExample found. Creating safe placeholder $envFile (no secrets)."
+        @'
+# Enterprise environment (auto-generated placeholder)
+DATABASE_URL=postgresql+psycopg://coffeestudio:changeme@postgres:5432/coffeestudio
+REDIS_URL=redis://redis:6379/0
+JWT_SECRET=replace-with-a-secure-secret-of-at-least-32-chars
+CORS_ORIGINS=http://localhost:3000
+PERPLEXITY_API_KEY=
+'@ | Set-Content -Path $envFile -Encoding UTF8
     }
 }
 
@@ -127,3 +143,4 @@ switch ($action) {
     }
     default { Show-Help }
 }
+

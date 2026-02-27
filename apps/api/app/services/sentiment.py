@@ -13,7 +13,6 @@ from typing import Any
 import structlog
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.news_item import NewsItem
 from app.models.sentiment_score import SentimentScore
 

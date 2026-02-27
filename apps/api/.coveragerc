@@ -1,7 +1,7 @@
 # Coverage Configuration for pytest
 [coverage:run]
 branch = True
-source = backend/app
+source = app
 omit =
     */tests/*
     */migrations/*

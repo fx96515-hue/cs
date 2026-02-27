@@ -22,13 +22,13 @@ echo "1. Checking file structure..."
 
 # Check that all key files exist
 FILES=(
-    "backend/app/core/audit.py"
-    "backend/app/middleware/__init__.py"
-    "backend/app/middleware/security_headers.py"
-    "backend/app/middleware/input_validation.py"
-    "backend/app/core/error_handlers.py"
-    "backend/app/core/export.py"
-    "backend/tests/test_audit_logging.py"
+    "apps/api/app/core/audit.py"
+    "apps/api/app/middleware/__init__.py"
+    "apps/api/app/middleware/security_headers.py"
+    "apps/api/app/middleware/input_validation.py"
+    "apps/api/app/core/error_handlers.py"
+    "apps/api/app/core/export.py"
+    "apps/api/tests/test_audit_logging.py"
 )
 
 ALL_FILES_EXIST=true
@@ -45,7 +45,7 @@ echo ""
 echo "2. Checking Python syntax..."
 
 # Check Python syntax for key files
-cd backend
+cd apps/api
 SYNTAX_OK=true
 for file in app/core/audit.py app/middleware/input_validation.py app/middleware/security_headers.py app/core/error_handlers.py app/core/export.py app/main.py; do
     if python -m py_compile "$file" 2>/dev/null; then
@@ -117,10 +117,10 @@ if [ -f "docker-compose.yml" ]; then
     fi
     
     # Check if Dockerfile exists
-    if [ -f "backend/Dockerfile" ]; then
-        echo -e "${GREEN}✓${NC} backend/Dockerfile exists"
+    if [ -f "apps/api/Dockerfile" ]; then
+        echo -e "${GREEN}✓${NC} apps/api/Dockerfile exists"
     else
-        echo -e "${RED}✗${NC} backend/Dockerfile missing"
+        echo -e "${RED}✗${NC} apps/api/Dockerfile missing"
     fi
 else
     echo -e "${RED}✗${NC} docker-compose.yml missing"
@@ -155,7 +155,7 @@ if [ "$ALL_FILES_EXIST" = true ] && [ "$SYNTAX_OK" = true ]; then
     echo "Next steps:"
     echo "  1. Set up environment variables in .env"
     echo "  2. Run: docker compose up --build"
-    echo "  3. Run tests: cd backend && pytest tests/ -v"
+    echo "  3. Run tests: cd apps/api && pytest tests/ -v"
     echo ""
     exit 0
 else

@@ -26,7 +26,10 @@ if (Test-Path (Join-Path $RepoRoot "apps\api\requirements-dev.txt")) {
 }
 
 Write-Host "Ruff (lint)" -ForegroundColor Yellow
-& $Py -m ruff check (Join-Path $RepoRoot "apps/api")
+& $Py -m ruff check (Join-Path $RepoRoot "apps\api")
+
+Write-Host "Ruff (format check)" -ForegroundColor Yellow
+& $Py -m ruff format --check (Join-Path $RepoRoot "apps\api\app") (Join-Path $RepoRoot "apps\api\tests")
 
 Write-Host "Mypy (typecheck)" -ForegroundColor Yellow
 & $Py -m mypy --config-file (Join-Path $RepoRoot "mypy.ini") (Join-Path $RepoRoot "apps\api\app")
@@ -39,10 +42,10 @@ if ($proc.ExitCode -ne 0 -and $proc.ExitCode -ne 5) {
 
 # --- Frontend ---
 if (Test-Path (Join-Path $RepoRoot "apps\web\package.json")) {
-  Push-Location (Join-Path $RepoRoot "frontend")
+  Push-Location (Join-Path $RepoRoot "apps\web")
   try {
     Write-Host "Installing frontend dependencies" -ForegroundColor Yellow
-    npm install --no-fund --no-audit
+    npm ci --no-fund --no-audit
 
     Write-Host "Frontend lint" -ForegroundColor Yellow
     npm run lint

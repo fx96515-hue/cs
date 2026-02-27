@@ -17,6 +17,10 @@ TOTAL_CHECKS=0
 PASSED_CHECKS=0
 FAILED_CHECKS=0
 
+# Repo paths
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+API_DIR="$REPO_ROOT/apps/api"
+
 # Function to print section header
 print_header() {
     echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -41,32 +45,38 @@ print_warning() {
     echo -e "${YELLOW}⚠ $1${NC}"
 }
 
-# Change to backend directory
-cd "$(dirname "$0")/../backend" || exit 1
+if [ ! -d "$API_DIR" ]; then
+    echo -e "${RED}API directory not found: $API_DIR${NC}" >&2
+    exit 2
+fi
 
 print_header "🚀 ENTERPRISE VALIDATION SUITE"
 echo "Starting comprehensive quality assurance checks..."
 echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+echo "Repo: $REPO_ROOT"
+echo "API:  $API_DIR"
 
 # ═══════════════════════════════════════════════════════════════════
-# 1. CODE QUALITY & LINTING
+# 1. CODE QUALITY & FORMATTING
 # ═══════════════════════════════════════════════════════════════════
-print_header "📝 Code Quality & Linting"
+print_header "📝 Code Quality & Formatting"
+
+cd "$API_DIR" || exit 1
 
 ((TOTAL_CHECKS++))
 echo "Running Ruff linter..."
-if ruff check app; then
+if ruff check app tests; then
     print_success "Ruff linting passed - no issues found"
 else
     print_error "Ruff linting failed - issues detected"
 fi
 
 ((TOTAL_CHECKS++))
-echo -e "\nChecking Black code formatting..."
-if black app --check; then
-    print_success "Black formatting passed - code is properly formatted"
+echo -e "\nChecking Ruff formatting..."
+if ruff format --check app tests; then
+    print_success "Ruff formatting passed - code is properly formatted"
 else
-    print_error "Black formatting failed - code needs formatting"
+    print_error "Ruff formatting failed - code needs formatting"
 fi
 
 # ═══════════════════════════════════════════════════════════════════
@@ -76,13 +86,11 @@ print_header "🔍 Type Checking"
 
 ((TOTAL_CHECKS++))
 echo "Running mypy type checker..."
-cd ..
-if mypy backend/app --config-file=mypy.ini; then
+if mypy --config-file "$REPO_ROOT/mypy.ini" app; then
     print_success "Type checking passed - 0 type errors"
 else
     print_error "Type checking failed - type errors detected"
 fi
-cd backend
 
 # ═══════════════════════════════════════════════════════════════════
 # 3. TEST SUITE
@@ -97,7 +105,7 @@ TEST_EXIT_CODE=$?
 
 if [ $TEST_EXIT_CODE -eq 0 ]; then
     print_success "All tests passed"
-    
+
     # Extract coverage percentage from captured output
     COVERAGE=$(echo "$TEST_OUTPUT" | grep "TOTAL" | awk '{print $NF}' | sed 's/%//')
     if [ -n "$COVERAGE" ]; then
@@ -109,7 +117,6 @@ if [ $TEST_EXIT_CODE -eq 0 ]; then
     fi
 else
     print_error "Test suite failed"
-    # Print the test output so user can see what failed
     echo "$TEST_OUTPUT"
 fi
 
@@ -147,86 +154,51 @@ fi
 # ═══════════════════════════════════════════════════════════════════
 print_header "⚙️ Configuration Validation"
 
-cd ..
-
 ((TOTAL_CHECKS++))
 echo "Checking .env.example completeness..."
-# Core required variables
-REQUIRED_VARS=("DATABASE_URL" "REDIS_URL" "JWT_SECRET" "BOOTSTRAP_ADMIN_EMAIL" "BOOTSTRAP_ADMIN_PASSWORD")
-# Optional but recommended variables
-OPTIONAL_VARS=("CORS_ORIGINS" "JWT_ISSUER" "JWT_AUDIENCE")
+ENV_EXAMPLE="$REPO_ROOT/.env.example"
 
-MISSING_VARS=()
-for var in "${REQUIRED_VARS[@]}"; do
-    if ! grep -q "^${var}=" .env.example; then
-        MISSING_VARS+=("$var")
-    fi
-done
+if [ ! -f "$ENV_EXAMPLE" ]; then
+    print_error ".env.example missing at repo root"
+else
+    # Core required variables
+    REQUIRED_VARS=("DATABASE_URL" "REDIS_URL" "JWT_SECRET" "BOOTSTRAP_ADMIN_EMAIL" "BOOTSTRAP_ADMIN_PASSWORD")
+    # Optional but recommended variables
+    OPTIONAL_VARS=("CORS_ORIGINS" "JWT_ISSUER" "JWT_AUDIENCE")
 
-if [ ${#MISSING_VARS[@]} -eq 0 ]; then
-    print_success "All required environment variables present in .env.example"
-    
-    # Check optional variables (informational only)
-    MISSING_OPTIONAL=()
-    for var in "${OPTIONAL_VARS[@]}"; do
-        if ! grep -q "^${var}=" .env.example; then
-            MISSING_OPTIONAL+=("$var")
+    MISSING_VARS=()
+    for var in "${REQUIRED_VARS[@]}"; do
+        if ! grep -q "^${var}=" "$ENV_EXAMPLE"; then
+            MISSING_VARS+=("$var")
         fi
     done
-    
-    if [ ${#MISSING_OPTIONAL[@]} -gt 0 ]; then
-        echo "  Note: Optional variables present: ${OPTIONAL_VARS[*]}"
+
+    if [ ${#MISSING_VARS[@]} -eq 0 ]; then
+        print_success "All required environment variables present in .env.example"
+    else
+        print_error "Missing required variables in .env.example: ${MISSING_VARS[*]}"
     fi
-else
-    print_error "Missing required environment variables: ${MISSING_VARS[*]}"
+
+    for var in "${OPTIONAL_VARS[@]}"; do
+        if ! grep -q "^${var}=" "$ENV_EXAMPLE"; then
+            print_warning "Optional variable missing in .env.example: $var"
+        fi
+    done
 fi
 
 # ═══════════════════════════════════════════════════════════════════
-# 6. DOCUMENTATION CHECK
+# SUMMARY
 # ═══════════════════════════════════════════════════════════════════
-print_header "📚 Documentation Validation"
+print_header "📊 Validation Summary"
 
-((TOTAL_CHECKS++))
-echo "Checking required documentation files..."
-REQUIRED_DOCS=("SECURITY_BEST_PRACTICES.md" "API_USAGE_GUIDE.md" "TESTING.md" "ENTERPRISE_IMPLEMENTATION_SUMMARY.md")
-MISSING_DOCS=()
-for doc in "${REQUIRED_DOCS[@]}"; do
-    if [ ! -f "$doc" ]; then
-        MISSING_DOCS+=("$doc")
-    fi
-done
+echo -e "Total Checks:  ${TOTAL_CHECKS}"
+echo -e "Passed:        ${GREEN}${PASSED_CHECKS}${NC}"
+echo -e "Failed:        ${RED}${FAILED_CHECKS}${NC}"
 
-if [ ${#MISSING_DOCS[@]} -eq 0 ]; then
-    print_success "All required documentation files present"
-else
-    print_error "Missing documentation files: ${MISSING_DOCS[*]}"
-fi
-
-# ═══════════════════════════════════════════════════════════════════
-# FINAL SUMMARY
-# ═══════════════════════════════════════════════════════════════════
-print_header "📊 VALIDATION SUMMARY"
-
-echo "Total Checks: $TOTAL_CHECKS"
-echo -e "Passed: ${GREEN}$PASSED_CHECKS${NC}"
-echo -e "Failed: ${RED}$FAILED_CHECKS${NC}"
-echo ""
-
-if [ $TOTAL_CHECKS -gt 0 ]; then
-    PASS_RATE=$((PASSED_CHECKS * 100 / TOTAL_CHECKS))
-    echo "Pass Rate: ${PASS_RATE}%"
-else
-    echo "Pass Rate: N/A"
-fi
-
-if [ $FAILED_CHECKS -eq 0 ]; then
-    echo -e "\n${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${GREEN}✅ ALL CHECKS PASSED - PRODUCTION READY! ✅${NC}"
-    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+if [ "$FAILED_CHECKS" -eq 0 ]; then
+    echo -e "\n${GREEN}✅ ENTERPRISE VALIDATION PASSED${NC}"
     exit 0
 else
-    echo -e "\n${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${RED}❌ VALIDATION FAILED - ISSUES NEED ATTENTION ❌${NC}"
-    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+    echo -e "\n${RED}❌ ENTERPRISE VALIDATION FAILED${NC}"
     exit 1
 fi

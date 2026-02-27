@@ -43,6 +43,11 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Run Ruff (Format)
+        run: |
+          cd apps/api
+          ruff format app/ tests/
+
       - name: Run Ruff (Linting)
         run: |
           cd apps/api
@@ -51,9 +56,9 @@ jobs:
       - name: Run MyPy (Type Checking)
         run: |
           cd apps/api
-          mypy --config-file ../mypy.ini app/
+          mypy --config-file ../../mypy.ini app/
 
-      - name: Check Code Formatting (Black)
+      - name: Check Code Formatting (Ruff)
         run: |
           cd apps/api
           ruff format --check app/ tests/

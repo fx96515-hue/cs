@@ -13,7 +13,7 @@ from app.models.evidence import EntityEvidence
 from app.models.roaster import Roaster
 from app.models.source import Source
 from app.providers.perplexity import PerplexityClient, PerplexityError, safe_json_loads
-from app.services.country_config import COUNTRY_CONFIGS, get_country_config
+from app.services.country_config import get_country_config
 
 
 def _cooperative_response_format() -> dict[str, Any]:

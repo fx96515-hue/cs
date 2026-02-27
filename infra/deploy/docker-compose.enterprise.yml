@@ -1,6 +1,4 @@
-version: '3.8'
-
-services:
+﻿services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -22,7 +20,7 @@ services:
       context: ../../apps/api
       dockerfile: Dockerfile
     env_file:
-      - ../env/enterprise.env.example
+      - ../env/enterprise.env
     depends_on:
       - postgres
       - redis
@@ -35,7 +33,7 @@ services:
       context: ../../apps/api
       dockerfile: Dockerfile
     env_file:
-      - ../env/enterprise.env.example
+      - ../env/enterprise.env
     command: celery -A app.workers.celery_app.celery worker --loglevel=info
     depends_on:
       - redis
@@ -43,3 +41,4 @@ services:
 
 volumes:
   pgdata:
+

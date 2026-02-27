@@ -1,10 +1,11 @@
 # Deploy (Enterprise) — Local Docker Compose
 
-This guide shows how to run a production-like stack locally using the enterprise docker-compose.
+This guide shows how to run a production-like stack locally using the **enterprise** docker-compose.
 
-Files added
-- `ops/deploy/docker-compose.enterprise.yml`
-- `.env.enterprise.example`
+Key files
+- `infra/deploy/docker-compose.enterprise.yml`
+- `infra/env/enterprise.env.example` (example)
+- `infra/env/enterprise.env` (local, not committed)
 
 Prerequisites
 - Docker and Docker Compose installed
@@ -12,32 +13,36 @@ Prerequisites
 
 Quick start
 
-1. Copy the example env and set secrets:
+1) Review the example env and create your local enterprise env (recommended):
 
 ```bash
-cp .env.enterprise.example .env.enterprise
-# Edit .env.enterprise and set a strong JWT_SECRET and PERPLEXITY_API_KEY if needed
+cp infra/env/enterprise.env.example infra/env/enterprise.env
+# Edit infra/env/enterprise.env and set a strong JWT_SECRET and PERPLEXITY_API_KEY if needed
 ```
 
-2. Start the stack:
+> Note: `infra/env/enterprise.env` is ignored by git (see `.gitignore`).
+
+2) Start the stack:
 
 ```bash
-cd ops/deploy
-docker compose -f docker-compose.enterprise.yml up --build -d
+docker compose -f infra/deploy/docker-compose.enterprise.yml up --build -d
 ```
 
-3. Run migrations and seed data (inside backend container):
+3) Run migrations and seed data (inside backend container):
 
 ```bash
-docker compose -f docker-compose.enterprise.yml exec backend alembic upgrade head
-# Optionally run startup seed via CLI or ensure startup event seeds data
+docker compose -f infra/deploy/docker-compose.enterprise.yml exec backend alembic upgrade head
+curl -s -X POST http://localhost:8000/auth/dev/bootstrap | cat
 ```
 
-4. Visit the API:
-- Backend: http://localhost:8000
-- Prometheus (if running external): http://localhost:9090
-- Grafana (if running): http://localhost:3000
+4) Verify health:
 
-Notes
-- The `backend` service uses the repo `apps/api/Dockerfile`. Ensure the Dockerfile exposes port 8000 and installs required packages.
-- For production, replace `postgres` image and secrets with managed services and secure the `JWT_SECRET` and other keys.
+```bash
+curl -fsS http://localhost:8000/health | cat
+```
+
+Stop / cleanup
+
+```bash
+docker compose -f infra/deploy/docker-compose.enterprise.yml down -v
+```

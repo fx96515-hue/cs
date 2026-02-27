@@ -33,6 +33,9 @@ Thumbs.db
 !*.example
 apps/web/.env.local
 
+# Enterprise env (local only)
+infra/env/enterprise.env
+
 # --- Logs ---
 *.log
 

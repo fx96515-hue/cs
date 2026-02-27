@@ -211,7 +211,7 @@ async def get_feature_importance(
 
         m.load(str(resolved))  # type: ignore[attr-defined]
         importances = m.get_feature_importance()  # type: ignore[attr-defined]
-    except Exception as exc:
+    except Exception:
         safe_model_id_int = int(model_id)
         logger.exception(
             "Failed to compute feature importance for model_id=%d",

@@ -18,5 +18,5 @@ One-liner to start the enterprise local stack, wait for health and optionally st
 
 Notes:
 - Ensure Docker Desktop (or Docker Engine) is running.
-- Review `.env.enterprise` (copied from `.env.enterprise.example` by the script on first run).
+- Review `infra/env/enterprise.env` (copied from `infra/env/enterprise.env.example` by the script on first run).
 - Use `-action status` to see container state.

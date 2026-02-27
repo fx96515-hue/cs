@@ -39,7 +39,7 @@ jobs:
 
       - name: Start enterprise stack and run health checks
         run: |
-          ./scripts/ci_start_enterprise.sh ops/deploy/docker-compose.enterprise.yml http://localhost:8000/health
+          ./scripts/ci_start_enterprise.sh infra/deploy/docker-compose.enterprise.yml http://localhost:8000/health
 
       - name: Run smoke tests
         run: |
@@ -50,4 +50,4 @@ jobs:
       - name: Teardown
         if: always()
         run: |
-          docker compose -f ops/deploy/docker-compose.enterprise.yml down -v
+          docker compose -f infra/deploy/docker-compose.enterprise.yml down -v

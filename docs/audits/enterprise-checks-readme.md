@@ -6,7 +6,7 @@ This document describes the enterprise-grade quality and static analysis checks 
 
 The enterprise checks cover three key areas:
 1. **Type Checking** (mypy) — Ensuring static type safety
-2. **Linting** (flake8) — Code style and quality standards
+2. **Linting** (ruff) — Code style and quality standards
 3. **Unit Testing** (pytest) — Runtime behavior validation
 
 ## Quick Start
@@ -45,8 +45,11 @@ A GitHub Actions workflow is configured at `.github/workflows/enterprise-tests.y
 
 Ensures all Python code is statically type-safe per `apps/api/app/mypy.ini` config.
 
+The canonical config lives at repo root: `mypy.ini`.
+
 ```powershell
-mypy backend --config-file mypy.ini
+cd apps/api
+mypy --config-file ../../mypy.ini app/
 ```
 
 **Key fixes applied:**
@@ -54,12 +57,14 @@ mypy backend --config-file mypy.ini
 - Quality alert service uses `Mapping[str, float | None]` for flexible argument passing
 - Safe getattr() fallback for optional feature flags
 
-### 2. Linting (flake8)
+### 2. Linting (ruff)
 
 Lints code style and common issues.
 
 ```powershell
-flake8 backend
+cd apps/api
+ruff check app/ tests/
+ruff format --check app/ tests/
 ```
 
 ### 3. Unit Testing (pytest)
@@ -86,7 +91,7 @@ pytest -q apps/api/tests
 Scans for common security issues.
 
 ```powershell
-bandit -r backend
+bandit -r apps/api/app
 ```
 
 ## CI Requirements
@@ -104,10 +109,10 @@ pip install -r apps/api/requirements.txt
 pip install -r ci/requirements-ci.txt
 
 # Now run checks
-mypy backend --config-file mypy.ini
-flake8 backend
+mypy --config-file mypy.ini apps/api/app
+ruff check apps/api/app apps/api/tests
 pytest -q apps/api/tests
-bandit -r backend
+bandit -r apps/api/app
 ```
 
 ### CI Dependencies (`ci/requirements-ci.txt`)

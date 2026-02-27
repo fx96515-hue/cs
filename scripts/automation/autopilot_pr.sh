@@ -74,7 +74,7 @@ heuristic_checks() {
     popd >/dev/null
   fi
 
-  if [[ -f backend/requirements.txt || -f backend/pyproject.toml ]]; then
+  if [[ -f apps/api/requirements.txt || -f apps/api/pyproject.toml ]]; then
     pushd backend >/dev/null
     if [[ -f requirements.txt ]]; then
       python -m pip install -r requirements.txt || true

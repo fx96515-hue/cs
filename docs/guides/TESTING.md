@@ -230,7 +230,7 @@ Test your changes locally before pushing:
 # Backend
 cd apps/api
 ruff check .
-mypy --config-file ../mypy.ini app
+mypy --config-file ../../mypy.ini app
 pytest tests/ -v
 
 # Frontend

@@ -3,9 +3,9 @@ set -euo pipefail
 
 # CI-friendly script to start the enterprise compose stack and run basic health checks.
 # Usage: ./scripts/ci_start_enterprise.sh [compose-file] [health-url]
-# Defaults: compose-file=ops/deploy/docker-compose.enterprise.yml, health-url=http://localhost:8000/health
+# Defaults: compose-file=infra/deploy/docker-compose.enterprise.yml, health-url=http://localhost:8000/health
 
-COMPOSE_FILE="${1:-ops/deploy/docker-compose.enterprise.yml}"
+COMPOSE_FILE="${1:-infra/deploy/docker-compose.enterprise.yml}"
 HEALTH_URL="${2:-http://localhost:8000/health}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-120}"
 
@@ -18,19 +18,41 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 2
 fi
 
-# Ensure expected env file for compose exists. Many compose files reference an env at ops/.env.enterprise.example
-COMPOSE_DIR=$(dirname "$COMPOSE_FILE")
-EXPECTED_ENV="$COMPOSE_DIR/../.env.enterprise.example"
-if [ -f "$EXPECTED_ENV" ]; then
-  echo "Found expected env file: $EXPECTED_ENV"
-elif [ -f .env.enterprise.example ]; then
-  echo "Copying root .env.enterprise.example to $EXPECTED_ENV"
-  mkdir -p "$(dirname "$EXPECTED_ENV")"
-  cp .env.enterprise.example "$EXPECTED_ENV"
+if [ ! -f "$COMPOSE_FILE" ]; then
+  echo "Compose file not found: $COMPOSE_FILE" >&2
+  exit 3
+fi
+
+# Ensure env file(s) referenced by the enterprise compose exist.
+COMPOSE_DIR="$(cd "$(dirname "$COMPOSE_FILE")" && pwd)"
+CANDIDATES=(
+  "$COMPOSE_DIR/../env/enterprise.env"
+  "$COMPOSE_DIR/../env/enterprise.env.example"
+)
+
+found_env=""
+for f in "${CANDIDATES[@]}"; do
+  if [ -f "$f" ]; then
+    found_env="$f"
+    break
+  fi
+done
+
+if [ -n "$found_env" ]; then
+  echo "Found enterprise env file: $found_env"
 else
-  echo "Warning: no .env.enterprise.example found in repo root or expected path. Creating empty $EXPECTED_ENV"
-  mkdir -p "$(dirname "$EXPECTED_ENV")"
-  touch "$EXPECTED_ENV"
+  # Best-effort fallback: create a SAFE placeholder env in the compose-expected location
+  fallback="$COMPOSE_DIR/../env/enterprise.env"
+  echo "Warning: no enterprise env found. Creating fallback: $fallback"
+  mkdir -p "$(dirname "$fallback")"
+  cat > "$fallback" <<'EOF'
+# Enterprise environment (auto-generated fallback, NO secrets)
+DATABASE_URL=postgresql+psycopg://coffeestudio:changeme@postgres:5432/coffeestudio
+REDIS_URL=redis://redis:6379/0
+JWT_SECRET=replace-with-a-secure-secret-of-at-least-32-chars
+CORS_ORIGINS=http://localhost:3000
+PERPLEXITY_API_KEY=
+EOF
 fi
 
 docker compose -f "$COMPOSE_FILE" up --build -d
@@ -47,10 +69,10 @@ while [ $SECONDS -lt $deadline ]; do
 done
 
 if [ $SECONDS -ge $deadline ]; then
-  echo "\nHealth endpoint did not respond within ${TIMEOUT_SECONDS}s" >&2
+  echo -e "\nHealth endpoint did not respond within ${TIMEOUT_SECONDS}s" >&2
   echo "Container logs:" >&2
   docker compose -f "$COMPOSE_FILE" logs --no-color --tail=200 >&2 || true
-  exit 3
+  exit 4
 fi
 
 check_port() {
@@ -67,14 +89,14 @@ check_port() {
 echo "Checking TCP ports: postgres(5432), redis(6379)"
 if ! check_port localhost 5432; then
   echo "Postgres port 5432 not open on localhost" >&2
-  docker compose -f "$COMPOSE_FILE" logs db --no-color --tail=100 || true
-  exit 4
+  docker compose -f "$COMPOSE_FILE" logs postgres --no-color --tail=200 >&2 || true
+  exit 5
 fi
 
 if ! check_port localhost 6379; then
   echo "Redis port 6379 not open on localhost" >&2
-  docker compose -f "$COMPOSE_FILE" logs redis --no-color --tail=100 || true
-  exit 5
+  docker compose -f "$COMPOSE_FILE" logs redis --no-color --tail=200 >&2 || true
+  exit 6
 fi
 
 echo "All basic checks passed."
