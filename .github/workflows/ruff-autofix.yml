@@ -33,7 +33,7 @@ jobs:
           ruff format .
 
       - name: Create PR if changes
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "chore: ruff auto-fix"
           title: "chore: ruff auto-fix"
