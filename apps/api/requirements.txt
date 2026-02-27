@@ -22,7 +22,7 @@ structlog==24.4.0
 
 # Data enrichment / dedup
 beautifulsoup4==4.12.3
-rapidfuzz==3.10.1
+rapidfuzz==3.14.3
 
 # Rate limiting
 slowapi==0.1.9
