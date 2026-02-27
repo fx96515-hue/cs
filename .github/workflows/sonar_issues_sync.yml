@@ -3,8 +3,7 @@ name: Sync SonarCloud Issues -> GitHub Issues
 on:
   workflow_dispatch:
   schedule:
-    # daily 06:30 Europe/Berlin ≈ 05:30 UTC (winter)
-    - cron: "30 5 * * *"
+    - cron: "30 5 * * *"  # daily 05:30 UTC
 
 permissions:
   contents: read

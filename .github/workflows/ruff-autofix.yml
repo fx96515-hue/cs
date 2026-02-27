@@ -1,0 +1,42 @@
+name: Ruff Auto-fix PR
+
+on:
+  schedule:
+    - cron: "15 5 * * *" # täglich 05:15 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ruff-autofix
+  cancel-in-progress: false
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: python -m pip install --upgrade pip ruff
+
+      - name: Ruff fix + format
+        run: |
+          ruff check --fix .
+          ruff format .
+
+      - name: Create PR if changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: ruff auto-fix"
+          title: "chore: ruff auto-fix"
+          body: "Automated ruff fixes + formatting."
+          branch: "bot/ruff-autofix"
+          delete-branch: true
