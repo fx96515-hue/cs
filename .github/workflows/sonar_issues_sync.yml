@@ -1,0 +1,37 @@
+﻿name: Sync SonarCloud Issues -> GitHub Issues
+
+on:
+  workflow_dispatch:
+  schedule:
+    # daily 06:30 Europe/Berlin ≈ 05:30 UTC (winter)
+    - cron: "30 5 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync issues
+        env:
+          SONAR_API_BASE: "https://sonarcloud.io/api"
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_BRANCH: ${{ vars.SONAR_BRANCH }}
+          SONAR_SEVERITIES: ${{ vars.SONAR_SEVERITIES }}
+          SONAR_STATUSES: ${{ vars.SONAR_STATUSES }}
+          SONAR_MAX_CREATE: ${{ vars.SONAR_MAX_CREATE }}
+          SONAR_AUTO_CLOSE: ${{ vars.SONAR_AUTO_CLOSE }}
+          SONAR_LABEL: ${{ vars.SONAR_LABEL }}
+
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/automation/sonar_sync_issues.py
