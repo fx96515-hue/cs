@@ -8,7 +8,7 @@ python-jose[cryptography]==3.3.0
 # IMPORTANT: do NOT depend on bcrypt in this project (Windows/Docker stability).
 # Using argon2 as the secure, cross-platform password hashing backend.
 passlib[argon2]==1.7.4
-argon2-cffi==23.1.0
+argon2-cffi==25.1.0
 sqlalchemy==2.0.36
 psycopg[binary]==3.2.3
 alembic==1.14.0
