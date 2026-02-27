@@ -78,3 +78,7 @@ diagnostics/
 *.patch
 *.rej
 *.orig
+
+# patches
+*.patch
+
