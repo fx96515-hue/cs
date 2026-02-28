@@ -26,18 +26,10 @@ def _get_redis() -> redis.Redis:
 
 
 def _sanitize_errors(errors: list[str] | None) -> list[str]:
-    """Strip exception details before returning errors to clients."""
-    sanitized: list[str] = []
-    for err in errors or []:
-        if not err:
-            continue
-        if ":" in err:
-            head = err.split(":", 1)[0].strip()
-            if head:
-                sanitized.append(f"{head}: error")
-                continue
-        sanitized.append(err)
-    return sanitized
+    """Return generic error entries without exposing exception details."""
+    if not errors:
+        return []
+    return ["Pipeline operation failed"] * len(errors)
 
 
 @router.get("/status")
