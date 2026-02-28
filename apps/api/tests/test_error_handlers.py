@@ -24,9 +24,7 @@ def test_error_response_format_basic():
     assert response.status_code == 400
     body = response.body
     json_content = (
-        body.decode()
-        if isinstance(body, (bytes, bytearray))
-        else bytes(body).decode()
+        body.decode() if isinstance(body, (bytes, bytearray)) else bytes(body).decode()
     )
     assert "TEST_ERROR" in json_content
     assert "Test error message" in json_content
@@ -45,9 +43,7 @@ def test_error_response_format_with_details():
     assert response.status_code == 422
     body = response.body
     json_content = (
-        body.decode()
-        if isinstance(body, (bytes, bytearray))
-        else bytes(body).decode()
+        body.decode() if isinstance(body, (bytes, bytearray)) else bytes(body).decode()
     )
     assert "VALIDATION_ERROR" in json_content
     assert "field" in json_content

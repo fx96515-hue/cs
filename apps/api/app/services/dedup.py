@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, cast, Union
+from typing import Any
 from urllib.parse import urlparse
 
 from rapidfuzz import fuzz
@@ -143,12 +143,14 @@ def merge_entities(
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
 
+    keep_entity: Cooperative | Roaster | None
+    merge_entity: Cooperative | Roaster | None
     if entity_type == "cooperative":
-        keep_entity = cast(Cooperative, db.get(Cooperative, keep_id))
-        merge_entity = cast(Cooperative, db.get(Cooperative, merge_id))
+        keep_entity = db.get(Cooperative, keep_id)
+        merge_entity = db.get(Cooperative, merge_id)
     else:
-        keep_entity = cast(Roaster, db.get(Roaster, keep_id))
-        merge_entity = cast(Roaster, db.get(Roaster, merge_id))
+        keep_entity = db.get(Roaster, keep_id)
+        merge_entity = db.get(Roaster, merge_id)
 
     if not keep_entity or not merge_entity:
         raise ValueError("One or both entities not found")

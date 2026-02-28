@@ -72,7 +72,9 @@ def _is_allowed_host(hostname: str) -> bool:
     configured_domains = _split_csv(getattr(settings, "ENRICH_ALLOWED_DOMAINS", None))
 
     # Combine built-in allowlist with any configured values, removing empties.
-    allowed = [h for h in (builtin_allowed + configured_hosts + configured_domains) if h]
+    allowed = [
+        h for h in (builtin_allowed + configured_hosts + configured_domains) if h
+    ]
     if not allowed:
         # With an empty combined allowlist, deny by default to avoid SSRF.
         return False

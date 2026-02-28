@@ -43,7 +43,9 @@ class TestFetchTwelveDataCoffee:
         assert quote is None
 
     def test_returns_none_on_network_error(self):
-        with patch("app.providers.ice_realtime.httpx.get", side_effect=Exception("timeout")):
+        with patch(
+            "app.providers.ice_realtime.httpx.get", side_effect=Exception("timeout")
+        ):
             quote = fetch_twelve_data_coffee("fake-api-key")
 
         assert quote is None
@@ -60,7 +62,9 @@ class TestFetchRealtimeCoffeePrice:
     def test_uses_twelve_data_when_api_key_provided(self):
         mock_quote = CoffeeQuote(
             price_usd_per_lb=2.40,
-            observed_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+            observed_at=__import__("datetime").datetime.now(
+                __import__("datetime").timezone.utc
+            ),
             source_name="Twelve Data (ICE KC1!)",
             source_url="https://api.twelvedata.com/price",
             raw_data="{}",
@@ -78,18 +82,23 @@ class TestFetchRealtimeCoffeePrice:
     def test_falls_back_to_yahoo_when_twelve_data_fails(self):
         fallback_quote = CoffeeQuote(
             price_usd_per_lb=2.35,
-            observed_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+            observed_at=__import__("datetime").datetime.now(
+                __import__("datetime").timezone.utc
+            ),
             source_name="Yahoo Finance",
             source_url="https://query1.finance.yahoo.com/",
             raw_data="{}",
             metadata={},
         )
-        with patch(
-            "app.providers.ice_realtime.fetch_twelve_data_coffee",
-            return_value=None,
-        ), patch(
-            "app.providers.coffee_prices.fetch_yahoo_finance_coffee",
-            return_value=fallback_quote,
+        with (
+            patch(
+                "app.providers.ice_realtime.fetch_twelve_data_coffee",
+                return_value=None,
+            ),
+            patch(
+                "app.providers.coffee_prices.fetch_yahoo_finance_coffee",
+                return_value=fallback_quote,
+            ),
         ):
             result = fetch_realtime_coffee_price(api_key="fake-key")
 
@@ -99,17 +108,20 @@ class TestFetchRealtimeCoffeePrice:
     def test_skips_twelve_data_when_no_api_key(self):
         fallback_quote = CoffeeQuote(
             price_usd_per_lb=2.30,
-            observed_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+            observed_at=__import__("datetime").datetime.now(
+                __import__("datetime").timezone.utc
+            ),
             source_name="Yahoo Finance",
             source_url="https://query1.finance.yahoo.com/",
             raw_data="{}",
             metadata={},
         )
-        with patch(
-            "app.providers.ice_realtime.fetch_twelve_data_coffee"
-        ) as mock_td, patch(
-            "app.providers.coffee_prices.fetch_yahoo_finance_coffee",
-            return_value=fallback_quote,
+        with (
+            patch("app.providers.ice_realtime.fetch_twelve_data_coffee") as mock_td,
+            patch(
+                "app.providers.coffee_prices.fetch_yahoo_finance_coffee",
+                return_value=fallback_quote,
+            ),
         ):
             result = fetch_realtime_coffee_price(api_key=None)
 
@@ -119,12 +131,15 @@ class TestFetchRealtimeCoffeePrice:
         assert result.source_name == "Yahoo Finance"
 
     def test_returns_none_when_all_sources_fail(self):
-        with patch(
-            "app.providers.ice_realtime.fetch_twelve_data_coffee",
-            return_value=None,
-        ), patch(
-            "app.providers.coffee_prices.fetch_yahoo_finance_coffee",
-            return_value=None,
+        with (
+            patch(
+                "app.providers.ice_realtime.fetch_twelve_data_coffee",
+                return_value=None,
+            ),
+            patch(
+                "app.providers.coffee_prices.fetch_yahoo_finance_coffee",
+                return_value=None,
+            ),
         ):
             result = fetch_realtime_coffee_price(api_key="fake-key")
 

@@ -24,7 +24,9 @@ class MarginCalcRequest(BaseModel):
     # Optional: FX rate used (USD->EUR) if needed by client; calculation here is currency-agnostic unless you provide fx
     fx_usd_to_eur: Optional[float] = Field(None, gt=0, le=100)
 
-    def __init__(self, *args: Any, fx_usd_to_eur: Optional[float] = None, **data: Any) -> None:
+    def __init__(
+        self, *args: Any, fx_usd_to_eur: Optional[float] = None, **data: Any
+    ) -> None:
         """Provide an explicit __init__ so static type checkers see
         `fx_usd_to_eur` as an optional keyword-only argument.
         """

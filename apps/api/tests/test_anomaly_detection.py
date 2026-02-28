@@ -34,6 +34,7 @@ def _make_coop(db, name: str, q: float, r: float, e: float) -> Cooperative:
 
 def _make_obs(db, key: str, value: float, offset_seconds: int = 0) -> MarketObservation:
     from datetime import timedelta
+
     obs = MarketObservation(
         key=key,
         value=value,

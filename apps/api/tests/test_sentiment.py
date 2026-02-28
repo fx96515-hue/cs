@@ -26,7 +26,9 @@ def test_analyze_text_positive():
 
 
 def test_analyze_text_negative():
-    score, label = analyze_text("Crisis threatens coffee supply with drought and shortage")
+    score, label = analyze_text(
+        "Crisis threatens coffee supply with drought and shortage"
+    )
     assert score < 0
     assert label == "negative"
 

@@ -60,12 +60,14 @@ class TestPublishPrice:
 
 class TestGetCachedPrice:
     def test_returns_dict_when_cache_hit(self):
-        payload = json.dumps({
-            "price_usd_per_lb": 2.35,
-            "observed_at": "2025-06-01T12:00:00+00:00",
-            "source_name": "Twelve Data (ICE KC1!)",
-            "metadata": {},
-        })
+        payload = json.dumps(
+            {
+                "price_usd_per_lb": 2.35,
+                "observed_at": "2025-06-01T12:00:00+00:00",
+                "source_name": "Twelve Data (ICE KC1!)",
+                "metadata": {},
+            }
+        )
         redis_mock = MagicMock()
         redis_mock.get.return_value = payload.encode("utf-8")
 

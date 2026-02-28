@@ -1,14 +1,16 @@
 import logging
+from typing import Any
 
 try:
     from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
-    from fastapi import FastAPI
     from starlette.responses import Response
 except Exception as exc:
     # prometheus_client or FastAPI not installed; provide no-op
-    logging.getLogger(__name__).debug("prometheus_instrumentation_unavailable", exc_info=exc)
+    logging.getLogger(__name__).debug(
+        "prometheus_instrumentation_unavailable", exc_info=exc
+    )
 
-    def instrument_app(app):
+    def instrument_app(app: Any) -> None:
         return
 else:
     REQUEST_COUNTER = Counter(
@@ -17,7 +19,7 @@ else:
         ["method", "path", "status"],
     )
 
-    def instrument_app(app: FastAPI):
+    def instrument_app(app: Any) -> None:
         """Add a Prometheus /metrics endpoint and a simple request counter middleware.
 
         Safe to call even if prometheus_client is not available in the environment

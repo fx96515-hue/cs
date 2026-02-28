@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -19,7 +19,9 @@ router = APIRouter()
 log = structlog.get_logger()
 
 NOT_FOUND_DETAIL = "Not found"
-NOT_FOUND_RESPONSES = {404: {"description": "Cooperative not found"}}
+NOT_FOUND_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": "Cooperative not found"}
+}
 
 
 @router.get("/", response_model=list[CooperativeOut])

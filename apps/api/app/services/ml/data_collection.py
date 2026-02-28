@@ -1,5 +1,6 @@
 """Data collection service for ML training data."""
 
+from datetime import datetime
 from typing import Any
 from sqlalchemy.orm import Session
 
@@ -100,35 +101,47 @@ class DataCollectionService:
         if shipment.status != "delivered":
             return
 
+        def _parse_dt(value: str | datetime | None) -> datetime | None:
+            if isinstance(value, datetime):
+                return value
+            if isinstance(value, str):
+                try:
+                    return datetime.fromisoformat(value)
+                except ValueError:
+                    return None
+            return None
+
+        arrival_raw = getattr(shipment, "arrival_date", None)
+        if arrival_raw is None:
+            arrival_raw = getattr(shipment, "actual_arrival", None) or getattr(
+                shipment, "estimated_arrival", None
+            )
+        departure_raw = getattr(shipment, "departure_date", None)
+        arrival_dt = _parse_dt(arrival_raw)
+        departure_dt = _parse_dt(departure_raw)
+        freight_cost_usd = getattr(shipment, "freight_cost_usd", None)
+        carrier = getattr(shipment, "carrier", None)
+
         # Create FreightHistory record from shipment data
         if (
             shipment.origin_port
             and shipment.destination_port
-            and shipment.freight_cost_usd
+            and freight_cost_usd is not None
+            and arrival_dt
+            and departure_dt
         ):
             freight = FreightHistory(
                 route=f"{shipment.origin_port}-{shipment.destination_port}",
                 origin_port=shipment.origin_port,
                 destination_port=shipment.destination_port,
-                carrier=shipment.carrier or "Unknown",
+                carrier=carrier or "Unknown",
                 container_type=shipment.container_type or "20ft",
                 weight_kg=shipment.weight_kg or 0,
-                freight_cost_usd=shipment.freight_cost_usd,
-                transit_days=(
-                    (shipment.arrival_date - shipment.departure_date).days
-                    if shipment.arrival_date and shipment.departure_date
-                    else None
-                ),
-                departure_date=shipment.departure_date,
-                arrival_date=shipment.arrival_date,
-                season=(
-                    "high"
-                    if shipment.departure_date
-                    and shipment.departure_date.month in HIGH_SEASON_MONTHS
-                    else "low"
-                    if shipment.departure_date
-                    else None
-                ),
+                freight_cost_usd=freight_cost_usd,
+                transit_days=(arrival_dt - departure_dt).days,
+                departure_date=departure_dt.date(),
+                arrival_date=arrival_dt.date(),
+                season=("high" if departure_dt.month in HIGH_SEASON_MONTHS else "low"),
             )
             self.db.add(freight)
             self.db.commit()

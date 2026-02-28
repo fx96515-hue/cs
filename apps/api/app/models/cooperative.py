@@ -1,12 +1,15 @@
 from datetime import datetime
 from sqlalchemy import String, Text, Float, JSON, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
+
 try:
     from pgvector.sqlalchemy import Vector
 except Exception:  # pragma: no cover - fallback for test environments without pgvector
     # Lightweight fallback: represent vector column as a JSON/list of floats for tests
     def Vector(dim: int):
         return JSON
+
+
 from app.db.session import Base
 from app.models.common import TimestampMixin
 
