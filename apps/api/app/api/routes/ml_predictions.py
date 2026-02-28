@@ -116,9 +116,9 @@ async def predict_transit_time(
 @router.get("/freight-cost-trend", response_model=FreightCostTrend)
 async def get_freight_cost_trend(
     route: str,
-    months_back: int = 12,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    months_back: int = 12,
 ):
     """Get historical freight cost trend for a route."""
     service = FreightPredictionService(db)
@@ -344,9 +344,9 @@ async def get_feature_importance(
 
 @router.get("/models", response_model=list[MLModelResponse])
 async def list_ml_models(
-    model_type: str | None = None,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    model_type: str | None = None,
 ):
     """List all ML models with optional type filter."""
     service = MLModelManagementService(db)
