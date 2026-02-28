@@ -13,9 +13,10 @@ from tests.integration.bootstrap import BASE_URL, get_auth_token, auth_headers
 def auth_token() -> str:
     """Get authentication token for test user."""
     try:
-        return get_auth_token()
+        token = get_auth_token()
     except RuntimeError as exc:
         pytest.skip(str(exc))
+    return token
 
 
 def test_e2e_cooperative_flow(auth_token):

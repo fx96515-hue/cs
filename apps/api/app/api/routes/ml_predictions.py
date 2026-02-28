@@ -1,5 +1,7 @@
 """API routes for ML predictions."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
@@ -41,8 +43,8 @@ router = APIRouter()
 @router.post("/predict-freight", response_model=FreightPrediction)
 async def predict_freight_cost(
     request: FreightPredictionRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Predict freight cost for a shipment."""
     service = FreightPredictionService(db)
@@ -59,8 +61,8 @@ async def predict_freight_cost(
 @router.post("/predict-freight/batch", response_model=BatchFreightPredictionResponse)
 async def predict_freight_batch(
     request: BatchFreightPredictionRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Batch predict freight costs."""
     service = FreightPredictionService(db)
@@ -87,7 +89,7 @@ async def predict_freight_batch(
 @router.post("/predict-freight/batch/async", response_model=AsyncTaskResponse)
 async def predict_freight_batch_async(
     request: BatchFreightPredictionRequest,
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Enqueue freight batch prediction."""
     payload = [item.model_dump(mode="json") for item in request.requests]
@@ -98,8 +100,8 @@ async def predict_freight_batch_async(
 @router.post("/predict-transit-time", response_model=TransitTimePrediction)
 async def predict_transit_time(
     request: TransitTimeRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Predict transit time for a route."""
     service = FreightPredictionService(db)
@@ -115,8 +117,8 @@ async def predict_transit_time(
 async def get_freight_cost_trend(
     route: str,
     months_back: int = 12,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Get historical freight cost trend for a route."""
     service = FreightPredictionService(db)
@@ -127,8 +129,8 @@ async def get_freight_cost_trend(
 @router.post("/predict-coffee-price", response_model=CoffeePricePrediction)
 async def predict_coffee_price(
     request: CoffeePricePredictionRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Predict coffee price based on attributes."""
     service = CoffeePricePredictionService(db)
@@ -150,8 +152,8 @@ async def predict_coffee_price(
 )
 async def predict_coffee_price_batch(
     request: BatchCoffeePricePredictionRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Batch predict coffee prices."""
     service = CoffeePricePredictionService(db)
@@ -181,7 +183,7 @@ async def predict_coffee_price_batch(
 @router.post("/predict-coffee-price/batch/async", response_model=AsyncTaskResponse)
 async def predict_coffee_price_batch_async(
     request: BatchCoffeePricePredictionRequest,
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Enqueue coffee price batch prediction."""
     payload = [item.model_dump(mode="json") for item in request.requests]
@@ -194,8 +196,8 @@ async def predict_coffee_price_batch_async(
 @router.post("/forecast-price-trend", response_model=PriceForecast)
 async def forecast_price_trend(
     request: PriceForecastRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Forecast price trend for a region."""
     service = CoffeePricePredictionService(db)
@@ -208,8 +210,8 @@ async def forecast_price_trend(
 @router.post("/optimal-purchase-timing", response_model=OptimalPurchaseTiming)
 async def calculate_optimal_purchase_timing(
     request: OptimalPurchaseTimingRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Calculate optimal purchase timing based on price forecasts."""
     service = CoffeePricePredictionService(db)
@@ -222,7 +224,8 @@ async def calculate_optimal_purchase_timing(
 
 @router.get("/tasks/{task_id}", response_model=AsyncTaskStatus)
 async def ml_task_status(
-    task_id: str, _=Depends(require_role("admin", "analyst", "viewer"))
+    task_id: str,
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Check async ML task status."""
     res = AsyncResult(task_id, app=celery)
@@ -239,8 +242,8 @@ async def ml_task_status(
 @router.get("/models/{model_id}/feature-importance", response_model=dict)
 async def get_feature_importance(
     model_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     """Get feature importances for a specific trained model.
 
@@ -342,8 +345,8 @@ async def get_feature_importance(
 @router.get("/models", response_model=list[MLModelResponse])
 async def list_ml_models(
     model_type: str | None = None,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     """List all ML models with optional type filter."""
     service = MLModelManagementService(db)
@@ -354,8 +357,8 @@ async def list_ml_models(
 @router.get("/models/{model_id}", response_model=dict)
 async def get_model_details(
     model_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     """Get detailed information about a specific model."""
     service = MLModelManagementService(db)
@@ -370,8 +373,8 @@ async def get_model_details(
 @router.post("/models/{model_id}/retrain", response_model=dict)
 async def retrain_model(
     model_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     """Trigger retraining for a specific model."""
     service = MLModelManagementService(db)
@@ -388,8 +391,8 @@ async def retrain_model(
 @router.post("/data/import-freight", response_model=DataImportResponse)
 async def import_freight_data(
     data: list[FreightDataImport],
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     """Import historical freight data for ML training."""
     service = DataCollectionService(db)
@@ -411,8 +414,8 @@ async def import_freight_data(
 @router.post("/data/import-prices", response_model=DataImportResponse)
 async def import_price_data(
     data: list[PriceDataImport],
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     """Import historical coffee price data for ML training."""
     service = DataCollectionService(db)

@@ -225,6 +225,332 @@ def _merge_json(existing: dict | None, new: dict) -> dict:
     return merged
 
 
+def _merge_entity_json(
+    entity: Any,
+    attr: str,
+    extracted: dict[str, Any],
+    keys: list[str],
+    updated_fields: list[str],
+    label: str,
+) -> None:
+    new_data = {k: extracted.get(k) for k in keys if extracted.get(k) is not None}
+    if not new_data:
+        return
+    existing = getattr(entity, attr)
+    setattr(entity, attr, _merge_json(existing, new_data))
+    updated_fields.append(label)
+
+
+def _merge_entity_meta(
+    entity: Any,
+    meta_key: str,
+    extracted: dict[str, Any],
+    keys: list[str],
+    updated_fields: list[str],
+    label: str,
+) -> None:
+    new_data = {k: extracted.get(k) for k in keys if extracted.get(k) is not None}
+    if not new_data:
+        return
+    entity.meta = entity.meta or {}
+    entity.meta.setdefault(meta_key, {})
+    entity.meta[meta_key] = _merge_json(entity.meta.get(meta_key), new_data)
+    updated_fields.append(label)
+
+
+def _apply_cooperative_updates(
+    entity: Cooperative,
+    extracted: dict[str, Any],
+) -> list[str]:
+    updated_fields: list[str] = []
+    for key, attr, max_len in [
+        ("region", "region", 255),
+        ("varieties", "varieties", 255),
+        ("certifications", "certifications", 255),
+    ]:
+        value = extracted.get(key)
+        if value and not getattr(entity, attr):
+            setattr(entity, attr, str(value)[:max_len])
+            updated_fields.append(attr)
+
+    if not entity.altitude_m:
+        alt_min = extracted.get("altitude_min_m")
+        alt_max = extracted.get("altitude_max_m")
+        if alt_min is not None and alt_max is not None:
+            entity.altitude_m = (float(alt_min) + float(alt_max)) / 2
+            updated_fields.append("altitude_m")
+        elif alt_min is not None:
+            entity.altitude_m = float(alt_min)
+            updated_fields.append("altitude_m")
+        elif alt_max is not None:
+            entity.altitude_m = float(alt_max)
+            updated_fields.append("altitude_m")
+
+    _merge_entity_json(
+        entity,
+        "operational_data",
+        extracted,
+        [
+            "farmer_count",
+            "total_hectares",
+            "annual_production_kg",
+            "storage_capacity_kg",
+            "has_dry_mill",
+            "has_wet_mill",
+            "has_cupping_lab",
+            "processing_facilities",
+            "years_exporting",
+            "main_export_destinations",
+            "founding_year",
+            "processing_methods",
+        ],
+        updated_fields,
+        "operational_data",
+    )
+
+    _merge_entity_json(
+        entity,
+        "export_readiness",
+        extracted,
+        [
+            "has_export_license",
+            "senasa_registered",
+            "phytosanitary_cert",
+            "customs_broker",
+            "document_coordinator",
+            "incoterms_experience",
+            "minimum_order_kg",
+            "lead_time_days",
+            "container_experience",
+            "last_export_year",
+        ],
+        updated_fields,
+        "export_readiness",
+    )
+
+    _merge_entity_json(
+        entity,
+        "financial_data",
+        extracted,
+        [
+            "annual_revenue_usd",
+            "export_volume_kg",
+            "fob_price_per_kg",
+            "premium_over_cmarket_pct",
+            "payment_terms",
+            "bank_name",
+            "accepts_letter_of_credit",
+        ],
+        updated_fields,
+        "financial_data",
+    )
+
+    _merge_entity_json(
+        entity,
+        "social_impact_data",
+        extracted,
+        [
+            "female_farmer_pct",
+            "youth_programs",
+            "education_programs",
+            "health_programs",
+            "environmental_programs",
+            "community_projects",
+            "fair_trade_premium_use",
+        ],
+        updated_fields,
+        "social_impact_data",
+    )
+
+    _merge_entity_json(
+        entity,
+        "digital_footprint",
+        extracted,
+        [
+            "social_media_facebook",
+            "social_media_instagram",
+            "social_media_linkedin",
+            "youtube_channel",
+            "has_online_shop",
+            "languages_spoken",
+            "contact_phone",
+            "contact_person",
+            "contact_role",
+        ],
+        updated_fields,
+        "digital_footprint",
+    )
+
+    _merge_entity_meta(
+        entity,
+        "quality",
+        extracted,
+        [
+            "cupping_score_avg",
+            "cupping_score_range",
+            "cup_profile_notes",
+            "defect_rate_pct",
+            "moisture_content_pct",
+            "screen_size",
+            "sca_member",
+            "quality_control_process",
+            "sample_availability",
+        ],
+        updated_fields,
+        "meta.quality",
+    )
+
+    _merge_entity_meta(
+        entity,
+        "logistics",
+        extracted,
+        [
+            "nearest_port",
+            "transport_to_port_hours",
+            "warehouse_location",
+            "cold_storage_available",
+        ],
+        updated_fields,
+        "meta.logistics",
+    )
+
+    return updated_fields
+
+
+def _apply_roaster_updates(
+    entity: Roaster,
+    extracted: dict[str, Any],
+) -> list[str]:
+    updated_fields: list[str] = []
+
+    if extracted.get("city") and not entity.city:
+        entity.city = str(extracted["city"])[:255]
+        updated_fields.append("city")
+
+    if extracted.get("peru_focus") is not None and not entity.peru_focus:
+        entity.peru_focus = bool(extracted["peru_focus"])
+        updated_fields.append("peru_focus")
+    elif extracted.get("buys_from_peru") is not None and not entity.peru_focus:
+        entity.peru_focus = bool(extracted["buys_from_peru"])
+        updated_fields.append("peru_focus")
+
+    if extracted.get("specialty_focus") is not None:
+        entity.specialty_focus = bool(extracted["specialty_focus"])
+        updated_fields.append("specialty_focus")
+    elif extracted.get("third_wave") is not None:
+        entity.specialty_focus = bool(extracted["third_wave"])
+        updated_fields.append("specialty_focus")
+
+    if extracted.get("price_position") and not entity.price_position:
+        entity.price_position = str(extracted["price_position"])[:64]
+        updated_fields.append("price_position")
+
+    _merge_entity_meta(
+        entity,
+        "sourcing",
+        extracted,
+        [
+            "origin_countries",
+            "peru_regions_sourced",
+            "green_coffee_suppliers",
+            "buys_direct",
+            "annual_green_purchase_kg",
+            "preferred_certifications",
+            "preferred_processing",
+            "cupping_score_minimum",
+        ],
+        updated_fields,
+        "meta.sourcing",
+    )
+
+    _merge_entity_meta(
+        entity,
+        "business",
+        extracted,
+        [
+            "founding_year",
+            "employees_count",
+            "annual_volume_kg",
+            "roasting_capacity_kg_day",
+            "roaster_brand",
+            "roasting_style",
+            "direct_trade",
+            "single_origin_focus",
+        ],
+        updated_fields,
+        "meta.business",
+    )
+
+    _merge_entity_meta(
+        entity,
+        "sales",
+        extracted,
+        [
+            "has_cafe",
+            "cafe_count",
+            "has_online_shop",
+            "sells_wholesale",
+            "sells_subscriptions",
+            "distribution_channels",
+        ],
+        updated_fields,
+        "meta.sales",
+    )
+
+    _merge_entity_meta(
+        entity,
+        "digital",
+        extracted,
+        [
+            "social_media_instagram",
+            "social_media_facebook",
+            "social_media_linkedin",
+            "contact_phone",
+            "contact_person",
+            "contact_role",
+            "languages_spoken",
+        ],
+        updated_fields,
+        "meta.digital",
+    )
+
+    _merge_entity_meta(
+        entity,
+        "sustainability",
+        extracted,
+        [
+            "sustainability_commitment",
+            "co2_neutral",
+            "packaging_sustainable",
+            "transparency_reports",
+        ],
+        updated_fields,
+        "meta.sustainability",
+    )
+
+    return updated_fields
+
+
+def _apply_common_updates(
+    entity: Cooperative | Roaster,
+    extracted: dict[str, Any],
+    now: datetime,
+) -> list[str]:
+    updated_fields: list[str] = []
+
+    if extracted.get("contact_email") and not entity.contact_email:
+        entity.contact_email = str(extracted["contact_email"])[:320]
+        updated_fields.append("contact_email")
+
+    if extracted.get("website") and not entity.website:
+        entity.website = _normalize_url(str(extracted["website"]))[:500]
+        updated_fields.append("website")
+
+    entity.last_verified_at = now
+    updated_fields.append("last_verified_at")
+    return updated_fields
+
+
 def _cooperative_enrichment_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -493,330 +819,11 @@ def enrich_entity(
 
         updated_fields: list[str] = []
         if extracted:
-            # Use isinstance checks for proper type narrowing
             if isinstance(entity, Cooperative):
-                # Basic fields
-                if extracted.get("region") and not entity.region:
-                    entity.region = str(extracted["region"])[:255]
-                    updated_fields.append("region")
-                if extracted.get("varieties") and not entity.varieties:
-                    entity.varieties = str(extracted["varieties"])[:255]
-                    updated_fields.append("varieties")
-                if extracted.get("certifications") and not entity.certifications:
-                    entity.certifications = str(extracted["certifications"])[:255]
-                    updated_fields.append("certifications")
-
-                # altitude_m from altitude_min_m or altitude_max_m
-                if not entity.altitude_m:
-                    alt_min = extracted.get("altitude_min_m")
-                    alt_max = extracted.get("altitude_max_m")
-                    if alt_min is not None and alt_max is not None:
-                        entity.altitude_m = (float(alt_min) + float(alt_max)) / 2
-                        updated_fields.append("altitude_m")
-                    elif alt_min is not None:
-                        entity.altitude_m = float(alt_min)
-                        updated_fields.append("altitude_m")
-                    elif alt_max is not None:
-                        entity.altitude_m = float(alt_max)
-                        updated_fields.append("altitude_m")
-
-                # Operational Data JSON
-                operational_data_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "farmer_count",
-                        "total_hectares",
-                        "annual_production_kg",
-                        "storage_capacity_kg",
-                        "has_dry_mill",
-                        "has_wet_mill",
-                        "has_cupping_lab",
-                        "processing_facilities",
-                        "years_exporting",
-                        "main_export_destinations",
-                        "founding_year",
-                        "processing_methods",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if operational_data_new:
-                    entity.operational_data = _merge_json(
-                        entity.operational_data, operational_data_new
-                    )
-                    updated_fields.append("operational_data")
-
-                # Export Readiness JSON
-                export_readiness_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "has_export_license",
-                        "senasa_registered",
-                        "phytosanitary_cert",
-                        "customs_broker",
-                        "document_coordinator",
-                        "incoterms_experience",
-                        "minimum_order_kg",
-                        "lead_time_days",
-                        "container_experience",
-                        "last_export_year",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if export_readiness_new:
-                    entity.export_readiness = _merge_json(
-                        entity.export_readiness, export_readiness_new
-                    )
-                    updated_fields.append("export_readiness")
-
-                # Financial Data JSON
-                financial_data_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "annual_revenue_usd",
-                        "export_volume_kg",
-                        "fob_price_per_kg",
-                        "premium_over_cmarket_pct",
-                        "payment_terms",
-                        "bank_name",
-                        "accepts_letter_of_credit",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if financial_data_new:
-                    entity.financial_data = _merge_json(
-                        entity.financial_data, financial_data_new
-                    )
-                    updated_fields.append("financial_data")
-
-                # Social Impact Data JSON
-                social_impact_data_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "female_farmer_pct",
-                        "youth_programs",
-                        "education_programs",
-                        "health_programs",
-                        "environmental_programs",
-                        "community_projects",
-                        "fair_trade_premium_use",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if social_impact_data_new:
-                    entity.social_impact_data = _merge_json(
-                        entity.social_impact_data, social_impact_data_new
-                    )
-                    updated_fields.append("social_impact_data")
-
-                # Digital Footprint JSON
-                digital_footprint_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "social_media_facebook",
-                        "social_media_instagram",
-                        "social_media_linkedin",
-                        "youtube_channel",
-                        "has_online_shop",
-                        "languages_spoken",
-                        "contact_phone",
-                        "contact_person",
-                        "contact_role",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if digital_footprint_new:
-                    entity.digital_footprint = _merge_json(
-                        entity.digital_footprint, digital_footprint_new
-                    )
-                    updated_fields.append("digital_footprint")
-
-                # Quality data in meta["quality"]
-                entity.meta = entity.meta or {}
-                quality_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "cupping_score_avg",
-                        "cupping_score_range",
-                        "cup_profile_notes",
-                        "defect_rate_pct",
-                        "moisture_content_pct",
-                        "screen_size",
-                        "sca_member",
-                        "quality_control_process",
-                        "sample_availability",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if quality_new:
-                    entity.meta.setdefault("quality", {})
-                    entity.meta["quality"] = _merge_json(
-                        entity.meta.get("quality"), quality_new
-                    )
-                    updated_fields.append("meta.quality")
-
-                # Logistics data in meta["logistics"]
-                logistics_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "nearest_port",
-                        "transport_to_port_hours",
-                        "warehouse_location",
-                        "cold_storage_available",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if logistics_new:
-                    entity.meta.setdefault("logistics", {})
-                    entity.meta["logistics"] = _merge_json(
-                        entity.meta.get("logistics"), logistics_new
-                    )
-                    updated_fields.append("meta.logistics")
-
+                updated_fields.extend(_apply_cooperative_updates(entity, extracted))
             elif isinstance(entity, Roaster):
-                # Basic fields
-                if extracted.get("city") and not entity.city:
-                    entity.city = str(extracted["city"])[:255]
-                    updated_fields.append("city")
-
-                # Classification fields
-                if extracted.get("peru_focus") is not None and not entity.peru_focus:
-                    entity.peru_focus = bool(extracted["peru_focus"])
-                    updated_fields.append("peru_focus")
-                elif (
-                    extracted.get("buys_from_peru") is not None
-                    and not entity.peru_focus
-                ):
-                    entity.peru_focus = bool(extracted["buys_from_peru"])
-                    updated_fields.append("peru_focus")
-
-                if extracted.get("specialty_focus") is not None:
-                    entity.specialty_focus = bool(extracted["specialty_focus"])
-                    updated_fields.append("specialty_focus")
-                elif extracted.get("third_wave") is not None:
-                    entity.specialty_focus = bool(extracted["third_wave"])
-                    updated_fields.append("specialty_focus")
-
-                if extracted.get("price_position") and not entity.price_position:
-                    entity.price_position = str(extracted["price_position"])[:64]
-                    updated_fields.append("price_position")
-
-                # Meta fields
-                entity.meta = entity.meta or {}
-
-                # Sourcing data in meta["sourcing"]
-                sourcing_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "origin_countries",
-                        "peru_regions_sourced",
-                        "green_coffee_suppliers",
-                        "buys_direct",
-                        "annual_green_purchase_kg",
-                        "preferred_certifications",
-                        "preferred_processing",
-                        "cupping_score_minimum",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if sourcing_new:
-                    entity.meta.setdefault("sourcing", {})
-                    entity.meta["sourcing"] = _merge_json(
-                        entity.meta.get("sourcing"), sourcing_new
-                    )
-                    updated_fields.append("meta.sourcing")
-
-                # Business data in meta["business"]
-                business_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "founding_year",
-                        "employees_count",
-                        "annual_volume_kg",
-                        "roasting_capacity_kg_day",
-                        "roaster_brand",
-                        "roasting_style",
-                        "direct_trade",
-                        "single_origin_focus",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if business_new:
-                    entity.meta.setdefault("business", {})
-                    entity.meta["business"] = _merge_json(
-                        entity.meta.get("business"), business_new
-                    )
-                    updated_fields.append("meta.business")
-
-                # Sales data in meta["sales"]
-                sales_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "has_cafe",
-                        "cafe_count",
-                        "has_online_shop",
-                        "sells_wholesale",
-                        "sells_subscriptions",
-                        "distribution_channels",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if sales_new:
-                    entity.meta.setdefault("sales", {})
-                    entity.meta["sales"] = _merge_json(
-                        entity.meta.get("sales"), sales_new
-                    )
-                    updated_fields.append("meta.sales")
-
-                # Digital data in meta["digital"]
-                digital_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "social_media_instagram",
-                        "social_media_facebook",
-                        "social_media_linkedin",
-                        "contact_phone",
-                        "contact_person",
-                        "contact_role",
-                        "languages_spoken",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if digital_new:
-                    entity.meta.setdefault("digital", {})
-                    entity.meta["digital"] = _merge_json(
-                        entity.meta.get("digital"), digital_new
-                    )
-                    updated_fields.append("meta.digital")
-
-                # Sustainability data in meta["sustainability"]
-                sustainability_new = {
-                    k: extracted.get(k)
-                    for k in [
-                        "sustainability_commitment",
-                        "co2_neutral",
-                        "packaging_sustainable",
-                        "transparency_reports",
-                    ]
-                    if extracted.get(k) is not None
-                }
-                if sustainability_new:
-                    entity.meta.setdefault("sustainability", {})
-                    entity.meta["sustainability"] = _merge_json(
-                        entity.meta.get("sustainability"), sustainability_new
-                    )
-                    updated_fields.append("meta.sustainability")
-
-            # Common fields for both entity types
-            if extracted.get("contact_email") and not entity.contact_email:
-                entity.contact_email = str(extracted["contact_email"])[:320]
-                updated_fields.append("contact_email")
-
-            if extracted.get("website") and not entity.website:
-                entity.website = _normalize_url(str(extracted["website"]))[:500]
-                updated_fields.append("website")
-
-            entity.last_verified_at = now
-            updated_fields.append("last_verified_at")
+                updated_fields.extend(_apply_roaster_updates(entity, extracted))
+            updated_fields.extend(_apply_common_updates(entity, extracted, now))
             db.add(entity)
 
         db.add(
@@ -870,7 +877,7 @@ def enrich_entity(
                     WebExtract.entity_id == entity_id,
                     WebExtract.url == target_url,
                 )
-                we = db.scalar(stmt_retry)
+                db.scalar(stmt_retry)
         except Exception:
             # If even recording the failed extract fails, swallow to preserve
             # original error path and return failure payload below.

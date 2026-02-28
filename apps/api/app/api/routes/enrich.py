@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -15,8 +17,8 @@ def enrich(
     entity_type: str,
     entity_id: int,
     payload: EnrichRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     if entity_type not in ("cooperative", "roaster"):
         raise HTTPException(

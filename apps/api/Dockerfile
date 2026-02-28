@@ -42,10 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq5 \
     libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Keep system pip patched for vulnerability scans (even if unused at runtime).
-RUN python -m pip install --upgrade pip==26.0
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m pip install --upgrade pip==26.0
 
 WORKDIR /app
 

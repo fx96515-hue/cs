@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -15,13 +17,17 @@ from app.services.dedup import suggest_duplicates, merge_entities, get_merge_his
 router = APIRouter()
 
 
-@router.get("/suggest", response_model=list[DedupPairOut])
+@router.get(
+    "/suggest",
+    response_model=list[DedupPairOut],
+    responses={400: {"description": "Invalid request"}},
+)
 def suggest(
     entity_type: str,
     threshold: float = 90.0,
     limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     try:
         return suggest_duplicates(
@@ -31,11 +37,15 @@ def suggest(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/merge", response_model=MergeResultOut)
+@router.post(
+    "/merge",
+    response_model=MergeResultOut,
+    responses={400: {"description": "Invalid request"}},
+)
 def merge(
     payload: MergeEntitiesIn,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     """Merge two entities."""
     try:
@@ -54,8 +64,8 @@ def merge(
 def history(
     entity_type: str,
     limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     """View merge history."""
     return get_merge_history(db, entity_type=entity_type, limit=limit)

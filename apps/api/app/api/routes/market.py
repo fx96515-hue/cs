@@ -262,7 +262,7 @@ async def websocket_price(
                 data = data.decode("utf-8")
             await websocket.send_text(data)
     except WebSocketDisconnect:
-        pass
+        log.info("ws_price_disconnect")
     except Exception as exc:
         log.warning("ws_price_error", error=str(exc))
     finally:

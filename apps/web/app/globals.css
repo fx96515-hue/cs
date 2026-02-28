@@ -381,21 +381,21 @@ a {
 }
 
 .badgeOk {
-  color: #c9f7d6;
-  border-color: rgba(64, 214, 123, 0.35);
-  background: rgba(64, 214, 123, 0.12);
+  color: #f1fff5;
+  border-color: rgba(64, 214, 123, 0.65);
+  background: rgba(26, 96, 56, 0.8);
 }
 
 .badgeWarn {
-  color: #ffe7b3;
-  border-color: rgba(255, 183, 64, 0.35);
-  background: rgba(255, 183, 64, 0.12);
+  color: #fff4d6;
+  border-color: rgba(255, 183, 64, 0.7);
+  background: rgba(108, 74, 20, 0.85);
 }
 
 .badgeErr {
-  color: #ffd0d0;
-  border-color: rgba(228, 111, 93, 0.35);
-  background: rgba(228, 111, 93, 0.12);
+  color: #ffe9e9;
+  border-color: rgba(228, 111, 93, 0.7);
+  background: rgba(110, 28, 22, 0.85);
 }
 
 .mono {
@@ -880,12 +880,12 @@ a {
 }
 
 .authError {
-  color: #ffb0a3;
+  color: #ffeaea;
   font-size: 13px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(228, 111, 93, 0.12);
-  border: 1px solid rgba(228, 111, 93, 0.25);
+  background: rgba(110, 28, 22, 0.85);
+  border: 1px solid rgba(228, 111, 93, 0.65);
 }
 
 .authFooter {
