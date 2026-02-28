@@ -27,7 +27,7 @@ GH_TOKEN = (os.getenv("GITHUB_TOKEN") or "").strip()
 GH_REPO = (os.getenv("GITHUB_REPOSITORY") or "").strip()  # owner/repo
 
 # Marker used to map Sonar issue -> GitHub issue.
-ISSUE_KEY_RE = re.compile(r"(?im)^\s*Sonar Issue Key:\s*([A-Za-z0-9_\-:]+)\s*$")
+ISSUE_KEY_RE = re.compile(r"(?im)^\s*Sonar Issue Key:\s*([\\w:-]+)\s*$")
 
 
 @dataclass(frozen=True)

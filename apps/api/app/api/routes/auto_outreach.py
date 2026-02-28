@@ -63,7 +63,7 @@ def get_suggestions(
     entity_type: Literal["cooperative", "roaster"],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
-    limit: int = Query(20, le=100),
+    limit: Annotated[int, Query(20, le=100)],
 ):
     """Get AI-suggested outreach targets."""
     try:
