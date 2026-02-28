@@ -159,6 +159,13 @@ def _validate_public_http_url(url: str) -> str:
 
 
 def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]]:
+    """
+    Fetch and extract text from a user-supplied URL.
+
+    IMPORTANT: All network requests in this function MUST use URLs that have
+    been passed through `_validate_public_http_url`, which enforces scheme,
+    hostname, port, and IP-based restrictions to mitigate SSRF.
+    """
     # Validate the initial URL before making any request.
     current_url = _validate_public_http_url(url)
     headers = {
@@ -173,7 +180,9 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
     ) as client:
         redirects_followed = 0
         while True:
-            r = client.get(current_url)  # NOSONAR - URL validated via _validate_public_http_url
+            # `current_url` has always been produced by `_validate_public_http_url`
+            # and thus is safe to use as the request target.
+            r = client.get(current_url)
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break
