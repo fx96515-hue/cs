@@ -173,7 +173,7 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
     ) as client:
         redirects_followed = 0
         while True:
-            r = client.get(current_url)
+            r = client.get(current_url)  # NOSONAR - URL validated via _validate_public_http_url
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break

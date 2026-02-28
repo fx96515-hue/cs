@@ -3,7 +3,7 @@ RUN npm install -g npm@latest
 
 FROM base AS deps
 WORKDIR /usr/src/app
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
 FROM base AS builder
