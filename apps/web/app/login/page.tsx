@@ -27,23 +27,81 @@ export default function LoginPage() {
   }
 
   return (
-    <div>
-      <h1>Anmeldung</h1>
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 360 }}>
-        <label>
-          E-Mail
-          <input value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%" }} />
-        </label>
-        <label>
-          Passwort
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%" }} />
-        </label>
-        <button type="submit">Anmelden</button>
-        {error && <div style={{ color: "crimson" }}>{error}</div>}
-      </form>
-      <p style={{ opacity: 0.7 }}>
-        Hinweis: Beim ersten Start bitte im Backend einmal <code>POST /auth/dev/bootstrap</code> ausführen.
-      </p>
+    <div className="authRoot">
+      <div className="authShell">
+        <section className="authHero">
+          <div className="authBrand">
+            <div className="authBadge">CS</div>
+            <div>
+              <div className="authBrandTitle">CoffeeStudio</div>
+              <div className="authBrandSub">Intelligence Platform</div>
+            </div>
+          </div>
+          <h1 className="authTitle">Sourcing. Risk. Signal.</h1>
+          <p className="authLead">
+            Secure access to market intelligence, supplier quality, and
+            operational workflows. Built for fast, auditable decisions.
+          </p>
+          <div className="authHighlights">
+            <div className="authHighlight">
+              <div className="authHighlightValue">384</div>
+              <div className="authHighlightLabel">Embedding dims</div>
+            </div>
+            <div className="authHighlight">
+              <div className="authHighlightValue">17</div>
+              <div className="authHighlightLabel">Demo coops</div>
+            </div>
+            <div className="authHighlight">
+              <div className="authHighlightValue">8</div>
+              <div className="authHighlightLabel">Roasters</div>
+            </div>
+          </div>
+          <div className="authNote">
+            First run: call <code>POST /auth/dev/bootstrap</code> in the backend.
+          </div>
+        </section>
+
+        <section className="authPanel">
+          <div className="authPanelHeader">
+            <div className="authPanelTitle">Sign in</div>
+            <div className="authPanelSub">Use your admin credentials</div>
+          </div>
+
+          <form onSubmit={onSubmit} className="authForm">
+            <label className="field">
+              <span className="fieldLabel">Email</span>
+              <input
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@coffeestudio.com"
+                autoComplete="email"
+              />
+            </label>
+            <label className="field">
+              <span className="fieldLabel">Password</span>
+              <input
+                className="input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your secure password"
+                autoComplete="current-password"
+              />
+            </label>
+            <button type="submit" className="btn btnPrimary btnFull">
+              Access dashboard
+            </button>
+            {error && <div className="authError">{error}</div>}
+          </form>
+
+          <div className="authFooter">
+            <div className="authFootItem">End-to-end audit trail</div>
+            <div className="authFootItem">Real-time price signals</div>
+            <div className="authFootItem">ML scoring workflows</div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
