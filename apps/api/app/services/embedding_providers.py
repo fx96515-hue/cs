@@ -6,6 +6,7 @@ and OpenAI (cloud, 1536 dim) embeddings.
 
 from __future__ import annotations
 
+import inspect
 import structlog
 from abc import ABC, abstractmethod
 from typing import Any
@@ -83,8 +84,12 @@ class OllamaEmbeddingProvider(BaseEmbeddingProvider):
                     },
                     timeout=self.timeout,
                 )
-                response.raise_for_status()
+                status_result = response.raise_for_status()
+                if inspect.isawaitable(status_result):
+                    await status_result
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
 
                 # Ollama returns {"embeddings": [[0.1, 0.2, ...]]}
                 embeddings = data.get("embeddings", [[]])
@@ -168,8 +173,12 @@ class OpenAIEmbeddingProvider(BaseEmbeddingProvider):
                     },
                     timeout=self.timeout,
                 )
-                response.raise_for_status()
+                status_result = response.raise_for_status()
+                if inspect.isawaitable(status_result):
+                    await status_result
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
 
                 embedding = data["data"][0]["embedding"]
                 log.info(

@@ -4,6 +4,7 @@ from celery.schedules import crontab
 
 from app.core.config import settings
 
+
 def _env_flag(name: str, default: bool = False) -> bool:
     raw = os.getenv(name)
     if raw is None:

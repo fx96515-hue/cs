@@ -24,9 +24,11 @@ log = logging.getLogger(__name__)
 # Feature flag
 # ---------------------------------------------------------------------------
 
-MULTI_COUNTRY_ENABLED: bool = (
-    os.getenv("MULTI_COUNTRY_ENABLED", "false").lower() in {"1", "true", "yes"}
-)
+MULTI_COUNTRY_ENABLED: bool = os.getenv("MULTI_COUNTRY_ENABLED", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -70,16 +72,16 @@ class DataSourceConfig:
 class CountryConfig:
     """Full configuration for a coffee-origin country."""
 
-    code: str                             # ISO-3166-1 alpha-2
-    name: str                             # display name
-    currency: str                         # ISO-4217 currency code
+    code: str  # ISO-3166-1 alpha-2
+    name: str  # display name
+    currency: str  # ISO-4217 currency code
     currency_symbol: str
     flag_emoji: str
     data_source: DataSourceConfig
     harvest_calendar: HarvestCalendar
     discovery_cooperative_queries: List[str] = field(default_factory=list)
     discovery_roaster_queries: List[str] = field(default_factory=list)
-    ml_country_feature: str = ""          # encoded label for ML models
+    ml_country_feature: str = ""  # encoded label for ML models
     default_port: str = ""
 
 

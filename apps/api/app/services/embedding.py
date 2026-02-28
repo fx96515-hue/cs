@@ -7,6 +7,7 @@ legacy OpenAI path. The active provider is selected via the
 
 from __future__ import annotations
 
+import inspect
 import structlog
 from typing import Union
 
@@ -104,8 +105,12 @@ class EmbeddingService:
                     },
                     timeout=self.timeout,
                 )
-                response.raise_for_status()
+                status_result = response.raise_for_status()
+                if inspect.isawaitable(status_result):
+                    await status_result
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
                 embedding = data["data"][0]["embedding"]
                 log.info(
                     "embedding_generated",
@@ -163,8 +168,12 @@ class EmbeddingService:
                     },
                     timeout=self.timeout * 2,
                 )
-                response.raise_for_status()
+                status_result = response.raise_for_status()
+                if inspect.isawaitable(status_result):
+                    await status_result
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
 
                 results: list[list[float] | None] = [None] * len(texts)
                 for (orig_idx, _), emb_data in zip(valid_texts, data["data"]):

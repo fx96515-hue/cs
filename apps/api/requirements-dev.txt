@@ -4,6 +4,7 @@ pytest==8.3.4
 pytest-asyncio==0.24.0
 pytest-cov==7.0.0
 httpx==0.28.1
+requests==2.32.5
 
 # QA System dependencies
 openai>=1.0.0

@@ -12,7 +12,12 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.audit import AuditLogger
 from app.core.config import settings
-from app.core.security import create_access_token, generate_csrf_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    generate_csrf_token,
+    hash_password,
+    verify_password,
+)
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse, UserOut
@@ -36,7 +41,12 @@ def login(
     if not user or not verify_password(payload.password, user.password_hash):
         ip_address = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
-        logger.warning("auth.login_failed", email=payload.email, ip=ip_address, user_agent=user_agent)
+        logger.warning(
+            "auth.login_failed",
+            email=payload.email,
+            ip=ip_address,
+            user_agent=user_agent,
+        )
 
         AuditLogger.log_auth_event(
             email=payload.email,
@@ -54,7 +64,9 @@ def login(
     if not user.is_active:
         ip_address = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
-        logger.warning("auth.inactive_user_login_attempt", email=user.email, ip=ip_address)
+        logger.warning(
+            "auth.inactive_user_login_attempt", email=user.email, ip=ip_address
+        )
 
         AuditLogger.log_auth_event(
             email=user.email,
@@ -87,7 +99,7 @@ def login(
 
 @router.get("/me")
 def me(user: Annotated[User, Depends(get_current_user)]) -> UserOut:
-    return user
+    return UserOut.model_validate(user)
 
 
 @router.get("/csrf-token")
@@ -103,10 +115,6 @@ def dev_bootstrap(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    # Dev-only bootstrap: creates admin if empty.
-    if db.query(User).count() > 0:
-        return {"status": "skipped"}
-
     if not settings.BOOTSTRAP_ADMIN_PASSWORD:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -120,6 +128,18 @@ def dev_bootstrap(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid BOOTSTRAP_ADMIN_EMAIL: {e}",
         ) from e
+
+    admin = (
+        db.query(User)
+        .filter(User.email == settings.BOOTSTRAP_ADMIN_EMAIL)
+        .first()
+    )
+    if admin:
+        admin.password_hash = hash_password(settings.BOOTSTRAP_ADMIN_PASSWORD)
+        admin.is_active = True
+        admin.role = "admin"
+        db.commit()
+        return {"status": "updated", "email": admin.email}
 
     admin = User(
         email=settings.BOOTSTRAP_ADMIN_EMAIL,

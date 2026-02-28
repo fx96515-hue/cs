@@ -134,6 +134,7 @@ class SourcingAnalysisResponse(BaseModel):
     cooperative_name: str
     region: str | None = None
     analyzed_at: str
+    total_score: float
     supply_capacity: SupplyCapacityResponse
     export_readiness: ExportReadinessResponse
     communication_quality: CommunicationQualityResponse

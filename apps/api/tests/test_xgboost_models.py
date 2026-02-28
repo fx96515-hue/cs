@@ -303,7 +303,9 @@ class TestModelFactory:
         from app.ml.xgboost_freight_model import XGBoostFreightCostModel
 
         assert isinstance(factory_module.create_price_model(), XGBoostCoffeePriceModel)
-        assert isinstance(factory_module.create_freight_model(), XGBoostFreightCostModel)
+        assert isinstance(
+            factory_module.create_freight_model(), XGBoostFreightCostModel
+        )
 
     def test_unknown_model_type_falls_back_to_rf(self, monkeypatch):
         """Unknown ML_MODEL_TYPE should fall back to random_forest."""

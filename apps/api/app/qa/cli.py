@@ -1,14 +1,15 @@
 """AI-powered quality assurance command-line interface."""
 
 import os
-import sys
 import subprocess
 from pathlib import Path
 
 try:
     import click
 except ImportError:
-    raise SystemExit("ERROR: click package is required. Install with: pip install click")
+    raise SystemExit(
+        "ERROR: click package is required. Install with: pip install click"
+    )
 
 from .failure_analyzer import AIFailureAnalyzer
 from .auto_fixer import AutoFixer

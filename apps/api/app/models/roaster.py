@@ -1,11 +1,14 @@
 from datetime import datetime
 from sqlalchemy import String, Text, JSON, Float, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
+
 try:
     from pgvector.sqlalchemy import Vector
 except Exception:  # pragma: no cover - fallback for test environments without pgvector
+
     def Vector(dim: int):
         return JSON
+
 
 from app.db.session import Base
 from app.models.common import TimestampMixin

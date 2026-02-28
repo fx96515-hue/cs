@@ -17,7 +17,9 @@ class GraphEdge(BaseModel):
 
     source: str  # Node ID
     target: str  # Node ID
-    edge_type: str  # LOCATED_IN, HAS_CERTIFICATION, SIMILAR_PROFILE, SOURCES_FROM, TRADES_WITH
+    edge_type: (
+        str  # LOCATED_IN, HAS_CERTIFICATION, SIMILAR_PROFILE, SOURCES_FROM, TRADES_WITH
+    )
     weight: float = 1.0
 
 

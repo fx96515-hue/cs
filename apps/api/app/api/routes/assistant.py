@@ -1,6 +1,7 @@
 """
 Assistant Chat API endpoints (POST /assistant/chat, GET /assistant/status).
 """
+
 from __future__ import annotations
 
 from typing import Annotated
@@ -59,7 +60,9 @@ async def chat(
     if not service.is_available():
         provider_info = service.get_provider_info()
         provider = provider_info["provider"]
-        log.warning("assistant_unavailable", provider=provider, user=auth_info.get("email"))
+        log.warning(
+            "assistant_unavailable", provider=provider, user=auth_info.get("email")
+        )
         raise HTTPException(status_code=503, detail=_provider_error(provider))
 
     log.info(

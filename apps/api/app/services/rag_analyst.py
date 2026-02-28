@@ -277,7 +277,7 @@ WICHTIGE RICHTLINIEN:
 
         if not context:
             base_prompt += (
-                "\nAktuell sind keine spezifischen Quelldaten verfügbar.\n"
+                "\nAktuell sind keine spezifischen Daten verfügbar.\n"
                 "\n"
                 "Zusätzliche Richtlinien für diese Situation:\n"
                 "- Erkläre ausdrücklich, dass du für diese Antwort keine konkreten Quellen/Entities zur Verfügung hast.\n"

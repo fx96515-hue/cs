@@ -1,4 +1,4 @@
-﻿"""Utilities for parsing test output and extracting failure information."""
+"""Utilities for parsing test output and extracting failure information."""
 
 import re
 import json
@@ -274,4 +274,3 @@ def check_safety() -> dict[str, Any]:
         return {"passed": True, "message": "Safety not installed (optional)"}
     except Exception as e:
         return {"passed": False, "message": f"Error running Safety: {e}"}
-

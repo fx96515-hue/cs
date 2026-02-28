@@ -200,9 +200,7 @@ def detect_price_anomalies(
             continue
 
         # Skip if an open alert already exists for this observation
-        if _existing_unacknowledged(
-            db, "market", latest_id, "price_anomaly", key
-        ):
+        if _existing_unacknowledged(db, "market", latest_id, "price_anomaly", key):
             continue
 
         severity = "critical" if z > 5.0 else "warning"

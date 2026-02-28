@@ -5,6 +5,7 @@ Supports Ollama (local, no API key), OpenAI, and Groq providers.
 
 from __future__ import annotations
 
+import inspect
 import json
 import structlog
 from abc import ABC, abstractmethod
@@ -105,6 +106,8 @@ class OllamaProvider(BaseLLMProvider):
                 )
                 response.raise_for_status()
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
 
                 content = data["message"]["content"]
                 tokens_used = data.get("eval_count")
@@ -135,6 +138,10 @@ class OllamaProvider(BaseLLMProvider):
             )
         except Exception as e:
             log.error("ollama_chat_completion_failed", error=str(e))
+            if "connection refused" in str(e).lower():
+                raise Exception(
+                    "Ollama nicht erreichbar. Starten Sie Ollama mit: ollama serve"
+                )
             raise
 
     async def stream_chat_completion(
@@ -242,6 +249,8 @@ class OpenAIProvider(BaseLLMProvider):
                 )
                 response.raise_for_status()
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
 
                 content = data["choices"][0]["message"]["content"]
                 tokens_used = data.get("usage", {}).get("total_tokens")
@@ -378,6 +387,8 @@ class GroqProvider(BaseLLMProvider):
                 )
                 response.raise_for_status()
                 data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
 
                 content = data["choices"][0]["message"]["content"]
                 tokens_used = data.get("usage", {}).get("total_tokens")

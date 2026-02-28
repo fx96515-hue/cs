@@ -1,6 +1,6 @@
 """Auto-outreach API routes."""
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,7 @@ from app.services import auto_outreach
 
 router = APIRouter()
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {"description": "Invalid request"},
     500: {"description": "Server error"},
 }
@@ -54,7 +54,11 @@ def create_campaign(
         raise HTTPException(status_code=500, detail="Campaign creation failed")
 
 
-@router.get("/suggestions", response_model=list[OutreachSuggestionOut], responses=ERROR_RESPONSES)
+@router.get(
+    "/suggestions",
+    response_model=list[OutreachSuggestionOut],
+    responses=ERROR_RESPONSES,
+)
 def get_suggestions(
     entity_type: Literal["cooperative", "roaster"],
     db: Annotated[Session, Depends(get_db)],

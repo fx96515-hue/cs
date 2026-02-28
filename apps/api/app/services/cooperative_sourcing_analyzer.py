@@ -66,6 +66,7 @@ class CooperativeSourcingAnalyzer:
             + pricing["competitiveness_score"] * 0.15
             + communication["score"] * 0.10
         )
+        total_score_rounded = round(total_score, 2)
 
         # Generate recommendation
         recommendation = self.generate_recommendation(
@@ -83,13 +84,14 @@ class CooperativeSourcingAnalyzer:
             "communication_quality": communication,
             "price_benchmark": pricing,
             "risk_assessment": risk,
+            "total_score": total_score_rounded,
             "scores": {
                 "supply_capacity": supply_capacity["score"],
                 "quality": quality_score,
                 "export_readiness": export_readiness["score"],
                 "price_competitiveness": pricing["competitiveness_score"],
                 "communication": communication["score"],
-                "total": round(total_score, 2),
+                "total": total_score_rounded,
             },
             "recommendation": recommendation,
         }
