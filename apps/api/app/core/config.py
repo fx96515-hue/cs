@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     ROESTER_STALE_DAYS: int = 90
     NEWS_STALE_DAYS: int = 2
     FX_STALE_DAYS: int = 2
+    SOURCING_ANALYSIS_STALE_DAYS: int = 30
 
     # --- Scheduled refresh times (Europe/Berlin) ---
     # Format: "HH:MM,HH:MM,HH:MM"

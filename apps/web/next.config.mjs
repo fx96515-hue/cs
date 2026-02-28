@@ -1,10 +1,16 @@
 /** @type {import('next').NextConfig} */
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const nextConfig = {
   output: "standalone",
-  eslint: {
-    // Allow production builds to complete even with ESLint warnings
-    // This is reasonable since we've addressed critical errors
-    ignoreDuringBuilds: true,
+  turbopack: {
+    // Ensure workspace root points at this app to avoid lockfile warnings.
+    root: __dirname,
   },
 };
+
 export default nextConfig;

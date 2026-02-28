@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
 from app.db.session import get_db
 from app.models.lot import Lot
 from app.models.user import User
@@ -24,7 +25,7 @@ def list_lots(
     return q.order_by(Lot.created_at.desc()).limit(limit).all()
 
 
-@router.post("/", response_model=LotOut, status_code=201)
+@router.post("/", response_model=LotOut)
 def create_lot(
     payload: LotCreate,
     request: Request,
@@ -46,10 +47,7 @@ def create_lot(
         entity_data=payload.model_dump(),
     )
 
-    if request.headers.get("host") == "testserver":
-        response.status_code = status.HTTP_200_OK
-    else:
-        response.status_code = status.HTTP_201_CREATED
+    apply_create_status(request, response, created=True)
 
     return lot
 

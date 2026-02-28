@@ -198,3 +198,45 @@ class DataImportResponse(BaseModel):
     status: str
     records_imported: int
     message: str | None = None
+
+
+class BatchFreightPredictionRequest(BaseModel):
+    """Batch request schema for freight cost predictions."""
+
+    requests: list[FreightPredictionRequest]
+
+
+class BatchFreightPredictionResponse(BaseModel):
+    """Batch response schema for freight cost predictions."""
+
+    results: list[FreightPrediction | None]
+    errors: list[dict]
+
+
+class BatchCoffeePricePredictionRequest(BaseModel):
+    """Batch request schema for coffee price predictions."""
+
+    requests: list[CoffeePricePredictionRequest]
+
+
+class BatchCoffeePricePredictionResponse(BaseModel):
+    """Batch response schema for coffee price predictions."""
+
+    results: list[CoffeePricePrediction | None]
+    errors: list[dict]
+
+
+class AsyncTaskResponse(BaseModel):
+    """Response schema for async task creation."""
+
+    status: str
+    task_id: str
+
+
+class AsyncTaskStatus(BaseModel):
+    """Response schema for async task status."""
+
+    task_id: str
+    state: str
+    ready: bool
+    result: dict | None = None

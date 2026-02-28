@@ -1,11 +1,12 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 import structlog
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
 from app.db.session import get_db
 from app.models.cooperative import Cooperative
 from app.models.user import User
@@ -35,6 +36,8 @@ def list_coops(
 @router.post("/", response_model=CooperativeOut)
 def create_coop(
     payload: CooperativeCreate,
+    request: Request,
+    response: Response,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
@@ -51,6 +54,8 @@ def create_coop(
         entity_id=coop.id,
         entity_data=payload.model_dump(),
     )
+
+    apply_create_status(request, response, created=True)
 
     # Queue embedding generation task (async, non-blocking)
     if settings.SEMANTIC_SEARCH_ENABLED and settings.EMBEDDING_TASKS_ENABLED:

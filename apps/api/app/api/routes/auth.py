@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.audit import AuditLogger
 from app.core.config import settings
+from app.core.password_policy import validate_password_policy
 from app.core.security import (
     create_access_token,
     generate_csrf_token,
@@ -122,6 +123,14 @@ def dev_bootstrap(
         )
 
     try:
+        validate_password_policy(settings.BOOTSTRAP_ADMIN_PASSWORD)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
+
+    try:
         validate_email(settings.BOOTSTRAP_ADMIN_EMAIL, check_deliverability=False)
     except EmailNotValidError as e:
         raise HTTPException(
@@ -129,11 +138,7 @@ def dev_bootstrap(
             detail=f"Invalid BOOTSTRAP_ADMIN_EMAIL: {e}",
         ) from e
 
-    admin = (
-        db.query(User)
-        .filter(User.email == settings.BOOTSTRAP_ADMIN_EMAIL)
-        .first()
-    )
+    admin = db.query(User).filter(User.email == settings.BOOTSTRAP_ADMIN_EMAIL).first()
     if admin:
         admin.password_hash = hash_password(settings.BOOTSTRAP_ADMIN_PASSWORD)
         admin.is_active = True

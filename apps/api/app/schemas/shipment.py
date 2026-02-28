@@ -1,39 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 
-# Common XSS patterns to block (case-insensitive)
-XSS_PATTERNS = [
-    "<script",
-    "</script",
-    "<iframe",
-    "</iframe",
-    "javascript:",
-    "onerror=",
-    "onload=",
-    "onclick=",
-    "<object",
-    "<embed",
-    "vbscript:",
-    "data:text/html",
-]
-
-
-def _validate_xss(value: Optional[str], field_name: str) -> Optional[str]:
-    """Shared XSS validation logic for text fields.
-
-    Returns None for empty/whitespace-only strings.
-    Returns stripped string for valid input.
-    Raises ValueError for XSS patterns detected.
-    """
-    if value is None:
-        return value
-    if not value.strip():
-        return None
-    # Check for XSS patterns (case-insensitive)
-    value_lower = value.lower()
-    if any(pattern in value_lower for pattern in XSS_PATTERNS):
-        raise ValueError(f"Invalid characters in {field_name}")
-    return value.strip()
+from app.core.validation import validate_text_field
 
 
 class TrackingEvent(BaseModel):
@@ -63,7 +31,11 @@ class ShipmentCreate(BaseModel):
         """Validate port names for XSS prevention."""
         if not v or not v.strip():
             raise ValueError("Port name cannot be empty")
-        result = _validate_xss(v, "port name")
+        result = validate_text_field(
+            v,
+            field_name="port name",
+            invalid_message="Invalid characters in {field_name}",
+        )
         if result is None:
             raise ValueError("Port name cannot be empty")
         return result
@@ -74,7 +46,11 @@ class ShipmentCreate(BaseModel):
         """Validate bill of lading for XSS prevention."""
         if not v or not v.strip():
             raise ValueError("Bill of lading cannot be empty")
-        result = _validate_xss(v, "bill of lading")
+        result = validate_text_field(
+            v,
+            field_name="bill of lading",
+            invalid_message="Invalid characters in {field_name}",
+        )
         if result is None:
             raise ValueError("Bill of lading cannot be empty")
         return result
@@ -83,7 +59,9 @@ class ShipmentCreate(BaseModel):
     @classmethod
     def validate_notes(cls, v: Optional[str]) -> Optional[str]:
         """Validate notes for XSS prevention."""
-        return _validate_xss(v, "notes")
+        return validate_text_field(
+            v, field_name="notes", invalid_message="Invalid characters in {field_name}"
+        )
 
 
 class ShipmentUpdate(BaseModel):
@@ -97,13 +75,19 @@ class ShipmentUpdate(BaseModel):
     @classmethod
     def validate_current_location(cls, v: Optional[str]) -> Optional[str]:
         """Validate current location for XSS prevention."""
-        return _validate_xss(v, "current location")
+        return validate_text_field(
+            v,
+            field_name="current location",
+            invalid_message="Invalid characters in {field_name}",
+        )
 
     @field_validator("notes")
     @classmethod
     def validate_notes_update(cls, v: Optional[str]) -> Optional[str]:
         """Validate notes for XSS prevention."""
-        return _validate_xss(v, "notes")
+        return validate_text_field(
+            v, field_name="notes", invalid_message="Invalid characters in {field_name}"
+        )
 
 
 class TrackingEventCreate(BaseModel):
@@ -118,7 +102,11 @@ class TrackingEventCreate(BaseModel):
         """Validate location for XSS prevention."""
         if not v or not v.strip():
             raise ValueError("Location cannot be empty")
-        result = _validate_xss(v, "location")
+        result = validate_text_field(
+            v,
+            field_name="location",
+            invalid_message="Invalid characters in {field_name}",
+        )
         if result is None:
             raise ValueError("Location cannot be empty")
         return result
@@ -129,7 +117,11 @@ class TrackingEventCreate(BaseModel):
         """Validate event for XSS prevention."""
         if not v or not v.strip():
             raise ValueError("Event cannot be empty")
-        result = _validate_xss(v, "event")
+        result = validate_text_field(
+            v,
+            field_name="event",
+            invalid_message="Invalid characters in {field_name}",
+        )
         if result is None:
             raise ValueError("Event cannot be empty")
         return result
@@ -138,7 +130,11 @@ class TrackingEventCreate(BaseModel):
     @classmethod
     def validate_details(cls, v: Optional[str]) -> Optional[str]:
         """Validate details for XSS prevention."""
-        return _validate_xss(v, "details")
+        return validate_text_field(
+            v,
+            field_name="details",
+            invalid_message="Invalid characters in {field_name}",
+        )
 
 
 class ShipmentOut(BaseModel):

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
+from app.core.idempotency import find_existing_by_fields
 from app.db.session import get_db
 from app.models.source import Source
 from app.models.user import User
@@ -21,9 +23,20 @@ def list_sources(
 @router.post("/", response_model=SourceOut)
 def create_source(
     payload: SourceCreate,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "analyst")),
 ):
+    existing = find_existing_by_fields(
+        db,
+        Source,
+        {"name": payload.name, "url": payload.url, "kind": payload.kind},
+    )
+    if existing:
+        apply_create_status(request, response, created=False)
+        return existing
+
     s = Source(**payload.model_dump())
     db.add(s)
     db.commit()
@@ -37,6 +50,8 @@ def create_source(
         entity_id=s.id,
         entity_data=payload.model_dump(),
     )
+
+    apply_create_status(request, response, created=True)
 
     return s
 

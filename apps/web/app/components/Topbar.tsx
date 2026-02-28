@@ -16,19 +16,23 @@ export default function Topbar({
 
   return (
     <div className="topbar">
-      <div className="row" style={{ gap: 12 }}>
+      <div className="topbarLeft">
         <div className="topbarTitle">Steuerzentrale</div>
-        <div className="pill">Daten • Workflows • Qualität</div>
+        <div className="pill">Daten | Workflows | Qualitaet</div>
       </div>
-      <div className="topbarRight" style={{ gap: 12, display: "flex", alignItems: "center" }}>
+      <div className="topbarRight">
         <CountrySelector value={selectedCountry} onChange={setSelectedCountry} />
         <span className="muted small" title={countryConfig.data_source.description}>
           {countryConfig.data_source.name}
         </span>
         {authed ? (
-          <button className="btn" onClick={onLogout}>Abmelden</button>
+          <button className="btn" onClick={onLogout}>
+            Abmelden
+          </button>
         ) : (
-          <Link className="btn btnPrimary" href="/login">Anmelden</Link>
+          <Link className="btn btnPrimary" href="/login">
+            Anmelden
+          </Link>
         )}
       </div>
     </div>

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
 from app.db.session import get_db
 from app.models.roaster import Roaster
 from app.models.user import User
@@ -24,6 +25,8 @@ def list_roasters(
 @router.post("/", response_model=RoasterOut)
 def create_roaster(
     payload: RoasterCreate,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "analyst")),
 ):
@@ -40,6 +43,8 @@ def create_roaster(
         entity_id=r.id,
         entity_data=payload.model_dump(),
     )
+
+    apply_create_status(request, response, created=True)
 
     # Queue embedding generation task (async, non-blocking)
     if settings.SEMANTIC_SEARCH_ENABLED and settings.EMBEDDING_TASKS_ENABLED:

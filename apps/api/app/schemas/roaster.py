@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import datetime
 
+from app.core.validation import validate_text_field, validate_url_field
+
 
 class RoasterCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=255)
@@ -21,28 +23,13 @@ class RoasterCreate(BaseModel):
     @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate roaster name for XSS prevention."""
-        if not v or not v.strip():
-            raise ValueError("Name cannot be empty")
-        # Prevent XSS attempts
-        if any(
-            pattern in v.lower() for pattern in ["<script", "<iframe", "javascript:"]
-        ):
-            raise ValueError("Invalid characters in name")
-        return v.strip()
+        return validate_text_field(v, field_name="Name", required=True, max_length=255)
 
     @field_validator("website")
     @classmethod
     def validate_website(cls, v: Optional[str]) -> Optional[str]:
         """Validate website URL format."""
-        if v and v.strip():
-            v = v.strip()
-            # Must be a valid http/https URL
-            if not (v.startswith("http://") or v.startswith("https://")):
-                raise ValueError("Website must start with http:// or https://")
-            # Basic URL validation - prevent javascript: and other dangerous protocols
-            if any(proto in v.lower() for proto in ["javascript:", "data:", "file:"]):
-                raise ValueError("Invalid URL protocol")
-        return v if v else None
+        return validate_url_field(v, field_name="Website")
 
     @field_validator("price_position")
     @classmethod
@@ -92,28 +79,13 @@ class RoasterUpdate(BaseModel):
         """Validate roaster name for XSS prevention."""
         if v is None:
             return v
-        if not v.strip():
-            raise ValueError("Name cannot be empty")
-        # Prevent XSS attempts
-        if any(
-            pattern in v.lower() for pattern in ["<script", "<iframe", "javascript:"]
-        ):
-            raise ValueError("Invalid characters in name")
-        return v.strip()
+        return validate_text_field(v, field_name="Name", required=True, max_length=255)
 
     @field_validator("website")
     @classmethod
     def validate_website(cls, v: Optional[str]) -> Optional[str]:
         """Validate website URL format."""
-        if v and v.strip():
-            v = v.strip()
-            # Must be a valid http/https URL
-            if not (v.startswith("http://") or v.startswith("https://")):
-                raise ValueError("Website must start with http:// or https://")
-            # Basic URL validation - prevent javascript: and other dangerous protocols
-            if any(proto in v.lower() for proto in ["javascript:", "data:", "file:"]):
-                raise ValueError("Invalid URL protocol")
-        return v if v else None
+        return validate_url_field(v, field_name="Website")
 
     @field_validator("price_position")
     @classmethod
