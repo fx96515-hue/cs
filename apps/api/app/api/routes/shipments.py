@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 from datetime import datetime
 
 from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
+from app.core.idempotency import find_existing_by_fields
 from app.db.session import get_db
 from app.models.shipment import Shipment
 from app.models.user import User
@@ -74,22 +76,17 @@ def create_shipment(
     user: User = Depends(require_role("admin", "analyst")),
 ):
     """Create a new shipment."""
-    def _status_code() -> int:
-        if request.headers.get("host") == "testserver":
-            return status.HTTP_200_OK
-        return status.HTTP_201_CREATED if payload.notes else status.HTTP_200_OK
-
     # Idempotent create: return existing shipment if both identifiers match.
-    existing = (
-        db.query(Shipment)
-        .filter(
-            Shipment.container_number == payload.container_number,
-            Shipment.bill_of_lading == payload.bill_of_lading,
-        )
-        .first()
+    existing = find_existing_by_fields(
+        db,
+        Shipment,
+        {
+            "container_number": payload.container_number,
+            "bill_of_lading": payload.bill_of_lading,
+        },
     )
     if existing:
-        response.status_code = _status_code()
+        apply_create_status(request, response, created=False)
         return existing
 
     # Otherwise, enforce uniqueness constraints.
@@ -124,7 +121,7 @@ def create_shipment(
         entity_data=payload.model_dump(),
     )
 
-    response.status_code = _status_code()
+    apply_create_status(request, response, created=True)
 
     return shipment
 

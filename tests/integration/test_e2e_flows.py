@@ -5,60 +5,22 @@ DOES NOT DUPLICATE unit tests from PR #16.
 """
 import pytest
 import requests
-import time
-from typing import Generator
 
-BASE_URL = "http://localhost:8000"
+from tests.integration.bootstrap import BASE_URL, get_auth_token, auth_headers
 
 
 @pytest.fixture(scope="module")
-def wait_for_services() -> Generator[None, None, None]:
-    """Wait for backend and frontend to be ready."""
-    max_attempts = 30
-    for attempt in range(max_attempts):
-        try:
-            health = requests.get(f"{BASE_URL}/health", timeout=2)
-            if health.status_code == 200:
-                break
-        except requests.exceptions.ConnectionError:
-            if attempt == max_attempts - 1:
-                raise RuntimeError("Backend not ready after 30 attempts")
-            time.sleep(1)
-    
-    yield
-
-
-@pytest.fixture(scope="module")
-def auth_token(wait_for_services) -> str:
+def auth_token() -> str:
     """Get authentication token for test user."""
-    # First, bootstrap admin user
-    bootstrap_resp = requests.post(
-        f"{BASE_URL}/auth/dev/bootstrap",
-        headers={"Content-Type": "application/json"}
-    )
-    # Bootstrap may return 200 if already exists or newly created
-    assert bootstrap_resp.status_code == 200, f"Bootstrap failed: {bootstrap_resp.text}"
-    
-    # Login with correct password (adminadmin or from env)
-    import os
-    password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD")
-    email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@coffeestudio.com")
-
-    if not password:
-        pytest.skip("BOOTSTRAP_ADMIN_PASSWORD not set for e2e login")
-    
-    response = requests.post(
-        f"{BASE_URL}/auth/login",
-        json={"email": email, "password": password},
-        headers={"Content-Type": "application/json"}
-    )
-    assert response.status_code == 200, f"Auth failed: {response.text}"
-    return response.json()["access_token"]
+    try:
+        return get_auth_token()
+    except RuntimeError as exc:
+        pytest.skip(str(exc))
 
 
 def test_e2e_cooperative_flow(auth_token):
     """Test complete cooperative creation → sourcing analysis → frontend display flow."""
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    headers = auth_headers(auth_token)
     
     # Step 1: Create cooperative
     coop_data = {
@@ -71,7 +33,7 @@ def test_e2e_cooperative_flow(auth_token):
         json=coop_data,
         headers=headers
     )
-    assert create_resp.status_code == 200
+    assert create_resp.status_code == 201
     coop_id = create_resp.json()["id"]
     
     # Step 2: Trigger sourcing analysis (if Peru routes exist from PR #4)
@@ -97,7 +59,7 @@ def test_e2e_cooperative_flow(auth_token):
 
 def test_e2e_roaster_flow(auth_token):
     """Test complete roaster creation → sales fit scoring → frontend display flow."""
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    headers = auth_headers(auth_token)
     
     roaster_data = {
         "name": "E2E Test Roastery",
@@ -110,7 +72,7 @@ def test_e2e_roaster_flow(auth_token):
         json=roaster_data,
         headers=headers
     )
-    assert create_resp.status_code == 200
+    assert create_resp.status_code == 201
     roaster_id = create_resp.json()["id"]
     
     get_resp = requests.get(f"{BASE_URL}/roasters/{roaster_id}", headers=headers)
@@ -122,7 +84,7 @@ def test_e2e_roaster_flow(auth_token):
 
 def test_e2e_margin_calculation(auth_token):
     """Test lot creation → margin calculation → frontend display."""
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    headers = auth_headers(auth_token)
     
     # Create cooperative first
     coop_resp = requests.post(
@@ -177,7 +139,7 @@ def test_e2e_margin_calculation(auth_token):
 
 def test_ml_predictions_available(auth_token):
     """Verify ML prediction endpoints are functional."""
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    headers = auth_headers(auth_token)
     
     # Test freight cost prediction
     freight_payload = {
@@ -203,7 +165,7 @@ def test_ml_predictions_available(auth_token):
 
 def test_e2e_shipment_flow(auth_token):
     """Test complete shipment creation → tracking → frontend display flow."""
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    headers = auth_headers(auth_token)
     
     # Step 1: Create shipment
     shipment_data = {
@@ -221,7 +183,7 @@ def test_e2e_shipment_flow(auth_token):
         json=shipment_data,
         headers=headers
     )
-    assert create_resp.status_code == 200
+    assert create_resp.status_code == 201
     shipment_id = create_resp.json()["id"]
     
     # Step 2: List all shipments
@@ -276,7 +238,7 @@ def test_health_endpoints():
 
 def test_shipments_api_integration(auth_token):
     """Test shipments API endpoints."""
-    headers = {"Authorization": f"Bearer {auth_token}"}
+    headers = auth_headers(auth_token)
     
     # Create a shipment
     shipment_data = {

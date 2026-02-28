@@ -71,6 +71,13 @@ def _is_allowed_host(hostname: str) -> bool:
     configured_hosts = _split_csv(getattr(settings, "ENRICH_ALLOWED_HOSTS", None))
     configured_domains = _split_csv(getattr(settings, "ENRICH_ALLOWED_DOMAINS", None))
 
+    # Never allow raw IP literals unless explicitly listed in configured hosts.
+    try:
+        ipaddress.ip_address(hostname)
+        return hostname in {h.lower() for h in configured_hosts}
+    except ValueError:
+        pass
+
     # Combine built-in allowlist with any configured values, removing empties.
     allowed = [
         h for h in (builtin_allowed + configured_hosts + configured_domains) if h

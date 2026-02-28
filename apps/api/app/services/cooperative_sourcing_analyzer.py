@@ -7,7 +7,7 @@ export readiness, communication quality, pricing, and risk assessment.
 """
 
 from typing import Any
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.cooperative import Cooperative
@@ -45,6 +45,10 @@ class CooperativeSourcingAnalyzer:
         if not force_refresh and coop.sourcing_scores:
             cached_at = coop.sourcing_scores.get("analyzed_at")
             if cached_at:
+                parsed = self._parse_cached_at(cached_at)
+                if parsed and not self._is_cache_stale(parsed):
+                    return coop.sourcing_scores
+            else:
                 return coop.sourcing_scores
 
         # Perform fresh analysis
@@ -101,6 +105,22 @@ class CooperativeSourcingAnalyzer:
         self.db.commit()
 
         return result
+
+    def _parse_cached_at(self, value: str) -> datetime | None:
+        try:
+            raw = value.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(raw)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed
+        except Exception:
+            return None
+
+    def _is_cache_stale(self, cached_at: datetime) -> bool:
+        from app.core.config import settings
+
+        max_age = timedelta(days=settings.SOURCING_ANALYSIS_STALE_DAYS)
+        return datetime.now(timezone.utc) - cached_at > max_age
 
     def check_supply_capacity(self, coop: Cooperative) -> dict[str, Any]:
         """

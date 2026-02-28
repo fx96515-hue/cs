@@ -495,6 +495,12 @@ DEMO_MARKET_OBSERVATIONS = [
 ]
 
 
+def _as_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def seed_demo_cooperatives(db: Session) -> dict[str, Any]:
     """
     Seed demo cooperatives if table is empty.
@@ -584,7 +590,7 @@ def seed_demo_market_data(db: Session) -> dict[str, Any]:
 
         if existing:
             # Update if data is older than 24 hours
-            age_hours = (now - existing.observed_at).total_seconds() / 3600
+            age_hours = (now - _as_utc(existing.observed_at)).total_seconds() / 3600
             if age_hours > 24:
                 existing.value = cast(float, obs_data["value"])
                 existing.observed_at = now

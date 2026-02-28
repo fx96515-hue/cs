@@ -3,12 +3,21 @@ import json
 import redis as redis_lib
 import redis.asyncio as aioredis
 import structlog
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from sqlalchemy.orm import Session
 
 from celery.result import AsyncResult
 
 from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
 from app.core.config import settings
 from app.core.security import decode_token
 from app.db.session import get_db, SessionLocal
@@ -38,6 +47,8 @@ def list_observations(
 @router.post("/observations", response_model=MarketObservationOut)
 def create_observation(
     payload: MarketObservationCreate,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "analyst")),
 ):
@@ -54,6 +65,8 @@ def create_observation(
         entity_id=obs.id,
         entity_data=payload.model_dump(),
     )
+
+    apply_create_status(request, response, created=True)
 
     return obs
 

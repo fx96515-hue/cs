@@ -1,6 +1,7 @@
 """API routes for ML predictions."""
 
 from fastapi import APIRouter, Depends, HTTPException
+from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -21,11 +22,18 @@ from app.schemas.ml_predictions import (
     FreightDataImport,
     PriceDataImport,
     DataImportResponse,
+    BatchFreightPredictionRequest,
+    BatchFreightPredictionResponse,
+    BatchCoffeePricePredictionRequest,
+    BatchCoffeePricePredictionResponse,
+    AsyncTaskResponse,
+    AsyncTaskStatus,
 )
 from app.services.ml.freight_prediction import FreightPredictionService
 from app.services.ml.price_prediction import CoffeePricePredictionService
 from app.services.ml.model_management import MLModelManagementService
 from app.services.ml.data_collection import DataCollectionService
+from app.workers.celery_app import celery
 
 router = APIRouter()
 
@@ -46,6 +54,45 @@ async def predict_freight_cost(
         departure_date=request.departure_date,
     )
     return result
+
+
+@router.post("/predict-freight/batch", response_model=BatchFreightPredictionResponse)
+async def predict_freight_batch(
+    request: BatchFreightPredictionRequest,
+    db: Session = Depends(get_db),
+    _=Depends(require_role("admin", "analyst", "viewer")),
+):
+    """Batch predict freight costs."""
+    service = FreightPredictionService(db)
+    results: list[FreightPrediction | None] = []
+    errors: list[dict] = []
+
+    for idx, item in enumerate(request.requests):
+        try:
+            result = await service.predict_freight_cost(
+                origin_port=item.origin_port,
+                destination_port=item.destination_port,
+                weight_kg=item.weight_kg,
+                container_type=item.container_type,
+                departure_date=item.departure_date,
+            )
+            results.append(result)  # type: ignore[arg-type]
+        except Exception as exc:
+            results.append(None)
+            errors.append({"index": idx, "error": str(exc)})
+
+    return BatchFreightPredictionResponse(results=results, errors=errors)
+
+
+@router.post("/predict-freight/batch/async", response_model=AsyncTaskResponse)
+async def predict_freight_batch_async(
+    request: BatchFreightPredictionRequest,
+    _=Depends(require_role("admin", "analyst", "viewer")),
+):
+    """Enqueue freight batch prediction."""
+    payload = [item.model_dump(mode="json") for item in request.requests]
+    task = celery.send_task("app.workers.tasks.predict_freight_batch", args=[payload])
+    return AsyncTaskResponse(status="queued", task_id=task.id)
 
 
 @router.post("/predict-transit-time", response_model=TransitTimePrediction)
@@ -98,6 +145,52 @@ async def predict_coffee_price(
     return result
 
 
+@router.post(
+    "/predict-coffee-price/batch", response_model=BatchCoffeePricePredictionResponse
+)
+async def predict_coffee_price_batch(
+    request: BatchCoffeePricePredictionRequest,
+    db: Session = Depends(get_db),
+    _=Depends(require_role("admin", "analyst", "viewer")),
+):
+    """Batch predict coffee prices."""
+    service = CoffeePricePredictionService(db)
+    results: list[CoffeePricePrediction | None] = []
+    errors: list[dict] = []
+
+    for idx, item in enumerate(request.requests):
+        try:
+            result = await service.predict_coffee_price(
+                origin_country=item.origin_country,
+                origin_region=item.origin_region,
+                variety=item.variety,
+                process_method=item.process_method,
+                quality_grade=item.quality_grade,
+                cupping_score=item.cupping_score,
+                certifications=item.certifications,
+                forecast_date=item.forecast_date,
+            )
+            results.append(result)  # type: ignore[arg-type]
+        except Exception as exc:
+            results.append(None)
+            errors.append({"index": idx, "error": str(exc)})
+
+    return BatchCoffeePricePredictionResponse(results=results, errors=errors)
+
+
+@router.post("/predict-coffee-price/batch/async", response_model=AsyncTaskResponse)
+async def predict_coffee_price_batch_async(
+    request: BatchCoffeePricePredictionRequest,
+    _=Depends(require_role("admin", "analyst", "viewer")),
+):
+    """Enqueue coffee price batch prediction."""
+    payload = [item.model_dump(mode="json") for item in request.requests]
+    task = celery.send_task(
+        "app.workers.tasks.predict_coffee_price_batch", args=[payload]
+    )
+    return AsyncTaskResponse(status="queued", task_id=task.id)
+
+
 @router.post("/forecast-price-trend", response_model=PriceForecast)
 async def forecast_price_trend(
     request: PriceForecastRequest,
@@ -125,6 +218,22 @@ async def calculate_optimal_purchase_timing(
         target_price_usd_per_kg=request.target_price_usd_per_kg,
     )
     return result
+
+
+@router.get("/tasks/{task_id}", response_model=AsyncTaskStatus)
+async def ml_task_status(
+    task_id: str, _=Depends(require_role("admin", "analyst", "viewer"))
+):
+    """Check async ML task status."""
+    res = AsyncResult(task_id, app=celery)
+    payload = None
+    try:
+        payload = res.result if res.ready() else None
+    except Exception:
+        payload = None
+    return AsyncTaskStatus(
+        task_id=task_id, state=res.state, ready=res.ready(), result=payload
+    )
 
 
 @router.get("/models/{model_id}/feature-importance", response_model=dict)

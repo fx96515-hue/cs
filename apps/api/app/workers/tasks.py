@@ -30,6 +30,18 @@ def _redis() -> redis.Redis:
     return redis.from_url(settings.REDIS_URL)
 
 
+def _parse_date(value):
+    from datetime import date, datetime
+
+    if isinstance(value, date):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, str):
+        return date.fromisoformat(value)
+    raise ValueError("Invalid date value")
+
+
 @celery.task(name="app.workers.tasks.refresh_market")
 def refresh_market():
     """Refresh market observations and generate a daily report.
@@ -372,6 +384,87 @@ def train_ml_model(model_type: str):
     except Exception as e:
         log.error("ml_model_training_failed", model_type=model_type, error=str(e))
         return {"status": "error", "model_type": model_type, "error": str(e)}
+    finally:
+        db.close()
+
+
+@celery.task(
+    name="app.workers.tasks.predict_freight_batch",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
+def predict_freight_batch(self, payloads: list[dict]):
+    """Run batch freight cost predictions in the background."""
+    import asyncio
+    from app.services.ml.freight_prediction import FreightPredictionService
+
+    db = _db()
+    try:
+        service = FreightPredictionService(db)
+        results: list[dict | None] = []
+        errors: list[dict] = []
+
+        async def _run():
+            for idx, item in enumerate(payloads):
+                try:
+                    result = await service.predict_freight_cost(
+                        origin_port=item["origin_port"],
+                        destination_port=item["destination_port"],
+                        weight_kg=item["weight_kg"],
+                        container_type=item["container_type"],
+                        departure_date=_parse_date(item["departure_date"]),
+                    )
+                    results.append(result)
+                except Exception as exc:
+                    results.append(None)
+                    errors.append({"index": idx, "error": str(exc)})
+
+        asyncio.run(_run())
+        return {"status": "ok", "results": results, "errors": errors}
+    finally:
+        db.close()
+
+
+@celery.task(
+    name="app.workers.tasks.predict_coffee_price_batch",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
+def predict_coffee_price_batch(self, payloads: list[dict]):
+    """Run batch coffee price predictions in the background."""
+    import asyncio
+    from app.services.ml.price_prediction import CoffeePricePredictionService
+
+    db = _db()
+    try:
+        service = CoffeePricePredictionService(db)
+        results: list[dict | None] = []
+        errors: list[dict] = []
+
+        async def _run():
+            for idx, item in enumerate(payloads):
+                try:
+                    result = await service.predict_coffee_price(
+                        origin_country=item["origin_country"],
+                        origin_region=item["origin_region"],
+                        variety=item["variety"],
+                        process_method=item["process_method"],
+                        quality_grade=item["quality_grade"],
+                        cupping_score=item["cupping_score"],
+                        certifications=item.get("certifications") or [],
+                        forecast_date=_parse_date(item["forecast_date"]),
+                    )
+                    results.append(result)
+                except Exception as exc:
+                    results.append(None)
+                    errors.append({"index": idx, "error": str(exc)})
+
+        asyncio.run(_run())
+        return {"status": "ok", "results": results, "errors": errors}
     finally:
         db.close()
 

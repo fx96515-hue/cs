@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.core.validation import validate_text_field
+
 
 class CuppingCreate(BaseModel):
     occurred_at: datetime | None = None
@@ -30,14 +32,9 @@ class CuppingCreate(BaseModel):
     @classmethod
     def validate_taster(cls, v: str | None) -> str | None:
         """Validate taster name for XSS prevention."""
-        if v is None:
-            return v
-        # Prevent XSS attempts
-        if any(
-            pattern in v.lower() for pattern in ["<script", "<iframe", "javascript:"]
-        ):
-            raise ValueError("Invalid characters in taster name")
-        return v.strip() if v else None
+        return validate_text_field(
+            v, field_name="taster name", required=False, max_length=255
+        )
 
 
 class CuppingOut(CuppingCreate):
