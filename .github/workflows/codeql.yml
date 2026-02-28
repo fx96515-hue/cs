@@ -23,7 +23,7 @@ jobs:
 
       - uses: github/codeql-action/init@v4
         with:
-          languages: python
+          languages: python, actions
 
       - uses: github/codeql-action/autobuild@v4
 

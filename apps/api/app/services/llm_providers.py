@@ -127,19 +127,19 @@ class OllamaProvider(BaseLLMProvider):
                 status_code=e.response.status_code,
                 error=str(e),
             )
-            raise Exception(
+            raise RuntimeError(
                 f"Ollama API error: {e.response.status_code}. "
                 "Stellen Sie sicher, dass Ollama läuft: ollama serve"
             )
         except httpx.ConnectError as e:
             log.error("ollama_connection_error", error=str(e))
-            raise Exception(
+            raise ConnectionError(
                 "Ollama nicht erreichbar. Starten Sie Ollama mit: ollama serve"
             )
         except Exception as e:
             log.error("ollama_chat_completion_failed", error=str(e))
             if "connection refused" in str(e).lower():
-                raise Exception(
+                raise ConnectionError(
                     "Ollama nicht erreichbar. Starten Sie Ollama mit: ollama serve"
                 )
             raise
@@ -230,7 +230,7 @@ class OpenAIProvider(BaseLLMProvider):
             Exception: If API key missing or request fails
         """
         if not self.is_available():
-            raise Exception("OpenAI API key not configured")
+            raise ValueError("OpenAI API key not configured")
 
         try:
             async with httpx.AsyncClient() as client:
@@ -270,7 +270,7 @@ class OpenAIProvider(BaseLLMProvider):
                 status_code=e.response.status_code,
                 error=str(e),
             )
-            raise Exception(f"OpenAI API error: {e.response.status_code}")
+            raise RuntimeError(f"OpenAI API error: {e.response.status_code}")
         except Exception as e:
             log.error("openai_chat_completion_failed", error=str(e))
             raise
@@ -289,7 +289,7 @@ class OpenAIProvider(BaseLLMProvider):
             Text chunks of the assistant response
         """
         if not self.is_available():
-            raise Exception("OpenAI API key not configured")
+            raise ValueError("OpenAI API key not configured")
 
         try:
             async with httpx.AsyncClient() as client:
@@ -368,7 +368,7 @@ class GroqProvider(BaseLLMProvider):
             Exception: If API key missing or request fails
         """
         if not self.is_available():
-            raise Exception("Groq API key not configured")
+            raise ValueError("Groq API key not configured")
 
         try:
             async with httpx.AsyncClient() as client:
@@ -408,7 +408,7 @@ class GroqProvider(BaseLLMProvider):
                 status_code=e.response.status_code,
                 error=str(e),
             )
-            raise Exception(f"Groq API error: {e.response.status_code}")
+            raise RuntimeError(f"Groq API error: {e.response.status_code}")
         except Exception as e:
             log.error("groq_chat_completion_failed", error=str(e))
             raise
@@ -427,7 +427,7 @@ class GroqProvider(BaseLLMProvider):
             Text chunks of the assistant response
         """
         if not self.is_available():
-            raise Exception("Groq API key not configured")
+            raise ValueError("Groq API key not configured")
 
         try:
             async with httpx.AsyncClient() as client:

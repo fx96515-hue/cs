@@ -6,7 +6,9 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:ui": "playwright test",
+    "test:ui:install": "playwright install chromium"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.17.0",
@@ -24,6 +26,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/leaflet": "^1.9.8",
     "@types/node": "22.10.2",
     "@types/react": "18.3.12",

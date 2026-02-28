@@ -4,6 +4,9 @@ from typing import Optional, List
 from app.core.validation import validate_text_field
 
 
+INVALID_CHARS_MESSAGE = "Invalid characters in {field_name}"
+
+
 class TrackingEvent(BaseModel):
     timestamp: str
     location: str
@@ -34,7 +37,7 @@ class ShipmentCreate(BaseModel):
         result = validate_text_field(
             v,
             field_name="port name",
-            invalid_message="Invalid characters in {field_name}",
+            invalid_message=INVALID_CHARS_MESSAGE,
         )
         if result is None:
             raise ValueError("Port name cannot be empty")
@@ -49,7 +52,7 @@ class ShipmentCreate(BaseModel):
         result = validate_text_field(
             v,
             field_name="bill of lading",
-            invalid_message="Invalid characters in {field_name}",
+            invalid_message=INVALID_CHARS_MESSAGE,
         )
         if result is None:
             raise ValueError("Bill of lading cannot be empty")
@@ -60,7 +63,7 @@ class ShipmentCreate(BaseModel):
     def validate_notes(cls, v: Optional[str]) -> Optional[str]:
         """Validate notes for XSS prevention."""
         return validate_text_field(
-            v, field_name="notes", invalid_message="Invalid characters in {field_name}"
+            v, field_name="notes", invalid_message=INVALID_CHARS_MESSAGE
         )
 
 
@@ -78,7 +81,7 @@ class ShipmentUpdate(BaseModel):
         return validate_text_field(
             v,
             field_name="current location",
-            invalid_message="Invalid characters in {field_name}",
+            invalid_message=INVALID_CHARS_MESSAGE,
         )
 
     @field_validator("notes")
@@ -86,7 +89,7 @@ class ShipmentUpdate(BaseModel):
     def validate_notes_update(cls, v: Optional[str]) -> Optional[str]:
         """Validate notes for XSS prevention."""
         return validate_text_field(
-            v, field_name="notes", invalid_message="Invalid characters in {field_name}"
+            v, field_name="notes", invalid_message=INVALID_CHARS_MESSAGE
         )
 
 
@@ -105,7 +108,7 @@ class TrackingEventCreate(BaseModel):
         result = validate_text_field(
             v,
             field_name="location",
-            invalid_message="Invalid characters in {field_name}",
+            invalid_message=INVALID_CHARS_MESSAGE,
         )
         if result is None:
             raise ValueError("Location cannot be empty")
@@ -120,7 +123,7 @@ class TrackingEventCreate(BaseModel):
         result = validate_text_field(
             v,
             field_name="event",
-            invalid_message="Invalid characters in {field_name}",
+            invalid_message=INVALID_CHARS_MESSAGE,
         )
         if result is None:
             raise ValueError("Event cannot be empty")
@@ -133,7 +136,7 @@ class TrackingEventCreate(BaseModel):
         return validate_text_field(
             v,
             field_name="details",
-            invalid_message="Invalid characters in {field_name}",
+            invalid_message=INVALID_CHARS_MESSAGE,
         )
 
 

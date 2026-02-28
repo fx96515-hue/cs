@@ -17,7 +17,7 @@ router = APIRouter()
 def list_cuppings(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    limit: int = Query(200, ge=1, le=500),
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
 ):
     return (
         db.query(CuppingResult)

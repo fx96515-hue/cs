@@ -16,6 +16,7 @@ def auth_token() -> str:
         return get_auth_token()
     except RuntimeError as exc:
         pytest.skip(str(exc))
+    raise RuntimeError("Unreachable: auth token not available")
 
 
 def test_e2e_cooperative_flow(auth_token):

@@ -33,10 +33,10 @@ def _redis() -> redis.Redis:
 def _parse_date(value):
     from datetime import date, datetime
 
-    if isinstance(value, date):
-        return value
     if isinstance(value, datetime):
         return value.date()
+    if isinstance(value, date):
+        return value
     if isinstance(value, str):
         return date.fromisoformat(value)
     raise ValueError("Invalid date value")

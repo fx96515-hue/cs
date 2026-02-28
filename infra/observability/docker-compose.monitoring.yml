@@ -6,6 +6,9 @@ services:
     container_name: prometheus
     security_opt:
       - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /prometheus
     volumes:
       - ./config/prometheus.monitoring.yml:/etc/prometheus/prometheus.yml:ro
     ports:
@@ -16,6 +19,10 @@ services:
     container_name: grafana
     security_opt:
       - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/lib/grafana
+      - /var/log/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin

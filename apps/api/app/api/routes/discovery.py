@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from typing import Literal, Optional, Any
+from typing import Annotated, Literal, Optional, Any
 
 
 from app.api.deps import require_role
@@ -25,7 +25,10 @@ class SeedRequest(BaseModel):
 
 
 @router.post("/seed")
-def enqueue_seed(payload: SeedRequest, _=Depends(require_role("admin", "analyst"))):
+def enqueue_seed(
+    payload: SeedRequest,
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+):
     """Enqueue a discovery seed job.
 
     Requires PERPLEXITY_API_KEY configured.
@@ -39,7 +42,8 @@ def enqueue_seed(payload: SeedRequest, _=Depends(require_role("admin", "analyst"
 
 @router.get("/seed/{task_id}")
 def get_seed_status(
-    task_id: str, _=Depends(require_role("admin", "analyst", "viewer"))
+    task_id: str,
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     res = celery.AsyncResult(task_id)
     body: dict[str, Any] = {"task_id": task_id, "state": res.state}

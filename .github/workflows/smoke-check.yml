@@ -5,6 +5,9 @@ on:
     workflows: ["Integration Tests", "Unit Tests"]
     types: [completed]
 
+permissions:
+  contents: read
+
 jobs:
   smoke:
     name: Smoke Health Check
