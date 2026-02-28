@@ -94,7 +94,6 @@ export default function DashboardPage() {
   }, []);
 
   const fx = market?.["FX:USD_EUR"] ?? null;
-  const kc = market?.["CME:KC"] ?? market?.["KC.F"] ?? null;
 
   return (
     <div className="page">
