@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch, getToken, apiBaseUrl } from "../../lib/api";
+import { apiFetch, getToken } from "../../lib/api";
 
 // Constants
 const MAX_QUESTION_LENGTH = 1000; // Must match backend RAGQuestion.question max_length

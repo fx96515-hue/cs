@@ -19,7 +19,10 @@ ENV PORT=3000
 WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/.next/standalone ./
 COPY --from=builder /usr/src/app/.next/static ./.next/static
-RUN addgroup -S app && adduser -S app -G app && chown -R app:app /usr/src/app
+RUN addgroup -S app \
+    && adduser -S app -G app \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+    && chown -R app:app /usr/src/app
 USER app
 EXPOSE 3000
 CMD ["node", "server.js"]

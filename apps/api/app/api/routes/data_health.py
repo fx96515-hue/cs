@@ -25,6 +25,21 @@ def _get_redis() -> redis.Redis:
     return redis.from_url(settings.REDIS_URL)
 
 
+def _sanitize_errors(errors: list[str] | None) -> list[str]:
+    """Strip exception details before returning errors to clients."""
+    sanitized: list[str] = []
+    for err in errors or []:
+        if not err:
+            continue
+        if ":" in err:
+            head = err.split(":", 1)[0].strip()
+            if head:
+                sanitized.append(f"{head}: error")
+                continue
+        sanitized.append(err)
+    return sanitized
+
+
 @router.get("/status")
 def data_health_status(
     db: Annotated[Session, Depends(get_db)],
@@ -99,7 +114,7 @@ def trigger_full_refresh(
             "status": result.status,
             "duration_seconds": result.duration_seconds,
             "operations": result.operations,
-            "errors": result.errors,
+            "errors": _sanitize_errors(result.errors),
             "started_at": result.started_at.isoformat(),
             "completed_at": result.completed_at.isoformat(),
         }
@@ -125,7 +140,7 @@ def trigger_market_refresh(
             "status": result["status"],
             "duration_seconds": result["duration_seconds"],
             "results": result["results"],
-            "errors": result["errors"],
+            "errors": _sanitize_errors(result.get("errors")),
         }
     finally:
         redis_client.close()
@@ -149,7 +164,7 @@ def trigger_intelligence_refresh(
             "status": result["status"],
             "duration_seconds": result["duration_seconds"],
             "results": result["results"],
-            "errors": result["errors"],
+            "errors": _sanitize_errors(result.get("errors")),
         }
     finally:
         redis_client.close()

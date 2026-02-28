@@ -182,7 +182,9 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
         while True:
             # `current_url` has always been produced by `_validate_public_http_url`
             # and thus is safe to use as the request target.
-            r = client.get(current_url)
+            r = client.get(  # lgtm[py/full-ssrf] - URL validated via _validate_public_http_url
+                current_url
+            )
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break

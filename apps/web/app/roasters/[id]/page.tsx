@@ -102,7 +102,6 @@ export default function RoasterDetailPage() {
       </div>
 
       {msg ? <div className="success">{msg}</div> : null}
-      {err ? <div className="error">{err}</div> : null}
 
       <div className="grid2">
         <div className="panel">
