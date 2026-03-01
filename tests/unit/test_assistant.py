@@ -61,8 +61,12 @@ def service(mock_settings):
 def mock_db():
     db = MagicMock()
 
-    coop_rows = [("cooperative", 1, "Test Coop", "Cajamarca", "Organic", 1500, "Arabica", 0.85)]
-    roaster_rows = [("roaster", 2, "Test Roaster", "Hamburg", True, True, "premium", 0.80)]
+    coop_rows = [
+        ("cooperative", 1, "Test Coop", "Cajamarca", "Organic", 1500, "Arabica", 0.85)
+    ]
+    roaster_rows = [
+        ("roaster", 2, "Test Roaster", "Hamburg", True, True, "premium", 0.80)
+    ]
     news_rows = [(10, "Coffee Market Update", "Prices rose 5%", "market", None)]
 
     def mock_execute(query, params=None):
@@ -135,7 +139,10 @@ class TestSessionHistory:
             assert "sess-1" in call_args[0]
 
     def test_load_history_returns_parsed_json(self, service):
-        history = [{"role": "user", "content": "Hi"}, {"role": "assistant", "content": "Hey"}]
+        history = [
+            {"role": "user", "content": "Hi"},
+            {"role": "assistant", "content": "Hey"},
+        ]
         fake_redis = MagicMock()
         fake_redis.get.return_value = json.dumps(history)
 
@@ -154,12 +161,16 @@ class TestSessionHistory:
         assert loaded == []
 
     def test_load_history_redis_error_returns_empty(self, service):
-        with patch.object(service, "_redis_client", side_effect=Exception("redis down")):
+        with patch.object(
+            service, "_redis_client", side_effect=Exception("redis down")
+        ):
             loaded = service.load_history("sess-1")
         assert loaded == []
 
     def test_save_history_redis_error_does_not_raise(self, service):
-        with patch.object(service, "_redis_client", side_effect=Exception("redis down")):
+        with patch.object(
+            service, "_redis_client", side_effect=Exception("redis down")
+        ):
             # Should not raise
             service.save_history("sess-1", [{"role": "user", "content": "x"}])
 
@@ -172,7 +183,9 @@ class TestSessionHistory:
 class TestContextRetrieval:
     @pytest.mark.asyncio
     async def test_retrieve_context_returns_entities(self, service, mock_db):
-        with patch.object(service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING):
+        with patch.object(
+            service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING
+        ):
             ctx = await service._retrieve_context("test question", mock_db)
 
         assert len(ctx) > 0
@@ -181,13 +194,17 @@ class TestContextRetrieval:
 
     @pytest.mark.asyncio
     async def test_retrieve_context_embedding_failure(self, service, mock_db):
-        with patch.object(service.embedding_service, "generate_embedding", return_value=None):
+        with patch.object(
+            service.embedding_service, "generate_embedding", return_value=None
+        ):
             ctx = await service._retrieve_context("test", mock_db)
         assert ctx == []
 
     @pytest.mark.asyncio
     async def test_retrieve_context_includes_news(self, service, mock_db):
-        with patch.object(service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING):
+        with patch.object(
+            service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING
+        ):
             ctx = await service._retrieve_context("market update", mock_db)
         news = [c for c in ctx if c["entity_type"] == "news"]
         assert len(news) > 0
@@ -250,8 +267,14 @@ class TestStreamChat:
             yield "Welt!"
 
         with (
-            patch.object(service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING),
-            patch.object(service.llm_provider, "stream_chat_completion", side_effect=fake_stream),
+            patch.object(
+                service.embedding_service,
+                "generate_embedding",
+                return_value=MOCK_EMBEDDING,
+            ),
+            patch.object(
+                service.llm_provider, "stream_chat_completion", side_effect=fake_stream
+            ),
             patch.object(service, "load_history", return_value=[]),
             patch.object(service, "save_history"),
         ):
@@ -273,13 +296,21 @@ class TestStreamChat:
             yield "ok"
 
         with (
-            patch.object(service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING),
-            patch.object(service.llm_provider, "stream_chat_completion", side_effect=fake_stream),
+            patch.object(
+                service.embedding_service,
+                "generate_embedding",
+                return_value=MOCK_EMBEDDING,
+            ),
+            patch.object(
+                service.llm_provider, "stream_chat_completion", side_effect=fake_stream
+            ),
             patch.object(service, "load_history", return_value=[]),
             patch.object(service, "save_history"),
         ):
             events = []
-            async for frame in service.stream_chat("Hi", "existing-session-123", mock_db):
+            async for frame in service.stream_chat(
+                "Hi", "existing-session-123", mock_db
+            ):
                 events.append(json.loads(frame[6:]))
 
         session_event = next(e for e in events if e["type"] == "session")
@@ -301,8 +332,16 @@ class TestStreamChat:
             yield  # make it a generator
 
         with (
-            patch.object(service.embedding_service, "generate_embedding", return_value=MOCK_EMBEDDING),
-            patch.object(service.llm_provider, "stream_chat_completion", side_effect=failing_stream),
+            patch.object(
+                service.embedding_service,
+                "generate_embedding",
+                return_value=MOCK_EMBEDDING,
+            ),
+            patch.object(
+                service.llm_provider,
+                "stream_chat_completion",
+                side_effect=failing_stream,
+            ),
             patch.object(service, "load_history", return_value=[]),
         ):
             events = []

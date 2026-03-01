@@ -35,7 +35,11 @@ def upgrade():
             index=True,
         ),
         sa.Column(
-            "acknowledged", sa.Boolean(), nullable=False, server_default="false", index=True
+            "acknowledged",
+            sa.Boolean(),
+            nullable=False,
+            server_default="false",
+            index=True,
         ),
         sa.Column("acknowledged_by", sa.String(length=255), nullable=True),
         sa.Column("acknowledged_at", sa.DateTime(timezone=True), nullable=True),

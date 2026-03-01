@@ -1,4 +1,4 @@
-﻿"""Seed discovery for cooperatives/roasters using Perplexity.
+"""Seed discovery for cooperatives/roasters using Perplexity.
 
 Usage (inside docker):
   docker compose exec backend python scripts/seed_first_run.py --coops --max 50
@@ -24,6 +24,8 @@ if _ROOT not in sys.path:
 
 from app.db.session import SessionLocal  # noqa: E402
 from app.services.discovery import seed_discovery  # noqa: E402
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--coops", action="store_true", help="Seed cooperatives (Peru)")
@@ -67,4 +69,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

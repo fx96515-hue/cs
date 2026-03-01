@@ -20,7 +20,9 @@ def upgrade() -> None:
         sa.Column("algorithm", sa.String(32), nullable=True),
     )
     # Back-fill existing rows with 'random_forest' (original implementation)
-    op.execute("UPDATE ml_models SET algorithm = 'random_forest' WHERE algorithm IS NULL")
+    op.execute(
+        "UPDATE ml_models SET algorithm = 'random_forest' WHERE algorithm IS NULL"
+    )
 
 
 def downgrade() -> None:

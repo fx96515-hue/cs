@@ -5,6 +5,7 @@ Revision ID: 0010_seed_ml_data
 Revises: 0009_ml_prediction_tables
 Create Date: 2025-12-29
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -43,7 +44,9 @@ def _build_freight_data(base_date: date) -> list[dict]:
         route_multiplier = 1.0 + (i % len(routes)) * 0.15
         seasonal_var = 1.1 if season in {"Q3", "Q4"} else 1.0
 
-        freight_cost = base_cost * route_multiplier * seasonal_var * (0.9 + (i % 20) * 0.01)
+        freight_cost = (
+            base_cost * route_multiplier * seasonal_var * (0.9 + (i % 20) * 0.01)
+        )
         weight = 18000 if container == "20ft" else 26000
         transit = 25 + (i % 5)
         arrival = dept_date + timedelta(days=transit)
@@ -211,7 +214,13 @@ def upgrade() -> None:
                 "model_type": "price_prediction",
                 "model_version": "1.0.0",
                 "training_date": datetime.now(),
-                "features_used": ["origin", "variety", "process", "grade", "cupping_score"],
+                "features_used": [
+                    "origin",
+                    "variety",
+                    "process",
+                    "grade",
+                    "cupping_score",
+                ],
                 "performance_metrics": {
                     "mae": 0.45,
                     "rmse": 0.62,

@@ -10,7 +10,9 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 
-SONAR_API_BASE = (os.getenv("SONAR_API_BASE") or "https://sonarcloud.io/api").rstrip("/")
+SONAR_API_BASE = (os.getenv("SONAR_API_BASE") or "https://sonarcloud.io/api").rstrip(
+    "/"
+)
 SONAR_TOKEN = (os.getenv("SONAR_TOKEN") or "").strip()
 
 PROJECT_KEY = (os.getenv("SONAR_PROJECT_KEY") or "").strip()
@@ -106,7 +108,9 @@ def _sonar_headers() -> Dict[str, str]:
     return {"Authorization": f"Bearer {SONAR_TOKEN}"}
 
 
-def _gh_request(method: str, path: str, payload: Optional[Dict[str, Any]] = None) -> Any:
+def _gh_request(
+    method: str, path: str, payload: Optional[Dict[str, Any]] = None
+) -> Any:
     url = f"https://api.github.com{path}"
     return _http_json(
         url,
@@ -138,7 +142,9 @@ def _gh_paginate(path: str) -> List[Dict[str, Any]]:
 
 def _ensure_label(owner: str, repo: str, name: str) -> None:
     try:
-        _gh_request("POST", f"/repos/{owner}/{repo}/labels", {"name": name, "color": "0e8a16"})
+        _gh_request(
+            "POST", f"/repos/{owner}/{repo}/labels", {"name": name, "color": "0e8a16"}
+        )
     except Exception:
         # Already exists or no permission—ignore.
         return
@@ -150,7 +156,9 @@ def _extract_key(body: str) -> Optional[str]:
 
 
 def _existing_mapping(owner: str, repo: str, label: str) -> Dict[str, GhIssueRef]:
-    items = _gh_paginate(f"/repos/{owner}/{repo}/issues?state=all&labels={urllib.parse.quote(label)}")
+    items = _gh_paginate(
+        f"/repos/{owner}/{repo}/issues?state=all&labels={urllib.parse.quote(label)}"
+    )
     mapping: Dict[str, GhIssueRef] = {}
 
     # Deduplicate: keep the lowest issue number per sonar key.
@@ -183,15 +191,16 @@ def _existing_mapping(owner: str, repo: str, label: str) -> Dict[str, GhIssueRef
 
     for key, nums in dups.items():
         nums_sorted = sorted(nums)
-        print(f"[warn] Duplicate GitHub issues for Sonar key {key}: extra={nums_sorted}, kept={mapping[key].number}")
+        print(
+            f"[warn] Duplicate GitHub issues for Sonar key {key}: extra={nums_sorted}, kept={mapping[key].number}"
+        )
 
     return mapping
 
 
 def _sonar_issue_link(issue_key: str) -> str:
-    return (
-        "https://sonarcloud.io/project/issues?"
-        + urllib.parse.urlencode({"id": PROJECT_KEY, "open": issue_key})
+    return "https://sonarcloud.io/project/issues?" + urllib.parse.urlencode(
+        {"id": PROJECT_KEY, "open": issue_key}
     )
 
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 import sys
-import sys
 
 from app.services.country_config import (
     COUNTRY_CONFIGS,
@@ -80,10 +79,10 @@ def test_discovery_queries_non_empty():
 @pytest.mark.parametrize(
     "start, end, expected_wraps",
     [
-        (4, 9, False),   # Peru: Apr–Sep, no wrap
-        (5, 9, False),   # Brazil: May–Sep, no wrap
-        (10, 2, True),   # Colombia: Oct–Feb, wraps year
-        (10, 1, True),   # Ethiopia: Oct–Jan, wraps year
+        (4, 9, False),  # Peru: Apr–Sep, no wrap
+        (5, 9, False),  # Brazil: May–Sep, no wrap
+        (10, 2, True),  # Colombia: Oct–Feb, wraps year
+        (10, 1, True),  # Ethiopia: Oct–Jan, wraps year
     ],
 )
 def test_harvest_calendar_wraps_year(start, end, expected_wraps):
@@ -104,16 +103,12 @@ def test_get_active_countries_default_returns_only_peru(monkeypatch):
     assert len(active) == 1
     assert active[0].code == "PE"
 
-
     country_config_module = sys.modules[get_active_countries.__module__]
     monkeypatch.setattr(country_config_module, "MULTI_COUNTRY_ENABLED", True)
 
     active = get_active_countries()
     codes = {cfg.code for cfg in active}
     assert codes == set(SUPPORTED_COUNTRIES)
-
-
-
 
 
 # ---------------------------------------------------------------------------
