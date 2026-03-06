@@ -3,7 +3,7 @@ import { apiFetch } from "../../lib/api";
 import { Roaster, RoasterFilters, Paged } from "../types";
 
 // Fetch Roasters with filters
-export function useRoasters(filters?: RoasterFilters & { limit?: number; page?: number }) {
+export function useRoasters(filters: Partial<RoasterFilters> & { limit?: number; page?: number }) {
   const params = new URLSearchParams();
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
@@ -20,7 +20,10 @@ export function useRoasters(filters?: RoasterFilters & { limit?: number; page?: 
   return useQuery({
     queryKey: ["roasters", filters],
     queryFn: async () => {
-      const response = await apiFetch<Roaster[] | Paged<Roaster>>(`/roasters?${params.toString()}`);
+      const qs = params.toString();
+      const response = await apiFetch<Roaster[] | Paged<Roaster>>(
+        `/roasters${qs ? `?${qs}` : ""}`,
+      );
       // Backend returns flat list, but we need Paged format
       // Check if response is already in Paged format
       if (Array.isArray(response)) {

@@ -1,10 +1,11 @@
-from sqlalchemy import String, Float, Integer, JSON, ForeignKey
+from datetime import datetime
+from sqlalchemy import String, Float, Integer, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.session import Base
-from app.models.common import TimestampMixin
+from app.models.common import TimestampMixin, SoftDeleteMixin
 
 
-class Shipment(Base, TimestampMixin):
+class Shipment(Base, TimestampMixin, SoftDeleteMixin):
     """Shipment tracking for coffee lots from origin to destination."""
 
     __tablename__ = "shipments"
@@ -39,6 +40,15 @@ class Shipment(Base, TimestampMixin):
     departure_date: Mapped[str | None] = mapped_column(String(50), nullable=True)
     estimated_arrival: Mapped[str | None] = mapped_column(String(50), nullable=True)
     actual_arrival: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    departure_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    estimated_arrival_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    actual_arrival_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Status
     status: Mapped[str] = mapped_column(

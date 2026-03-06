@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,8 @@ from app.models.user import User
 from app.schemas.roaster import RoasterCreate, RoasterOut, RoasterUpdate
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
+from app.core.versioning import capture_entity_version
+from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 from app.core.config import settings
 
 router = APIRouter()
@@ -17,9 +21,14 @@ router = APIRouter()
 
 @router.get("/", response_model=list[RoasterOut])
 def list_roasters(
-    db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst", "viewer"))
+    include_deleted: bool = Query(False),
+    db: Session = Depends(get_db),
+    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
-    return db.query(Roaster).order_by(Roaster.name.asc()).all()
+    q = db.query(Roaster)
+    if not include_deleted:
+        q = q.filter(Roaster.deleted_at.is_(None))
+    return q.order_by(Roaster.name.asc()).all()
 
 
 @router.post("/", response_model=RoasterOut)
@@ -43,6 +52,21 @@ def create_roaster(
         entity_id=r.id,
         entity_data=payload.model_dump(),
     )
+    capture_entity_version(
+        db=db,
+        entity_type="roaster",
+        entity_id=r.id,
+        instance=r,
+        user=user,
+        reason="create",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="roaster",
+        entity_id=r.id,
+        instance=r,
+        user=user,
+    )
 
     apply_create_status(request, response, created=True)
 
@@ -62,10 +86,14 @@ def create_roaster(
 @router.get("/{roaster_id}", response_model=RoasterOut)
 def get_roaster(
     roaster_id: int,
+    include_deleted: bool = Query(False),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
-    r = db.query(Roaster).filter(Roaster.id == roaster_id).first()
+    q = db.query(Roaster).filter(Roaster.id == roaster_id)
+    if not include_deleted:
+        q = q.filter(Roaster.deleted_at.is_(None))
+    r = q.first()
     if not r:
         raise HTTPException(status_code=404, detail="Not found")
     return r
@@ -78,7 +106,11 @@ def update_roaster(
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "analyst")),
 ):
-    r = db.query(Roaster).filter(Roaster.id == roaster_id).first()
+    r = (
+        db.query(Roaster)
+        .filter(Roaster.id == roaster_id, Roaster.deleted_at.is_(None))
+        .first()
+    )
     if not r:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -98,6 +130,21 @@ def update_roaster(
         entity_id=roaster_id,
         old_data=old_data,
         new_data=payload.model_dump(exclude_unset=True),
+    )
+    capture_entity_version(
+        db=db,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        instance=r,
+        user=user,
+        reason="update",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        instance=r,
+        user=user,
     )
 
     # Queue embedding generation task (async, non-blocking)
@@ -130,7 +177,7 @@ def delete_roaster(
         "website": r.website,
     }
 
-    db.delete(r)
+    r.deleted_at = datetime.utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -141,15 +188,74 @@ def delete_roaster(
         entity_id=roaster_id,
         entity_data=entity_data,
     )
+    capture_entity_version(
+        db=db,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        instance=r,
+        user=user,
+        reason="soft_delete",
+    )
+    resolve_entity_flags(
+        db=db,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        user=user,
+    )
 
     return {"status": "deleted"}
 
 
+@router.post("/{roaster_id}/restore")
+def restore_roaster(
+    roaster_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("admin")),
+):
+    r = db.query(Roaster).filter(Roaster.id == roaster_id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    r.deleted_at = None
+    db.commit()
+    db.refresh(r)
+
+    AuditLogger.log_update(
+        db=db,
+        user=user,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        old_data={"deleted_at": "set"},
+        new_data={"deleted_at": None},
+    )
+    capture_entity_version(
+        db=db,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        instance=r,
+        user=user,
+        reason="restore",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="roaster",
+        entity_id=roaster_id,
+        instance=r,
+        user=user,
+    )
+
+    return r
+
+
 @router.get("/export/csv", response_class=StreamingResponse)
 def export_roasters_csv(
+    include_deleted: bool = Query(False),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Export all roasters to CSV format."""
-    roasters = db.query(Roaster).order_by(Roaster.name.asc()).all()
+    q = db.query(Roaster)
+    if not include_deleted:
+        q = q.filter(Roaster.deleted_at.is_(None))
+    roasters = q.order_by(Roaster.name.asc()).all()
     return DataExporter.roasters_to_csv(roasters)

@@ -131,6 +131,7 @@ class RoasterOut(BaseModel):
     confidence: Optional[float] = None
     last_scored_at: Optional[datetime] = None
     meta: Optional[dict] = None
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -8,12 +8,41 @@ from sqlalchemy.orm import Session
 import structlog
 
 from app.models.user import User
+from app.models.audit_log import AuditLog
 
 logger = structlog.get_logger(__name__)
 
 
 class AuditLogger:
     """Log all CRUD operations for audit trail."""
+
+    @staticmethod
+    def _persist(
+        db: Session,
+        *,
+        action: str,
+        user: User | None,
+        entity_type: str | None,
+        entity_id: int | None,
+        payload: Dict[str, Any] | None,
+        request_id: Optional[str] = None,
+    ) -> None:
+        try:
+            entry = AuditLog(
+                actor_id=user.id if user else None,
+                actor_email=user.email if user else None,
+                actor_role=user.role if user else None,
+                action=action,
+                entity_type=entity_type or "unknown",
+                entity_id=entity_id,
+                request_id=request_id,
+                payload=payload,
+                created_at=datetime.utcnow(),
+            )
+            db.add(entry)
+            db.commit()
+        except Exception as exc:  # pragma: no cover - audit must not break flow
+            logger.warning("audit.persist_failed", error=str(exc))
 
     @staticmethod
     def log_create(
@@ -35,6 +64,15 @@ class AuditLogger:
             entity_data=entity_data,
             request_id=request_id,
             timestamp=datetime.utcnow().isoformat(),
+        )
+        AuditLogger._persist(
+            db=db,
+            action="create",
+            user=user,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload=entity_data,
+            request_id=request_id,
         )
 
     @staticmethod
@@ -66,6 +104,15 @@ class AuditLogger:
             request_id=request_id,
             timestamp=datetime.utcnow().isoformat(),
         )
+        AuditLogger._persist(
+            db=db,
+            action="update",
+            user=user,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload={"changes": changes},
+            request_id=request_id,
+        )
 
     @staticmethod
     def log_delete(
@@ -88,6 +135,15 @@ class AuditLogger:
             request_id=request_id,
             timestamp=datetime.utcnow().isoformat(),
         )
+        AuditLogger._persist(
+            db=db,
+            action="delete",
+            user=user,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload=entity_data,
+            request_id=request_id,
+        )
 
     @staticmethod
     def log_access(
@@ -109,6 +165,15 @@ class AuditLogger:
             action=action,
             request_id=request_id,
             timestamp=datetime.utcnow().isoformat(),
+        )
+        AuditLogger._persist(
+            db=db,
+            action=action,
+            user=user,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload=None,
+            request_id=request_id,
         )
 
     @staticmethod

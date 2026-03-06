@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
+from datetime import datetime
 
 from app.core.validation import validate_text_field
 
@@ -132,6 +133,7 @@ class LotOut(BaseModel):
     availability_window: Optional[str] = None
     notes: Optional[str] = None
     meta: Optional[dict] = None
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
-  const active = pathname === href || pathname?.startsWith(href + "/");
+  const active = pathname === href || pathname.startsWith(href + "/");
   return (
     <Link
       href={href}
@@ -35,10 +35,10 @@ export default function Nav() {
     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
       <NavLink href="/dashboard" label="Dashboard" />
       <NavLink href="/cooperatives" label="Kooperativen" />
-      <NavLink href="/roasters" label="Röster" />
+      <NavLink href="/roasters" label="Roester" />
       <NavLink href="/lots" label="Lots" />
       <NavLink href="/reports" label="Reports" />
-      <NavLink href="/search" label="Suche 🔍" />
+      <NavLink href="/search" label="Suche" />
 
       <div style={{ flex: 1 }} />
 

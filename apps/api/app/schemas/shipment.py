@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
+from datetime import datetime
 
 from app.core.validation import validate_text_field
 
@@ -16,6 +17,7 @@ class TrackingEvent(BaseModel):
 
 class ShipmentCreate(BaseModel):
     lot_id: Optional[int] = None
+    lot_ids: Optional[List[int]] = None
     cooperative_id: Optional[int] = None
     roaster_id: Optional[int] = None
     container_number: str = Field(..., min_length=5, max_length=50)
@@ -26,6 +28,9 @@ class ShipmentCreate(BaseModel):
     destination_port: str = Field(..., max_length=100)
     departure_date: Optional[str] = None
     estimated_arrival: Optional[str] = None
+    departure_at: Optional[datetime] = None
+    estimated_arrival_at: Optional[datetime] = None
+    actual_arrival_at: Optional[datetime] = None
     notes: Optional[str] = Field(None, max_length=2000)
 
     @field_validator("origin_port", "destination_port")
@@ -71,8 +76,12 @@ class ShipmentUpdate(BaseModel):
     current_location: Optional[str] = Field(None, max_length=200)
     status: Optional[str] = None
     actual_arrival: Optional[str] = None
+    departure_at: Optional[datetime] = None
+    estimated_arrival_at: Optional[datetime] = None
+    actual_arrival_at: Optional[datetime] = None
     delay_hours: Optional[int] = None
     notes: Optional[str] = Field(None, max_length=2000)
+    lot_ids: Optional[List[int]] = None
 
     @field_validator("current_location")
     @classmethod
@@ -143,6 +152,7 @@ class TrackingEventCreate(BaseModel):
 class ShipmentOut(BaseModel):
     id: int
     lot_id: Optional[int]
+    lot_ids: Optional[List[int]] = None
     cooperative_id: Optional[int]
     roaster_id: Optional[int]
     container_number: str
@@ -155,11 +165,15 @@ class ShipmentOut(BaseModel):
     departure_date: Optional[str]
     estimated_arrival: Optional[str]
     actual_arrival: Optional[str]
+    departure_at: Optional[datetime] = None
+    estimated_arrival_at: Optional[datetime] = None
+    actual_arrival_at: Optional[datetime] = None
     status: str
     status_updated_at: Optional[str]
     delay_hours: int
     tracking_events: Optional[List[TrackingEvent]] = None
     notes: Optional[str]
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

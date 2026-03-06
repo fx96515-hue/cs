@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "../../lib/api";
 import { useDeals, useCalculateMargin } from "../hooks/useDeals";
 import { MarginCalcRequest } from "../types";
 import PieChart from "../charts/PieChart";
 
 export default function DealsDashboard() {
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [marginForm, setMarginForm] = useState<MarginCalcRequest>({
     purchase_price_per_kg: 4.5,
     purchase_currency: "USD",
@@ -16,25 +18,54 @@ export default function DealsDashboard() {
     yield_factor: 0.84,
     selling_price_per_kg: 12.0,
     selling_currency: "EUR",
+    fx_usd_to_eur: null,
   });
 
-  const { data: dealsData, isLoading } = useDeals({ limit: 50 });
+  const { data: dealsData, isLoading, refetch } = useDeals({
+    limit: 50,
+    include_deleted: showArchived,
+  });
   const calculateMargin = useCalculateMargin();
+  const [busyId, setBusyId] = useState<number | null>(null);
 
   const deals = dealsData?.items || [];
+  const activeDeals = deals.filter((d) => !(d as any).deleted_at);
 
-  // Calculate overview stats (using lots as deals for now)
   const stats = {
-    total: deals.length,
-    totalValue: deals.reduce((sum, d) => sum + ((d as any).value_eur || 0), 0),
-    avgMargin: 15.5, // Placeholder
+    total: activeDeals.length,
+    totalValue: activeDeals.reduce((sum, d) => sum + ((d as any).value_eur || 0), 0),
+    avgMargin: 15.5,
   };
 
   const handleCalculate = () => {
     calculateMargin.mutate(marginForm);
   };
 
-  // Mock cost breakdown data for chart
+  async function archiveLot(id: number) {
+    if (!confirm("Deal archivieren?")) return;
+    setBusyId(id);
+    try {
+      await apiFetch(`/deals/${id}`, { method: "DELETE" });
+      await refetch();
+    } catch (e) {
+      console.error("Failed to archive deal:", e);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function restoreLot(id: number) {
+    setBusyId(id);
+    try {
+      await apiFetch(`/deals/${id}/restore`, { method: "POST" });
+      await refetch();
+    } catch (e) {
+      console.error("Failed to restore deal:", e);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const costBreakdown = [
     { name: "Purchase", value: marginForm.purchase_price_per_kg },
     { name: "Landed Costs", value: marginForm.landed_costs_per_kg },
@@ -47,10 +78,18 @@ export default function DealsDashboard() {
         <div>
           <div className="h1">Deals & Margenrechner</div>
           <div className="muted">
-            Verwalten Sie Deals, berechnen Sie Margen und analysieren Sie die Rentabilität
+            Verwalten Sie Deals, berechnen Sie Margen und analysieren Sie die Rentabilitaet
           </div>
         </div>
         <div className="actions">
+          <label className="row" style={{ gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            <span className="small muted">Archivierte anzeigen</span>
+          </label>
           <button
             type="button"
             className="btn btnPrimary"
@@ -64,7 +103,6 @@ export default function DealsDashboard() {
         </div>
       </div>
 
-      {/* Overview KPIs */}
       <div className="grid gridCols4" style={{ marginBottom: "18px" }}>
         <div className="panel card">
           <div className="cardLabel">Deals gesamt</div>
@@ -73,7 +111,7 @@ export default function DealsDashboard() {
         </div>
         <div className="panel card">
           <div className="cardLabel">Pipeline-Wert</div>
-          <div className="cardValue">€{stats.totalValue.toLocaleString()}</div>
+          <div className="cardValue">EUR {stats.totalValue.toLocaleString()}</div>
           <div className="cardHint">Gesamter Deal-Wert</div>
         </div>
         <div className="panel card">
@@ -82,22 +120,20 @@ export default function DealsDashboard() {
           <div className="cardHint">Durchschnittliche Bruttomarge</div>
         </div>
         <div className="panel card">
-          <div className="cardLabel">Aktive Lots</div>
-          <div className="cardValue">{deals.filter((d) => (d as any).status !== "completed").length}</div>
+          <div className="cardLabel">Aktive Deals</div>
+          <div className="cardValue">{activeDeals.filter((d) => (d as any).status !== "closed").length}</div>
           <div className="cardHint">In Bearbeitung</div>
         </div>
       </div>
 
-      {/* Margin Calculator */}
       {showCalculator && (
         <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
           <div className="h2">Echtzeit-Margenrechner</div>
           <div className="muted" style={{ marginBottom: "14px" }}>
-            Berechnen Sie Rentabilitätsszenarien für Kaffee-Deals
+            Berechnen Sie Rentabilitaetsszenarien fuer Kaffee-Deals
           </div>
 
           <div className="grid gridCols2" style={{ gap: "18px" }}>
-            {/* Input Form */}
             <div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div>
@@ -139,7 +175,7 @@ export default function DealsDashboard() {
                 </div>
                 <div>
                   <label style={{ fontSize: "12px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-                    Röst- & Verpackungskosten pro kg (EUR)
+                    Roest- & Verpackungskosten pro kg (EUR)
                   </label>
                   <input
                     type="number"
@@ -156,7 +192,7 @@ export default function DealsDashboard() {
                 </div>
                 <div>
                   <label style={{ fontSize: "12px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-                    Ertragsfaktor (Grün zu Geröstet)
+                    Ertragsfaktor (Gruen zu Geroestet)
                   </label>
                   <input
                     type="number"
@@ -170,7 +206,7 @@ export default function DealsDashboard() {
                     }
                   />
                   <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "4px" }}>
-                    0.84 = 16% Gewichtsverlust beim Rösten
+                    0.84 = 16% Gewichtsverlust beim Roesten
                   </div>
                 </div>
                 <div>
@@ -202,9 +238,8 @@ export default function DealsDashboard() {
               </div>
             </div>
 
-            {/* Results & Charts */}
             <div>
-              {calculateMargin.isSuccess && calculateMargin.data && (
+              {calculateMargin.isSuccess && calculateMargin.data ? (
                 <div>
                   <div
                     className="panel"
@@ -230,16 +265,9 @@ export default function DealsDashboard() {
                     </div>
                   </div>
 
-                  <PieChart
-                    data={costBreakdown}
-                    dataKey="value"
-                    nameKey="name"
-                    title="Kostenaufschlüsselung"
-                  />
+                  <PieChart data={costBreakdown} dataKey="value" nameKey="name" title="Kostenaufschluesselung" />
                 </div>
-              )}
-
-              {!calculateMargin.isSuccess && (
+              ) : (
                 <div
                   style={{
                     padding: "40px",
@@ -249,7 +277,7 @@ export default function DealsDashboard() {
                     borderRadius: "12px",
                   }}
                 >
-                  Geben Sie Werte ein und klicken Sie auf &quot;Marge berechnen&quot;, um Ergebnisse zu sehen
+                  Geben Sie Werte ein und klicken Sie auf "Marge berechnen", um Ergebnisse zu sehen
                 </div>
               )}
             </div>
@@ -257,11 +285,10 @@ export default function DealsDashboard() {
         </div>
       )}
 
-      {/* Deals Table */}
       <div className="panel" style={{ padding: "18px" }}>
-        <div className="h2">Aktive Lots & Deals</div>
+        <div className="h2">Aktive Deals</div>
         <div className="muted" style={{ marginBottom: "14px" }}>
-          {isLoading ? "Lade Deals..." : `${deals.length} Lots im System`}
+          {isLoading ? "Lade Deals..." : `${deals.length} Deals im System`}
         </div>
 
         {deals.length > 0 ? (
@@ -273,7 +300,7 @@ export default function DealsDashboard() {
                   <th>Herkunft</th>
                   <th>Sorte</th>
                   <th>Prozess</th>
-                  <th>Qualität</th>
+                  <th>Qualitaet</th>
                   <th>Gewicht (kg)</th>
                   <th>Cupping-Score</th>
                   <th>Status</th>
@@ -284,27 +311,48 @@ export default function DealsDashboard() {
                 {deals.map((lot) => (
                   <tr key={lot.id}>
                     <td style={{ fontWeight: "600" }}>{(lot as any).reference || `LOT-${lot.id}`}</td>
-                    <td>{(lot as any).origin || "–"}</td>
-                    <td>{(lot as any).variety || "–"}</td>
-                    <td>{(lot as any).process || "–"}</td>
-                    <td>{(lot as any).grade || "–"}</td>
-                    <td>{(lot as any).weight_kg?.toLocaleString() || "–"}</td>
+                    <td>{(lot as any).origin || "-"}</td>
+                    <td>{(lot as any).variety || "-"}</td>
+                    <td>{(lot as any).process || "-"}</td>
+                    <td>{(lot as any).grade || "-"}</td>
+                    <td>{(lot as any).weight_kg?.toLocaleString() || "-"}</td>
                     <td>
                       {(lot as any).cupping_score ? (
                         <span className="badge badgeOk">{(lot as any).cupping_score}</span>
                       ) : (
-                        "–"
+                        "-"
                       )}
                     </td>
                     <td>
-                      <span className="badge">
-                        {(lot as any).status || "active"}
-                      </span>
+                      {(lot as any).deleted_at ? (
+                        <span className="badge badgeWarn">archiviert</span>
+                      ) : (
+                        <span className="badge">{(lot as any).status || "active"}</span>
+                      )}
                     </td>
                     <td>
                       <Link href={`/lots/${lot.id}`} className="link">
-                        Ansehen →
+                        Ansehen -
                       </Link>
+                      {(lot as any).deleted_at ? (
+                        <button
+                          className="btn"
+                          style={{ marginLeft: 8 }}
+                          onClick={() => restoreLot(lot.id)}
+                          disabled={busyId === lot.id}
+                        >
+                          Restore
+                        </button>
+                      ) : (
+                        <button
+                          className="btn"
+                          style={{ marginLeft: 8 }}
+                          onClick={() => archiveLot(lot.id)}
+                          disabled={busyId === lot.id}
+                        >
+                          Archivieren
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -313,7 +361,7 @@ export default function DealsDashboard() {
           </div>
         ) : (
           <div className="empty" style={{ padding: "40px", textAlign: "center", color: "var(--muted)" }}>
-            Keine Deals oder Lots gefunden. Erstellen Sie ein Lot, um Deals und Margen zu verfolgen.
+            Keine Deals gefunden. Erstellen Sie einen Deal, um Margen zu verfolgen.
           </div>
         )}
       </div>

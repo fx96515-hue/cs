@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { DataQualityFlag } from "../../types";
 
 type Roaster = {
   id: number;
@@ -13,26 +14,65 @@ type Roaster = {
   city?: string | null;
   website?: string | null;
   notes?: string | null;
+  deleted_at?: string | null;
 };
 
 export default function RoasterDetailPage() {
   const params = useParams<{ id: string }>();
-  const id = Number(params.id);
+  const id = Number(params?.id);
+  const router = useRouter();
   const [r, setR] = useState<Roaster | null>(null);
   const [saving, setSaving] = useState(false);
+  const [flags, setFlags] = useState<DataQualityFlag[]>([]);
+  const [qualityBusy, setQualityBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!id) return;
     (async () => {
       try {
-        const d = await apiFetch<Roaster>(`/roasters/${id}`);
+        const [d, f] = await Promise.all([
+          apiFetch<Roaster>(`/roasters/${id}?include_deleted=true`),
+          apiFetch<DataQualityFlag[]>(`/data-quality/flags?entity_type=roaster&entity_id=${id}`),
+        ]);
         setR(d);
+        setFlags(f);
       } catch (e: any) {
         setErr(e?.message ?? String(e));
       }
     })();
   }, [id]);
+
+  async function resolveFlag(flagId: number) {
+    setQualityBusy(true);
+    try {
+      await apiFetch(`/data-quality/flags/${flagId}/resolve`, { method: "POST" });
+      const f = await apiFetch<DataQualityFlag[]>(
+        `/data-quality/flags?entity_type=roaster&entity_id=${id}`,
+      );
+      setFlags(f);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setQualityBusy(false);
+    }
+  }
+
+  async function recomputeFlags() {
+    setQualityBusy(true);
+    try {
+      await apiFetch(`/data-quality/recompute/roaster/${id}`, { method: "POST" });
+      const f = await apiFetch<DataQualityFlag[]>(
+        `/data-quality/flags?entity_type=roaster&entity_id=${id}`,
+      );
+      setFlags(f);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setQualityBusy(false);
+    }
+  }
 
   async function save() {
     if (!r) return;
@@ -59,12 +99,38 @@ export default function RoasterDetailPage() {
     }
   }
 
+  async function archive() {
+    setErr(null);
+    setMsg(null);
+    if (!confirm("Roesterei archivieren?")) return;
+    try {
+      await apiFetch(`/roasters/${id}`, { method: "DELETE" });
+      router.push("/roasters");
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    }
+  }
+
+  async function restore() {
+    setErr(null);
+    setMsg(null);
+    try {
+      const restored = await apiFetch<Roaster>(`/roasters/${id}/restore`, {
+        method: "POST",
+      });
+      setR(restored);
+      setMsg("Wiederhergestellt.");
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    }
+  }
+
   if (err) {
     return (
       <div className="page">
         <div className="error">{err}</div>
         <Link className="btn" href="/roasters">
-          Zurück
+          Zurueck
         </Link>
       </div>
     );
@@ -73,7 +139,7 @@ export default function RoasterDetailPage() {
   if (!r) {
     return (
       <div className="page">
-        <div className="panel">Lade…</div>
+        <div className="panel">Lade...</div>
       </div>
     );
   }
@@ -88,41 +154,72 @@ export default function RoasterDetailPage() {
     <div className="page">
       <div className="pageHeader">
         <div>
-          <div className="h1">Rösterei #{r.id}</div>
+          <div className="h1">Roesterei #{r.id}</div>
           <div className="muted">Stammdaten & Notizen</div>
         </div>
         <div className="row gap">
           <Link className="btn" href="/roasters">
             Zur Liste
           </Link>
+          {r?.deleted_at ? (
+            <button className="btn btnPrimary" onClick={restore}>
+              Wiederherstellen
+            </button>
+          ) : (
+            <button className="btn" onClick={archive}>
+              Archivieren
+            </button>
+          )}
           <button className="btn btnPrimary" onClick={save} disabled={saving}>
-            {saving ? "Speichere…" : "Speichern"}
+            {saving ? "Speichere..." : "Speichern"}
           </button>
         </div>
       </div>
 
       {msg ? <div className="success">{msg}</div> : null}
-      {err ? <div className="error">{err}</div> : null}
+
+      {r?.deleted_at ? (
+        <div className="alert bad">
+          <div className="alertTitle">Archiviert</div>
+          <div className="alertText">Diese Roesterei ist archiviert und nicht aktiv.</div>
+        </div>
+      ) : null}
 
       <div className="grid2">
         <div className="panel">
           <div className="panelTitle">Stammdaten</div>
           <div className="form">
             <label className="label">Name</label>
-            <input className="input" value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} />
+            <input
+              className="input"
+              value={r.name}
+              onChange={(e) => setR({ ...r, name: e.target.value })}
+            />
 
             <label className="label">Stadt</label>
-            <input className="input" value={r.city ?? ""} onChange={(e) => setR({ ...r, city: e.target.value })} />
+            <input
+              className="input"
+              value={r.city ?? ""}
+              onChange={(e) => setR({ ...r, city: e.target.value })}
+            />
 
             <label className="label">Land</label>
-            <input className="input" value={r.country ?? ""} onChange={(e) => setR({ ...r, country: e.target.value })} />
+            <input
+              className="input"
+              value={r.country ?? ""}
+              onChange={(e) => setR({ ...r, country: e.target.value })}
+            />
 
             <label className="label">Website</label>
-            <input className="input" value={r.website ?? ""} onChange={(e) => setR({ ...r, website: e.target.value })} />
+            <input
+              className="input"
+              value={r.website ?? ""}
+              onChange={(e) => setR({ ...r, website: e.target.value })}
+            />
             {websiteHref ? (
               <div className="row" style={{ marginTop: 8 }}>
                 <a className="link" href={websiteHref} target="_blank" rel="noreferrer">
-                  <Badge tone="good">Website öffnen</Badge>
+                  <Badge tone="good">Website oeffnen</Badge>
                 </a>
               </div>
             ) : (
@@ -143,8 +240,72 @@ export default function RoasterDetailPage() {
             placeholder="z.B. Ansprechpartner, Konditionen, Profile, Specialty Fokus, ..."
           />
           <div className="muted" style={{ marginTop: 10 }}>
-            Tipp: Nutze diese Notizen als CRM-Vorarbeit (Tonality + Anknüpfungspunkte).
+            Tipp: Nutze diese Notizen als CRM-Vorarbeit (Tonality + Anknoepfungspunkte).
           </div>
+        </div>
+      </div>
+
+      <div className="panel" style={{ marginTop: 14 }}>
+        <div className="rowBetween" style={{ marginBottom: 10 }}>
+          <div>
+            <div className="panelTitle">Datenqualitaet</div>
+            <div className="muted">Offene Flags fuer diese Roesterei.</div>
+          </div>
+          <div className="row gap">
+            <button className="btn" onClick={recomputeFlags} disabled={qualityBusy}>
+              Neu berechnen
+            </button>
+          </div>
+        </div>
+        <div className="tableWrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Feld</th>
+                <th>Issue</th>
+                <th>Severity</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {flags.length ? (
+                flags.map((flag) => (
+                  <tr key={flag.id}>
+                    <td>{flag.field_name || "-"}</td>
+                    <td>{flag.message || flag.issue_type}</td>
+                    <td>
+                      <Badge
+                        tone={
+                          flag.severity === "critical"
+                            ? "bad"
+                            : flag.severity === "warning"
+                              ? "warn"
+                              : "neutral"
+                        }
+                      >
+                        {flag.severity}
+                      </Badge>
+                    </td>
+                    <td>
+                      <button
+                        className="btn"
+                        onClick={() => resolveFlag(flag.id)}
+                        disabled={qualityBusy}
+                      >
+                        Resolve
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="muted">
+                    Keine offenen Flags.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

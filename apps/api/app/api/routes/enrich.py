@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+import structlog
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -10,6 +11,7 @@ from app.services.enrichment import enrich_entity
 
 
 router = APIRouter()
+log = structlog.get_logger(__name__)
 
 
 @router.post("/{entity_type}/{entity_id}", response_model=EnrichResponse)
@@ -34,4 +36,12 @@ def enrich(
         )
         return out
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        log.warning(
+            "enrich_request_invalid",
+            error=str(e),
+            entity_type=entity_type,
+            entity_id=entity_id,
+        )
+        raise HTTPException(
+            status_code=400, detail="Invalid enrichment request"
+        )

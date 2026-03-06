@@ -29,23 +29,21 @@ type PurchaseTiming = {
 
 type PriceForecast = {
   status: string;
-  forecast_days?: number;
-  current_price?: number;
-  forecast?: Array<{
+  forecast_days: number;
+  current_price: number;
+  forecast: Array<{
     date: string;
     predicted_price: number;
     confidence: number;
   }>;
-  trend?: string;
-  note?: string;
-  message?: string;
+  trend: string;
+  note: string;
+  message: string;
 };
 
 export default function MLPage() {
   const [models, setModels] = useState<MLModel[]>([]);
-  const [purchaseTiming, setPurchaseTiming] = useState<PurchaseTiming | null>(
-    null
-  );
+  const [purchaseTiming, setPurchaseTiming] = useState<PurchaseTiming | null>(null);
   const [forecast, setForecast] = useState<PriceForecast | null>(null);
   const [trainingModel, setTrainingModel] = useState<string | null>(null);
 
@@ -60,9 +58,7 @@ export default function MLPage() {
 
   async function fetchPurchaseTiming() {
     try {
-      const data = await apiFetch<PurchaseTiming>(
-        "/ml/train/optimal-purchase-timing"
-      );
+      const data = await apiFetch<PurchaseTiming>("/ml/train/optimal-purchase-timing");
       setPurchaseTiming(data);
     } catch (e) {
       console.error("Failed to fetch purchase timing:", e);
@@ -71,9 +67,7 @@ export default function MLPage() {
 
   async function fetchForecast() {
     try {
-      const data = await apiFetch<PriceForecast>(
-        "/ml/train/price-forecast?days=30"
-      );
+      const data = await apiFetch<PriceForecast>("/ml/train/price-forecast?days=30");
       setForecast(data);
     } catch (e) {
       console.error("Failed to fetch forecast:", e);
@@ -84,7 +78,7 @@ export default function MLPage() {
     try {
       setTrainingModel(modelType);
       await apiFetch(`/ml/train/${modelType}`, { method: "POST" });
-      alert(`Modelltraining für ${modelType} gestartet!`);
+      alert(`Modelltraining fuer ${modelType} gestartet!`);
       fetchModels();
     } catch (e: any) {
       alert(`Fehler beim Training: ${e?.message || e}`);
@@ -115,9 +109,7 @@ export default function MLPage() {
       <div className="pageHeader">
         <div>
           <div className="h1">ML-Modelle</div>
-          <div className="muted">
-            Machine Learning Modelle und Kaufzeitprognosen
-          </div>
+          <div className="muted">Machine Learning Modelle und Kaufzeitprognosen</div>
         </div>
       </div>
 
@@ -129,8 +121,7 @@ export default function MLPage() {
               <div style={{ marginBottom: 10 }}>
                 {recommendationBadge(purchaseTiming.recommendation)}
                 <div style={{ marginTop: 8 }}>
-                  <strong>Vertrauen:</strong>{" "}
-                  {(purchaseTiming.confidence * 100).toFixed(0)}%
+                  <strong>Vertrauen:</strong> {(purchaseTiming.confidence * 100).toFixed(0)}%
                 </div>
               </div>
               <div className="muted">{purchaseTiming.reason}</div>
@@ -152,7 +143,7 @@ export default function MLPage() {
               </div>
             </div>
           ) : (
-            <div className="muted">Lädt...</div>
+            <div className="muted">Laedt...</div>
           )}
         </div>
 
@@ -166,25 +157,17 @@ export default function MLPage() {
               <div style={{ maxHeight: 200, overflowY: "auto" }}>
                 {forecast.forecast.slice(0, 10).map((f, idx) => (
                   <div key={idx} className="row" style={{ padding: 4 }}>
+                    <div style={{ flex: 1 }}>{new Date(f.date).toLocaleDateString("de-DE")}</div>
+                    <div style={{ flex: 1 }}>${f.predicted_price.toFixed(2)}/kg</div>
                     <div style={{ flex: 1 }}>
-                      {new Date(f.date).toLocaleDateString("de-DE")}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      ${f.predicted_price.toFixed(2)}/kg
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <Badge tone="neutral">
-                        {(f.confidence * 100).toFixed(0)}%
-                      </Badge>
+                      <Badge tone="neutral">{(f.confidence * 100).toFixed(0)}%</Badge>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="muted">
-              {forecast?.message || "Lädt..."}
-            </div>
+            <div className="muted">{forecast?.message || "Laedt..."}</div>
           )}
         </div>
       </div>
@@ -197,18 +180,14 @@ export default function MLPage() {
             onClick={() => trainModel("freight_cost")}
             disabled={trainingModel === "freight_cost"}
           >
-            {trainingModel === "freight_cost"
-              ? "Training läuft..."
-              : "Frachtmodell trainieren"}
+            {trainingModel === "freight_cost" ? "Training laeuft..." : "Frachtmodell trainieren"}
           </button>
           <button
             className="btn btnPrimary"
             onClick={() => trainModel("coffee_price")}
             disabled={trainingModel === "coffee_price"}
           >
-            {trainingModel === "coffee_price"
-              ? "Training läuft..."
-              : "Preismodell trainieren"}
+            {trainingModel === "coffee_price" ? "Training laeuft..." : "Preismodell trainieren"}
           </button>
         </div>
 
@@ -240,9 +219,7 @@ export default function MLPage() {
                       </Badge>
                     </td>
                     <td>{model.model_version}</td>
-                    <td>
-                      {new Date(model.training_date).toLocaleDateString("de-DE")}
-                    </td>
+                    <td>{new Date(model.training_date).toLocaleDateString("de-DE")}</td>
                     <td>
                       {model.performance_metrics ? (
                         <div style={{ fontSize: "0.85em" }}>

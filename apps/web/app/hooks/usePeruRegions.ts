@@ -34,7 +34,7 @@ export function usePeruRegionIntelligence(regionName: string) {
 }
 
 // Fetch Cooperatives with filters
-export function useCooperatives(filters?: CooperativeFilters & { limit?: number; page?: number }) {
+export function useCooperatives(filters: Partial<CooperativeFilters> & { limit?: number; page?: number }) {
   const params = new URLSearchParams();
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
@@ -51,8 +51,9 @@ export function useCooperatives(filters?: CooperativeFilters & { limit?: number;
   return useQuery({
     queryKey: ["cooperatives", filters],
     queryFn: async () => {
+      const qs = params.toString();
       const response = await apiFetch<Cooperative[] | Paged<Cooperative>>(
-        `/cooperatives?${params.toString()}`
+        `/cooperatives${qs ? `?${qs}` : ""}`,
       );
       // Backend returns flat list, but we need Paged format
       // Check if response is already in Paged format

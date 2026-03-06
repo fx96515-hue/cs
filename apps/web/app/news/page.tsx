@@ -3,15 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import DataQualityMini from "../components/DataQualityMini";
 
 type NewsItem = {
   id: number;
-  topic?: string | null;
+  topic: string | null;
   title: string;
   url: string;
-  source?: string | null;
-  published_at?: string | null;
-  created_at?: string | null;
+  source: string | null;
+  published_at: string | null;
+  created_at: string | null;
 };
 
 export default function NewsPage() {
@@ -27,7 +28,9 @@ export default function NewsPage() {
     setLoading(true);
     setErr(null);
     try {
-      const d = await apiFetch<NewsItem[]>(`/news?topic=${encodeURIComponent(topic)}&days=${days}&limit=60`);
+      const d = await apiFetch<NewsItem[]>(
+        `/news?topic=${encodeURIComponent(topic)}&days=${days}&limit=60`,
+      );
       setItems(d);
     } catch (e: any) {
       setErr(e?.message ?? String(e));
@@ -38,7 +41,6 @@ export default function NewsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sorted = useMemo(() => {
@@ -52,13 +54,14 @@ export default function NewsPage() {
     setMsg(null);
     setErr(null);
     try {
-      const r = await apiFetch<{ status: string; created?: number; updated?: number; errors?: any[] }>(
+      const r = await apiFetch<{ status: string; created: number; updated: number; errors: any[] }>(
         `/news/refresh?topic=${encodeURIComponent(topic)}`,
-        { method: "POST" }
+        { method: "POST" },
       );
-      setMsg(`Refresh: ${r.status}${typeof r.created === "number" ? ` • neu ${r.created}` : ""}${
-        typeof r.updated === "number" ? ` • aktualisiert ${r.updated}` : ""
-      }`);
+      const parts = [`Refresh: ${r.status}`];
+      if (typeof r.created === "number") parts.push(`neu ${r.created}`);
+      if (typeof r.updated === "number") parts.push(`aktualisiert ${r.updated}`);
+      setMsg(parts.join(" | "));
       await load();
     } catch (e: any) {
       setErr(e?.message ?? String(e));
@@ -72,14 +75,14 @@ export default function NewsPage() {
       <div className="pageHeader">
         <div>
           <div className="h1">Marktradar</div>
-          <div className="muted">News, Quellen, Themen – ein Ort.</div>
+          <div className="muted">News, Quellen, Themen - ein Ort.</div>
         </div>
         <div className="row gap">
           <button className="btn" onClick={load} disabled={loading || refreshing}>
             Neu laden
           </button>
           <button className="btn btnPrimary" onClick={refreshNow} disabled={refreshing}>
-            {refreshing ? "Refresh…" : "Refresh (API)"}
+            {refreshing ? "Refresh..." : "Refresh (API)"}
           </button>
         </div>
       </div>
@@ -92,7 +95,12 @@ export default function NewsPage() {
         <div className="row gap" style={{ flexWrap: "wrap" }}>
           <div>
             <div className="label">Topic</div>
-            <input className="input" value={topic} onChange={(e) => setTopic(e.target.value)} style={{ width: 320 }} />
+            <input
+              className="input"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              style={{ width: 320 }}
+            />
           </div>
           <div>
             <div className="label">Tage</div>
@@ -113,14 +121,15 @@ export default function NewsPage() {
           </div>
         </div>
         <div className="muted" style={{ marginTop: 10 }}>
-          Tipp: Für Peru z.B. „peru specialty coffee“, „cajamarca coffee cooperative“, „peru arabica export“.
+          Tipp: Fuer Peru z.B. "peru specialty coffee", "cajamarca coffee cooperative",
+          "peru arabica export".
         </div>
       </div>
 
       <div className="panel">
         <div className="panelTitle">Ergebnisse ({sorted.length})</div>
         {loading ? (
-          <div className="muted">Lade…</div>
+          <div className="muted">Lade...</div>
         ) : sorted.length === 0 ? (
           <div className="muted">Keine Treffer.</div>
         ) : (
@@ -131,17 +140,23 @@ export default function NewsPage() {
                   <div className="listTitle">{n.title}</div>
                   <div className="listMeta">
                     <span className="muted">{n.source ?? "(Quelle unbekannt)"}</span>
-                    <span className="dot">•</span>
-                    <span className="muted">{n.published_at ? new Date(n.published_at).toLocaleString() : "-"}</span>
-                    <span className="dot">•</span>
+                    <span className="dot">|</span>
+                    <span className="muted">
+                      {n.published_at ? new Date(n.published_at).toLocaleString() : "-"}
+                    </span>
+                    <span className="dot">|</span>
                     <Badge tone="neutral">{n.topic ?? topic}</Badge>
                   </div>
                 </div>
-                <div className="listRight">↗</div>
+                <div className="listRight">-</div>
               </a>
             ))}
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <DataQualityMini title="Data Quality (News Kontext)" limit={10} />
       </div>
     </div>
   );

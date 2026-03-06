@@ -8,6 +8,7 @@ from app.core.validation import validate_text_field, validate_url_field
 class CooperativeCreate(BaseModel):
     name: str = Field(min_length=2, max_length=255)
     region: Optional[str] = Field(None, max_length=255)
+    region_id: Optional[int] = Field(None, ge=1)
     altitude_m: Optional[float] = Field(None, ge=0, le=6000)
     varieties: Optional[str] = Field(None, max_length=255)
     certifications: Optional[str] = Field(None, max_length=255)
@@ -35,6 +36,7 @@ class CooperativeCreate(BaseModel):
 class CooperativeUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=255)
     region: Optional[str] = Field(None, max_length=255)
+    region_id: Optional[int] = Field(None, ge=1)
     altitude_m: Optional[float] = Field(None, ge=0, le=6000)
     varieties: Optional[str] = Field(None, max_length=255)
     certifications: Optional[str] = Field(None, max_length=255)
@@ -66,6 +68,7 @@ class CooperativeOut(BaseModel):
     id: int
     name: str
     region: Optional[str] = None
+    region_id: Optional[int] = None
     altitude_m: Optional[float] = None
     varieties: Optional[str] = None
     certifications: Optional[str] = None
@@ -86,6 +89,7 @@ class CooperativeOut(BaseModel):
     last_scored_at: Optional[datetime] = None
 
     meta: Optional[dict] = None
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -3,6 +3,7 @@
 from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+import structlog
 
 from app.api.deps import require_role, get_db
 from app.schemas.auto_outreach import (
@@ -15,6 +16,7 @@ from app.services import auto_outreach
 
 
 router = APIRouter()
+log = structlog.get_logger(__name__)
 
 ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {"description": "Invalid request"},
@@ -46,11 +48,10 @@ def create_campaign(
         )
         return result
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        log.warning("create_campaign_invalid", error=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        import structlog
-
-        structlog.get_logger().error("create_campaign_failed", error=str(e))
+        log.error("create_campaign_failed", error=str(e))
         raise HTTPException(status_code=500, detail="Campaign creation failed")
 
 
@@ -72,9 +73,7 @@ def get_suggestions(
         )
         return suggestions
     except Exception as e:
-        import structlog
-
-        structlog.get_logger().error("get_suggestions_failed", error=str(e))
+        log.error("get_suggestions_failed", error=str(e))
         raise HTTPException(
             status_code=500, detail="Failed to get outreach suggestions"
         )
@@ -98,9 +97,7 @@ def get_entity_status(
         )
         return status
     except Exception as e:
-        import structlog
-
-        structlog.get_logger().error("get_entity_status_failed", error=str(e))
+        log.error("get_entity_status_failed", error=str(e))
         raise HTTPException(
             status_code=500, detail="Failed to get entity outreach status"
         )
