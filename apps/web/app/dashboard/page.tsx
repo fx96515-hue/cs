@@ -38,8 +38,15 @@ type Report = {
   report_at: string;
 };
 
+type OpsOverview = {
+  data_quality?: {
+    open_flags?: number;
+    critical_flags?: number;
+  };
+};
+
 function fmtDate(x?: string | null) {
-  if (!x) return "–";
+  if (!x) return "-";
   const d = new Date(x);
   return d.toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
 }
@@ -52,6 +59,7 @@ export default function DashboardPage() {
   const [market, setMarket] = useState<MarketSnapshot | null>(null);
   const [coopsTotal, setCoopsTotal] = useState<number | null>(null);
   const [roastersTotal, setRoastersTotal] = useState<number | null>(null);
+  const [opsOverview, setOpsOverview] = useState<OpsOverview | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
 
@@ -62,23 +70,24 @@ export default function DashboardPage() {
         setLoading(true);
         setErr(null);
 
-        const [h, m, coops, roasters, n, r] = await Promise.all([
+        const [h, m, coops, roasters, n, r, ops] = await Promise.all([
           apiFetch<ApiStatus>("/health", { skipAuth: true }),
           apiFetch<MarketSnapshot>("/market/latest"),
           apiFetch<Paged<any> | any[]>("/cooperatives?limit=1"),
           apiFetch<Paged<any> | any[]>("/roasters?limit=1"),
           apiFetch<NewsItem[]>("/news?limit=6"),
           apiFetch<Report[]>("/reports?limit=6"),
+          apiFetch<OpsOverview>("/ops/overview"),
         ]);
 
         if (!alive) return;
         setHealth(h);
         setMarket(m);
-        // Handle both flat list and Paged format
         setCoopsTotal(Array.isArray(coops) ? coops.length : coops?.total ?? null);
         setRoastersTotal(Array.isArray(roasters) ? roasters.length : roasters?.total ?? null);
         setNews(Array.isArray(n) ? n : []);
         setReports(Array.isArray(r) ? r : []);
+        setOpsOverview(ops);
       } catch (e: any) {
         if (!alive) return;
         setErr(e?.message ?? String(e));
@@ -99,10 +108,8 @@ export default function DashboardPage() {
     <div className="page">
       <div className="pageHeader">
         <div>
-          <div className="h1">Übersicht</div>
-          <div className="muted">
-            Status, KPIs und die wichtigsten Signale auf einen Blick.
-          </div>
+          <div className="h1">Uebersicht</div>
+          <div className="muted">Status, KPIs und die wichtigsten Signale auf einen Blick.</div>
         </div>
         <div className="actions">
           <Link className="btn" href="/ops">
@@ -126,25 +133,50 @@ export default function DashboardPage() {
           label="Backend"
           value={
             <Badge tone={health?.status === "ok" ? "good" : "warn"}>
-              {health?.status ?? (loading ? "…" : "unbekannt")}
+              {health?.status ?? (loading ? "..." : "unbekannt")}
             </Badge>
           }
           hint="/health"
         />
         <KpiCard
           label="Kooperativen"
-          value={coopsTotal ?? (loading ? "…" : "–")}
+          value={coopsTotal ?? (loading ? "..." : "-")}
           hint="Inventar im System"
         />
         <KpiCard
-          label="Röstereien"
-          value={roastersTotal ?? (loading ? "…" : "–")}
+          label="Roestereien"
+          value={roastersTotal ?? (loading ? "..." : "-")}
           hint="CRM-Pipeline"
+        />
+        <KpiCard
+          label="Data Quality"
+          value={
+            <div className="row gap">
+              <Link className="link" href="/ops?severity=critical">
+                <Badge tone={opsOverview?.data_quality?.critical_flags ? "bad" : "good"}>
+                  Critical {opsOverview?.data_quality?.critical_flags ?? (loading ? "..." : "0")}
+                </Badge>
+              </Link>
+              <Link className="link" href="/ops?severity=all">
+                <Badge
+                  tone={
+                    opsOverview?.data_quality?.open_flags &&
+                    opsOverview.data_quality.open_flags > 0
+                      ? "warn"
+                      : "good"
+                  }
+                >
+                  Open {opsOverview?.data_quality?.open_flags ?? (loading ? "..." : "0")}
+                </Badge>
+              </Link>
+            </div>
+          }
+          hint="Filter in Ops"
         />
         <MarketPriceWidget />
         <KpiCard
           label="USD/EUR"
-          value={fx ? fx.value.toFixed(4) : loading ? "…" : "–"}
+          value={fx ? fx.value.toFixed(4) : loading ? "..." : "-"}
           hint={fx ? `Stand: ${fmtDate(fx.observed_at)}` : "FX Feed"}
         />
       </div>
@@ -157,7 +189,7 @@ export default function DashboardPage() {
               <div className="muted">Neueste Headlines (Default: Peru Coffee)</div>
             </div>
             <Link className="link" href="/news">
-              öffnen →
+              oeffnen -
             </Link>
           </div>
           <div className="list">
@@ -174,8 +206,8 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <div className="listMeta">
-                    <span>{n.source ?? "–"}</span>
-                    <span className="dot">•</span>
+                    <span>{n.source ?? "-"}</span>
+                    <span className="dot">|</span>
                     <span>{fmtDate(n.published_at)}</span>
                   </div>
                 </div>
@@ -183,7 +215,7 @@ export default function DashboardPage() {
               </div>
             ))}
             {(!news || news.length === 0) && !loading ? (
-              <div className="empty">Noch keine News. In Ops → „News refresh“ starten.</div>
+              <div className="empty">Noch keine News. In Ops - "News refresh" starten.</div>
             ) : null}
           </div>
         </div>
@@ -195,7 +227,7 @@ export default function DashboardPage() {
               <div className="muted">Letzte Ingest-/Job-Reports</div>
             </div>
             <Link className="link" href="/reports">
-              öffnen →
+              oeffnen -
             </Link>
           </div>
           <div className="list">
@@ -205,7 +237,7 @@ export default function DashboardPage() {
                   <div className="listTitle">{r.name}</div>
                   <div className="listMeta">
                     <span>{r.kind}</span>
-                    <span className="dot">•</span>
+                    <span className="dot">|</span>
                     <span>{fmtDate(r.report_at)}</span>
                   </div>
                 </div>
@@ -214,10 +246,10 @@ export default function DashboardPage() {
                     r.status === "ok"
                       ? "good"
                       : r.status === "skipped"
-                      ? "warn"
-                      : r.status === "error"
-                      ? "bad"
-                      : "neutral"
+                        ? "warn"
+                        : r.status === "error"
+                          ? "bad"
+                          : "neutral"
                   }
                 >
                   {r.status}
@@ -237,16 +269,16 @@ export default function DashboardPage() {
 
       <div className="grid3">
         <div className="panel small">
-          <div className="panelTitle">Nächste Schritte</div>
+          <div className="panelTitle">Naechste Schritte</div>
           <ol className="steps">
             <li>
-              <b>Discovery Seed</b> ausführen (Ops) → Kooperativen/Röster initial füllen.
+              <b>Discovery Seed</b> ausfuehren (Ops) - Kooperativen/Roester initial fuellen.
             </li>
             <li>
-              <b>Enrichment</b> aktivieren → Webseiten/Infos ziehen → Scoring.
+              <b>Enrichment</b> aktivieren - Webseiten/Infos ziehen - Scoring.
             </li>
             <li>
-              <b>CRM</b> nutzen: Roasters → Outreach → Deals.
+              <b>CRM</b> nutzen: Roasters - Outreach - Deals.
             </li>
           </ol>
         </div>
@@ -257,7 +289,7 @@ export default function DashboardPage() {
               Kooperativen
             </Link>
             <Link className="chip" href="/roasters">
-              Röstereien
+              Roestereien
             </Link>
             <Link className="chip" href="/ops">
               Jobs / Ops
@@ -270,8 +302,8 @@ export default function DashboardPage() {
         <div className="panel small">
           <div className="panelTitle">Hinweis</div>
           <div className="muted">
-            Wenn „ui.localhost“/„api.localhost“ zicken: direkt nutzen:
-            <div className="code">UI: http://localhost:3000 · API: http://localhost:8000/docs</div>
+            Wenn "ui.localhost"/"api.localhost" zicken: direkt nutzen:
+            <div className="code">UI: http://localhost:3000 | API: http://localhost:8000/docs</div>
           </div>
         </div>
       </div>

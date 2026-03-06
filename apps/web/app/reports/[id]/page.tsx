@@ -9,10 +9,10 @@ import remarkGfm from "remark-gfm";
 type Report = {
   id: number;
   kind: string;
-  title?: string | null;
+  title: string | null;
   report_at: string;
   markdown: string;
-  payload?: any;
+  payload: any;
 };
 
 export default function ReportDetailPage() {
@@ -26,7 +26,7 @@ export default function ReportDetailPage() {
     if (!id) return;
     apiFetch<Report>(`/reports/${id}`)
       .then(setReport)
-      .catch((e) => setErr(e.message));
+      .catch((e) => setErr(e?.message ?? String(e)));
   }, [id]);
 
   return (
@@ -36,7 +36,7 @@ export default function ReportDetailPage() {
       {report ? (
         <>
           <div style={{ fontSize: 12, color: "#555", marginBottom: 12 }}>
-            {new Date(report.report_at).toLocaleString()} — {report.kind}
+            {new Date(report.report_at).toLocaleString()} - {report.kind}
           </div>
 
           <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12 }}>
@@ -73,7 +73,7 @@ export default function ReportDetailPage() {
           </div>
         </>
       ) : (
-        <div>Loading…</div>
+        <div>Loading...</div>
       )}
     </div>
   );

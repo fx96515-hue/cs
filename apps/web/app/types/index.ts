@@ -7,8 +7,8 @@ export interface HarvestCalendar {
   main_crop_start: number;
   /** When main_crop_end < main_crop_start the harvest spans a year boundary (e.g. Oct–Feb). */
   main_crop_end: number;
-  fly_crop_start?: number | null;
-  fly_crop_end?: number | null;
+  fly_crop_start: number | null;
+  fly_crop_end: number | null;
   notes: string;
 }
 
@@ -40,7 +40,13 @@ export const COUNTRY_CONFIGS: Record<SupportedCountry, CountryConfig> = {
     currency_symbol: "S/",
     flag_emoji: "🇵🇪",
     data_source: { name: "PROMPERÚ", url: "https://www.promperu.gob.pe/", kind: "web", reliability: 0.75, description: "Peruvian export promotion agency" },
-    harvest_calendar: { main_crop_start: 4, main_crop_end: 9, notes: "Main harvest April–September" },
+    harvest_calendar: {
+      main_crop_start: 4,
+      main_crop_end: 9,
+      fly_crop_start: null,
+      fly_crop_end: null,
+      notes: "Main harvest April–September",
+    },
     ml_country_feature: "PE",
     default_port: "Callao",
   },
@@ -62,7 +68,13 @@ export const COUNTRY_CONFIGS: Record<SupportedCountry, CountryConfig> = {
     currency_symbol: "Br",
     flag_emoji: "🇪🇹",
     data_source: { name: "ECX", url: "https://www.ecx.com.et/", kind: "api", reliability: 0.80, description: "Ethiopian Commodity Exchange" },
-    harvest_calendar: { main_crop_start: 10, main_crop_end: 1, notes: "Harvest October–January" },
+    harvest_calendar: {
+      main_crop_start: 10,
+      main_crop_end: 1,
+      fly_crop_start: null,
+      fly_crop_end: null,
+      notes: "Harvest October–January",
+    },
     ml_country_feature: "ET",
     default_port: "Djibouti",
   },
@@ -73,7 +85,13 @@ export const COUNTRY_CONFIGS: Record<SupportedCountry, CountryConfig> = {
     currency_symbol: "R$",
     flag_emoji: "🇧🇷",
     data_source: { name: "CECAFÉ", url: "https://www.cecafe.com.br/", kind: "web", reliability: 0.82, description: "Conselho dos Exportadores de Café do Brasil" },
-    harvest_calendar: { main_crop_start: 5, main_crop_end: 9, notes: "Main harvest May–September" },
+    harvest_calendar: {
+      main_crop_start: 5,
+      main_crop_end: 9,
+      fly_crop_start: null,
+      fly_crop_end: null,
+      notes: "Main harvest May–September",
+    },
     ml_country_feature: "BR",
     default_port: "Santos",
   },
@@ -100,6 +118,7 @@ export interface Cooperative {
   name: string;
   country: string;
   region: string | null;
+  region_id: number | null;
   members_count: number | null;
   annual_production_kg: number | null;
   certifications: string[];
@@ -114,6 +133,7 @@ export interface Cooperative {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 // Roasters
@@ -137,12 +157,14 @@ export interface Roaster {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 // Shipments/Logistics
 export interface Shipment {
   id: number;
   lot_id: number | null;
+  lot_ids: number[] | null;
   cooperative_id: number | null;
   roaster_id: number | null;
   container_number: string;
@@ -162,10 +184,11 @@ export interface Shipment {
   tracking_events: any[] | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
   // Legacy/alias fields for compatibility
-  eta?: string | null;
-  reference?: string;
-  carrier?: string | null;
+  eta: string | null;
+  reference: string;
+  carrier: string | null;
 }
 
 export interface ShipmentEvent {
@@ -181,55 +204,76 @@ export interface ShipmentEvent {
 // Deals/Margins
 export interface Deal {
   id: number;
-  reference: string;
   cooperative_id: number | null;
   roaster_id: number | null;
   lot_id: number | null;
-  quantity_kg: number;
-  purchase_price_per_kg: number;
-  purchase_currency: string;
-  sale_price_per_kg: number;
-  sale_currency: string;
-  freight_cost: number;
-  insurance_cost: number;
-  other_costs: number;
-  margin_eur: number | null;
-  margin_percentage: number | null;
-  stage: string;
+  status: string;
+  incoterm: string | null;
+  price_per_kg: number | null;
+  currency: string | null;
+  weight_kg: number | null;
+  value_total: number | null;
+  value_eur: number | null;
+  origin_country: string | null;
+  origin_region: string | null;
+  variety: string | null;
+  process_method: string | null;
+  quality_grade: string | null;
+  cupping_score: number | null;
+  certifications: Record<string, any> | null;
+  closed_at: string | null;
   notes: string | null;
+  meta: Record<string, any> | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 // Deal/Lot creation and update types
 export interface CreateDealRequest {
-  origin_country: string;
-  origin_region?: string;
-  variety: string;
-  process_method: string;
-  quality_grade?: string;
-  cupping_score?: number;
-  weight_kg: number;
+  cooperative_id?: number;
+  roaster_id?: number;
+  lot_id?: number;
+  status?: string;
+  incoterm?: string;
   price_per_kg?: number;
   currency?: string;
-  certifications?: string[];
-  harvest_date?: string;
-  status?: string;
-}
-
-export interface UpdateDealRequest {
+  weight_kg?: number;
+  value_total?: number;
+  value_eur?: number;
   origin_country?: string;
   origin_region?: string;
   variety?: string;
   process_method?: string;
   quality_grade?: string;
   cupping_score?: number;
-  weight_kg?: number;
+  certifications?: Record<string, any>;
+  closed_at?: string;
+  notes?: string;
+  meta?: Record<string, any>;
+}
+
+export interface UpdateDealRequest {
+  cooperative_id?: number;
+  roaster_id?: number;
+  lot_id?: number;
+  status?: string;
+  incoterm?: string;
   price_per_kg?: number;
   currency?: string;
-  certifications?: string[];
-  harvest_date?: string;
-  status?: string;
+  weight_kg?: number;
+  value_total?: number;
+  value_eur?: number;
+  origin_country?: string;
+  origin_region?: string;
+  variety?: string;
+  process_method?: string;
+  quality_grade?: string;
+  cupping_score?: number;
+  certifications?: Record<string, any>;
+  closed_at?: string;
+  notes?: string;
+  meta?: Record<string, any>;
 }
 
 export interface MarginCalcRequest {
@@ -240,7 +284,7 @@ export interface MarginCalcRequest {
   yield_factor: number;
   selling_price_per_kg: number;
   selling_currency: string;
-  fx_usd_to_eur?: number | null;
+  fx_usd_to_eur: number | null;
 }
 
 export interface MarginCalcResult {
@@ -303,9 +347,9 @@ export interface MLModel {
   model_type: string;
   name: string;
   version: string;
-  accuracy?: number;
+  accuracy: number;
   created_at: string;
-  last_trained?: string;
+  last_trained: string;
   status: string;
 }
 
@@ -326,7 +370,7 @@ export interface PriceTrend {
     price_usd_per_kg: number;
   }>;
   trend: string;
-  forecast?: Array<{
+  forecast: Array<{
     date: string;
     predicted_price: number;
   }>;
@@ -356,8 +400,8 @@ export interface Report {
 // Market Data
 export interface MarketPoint {
   value: number;
-  unit?: string | null;
-  currency?: string | null;
+  unit: string | null;
+  currency: string | null;
   observed_at: string;
 }
 
@@ -369,53 +413,54 @@ export interface MarketSnapshot {
 export interface Paged<T> {
   items: T[];
   total: number;
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 }
 
 // Filters
 export interface RegionFilters {
-  min_production?: number;
-  max_distance_to_callao?: number;
-  min_cupping_score?: number;
+  min_production: number;
+  max_distance_to_callao: number;
+  min_cupping_score: number;
 }
 
 export interface CooperativeFilters {
-  country?: string;
-  region?: string;
-  min_capacity?: number;
-  max_capacity?: number;
-  certifications?: string[];
-  min_score?: number;
-  contact_status?: string;
+  country: string;
+  region: string;
+  min_capacity: number;
+  max_capacity: number;
+  certifications: string[];
+  min_score: number;
+  contact_status: string;
+  include_deleted?: boolean;
 }
 
 export interface RoasterFilters {
-  city?: string;
-  country?: string;
-  roaster_type?: string;
-  min_capacity?: number;
-  max_capacity?: number;
-  certifications?: string[];
-  min_sales_fit_score?: number;
-  contact_status?: string;
+  city: string;
+  country: string;
+  roaster_type: string;
+  min_capacity: number;
+  max_capacity: number;
+  certifications: string[];
+  min_sales_fit_score: number;
+  contact_status: string;
 }
 
 export interface ShipmentFilters {
-  status?: string;
-  origin_port?: string;
-  destination_port?: string;
-  date_from?: string;
-  date_to?: string;
+  status: string;
+  origin_port: string;
+  destination_port: string;
+  date_from: string;
+  date_to: string;
+  include_deleted: boolean;
 }
 
 export interface DealFilters {
-  stage?: string;
+  status?: string;
   cooperative_id?: number;
   roaster_id?: number;
-  min_margin?: number;
-  date_from?: string;
-  date_to?: string;
+  lot_id?: number;
+  include_deleted?: boolean;
 }
 
 // Peru Region Intelligence types
@@ -474,4 +519,25 @@ export interface RegionIntelligence {
   logistics: RegionLogistics;
   risks: RegionRisks;
   scores: RegionScores;
+}
+
+export interface Region {
+  id: number;
+  name: string;
+  country: string;
+}
+
+export interface DataQualityFlag {
+  id: number;
+  entity_type: string;
+  entity_id: number;
+  field_name: string | null;
+  issue_type: string;
+  severity: string;
+  message: string | null;
+  confidence: number | null;
+  detected_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  source_id: number | null;
 }

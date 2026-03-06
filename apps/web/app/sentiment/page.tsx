@@ -7,17 +7,17 @@ import Badge from "../components/Badge";
 
 type SentimentPoint = {
   id: number;
-  region?: string | null;
-  entity_id?: number | null;
+  region: string | null;
+  entity_id: number | null;
   score: number;
   label: string;
   article_count: number;
-  scored_at?: string | null;
+  scored_at: string | null;
 };
 
 type SentimentResponse = {
-  region?: string | null;
-  entity_id?: number | null;
+  region: string | null;
+  entity_id: number | null;
   data: SentimentPoint[];
   total: number;
 };
@@ -52,7 +52,6 @@ export default function SentimentPage() {
 
   useEffect(() => {
     load(region);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region]);
 
   const chartData = data.map((d) => ({
@@ -91,7 +90,7 @@ export default function SentimentPage() {
 
       {latest && (
         <div className="panel" style={{ marginBottom: 14 }}>
-          <div className="panelTitle">Aktuell – {region}</div>
+          <div className="panelTitle">Aktuell - {region}</div>
           <div className="row gap">
             <div>
               <span className="label">Score</span>
@@ -108,9 +107,9 @@ export default function SentimentPage() {
       <div className="panel">
         <div className="panelTitle">Sentiment-Trend</div>
         {loading ? (
-          <div className="muted">Lade…</div>
+          <div className="muted">Lade...</div>
         ) : chartData.length === 0 ? (
-          <div className="muted">Keine Daten für diese Region.</div>
+          <div className="muted">Keine Daten fuer diese Region.</div>
         ) : (
           <LineChart data={chartData} xKey="date" yKey="score" title="" color="#22c55e" />
         )}
