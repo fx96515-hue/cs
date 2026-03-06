@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Synopsys Action
         if: env.HAS_SYNOPSYS_CREDS == 'true'
-        uses: synopsys-sig/synopsys-action@v1.6.0
+        uses: synopsys-sig/synopsys-action@v1.13.1
         with:
           #------------------------------------------COVERITY-----------------------------------------
           coverity_url: ${{ secrets.COVERITY_URL }}
