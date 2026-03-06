@@ -22,7 +22,7 @@ prometheus-fastapi-instrumentator==7.0.0
 structlog==25.5.0
 
 # Data enrichment / dedup
-beautifulsoup4==4.12.3
+beautifulsoup4==4.14.3
 rapidfuzz==3.14.3
 
 # Rate limiting
