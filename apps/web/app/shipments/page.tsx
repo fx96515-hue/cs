@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { format, differenceInDays } from "date-fns";
 import { useShipments, useCreateShipment } from "../hooks/useShipments";
+import { apiFetch } from "../../lib/api";
 import { Shipment } from "../types";
 
 export default function ShipmentsDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [createForm, setCreateForm] = useState({
     container_number: "",
     bill_of_lading: "",
@@ -17,24 +19,41 @@ export default function ShipmentsDashboard() {
     departure_date: "",
     estimated_arrival: "",
     notes: "",
+    lot_ids: "",
   });
 
-  const { data: shipmentsResponse, isLoading, error } = useShipments({ limit: 200 });
+  const { data: shipmentsResponse, isLoading, error, refetch } = useShipments({
+    limit: 200,
+    include_deleted: showArchived,
+  });
   const createShipment = useCreateShipment();
   const [now, setNow] = useState(0);
   useEffect(() => setNow(Date.now()), []);
-  
-  const shipments = shipmentsResponse?.items || [];
+
+  const shipments = shipmentsResponse?.items ?? [];
+  const activeShipments = shipments.filter((s) => !s.deleted_at);
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const parsedLotIds = createForm.lot_ids
+        ? createForm.lot_ids
+            .split(",")
+            .map((v) => Number(v.trim()))
+            .filter((v) => Number.isFinite(v) && v > 0)
+        : null;
+      const lotIds = parsedLotIds && parsedLotIds.length > 0 ? parsedLotIds : null;
+
       await createShipment.mutateAsync({
         ...createForm,
+        lot_id: null,
+        cooperative_id: null,
+        roaster_id: null,
         weight_kg: Number(createForm.weight_kg),
         departure_date: createForm.departure_date || null,
         estimated_arrival: createForm.estimated_arrival || null,
         notes: createForm.notes || null,
+        lot_ids: lotIds,
       });
       setShowCreateModal(false);
       setCreateForm({
@@ -47,13 +66,14 @@ export default function ShipmentsDashboard() {
         departure_date: "",
         estimated_arrival: "",
         notes: "",
+        lot_ids: "",
       });
-    } catch (error) {
-      console.error("Failed to create shipment:", error);
+      await refetch();
+    } catch (createError) {
+      console.error("Failed to create shipment:", createError);
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="page">
@@ -67,14 +87,16 @@ export default function ShipmentsDashboard() {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <div className="page">
         <div className="pageHeader">
           <div className="h1">Sendungsverfolgung</div>
         </div>
-        <div className="panel" style={{ padding: "40px", textAlign: "center", color: "var(--danger)" }}>
+        <div
+          className="panel"
+          style={{ padding: "40px", textAlign: "center", color: "var(--danger)" }}
+        >
           <div>Fehler beim Laden der Sendungen</div>
           <div style={{ fontSize: "14px", marginTop: "8px" }}>{String(error)}</div>
         </div>
@@ -82,34 +104,50 @@ export default function ShipmentsDashboard() {
     );
   }
 
-  // Calculate stats
   const stats = {
-    total: shipments.length,
-    inTransit: shipments.filter((s) => s.status === "in_transit").length,
-    arrived: shipments.filter((s) => s.status === "delivered" || s.status === "arrived").length,
-    totalWeight: shipments.reduce((sum, s) => sum + (s.weight_kg || 0), 0),
+    total: activeShipments.length,
+    inTransit: activeShipments.filter((s) => s.status === "in_transit").length,
+    arrived: activeShipments.filter((s) => s.status === "delivered" || s.status === "arrived").length,
+    totalWeight: activeShipments.reduce((sum, s) => sum + (s.weight_kg || 0), 0),
   };
 
-  // Calculate progress from dates
+  async function archiveShipment(id: number) {
+    if (!confirm("Sendung archivieren?")) return;
+    try {
+      await apiFetch(`/shipments/${id}`, { method: "DELETE" });
+      await refetch();
+    } catch (archiveError) {
+      console.error("Failed to archive shipment:", archiveError);
+    }
+  }
+
+  async function restoreShipment(id: number) {
+    try {
+      await apiFetch(`/shipments/${id}/restore`, { method: "POST" });
+      await refetch();
+    } catch (restoreError) {
+      console.error("Failed to restore shipment:", restoreError);
+    }
+  }
+
   const calculateProgress = (shipment: Shipment): number => {
     if (now === 0) return 0;
     if (shipment.status === "arrived" || shipment.actual_arrival) return 100;
     const eta = shipment.estimated_arrival || shipment.eta;
     if (!shipment.departure_date || !eta) return 0;
-    
+
     const departure = new Date(shipment.departure_date).getTime();
     const etaTime = new Date(eta).getTime();
-    
+
     if (now < departure) return 0;
     if (now >= etaTime) return 100;
-    
+
     const totalDuration = etaTime - departure;
     const elapsed = now - departure;
     return Math.round((elapsed / totalDuration) * 100);
   };
 
-  // Shipments arriving soon (within 7 days)
-  const arrivingSoon = shipments.filter((s) => {
+  const arrivingSoon = activeShipments.filter((s) => {
     const eta = s.estimated_arrival || s.eta;
     if (s.status !== "in_transit" || !eta) return false;
     const daysUntilArrival = differenceInDays(new Date(eta), new Date());
@@ -129,7 +167,6 @@ export default function ShipmentsDashboard() {
     }
   };
 
-  // Empty state
   if (shipments.length === 0) {
     return (
       <div className="page">
@@ -141,25 +178,25 @@ export default function ShipmentsDashboard() {
             </div>
           </div>
           <div className="actions">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn btnPrimary"
               onClick={() => setShowCreateModal(true)}
             >
-              Sendung hinzufügen
+              Sendung hinzufuegen
             </button>
           </div>
         </div>
         <div style={{ padding: "60px 40px", textAlign: "center" }}>
-          <div style={{ fontSize: "48px", marginBottom: "16px" }}>📦</div>
+          <div style={{ fontSize: "28px", marginBottom: "16px" }}>[BOX]</div>
           <div style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
             Keine Sendungen vorhanden
           </div>
           <div style={{ fontSize: "14px", color: "var(--muted)", marginBottom: "20px" }}>
             Erstellen Sie Ihre erste Sendung, um mit dem Tracking zu beginnen
           </div>
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="btn btnPrimary"
             onClick={() => setShowCreateModal(true)}
           >
@@ -180,17 +217,24 @@ export default function ShipmentsDashboard() {
           </div>
         </div>
         <div className="actions">
-          <button 
-            type="button" 
+          <label className="row" style={{ gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            <span className="small muted">Archivierte anzeigen</span>
+          </label>
+          <button
+            type="button"
             className="btn btnPrimary"
             onClick={() => setShowCreateModal(true)}
           >
-            Sendung hinzufügen
+            Sendung hinzufuegen
           </button>
         </div>
       </div>
 
-      {/* Overview KPIs */}
       <div className="grid gridCols4" style={{ marginBottom: "18px" }}>
         <div className="panel card">
           <div className="cardLabel">Sendungen gesamt</div>
@@ -214,7 +258,6 @@ export default function ShipmentsDashboard() {
         </div>
       </div>
 
-      {/* Arriving Soon Widget */}
       {arrivingSoon.length > 0 && (
         <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
           <div className="h2">Bald ankommend</div>
@@ -224,7 +267,7 @@ export default function ShipmentsDashboard() {
           <div className="grid gridCols3" style={{ gap: "12px" }}>
             {arrivingSoon.map((shipment) => {
               const eta = shipment.estimated_arrival || shipment.eta;
-              if (!eta) return null; // Extra safety check
+              if (!eta) return null;
               const daysUntilArrival = differenceInDays(new Date(eta), new Date());
               return (
                 <div
@@ -240,7 +283,7 @@ export default function ShipmentsDashboard() {
                     {shipment.container_number || `ID-${shipment.id}`}
                   </div>
                   <div style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "8px" }}>
-                    {shipment.origin_port} → {shipment.destination_port}
+                    {shipment.origin_port} - {shipment.destination_port}
                   </div>
                   <div style={{ fontSize: "20px", fontWeight: "800", marginBottom: "4px" }}>
                     {daysUntilArrival} Tage
@@ -255,20 +298,19 @@ export default function ShipmentsDashboard() {
         </div>
       )}
 
-      {/* Active Shipments Cards */}
       <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
         <div className="h2">Aktive Sendungen</div>
         <div className="muted" style={{ marginBottom: "14px" }}>
           Aktuell in Transit
         </div>
         <div className="grid gridCols2" style={{ gap: "14px" }}>
-          {shipments
+          {activeShipments
             .filter((s) => s.status === "in_transit")
             .map((shipment) => {
               const statusColors = getStatusColor(shipment.status);
               const progress = calculateProgress(shipment);
               const eta = shipment.estimated_arrival || shipment.eta;
-              
+
               return (
                 <div
                   key={shipment.id}
@@ -279,7 +321,14 @@ export default function ShipmentsDashboard() {
                     border: `1px solid ${statusColors.border}`,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "start",
+                      marginBottom: "12px",
+                    }}
+                  >
                     <div>
                       <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "4px" }}>
                         {shipment.container_number || `ID-${shipment.id}`}
@@ -288,14 +337,17 @@ export default function ShipmentsDashboard() {
                         {shipment.carrier || "Carrier"}
                       </div>
                     </div>
-                    <span className="badge" style={{ background: statusColors.bg, borderColor: statusColors.border }}>
+                    <span
+                      className="badge"
+                      style={{ background: statusColors.bg, borderColor: statusColors.border }}
+                    >
                       {shipment.status.replace("_", " ")}
                     </span>
                   </div>
 
                   <div style={{ marginBottom: "12px" }}>
                     <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                      <strong>Route:</strong> {shipment.origin_port} → {shipment.destination_port}
+                      <strong>Route:</strong> {shipment.origin_port} - {shipment.destination_port}
                     </div>
                     <div style={{ fontSize: "13px", color: "var(--muted)" }}>
                       {shipment.current_location || "In Transit"}
@@ -303,11 +355,26 @@ export default function ShipmentsDashboard() {
                   </div>
 
                   <div style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: "12px",
+                        marginBottom: "6px",
+                      }}
+                    >
                       <span>Fortschritt</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
-                    <div style={{ width: "100%", height: "6px", background: "rgba(0,0,0,0.2)", borderRadius: "999px", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "6px",
+                        background: "rgba(0,0,0,0.2)",
+                        borderRadius: "999px",
+                        overflow: "hidden",
+                      }}
+                    >
                       <div
                         style={{
                           width: `${progress}%`,
@@ -323,25 +390,33 @@ export default function ShipmentsDashboard() {
                     <div>
                       <div style={{ color: "var(--muted)" }}>Abfahrt</div>
                       <div style={{ fontWeight: "600" }}>
-                        {shipment.departure_date ? format(new Date(shipment.departure_date), "dd. MMM") : "–"}
+                        {shipment.departure_date
+                          ? format(new Date(shipment.departure_date), "dd. MMM")
+                          : "-"}
                       </div>
                     </div>
                     <div>
                       <div style={{ color: "var(--muted)" }}>ETA</div>
                       <div style={{ fontWeight: "600" }}>
-                        {eta ? format(new Date(eta), "dd. MMM") : "–"}
+                        {eta ? format(new Date(eta), "dd. MMM") : "-"}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--border)" }}>
-                    <button 
-                      type="button" 
-                      className="btn" 
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      paddingTop: "12px",
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="btn"
                       style={{ width: "100%", fontSize: "12px" }}
                       onClick={() => alert(`Shipment details page coming soon (ID: ${shipment.id})`)}
                     >
-                      Details anzeigen →
+                      Details anzeigen -
                     </button>
                   </div>
                 </div>
@@ -350,11 +425,10 @@ export default function ShipmentsDashboard() {
         </div>
       </div>
 
-      {/* All Shipments Table */}
       <div className="panel" style={{ padding: "18px" }}>
         <div className="h2">Alle Sendungen</div>
         <div className="muted" style={{ marginBottom: "14px" }}>
-          Vollständiger Sendungsverlauf
+          Vollstaendiger Sendungsverlauf
         </div>
 
         <div style={{ overflowX: "auto" }}>
@@ -365,6 +439,7 @@ export default function ShipmentsDashboard() {
                 <th>Route</th>
                 <th>Spediteur</th>
                 <th>Container</th>
+                <th>Lots</th>
                 <th>Gewicht (kg)</th>
                 <th>Abfahrt</th>
                 <th>ETA / Ankunft</th>
@@ -378,43 +453,75 @@ export default function ShipmentsDashboard() {
                 const eta = shipment.estimated_arrival || shipment.eta;
                 return (
                   <tr key={shipment.id}>
-                    <td style={{ fontWeight: "600" }}>{shipment.container_number || `ID-${shipment.id}`}</td>
+                    <td style={{ fontWeight: "600" }}>
+                      {shipment.container_number || `ID-${shipment.id}`}
+                    </td>
                     <td>
-                      {shipment.origin_port} → {shipment.destination_port}
+                      {shipment.origin_port} - {shipment.destination_port}
                     </td>
-                    <td>{shipment.carrier || "–"}</td>
+                    <td>{shipment.carrier || "-"}</td>
                     <td className="mono" style={{ fontSize: "12px" }}>
-                      {shipment.container_number || "–"}
+                      {shipment.container_number || "-"}
                     </td>
-                    <td>{shipment.weight_kg ? shipment.weight_kg.toLocaleString() : "–"}</td>
-                    <td>{shipment.departure_date ? format(new Date(shipment.departure_date), "MMM dd, yyyy") : "–"}</td>
+                    <td>{shipment.lot_ids?.length ?? (shipment.lot_id ? 1 : 0)}</td>
+                    <td>{shipment.weight_kg ? shipment.weight_kg.toLocaleString() : "-"}</td>
+                    <td>
+                      {shipment.departure_date
+                        ? format(new Date(shipment.departure_date), "MMM dd, yyyy")
+                        : "-"}
+                    </td>
                     <td>
                       {shipment.actual_arrival
                         ? format(new Date(shipment.actual_arrival), "MMM dd, yyyy")
                         : eta
-                        ? format(new Date(eta), "MMM dd, yyyy")
-                        : "–"}
+                          ? format(new Date(eta), "MMM dd, yyyy")
+                          : "-"}
                     </td>
                     <td>
-                      <span
-                        className="badge"
-                        style={{
-                          background: statusColors.bg,
-                          borderColor: statusColors.border,
-                        }}
-                      >
-                        {shipment.status.replace("_", " ")}
-                      </span>
+                      {shipment.deleted_at ? (
+                        <span className="badge badgeWarn">archiviert</span>
+                      ) : (
+                        <span
+                          className="badge"
+                          style={{
+                            background: statusColors.bg,
+                            borderColor: statusColors.border,
+                          }}
+                        >
+                          {shipment.status.replace("_", " ")}
+                        </span>
+                      )}
                     </td>
                     <td>
-                      <button 
-                        type="button" 
-                        className="link"
-                        style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                        onClick={() => alert(`Shipment details page coming soon (ID: ${shipment.id})`)}
-                      >
-                        Details →
-                      </button>
+                      <div className="row" style={{ gap: 8 }}>
+                        <button
+                          type="button"
+                          className="link"
+                          style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                          onClick={() => alert(`Shipment details page coming soon (ID: ${shipment.id})`)}
+                        >
+                          Details -
+                        </button>
+                        {shipment.deleted_at ? (
+                          <button
+                            type="button"
+                            className="link"
+                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                            onClick={() => restoreShipment(shipment.id)}
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="link"
+                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                            onClick={() => archiveShipment(shipment.id)}
+                          >
+                            Archivieren
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -424,7 +531,6 @@ export default function ShipmentsDashboard() {
         </div>
       </div>
 
-      {/* Create Shipment Modal */}
       {showCreateModal && (
         <div
           style={{
@@ -443,16 +549,23 @@ export default function ShipmentsDashboard() {
         >
           <div
             className="panel"
-            style={{ 
-              width: "90%", 
-              maxWidth: "600px", 
+            style={{
+              width: "90%",
+              maxWidth: "600px",
               padding: "24px",
               maxHeight: "90vh",
               overflowY: "auto",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
               <h2 style={{ margin: 0 }}>Neue Sendung erstellen</h2>
               <button
                 type="button"
@@ -460,7 +573,7 @@ export default function ShipmentsDashboard() {
                 onClick={() => setShowCreateModal(false)}
                 style={{ padding: "4px 12px" }}
               >
-                ✕
+                X
               </button>
             </div>
 
@@ -581,6 +694,19 @@ export default function ShipmentsDashboard() {
                 </div>
               </div>
 
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
+                  Lot-IDs (optional, kommasepariert)
+                </label>
+                <input
+                  type="text"
+                  className="input"
+                  value={createForm.lot_ids}
+                  onChange={(e) => setCreateForm({ ...createForm, lot_ids: e.target.value })}
+                  placeholder="101, 102, 103"
+                />
+              </div>
+
               <div style={{ marginBottom: "20px" }}>
                 <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
                   Notizen
@@ -595,18 +721,10 @@ export default function ShipmentsDashboard() {
               </div>
 
               <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setShowCreateModal(false)}
-                >
+                <button type="button" className="btn" onClick={() => setShowCreateModal(false)}>
                   Abbrechen
                 </button>
-                <button
-                  type="submit"
-                  className="btn btnPrimary"
-                  disabled={createShipment.isPending}
-                >
+                <button type="submit" className="btn btnPrimary" disabled={createShipment.isPending}>
                   {createShipment.isPending ? "Erstellen..." : "Sendung erstellen"}
                 </button>
               </div>

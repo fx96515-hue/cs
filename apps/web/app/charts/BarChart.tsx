@@ -15,8 +15,8 @@ interface BarChartProps {
   data: any[];
   xKey: string;
   yKey: string;
-  title?: string;
-  color?: string;
+  title: string;
+  color: string;
 }
 
 export default function BarChart({ data, xKey, yKey, title, color = "#5786ff" }: BarChartProps) {

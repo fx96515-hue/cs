@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import DataQualityMini from "../components/DataQualityMini";
 
 type QualityAlert = {
   id: number;
@@ -44,12 +45,11 @@ export default function AlertsPage() {
       setLoading(true);
       const params = new URLSearchParams();
       if (filter.severity !== "all") params.set("severity", filter.severity);
-      if (filter.acknowledged !== "all")
-        params.set("acknowledged", filter.acknowledged);
-      if (filter.entity_type !== "all")
-        params.set("entity_type", filter.entity_type);
+      if (filter.acknowledged !== "all") params.set("acknowledged", filter.acknowledged);
+      if (filter.entity_type !== "all") params.set("entity_type", filter.entity_type);
 
-      const data = await apiFetch<QualityAlert[]>(`/alerts?${params}`);
+      const qs = params.toString();
+      const data = await apiFetch<QualityAlert[]>(`/alerts${qs ? `?${qs}` : ""}`);
       setAlerts(data);
     } catch (e) {
       console.error("Failed to fetch alerts:", e);
@@ -93,12 +93,10 @@ export default function AlertsPage() {
   useEffect(() => {
     fetchAlerts();
     fetchSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const severityBadge = (severity: string) => {
-    const tone =
-      severity === "critical" ? "bad" : severity === "warning" ? "warn" : "neutral";
+    const tone = severity === "critical" ? "bad" : severity === "warning" ? "warn" : "neutral";
     return <Badge tone={tone}>{severity}</Badge>;
   };
 
@@ -116,10 +114,10 @@ export default function AlertsPage() {
       <div className="pageHeader">
         <div>
           <div className="h1">Warnungen</div>
-          <div className="muted">Qualitäts- und Zertifizierungsänderungen überwachen</div>
+          <div className="muted">Qualitaets- und Zertifizierungsaenderungen ueberwachen</div>
         </div>
         <button className="btn btnPrimary" onClick={checkNow}>
-          Jetzt prüfen
+          Jetzt pruefen
         </button>
       </div>
 
@@ -130,7 +128,7 @@ export default function AlertsPage() {
             <div className="statValue">{summary.total_alerts}</div>
           </div>
           <div className="panel">
-            <div className="statLabel">Unbestätigt</div>
+            <div className="statLabel">Unbestaetigt</div>
             <div className="statValue">{summary.unacknowledged}</div>
           </div>
           <div className="panel">
@@ -171,27 +169,23 @@ export default function AlertsPage() {
             <select
               className="input"
               value={filter.acknowledged}
-              onChange={(e) =>
-                setFilter({ ...filter, acknowledged: e.target.value })
-              }
+              onChange={(e) => setFilter({ ...filter, acknowledged: e.target.value })}
             >
               <option value="all">Alle</option>
-              <option value="false">Unbestätigt</option>
-              <option value="true">Bestätigt</option>
+              <option value="false">Unbestaetigt</option>
+              <option value="true">Bestaetigt</option>
             </select>
           </div>
           <div>
-            <div className="label">Entitätstyp</div>
+            <div className="label">Entitaetstyp</div>
             <select
               className="input"
               value={filter.entity_type}
-              onChange={(e) =>
-                setFilter({ ...filter, entity_type: e.target.value })
-              }
+              onChange={(e) => setFilter({ ...filter, entity_type: e.target.value })}
             >
               <option value="all">Alle</option>
               <option value="cooperative">Kooperative</option>
-              <option value="roaster">Rösterei</option>
+              <option value="roaster">Roesterei</option>
             </select>
           </div>
         </div>
@@ -200,7 +194,7 @@ export default function AlertsPage() {
       <div className="panel" style={{ marginTop: 14 }}>
         <div className="panelTitle">Warnungen ({alerts.length})</div>
         {loading ? (
-          <div className="muted">Lädt...</div>
+          <div className="muted">Laedt...</div>
         ) : alerts.length === 0 ? (
           <div className="muted">Keine Warnungen gefunden.</div>
         ) : (
@@ -210,9 +204,9 @@ export default function AlertsPage() {
                 <tr>
                   <th>Schweregrad</th>
                   <th>Typ</th>
-                  <th>Entität</th>
+                  <th>Entitaet</th>
                   <th>Feld</th>
-                  <th>Änderung</th>
+                  <th>Aenderung</th>
                   <th>Erstellt</th>
                   <th>Aktion</th>
                 </tr>
@@ -229,13 +223,9 @@ export default function AlertsPage() {
                     <td>
                       {alert.old_value !== null && alert.new_value !== null ? (
                         <span>
-                          {alert.old_value.toFixed(1)} → {alert.new_value.toFixed(1)}{" "}
+                          {alert.old_value.toFixed(1)} - {alert.new_value.toFixed(1)}{" "}
                           {alert.change_amount !== null && (
-                            <span
-                              className={
-                                alert.change_amount > 0 ? "good" : "bad"
-                              }
-                            >
+                            <span className={alert.change_amount > 0 ? "good" : "bad"}>
                               ({alert.change_amount > 0 ? "+" : ""}
                               {alert.change_amount.toFixed(1)})
                             </span>
@@ -248,16 +238,11 @@ export default function AlertsPage() {
                     <td>{new Date(alert.created_at).toLocaleDateString("de-DE")}</td>
                     <td>
                       {!alert.acknowledged ? (
-                        <button
-                          className="btn btnSmall"
-                          onClick={() => acknowledgeAlert(alert.id)}
-                        >
-                          Bestätigen
+                        <button className="btn btnSmall" onClick={() => acknowledgeAlert(alert.id)}>
+                          Bestaetigen
                         </button>
                       ) : (
-                        <span className="muted">
-                          ✓ {alert.acknowledged_by || "Bestätigt"}
-                        </span>
+                        <span className="muted">OK {alert.acknowledged_by || "Bestaetigt"}</span>
                       )}
                     </td>
                   </tr>
@@ -266,6 +251,10 @@ export default function AlertsPage() {
             </table>
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <DataQualityMini title="Data Quality (Alerts Kontext)" limit={10} />
       </div>
     </div>
   );

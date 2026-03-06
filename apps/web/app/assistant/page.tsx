@@ -29,9 +29,9 @@ interface ServiceStatus {
 }
 
 const EXAMPLE_QUESTIONS = [
-  "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung?",
-  "Vergleiche Röstereien mit Peru-Fokus",
-  "Was sind aktuelle News zu Kaffee-Märkten?",
+  "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung",
+  "Vergleiche Roestereien mit Peru-Fokus",
+  "Was sind aktuelle News zu Kaffee-Maerkten",
 ];
 
 export default function AssistantPage() {
@@ -83,29 +83,33 @@ export default function AssistantPage() {
   function getProviderError(provider: string): string {
     switch (provider) {
       case "ollama":
-        return "Ollama ist nicht gestartet. Führe `ollama serve` aus und lade ein Modell: `ollama pull llama3.1:8b`";
+        return "Ollama ist nicht gestartet. Fuehre `ollama serve` aus und lade ein Modell: `ollama pull llama3.1:8b`";
       case "openai":
         return "OPENAI_API_KEY ist nicht konfiguriert";
       case "groq":
         return "GROQ_API_KEY ist nicht konfiguriert";
       default:
-        return "KI-Assistant ist derzeit nicht verfügbar.";
+        return "KI-Assistant ist derzeit nicht verfuegbar.";
     }
   }
 
   function getProviderBadge(): string {
     if (!serviceStatus) return "";
     switch (serviceStatus.provider) {
-      case "ollama": return "🦙 Ollama";
-      case "openai": return "🤖 OpenAI";
-      case "groq":   return "⚡ Groq";
-      default:       return serviceStatus.provider;
+      case "ollama":
+        return "Ollama";
+      case "openai":
+        return "OpenAI";
+      case "groq":
+        return "Groq";
+      default:
+        return serviceStatus.provider;
     }
   }
 
   function getEntityLink(source: Source): string {
     if (source.entity_type === "cooperative") return `/cooperatives/${source.entity_id}`;
-    if (source.entity_type === "roaster")     return `/roasters/${source.entity_id}`;
+    if (source.entity_type === "roaster") return `/roasters/${source.entity_id}`;
     return "#";
   }
 
@@ -119,12 +123,7 @@ export default function AssistantPage() {
     const userMsg: Message = { role: "user", content: question };
     setMessages((prev) => [...prev, userMsg]);
 
-    // Placeholder for streaming assistant message
-    const assistantIdx = messages.length + 1;
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: "", streaming: true },
-    ]);
+    setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
 
     const token = getToken();
     if (!token) {
@@ -180,7 +179,7 @@ export default function AssistantPage() {
               setMessages((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
-                if (last?.role === "assistant") {
+                if (last.role === "assistant") {
                   updated[updated.length - 1] = {
                     ...last,
                     content: last.content + event.content,
@@ -193,7 +192,7 @@ export default function AssistantPage() {
               setMessages((prev) => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
-                if (last?.role === "assistant") {
+                if (last.role === "assistant") {
                   updated[updated.length - 1] = {
                     ...last,
                     streaming: false,
@@ -213,17 +212,13 @@ export default function AssistantPage() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
-      const msg =
-        err instanceof Error ? err.message : "Fehler beim Senden der Nachricht.";
-      // Remove the placeholder assistant message
+      const msg = err instanceof Error ? err.message : "Fehler beim Senden der Nachricht.";
       setMessages((prev) => prev.slice(0, -1));
       setError(msg);
     } finally {
       setLoading(false);
       abortRef.current = null;
     }
-
-    void assistantIdx; // suppress unused variable warning
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -242,22 +237,20 @@ export default function AssistantPage() {
     setError(null);
   };
 
-  const isReady = serviceStatus?.enabled && serviceStatus?.available;
+  const isReady = !!serviceStatus?.enabled && !!serviceStatus?.available;
 
   return (
     <div className="assistant-container">
       <div className="assistant-header">
         <div className="header-row">
           <div>
-            <h1>💬 KI-Assistant</h1>
-            <p className="muted">
-              Interaktiver Chatbot mit Zugriff auf Kooperativen, Röstereien und News
-            </p>
+            <h1>KI-Assistant</h1>
+            <p className="muted">Interaktiver Chatbot mit Zugriff auf Kooperativen, Roestereien und News</p>
           </div>
           <div className="header-actions">
             {sessionId && (
               <button className="btn-secondary" onClick={handleNewSession}>
-                Neues Gespräch
+                Neues Gespraech
               </button>
             )}
             {serviceStatus?.available && (
@@ -276,9 +269,9 @@ export default function AssistantPage() {
       <div className="chat-area">
         {messages.length === 0 && (
           <div className="empty-state">
-            <div className="empty-icon">🤖</div>
+            <div className="empty-icon">[AI]</div>
             <h2>Willkommen beim KI-Assistant!</h2>
-            <p className="muted">Stellen Sie eine Frage oder wählen Sie ein Beispiel:</p>
+            <p className="muted">Stellen Sie eine Frage oder waehlen Sie ein Beispiel:</p>
             <div className="example-questions">
               {EXAMPLE_QUESTIONS.map((q, i) => (
                 <button
@@ -296,13 +289,11 @@ export default function AssistantPage() {
 
         {messages.map((msg, idx) => (
           <div key={idx} className={`message message-${msg.role}`}>
-            <div className="message-avatar">
-              {msg.role === "user" ? "👤" : "🤖"}
-            </div>
+            <div className="message-avatar">{msg.role === "user" ? "[U]" : "[AI]"}</div>
             <div className="message-content">
               <div className="message-text">
                 {msg.content}
-                {msg.streaming && <span className="cursor">▋</span>}
+                {msg.streaming && <span className="cursor">|</span>}
               </div>
               {!msg.streaming && msg.sources && msg.sources.length > 0 && (
                 <div className="message-sources">
@@ -340,14 +331,10 @@ export default function AssistantPage() {
         />
         {loading ? (
           <button type="button" className="btn-stop" onClick={handleStop}>
-            ⏹ Stop
+            Stop
           </button>
         ) : (
-          <button
-            type="submit"
-            className="btn-send"
-            disabled={!input.trim() || !isReady}
-          >
+          <button type="submit" className="btn-send" disabled={!input.trim() || !isReady}>
             Senden
           </button>
         )}
@@ -423,7 +410,7 @@ export default function AssistantPage() {
           padding: 3rem 1rem;
         }
         .empty-icon {
-          font-size: 4rem;
+          font-size: 2rem;
           margin-bottom: 1rem;
         }
         .empty-state h2 {
@@ -467,7 +454,7 @@ export default function AssistantPage() {
           flex-direction: row-reverse;
         }
         .message-avatar {
-          font-size: 1.75rem;
+          font-size: 1rem;
           width: 38px;
           height: 38px;
           display: flex;

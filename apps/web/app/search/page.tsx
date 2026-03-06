@@ -10,10 +10,10 @@ type SearchResult = {
   entity_id: number;
   name: string;
   similarity_score: number;
-  region?: string | null;
-  city?: string | null;
-  certifications?: string | null;
-  total_score?: number | null;
+  region: string | null;
+  city: string | null;
+  certifications: string | null;
+  total_score: number | null;
 };
 
 type SearchResponse = {
@@ -27,10 +27,10 @@ type SimilarEntity = {
   entity_id: number;
   name: string;
   similarity_score: number;
-  region?: string | null;
-  city?: string | null;
-  certifications?: string | null;
-  total_score?: number | null;
+  region: string | null;
+  city: string | null;
+  certifications: string | null;
+  total_score: number | null;
 };
 
 type SimilarResponse = {
@@ -62,13 +62,13 @@ export default function SearchPage() {
 
     try {
       const response = await apiFetch<SearchResponse>(
-        `/search/semantic?q=${encodeURIComponent(query)}&entity_type=${entityType}&limit=20`
+        `/search/semantic?q=${encodeURIComponent(query)}&entity_type=${entityType}&limit=20`,
       );
       setResults(response.results);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       if (errorMessage.includes("503")) {
-        setError("Semantische Suche ist nicht verfügbar. OpenAI API-Schlüssel nicht konfiguriert.");
+        setError("Semantische Suche ist nicht verfuegbar. OpenAI API-Schluessel fehlt.");
       } else {
         setError(errorMessage);
       }
@@ -79,10 +79,10 @@ export default function SearchPage() {
 
   const handleFindSimilar = async (result: SearchResult) => {
     const key = `${result.entity_type}-${result.entity_id}`;
-    
+
     try {
       const response = await apiFetch<SimilarResponse>(
-        `/search/entity/${result.entity_type}/${result.entity_id}/similar?limit=5`
+        `/search/entity/${result.entity_type}/${result.entity_id}/similar?limit=5`,
       );
       setSimilarResults((prev) => ({
         ...prev,
@@ -100,16 +100,11 @@ export default function SearchPage() {
     }
   };
 
-  const formatSimilarity = (score: number) => {
-    return `${Math.round(score * 100)}%`;
-  };
+  const formatSimilarity = (score: number) => `${Math.round(score * 100)}%`;
 
-  const getEntityUrl = (entityType: string, entityId: number) => {
-    if (entityType === "cooperative") {
-      return `/cooperatives/${entityId}`;
-    } else if (entityType === "roaster") {
-      return `/roasters/${entityId}`;
-    }
+  const getEntityUrl = (t: string, id: number) => {
+    if (t === "cooperative") return `/cooperatives/${id}`;
+    if (t === "roaster") return `/roasters/${id}`;
     return "#";
   };
 
@@ -119,7 +114,7 @@ export default function SearchPage() {
         <div>
           <div className="h1">Semantische Suche</div>
           <div className="muted">
-            KI-gestützte Suche über Kooperativen und Röstereien mit Embedding-Vektoren
+            KI-gestuetzte Suche ueber Kooperativen und Roestereien mit Embedding-Vektoren
           </div>
         </div>
       </div>
@@ -131,14 +126,14 @@ export default function SearchPage() {
             <label className="label">Suchbegriff</label>
             <input
               className="input"
-              placeholder="z.B. 'Bio-Kaffee aus Peru' oder 'Specialty Rösterei Hamburg'"
+              placeholder="z.B. 'Bio-Kaffee aus Peru' oder 'Specialty Roesterei Hamburg'"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
             />
           </div>
           <div style={{ minWidth: "200px" }}>
-            <label className="label">Entitätstyp</label>
+            <label className="label">Entitaetstyp</label>
             <select
               className="input"
               value={entityType}
@@ -146,14 +141,10 @@ export default function SearchPage() {
             >
               <option value="all">Alle</option>
               <option value="cooperative">Kooperativen</option>
-              <option value="roaster">Röstereien</option>
+              <option value="roaster">Roestereien</option>
             </select>
           </div>
-          <button
-            className="btn"
-            onClick={handleSearch}
-            disabled={loading || !query.trim()}
-          >
+          <button className="btn" onClick={handleSearch} disabled={loading || !query.trim()}>
             {loading ? "Suche..." : "Suchen"}
           </button>
         </div>
@@ -171,7 +162,7 @@ export default function SearchPage() {
             Ergebnisse: {results.length}
             {results.length > 0 && (
               <span className="muted" style={{ marginLeft: "0.5rem", fontWeight: "normal" }}>
-                für &quot;{query}&quot;
+                fuer "{query}"
               </span>
             )}
           </div>
@@ -190,7 +181,7 @@ export default function SearchPage() {
                     <th>Region/Stadt</th>
                     <th>Zertifizierungen</th>
                     <th>Score</th>
-                    <th>Ähnlichkeit</th>
+                    <th>Aehnlichkeit</th>
                     <th>Aktionen</th>
                   </tr>
                 </thead>
@@ -198,34 +189,29 @@ export default function SearchPage() {
                   {results.map((result) => {
                     const key = `${result.entity_type}-${result.entity_id}`;
                     const similar = similarResults[key];
-                    
+
                     return (
                       <>
                         <tr key={key}>
                           <td>
-                            <Link
-                              className="link"
-                              href={getEntityUrl(result.entity_type, result.entity_id)}
-                            >
+                            <Link className="link" href={getEntityUrl(result.entity_type, result.entity_id)}>
                               {result.name}
                             </Link>
                           </td>
                           <td>
                             <Badge tone={result.entity_type === "cooperative" ? "good" : "neutral"}>
-                              {result.entity_type === "cooperative" ? "Kooperative" : "Rösterei"}
+                              {result.entity_type === "cooperative" ? "Kooperative" : "Roesterei"}
                             </Badge>
                           </td>
-                          <td className="muted">
-                            {result.region || result.city || "–"}
-                          </td>
+                          <td className="muted">{result.region || result.city || "-"}</td>
                           <td className="muted" style={{ fontSize: "0.85rem" }}>
-                            {result.certifications || "–"}
+                            {result.certifications || "-"}
                           </td>
                           <td>
                             {result.total_score ? (
                               <Badge tone="neutral">{result.total_score.toFixed(1)}</Badge>
                             ) : (
-                              "–"
+                              "-"
                             )}
                           </td>
                           <td>
@@ -237,15 +223,21 @@ export default function SearchPage() {
                               onClick={() => handleFindSimilar(result)}
                               disabled={!!similar}
                             >
-                              {similar ? "✓ Geladen" : "Ähnliche anzeigen"}
+                              {similar ? "Geladen" : "Aehnliche anzeigen"}
                             </button>
                           </td>
                         </tr>
                         {similar && similar.length > 0 && (
                           <tr key={`${key}-similar`}>
-                            <td colSpan={7} style={{ backgroundColor: "var(--color-bg-secondary)", padding: "1rem" }}>
+                            <td
+                              colSpan={7}
+                              style={{
+                                backgroundColor: "var(--color-bg-secondary)",
+                                padding: "1rem",
+                              }}
+                            >
                               <div style={{ marginBottom: "0.5rem", fontWeight: "600" }}>
-                                Ähnliche Entitäten zu &quot;{result.name}&quot;:
+                                Aehnliche Entitaeten zu "{result.name}":
                               </div>
                               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
                                 {similar.map((sim) => (
@@ -264,9 +256,7 @@ export default function SearchPage() {
                                     }}
                                   >
                                     <span>{sim.name}</span>
-                                    <Badge tone="warn">
-                                      {formatSimilarity(sim.similarity_score)}
-                                    </Badge>
+                                    <Badge tone="warn">{formatSimilarity(sim.similarity_score)}</Badge>
                                   </Link>
                                 ))}
                               </div>
@@ -286,11 +276,11 @@ export default function SearchPage() {
       {!results && !loading && (
         <div className="panel">
           <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-muted)" }}>
-            <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>🔍</div>
+            <div style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>[SEARCH]</div>
             <div>Geben Sie einen Suchbegriff ein, um zu beginnen.</div>
             <div style={{ fontSize: "0.9rem", marginTop: "1rem" }}>
-              Die semantische Suche nutzt KI-Embeddings, um ähnliche Entitäten zu finden,
-              auch wenn die exakten Suchbegriffe nicht übereinstimmen.
+              Die semantische Suche nutzt KI-Embeddings, um aehnliche Entitaeten zu finden,
+              auch wenn die exakten Suchbegriffe nicht uebereinstimmen.
             </div>
           </div>
         </div>

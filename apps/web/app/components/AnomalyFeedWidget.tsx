@@ -31,15 +31,12 @@ export default function AnomalyFeedWidget() {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiFetch<AnomalyAlert[]>(
-          "/anomalies?acknowledged=false&limit=5"
-        );
+        const data = await apiFetch<AnomalyAlert[]>("/anomalies?acknowledged=false&limit=5");
         if (!alive) return;
         setAnomalies(Array.isArray(data) ? data : []);
       } catch (e: unknown) {
         if (!alive) return;
         if (e instanceof Error) {
-          // Detect feature-flag disabled via HTTP 503 status in error message
           const match = e.message.match(/API error:\s*(\d{3})/);
           const status = match ? Number(match[1]) : undefined;
           if (status === 503) {
@@ -65,23 +62,22 @@ export default function AnomalyFeedWidget() {
   const severityTone = (s: string): "bad" | "warn" | "neutral" =>
     s === "critical" ? "bad" : s === "warning" ? "warn" : "neutral";
 
-  const fmtDate = (x: string) =>
-    new Date(x).toLocaleDateString("de-DE");
+  const fmtDate = (x: string) => new Date(x).toLocaleDateString("de-DE");
 
   return (
     <div className="panel">
       <div className="panelHeader">
         <div>
           <div className="panelTitle">Anomalie-Feed</div>
-          <div className="muted">Score- &amp; Preis-Ausreißer</div>
+          <div className="muted">Score- & Preis-Ausreisser</div>
         </div>
         <Link className="link" href="/alerts">
-          öffnen →
+          oeffnen -
         </Link>
       </div>
       <div className="list">
         {loading ? (
-          <div className="muted">Lädt…</div>
+          <div className="muted">Laedt...</div>
         ) : error ? (
           <div className="muted">Fehler: {error}</div>
         ) : anomalies.length === 0 ? (
@@ -92,16 +88,14 @@ export default function AnomalyFeedWidget() {
               <div className="listMain">
                 <div className="listTitle">
                   {a.alert_type === "score_anomaly"
-                    ? `Score-Ausreißer: ${a.entity_type} #${a.entity_id}`
-                    : `Preis-Ausreißer: ${a.field_name ?? a.entity_type}`}
+                    ? `Score-Ausreisser: ${a.entity_type} #${a.entity_id}`
+                    : `Preis-Ausreisser: ${a.field_name ?? a.entity_type}`}
                 </div>
                 <div className="listMeta">
-                  {a.new_value !== null && (
-                    <span>Wert: {a.new_value.toFixed(2)}</span>
-                  )}
+                  {a.new_value !== null && <span>Wert: {a.new_value.toFixed(2)}</span>}
                   {a.change_amount !== null && (
                     <>
-                      <span className="dot">•</span>
+                      <span className="dot">|</span>
                       <span>
                         {a.alert_type === "price_anomaly"
                           ? `Z=${a.change_amount.toFixed(2)}`
@@ -109,7 +103,7 @@ export default function AnomalyFeedWidget() {
                       </span>
                     </>
                   )}
-                  <span className="dot">•</span>
+                  <span className="dot">|</span>
                   <span>{fmtDate(a.created_at)}</span>
                 </div>
               </div>

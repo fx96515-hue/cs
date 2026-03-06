@@ -11,8 +11,8 @@ import {
   UpdateDealRequest
 } from "../types";
 
-// Fetch Deals with filters (using lots as base for now)
-export function useDeals(filters?: DealFilters & { limit?: number; page?: number }) {
+// Fetch Deals with filters
+export function useDeals(filters: DealFilters & { limit?: number; page?: number }) {
   const params = new URLSearchParams();
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
@@ -29,8 +29,8 @@ export function useDeals(filters?: DealFilters & { limit?: number; page?: number
   return useQuery({
     queryKey: ["deals", filters],
     queryFn: async () => {
-      // Using lots endpoint as deals base
-      const response = await apiFetch<Deal[] | Paged<Deal>>(`/lots?${params.toString()}`);
+      const qs = params.toString();
+      const response = await apiFetch<Deal[] | Paged<Deal>>(`/deals${qs ? `?${qs}` : ""}`);
       // Backend may return flat list, but we need Paged format
       if (Array.isArray(response)) {
         return { items: response, total: response.length } as Paged<Deal>;
@@ -45,7 +45,7 @@ export function useDeal(id: number) {
   return useQuery({
     queryKey: ["deal", id],
     queryFn: async () => {
-      const data = await apiFetch<Deal>(`/lots/${id}`);
+      const data = await apiFetch<Deal>(`/deals/${id}`);
       return data;
     },
     enabled: !!id,
@@ -75,7 +75,7 @@ export function useSaveMarginRun() {
     }: {
       lotId: number;
       data: MarginCalcRequest;
-      profile?: string;
+      profile: string;
     }) => {
       return await apiFetch<MarginRun>(`/margins/lots/${lotId}/runs?profile=${profile}`, {
         method: "POST",
@@ -100,12 +100,12 @@ export function useMarginRuns(lotId: number) {
   });
 }
 
-// Create Deal (using lot endpoint)
+// Create Deal
 export function useCreateDeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: CreateDealRequest) => {
-      return await apiFetch<Deal>("/lots", {
+      return await apiFetch<Deal>("/deals", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -121,7 +121,7 @@ export function useUpdateDeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateDealRequest }) => {
-      return await apiFetch<Deal>(`/lots/${id}`, {
+      return await apiFetch<Deal>(`/deals/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       });

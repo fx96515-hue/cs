@@ -7,7 +7,7 @@ export default function KpiCard({
 }: {
   label: string;
   value: React.ReactNode;
-  hint?: string;
+  hint: string;
 }) {
   return (
     <div className="panel card">
