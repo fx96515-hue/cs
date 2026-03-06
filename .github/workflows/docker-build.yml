@@ -77,7 +77,7 @@ jobs:
       # PR build: build only, do not push, single-platform
       - name: Build only (PR)
         if: env.DO_PUSH != 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/api
           push: false
@@ -89,7 +89,7 @@ jobs:
       # Build with Docker Hub tags when available
       - name: Build and push (with Docker Hub)
         if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/api
           push: true
@@ -104,7 +104,7 @@ jobs:
       # Build without Docker Hub tags when not available
       - name: Build and push (GHCR only)
         if: env.DO_PUSH == 'true' && env.HAS_DOCKER_HUB != 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/api
           push: true
@@ -177,7 +177,7 @@ jobs:
       # PR build: build only, do not push, single-platform
       - name: Build only (PR)
         if: env.DO_PUSH != 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/web
           push: false
@@ -189,7 +189,7 @@ jobs:
       # Build with Docker Hub tags when available
       - name: Build and push (with Docker Hub)
         if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/web
           push: true
@@ -204,7 +204,7 @@ jobs:
       # Build without Docker Hub tags when not available
       - name: Build and push (GHCR only)
         if: env.DO_PUSH == 'true' && env.HAS_DOCKER_HUB != 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./apps/web
           push: true
