@@ -18,7 +18,7 @@ redis==5.2.0
 celery==5.4.0
 tenacity==9.0.0
 python-dateutil==2.9.0.post0
-prometheus-fastapi-instrumentator==7.0.0
+prometheus-fastapi-instrumentator==7.1.0
 structlog==25.5.0
 
 # Data enrichment / dedup
