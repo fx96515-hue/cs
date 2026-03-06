@@ -7,6 +7,8 @@ from app.api.response_utils import apply_create_status
 from app.core.idempotency import find_existing_by_fields
 from app.db.session import get_db
 from app.models.shipment import Shipment
+from app.models.shipment_lot import ShipmentLot
+from app.models.transport_event import TransportEvent
 from app.models.user import User
 from app.schemas.shipment import (
     ShipmentCreate,
@@ -15,8 +17,42 @@ from app.schemas.shipment import (
     TrackingEventCreate,
 )
 from app.core.audit import AuditLogger
+from app.core.versioning import capture_entity_version
+from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 
 router = APIRouter()
+
+
+def _build_shipment_out(db: Session, shipment: Shipment) -> ShipmentOut:
+    lot_ids = [
+        row.lot_id
+        for row in db.query(ShipmentLot)
+        .filter(ShipmentLot.shipment_id == shipment.id)
+        .all()
+    ]
+    base = ShipmentOut.model_validate(shipment)
+    return base.model_copy(update={"lot_ids": lot_ids})
+
+
+def _build_shipment_list_out(
+    db: Session, shipments: list[Shipment]
+) -> list[ShipmentOut]:
+    if not shipments:
+        return []
+    shipment_ids = [s.id for s in shipments]
+    lot_map: dict[int, list[int]] = {sid: [] for sid in shipment_ids}
+    rows = (
+        db.query(ShipmentLot)
+        .filter(ShipmentLot.shipment_id.in_(shipment_ids))
+        .all()
+    )
+    for row in rows:
+        lot_map.setdefault(row.shipment_id, []).append(row.lot_id)
+    result: list[ShipmentOut] = []
+    for shipment in shipments:
+        base = ShipmentOut.model_validate(shipment)
+        result.append(base.model_copy(update={"lot_ids": lot_map.get(shipment.id, [])}))
+    return result
 
 
 @router.get("/", response_model=list[ShipmentOut])
@@ -24,19 +60,23 @@ def list_shipments(
     status: str | None = None,
     origin_port: str | None = None,
     destination_port: str | None = None,
+    include_deleted: bool = Query(False),
     limit: int = Query(200, ge=1, le=500),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """List all shipments with optional filters."""
     q = db.query(Shipment)
+    if not include_deleted:
+        q = q.filter(Shipment.deleted_at.is_(None))
     if status:
         q = q.filter(Shipment.status == status)
     if origin_port:
         q = q.filter(Shipment.origin_port == origin_port)
     if destination_port:
         q = q.filter(Shipment.destination_port == destination_port)
-    return q.order_by(Shipment.created_at.desc()).limit(limit).all()
+    shipments = q.order_by(Shipment.created_at.desc()).limit(limit).all()
+    return _build_shipment_list_out(db, shipments)
 
 
 @router.get("/active", response_model=list[ShipmentOut])
@@ -45,12 +85,13 @@ def list_active_shipments(
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Get active shipments (status=in_transit)."""
-    return (
+    shipments = (
         db.query(Shipment)
-        .filter(Shipment.status == "in_transit")
+        .filter(Shipment.status == "in_transit", Shipment.deleted_at.is_(None))
         .order_by(Shipment.created_at.desc())
         .all()
     )
+    return _build_shipment_list_out(db, shipments)
 
 
 @router.get("/delayed", response_model=list[ShipmentOut])
@@ -59,12 +100,13 @@ def list_delayed_shipments(
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Get delayed shipments (delay_hours > 0)."""
-    return (
+    shipments = (
         db.query(Shipment)
-        .filter(Shipment.delay_hours > 0)
+        .filter(Shipment.delay_hours > 0, Shipment.deleted_at.is_(None))
         .order_by(Shipment.delay_hours.desc())
         .all()
     )
+    return _build_shipment_list_out(db, shipments)
 
 
 @router.post("/", response_model=ShipmentOut, status_code=201)
@@ -92,7 +134,10 @@ def create_shipment(
     # Otherwise, enforce uniqueness constraints.
     existing_container = (
         db.query(Shipment)
-        .filter(Shipment.container_number == payload.container_number)
+        .filter(
+            Shipment.container_number == payload.container_number,
+            Shipment.deleted_at.is_(None),
+        )
         .first()
     )
     if existing_container:
@@ -100,17 +145,54 @@ def create_shipment(
 
     existing_bol = (
         db.query(Shipment)
-        .filter(Shipment.bill_of_lading == payload.bill_of_lading)
+        .filter(
+            Shipment.bill_of_lading == payload.bill_of_lading,
+            Shipment.deleted_at.is_(None),
+        )
         .first()
     )
     if existing_bol:
         raise HTTPException(status_code=400, detail="Bill of lading already exists")
 
-    shipment = Shipment(**payload.model_dump())
+    shipment = Shipment(**payload.model_dump(exclude={"lot_ids"}))
+    if payload.departure_at and not payload.departure_date:
+        shipment.departure_date = payload.departure_at.isoformat()
+    if payload.estimated_arrival_at and not payload.estimated_arrival:
+        shipment.estimated_arrival = payload.estimated_arrival_at.isoformat()
+    if payload.actual_arrival_at and not payload.actual_arrival:
+        shipment.actual_arrival = payload.actual_arrival_at.isoformat()
+
+    if payload.departure_at is None and payload.departure_date:
+        try:
+            shipment.departure_at = datetime.fromisoformat(payload.departure_date)
+        except ValueError:
+            pass
+    if payload.estimated_arrival_at is None and payload.estimated_arrival:
+        try:
+            shipment.estimated_arrival_at = datetime.fromisoformat(payload.estimated_arrival)
+        except ValueError:
+            pass
+    if payload.actual_arrival_at is None and payload.actual_arrival:
+        try:
+            shipment.actual_arrival_at = datetime.fromisoformat(payload.actual_arrival)
+        except ValueError:
+            pass
+    lot_ids: list[int] = []
+    if payload.lot_ids:
+        lot_ids = list(dict.fromkeys(payload.lot_ids))
+        if shipment.lot_id is None and lot_ids:
+            shipment.lot_id = lot_ids[0]
+    elif payload.lot_id:
+        lot_ids = [payload.lot_id]
     shipment.tracking_events = []  # Initialize empty tracking events
     db.add(shipment)
     db.commit()
     db.refresh(shipment)
+
+    for lot_id in lot_ids:
+        db.add(ShipmentLot(shipment_id=shipment.id, lot_id=lot_id))
+    if lot_ids:
+        db.commit()
 
     # Log creation for audit trail
     AuditLogger.log_create(
@@ -120,23 +202,42 @@ def create_shipment(
         entity_id=shipment.id,
         entity_data=payload.model_dump(),
     )
+    capture_entity_version(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment.id,
+        instance=shipment,
+        user=user,
+        reason="create",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment.id,
+        instance=shipment,
+        user=user,
+    )
 
     apply_create_status(request, response, created=True)
 
-    return shipment
+    return _build_shipment_out(db, shipment)
 
 
 @router.get("/{shipment_id}", response_model=ShipmentOut)
 def get_shipment(
     shipment_id: int,
+    include_deleted: bool = Query(False),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Get shipment details."""
-    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    q = db.query(Shipment).filter(Shipment.id == shipment_id)
+    if not include_deleted:
+        q = q.filter(Shipment.deleted_at.is_(None))
+    shipment = q.first()
     if not shipment:
         raise HTTPException(status_code=404, detail="Not found")
-    return shipment
+    return _build_shipment_out(db, shipment)
 
 
 @router.patch("/{shipment_id}", response_model=ShipmentOut)
@@ -147,7 +248,11 @@ def update_shipment(
     user: User = Depends(require_role("admin", "analyst")),
 ):
     """Update shipment."""
-    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    shipment = (
+        db.query(Shipment)
+        .filter(Shipment.id == shipment_id, Shipment.deleted_at.is_(None))
+        .first()
+    )
     if not shipment:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -157,7 +262,38 @@ def update_shipment(
     }
 
     # Update status_updated_at if status is changing
-    update_dict = payload.model_dump(exclude_unset=True)
+    update_dict = payload.model_dump(exclude_unset=True, exclude={"lot_ids"})
+    if "departure_at" in update_dict and update_dict.get("departure_at"):
+        update_dict.setdefault(
+            "departure_date", update_dict["departure_at"].isoformat()
+        )
+    if "estimated_arrival_at" in update_dict and update_dict.get("estimated_arrival_at"):
+        update_dict.setdefault(
+            "estimated_arrival", update_dict["estimated_arrival_at"].isoformat()
+        )
+    if "actual_arrival_at" in update_dict and update_dict.get("actual_arrival_at"):
+        update_dict.setdefault(
+            "actual_arrival", update_dict["actual_arrival_at"].isoformat()
+        )
+    if "departure_at" not in update_dict and "departure_date" in update_dict:
+        try:
+            update_dict["departure_at"] = datetime.fromisoformat(update_dict["departure_date"])
+        except ValueError:
+            pass
+    if "estimated_arrival_at" not in update_dict and "estimated_arrival" in update_dict:
+        try:
+            update_dict["estimated_arrival_at"] = datetime.fromisoformat(
+                update_dict["estimated_arrival"]
+            )
+        except ValueError:
+            pass
+    if "actual_arrival_at" not in update_dict and "actual_arrival" in update_dict:
+        try:
+            update_dict["actual_arrival_at"] = datetime.fromisoformat(
+                update_dict["actual_arrival"]
+            )
+        except ValueError:
+            pass
     if "status" in update_dict and update_dict["status"] != shipment.status:
         update_dict["status_updated_at"] = datetime.now().isoformat()
 
@@ -165,6 +301,14 @@ def update_shipment(
         setattr(shipment, k, v)
     db.commit()
     db.refresh(shipment)
+
+    if payload.lot_ids is not None:
+        db.query(ShipmentLot).filter(ShipmentLot.shipment_id == shipment_id).delete()
+        for lot_id in list(dict.fromkeys(payload.lot_ids)):
+            db.add(ShipmentLot(shipment_id=shipment_id, lot_id=lot_id))
+        shipment.lot_id = payload.lot_ids[0] if payload.lot_ids else None
+        db.commit()
+        db.refresh(shipment)
 
     # Log update for audit trail
     AuditLogger.log_update(
@@ -175,8 +319,23 @@ def update_shipment(
         old_data=old_data,
         new_data=payload.model_dump(exclude_unset=True),
     )
+    capture_entity_version(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+        reason="update",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+    )
 
-    return shipment
+    return _build_shipment_out(db, shipment)
 
 
 @router.delete("/{shipment_id}")
@@ -197,7 +356,7 @@ def delete_shipment(
         "destination_port": shipment.destination_port,
     }
 
-    db.delete(shipment)
+    shipment.deleted_at = datetime.utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -208,8 +367,63 @@ def delete_shipment(
         entity_id=shipment_id,
         entity_data=entity_data,
     )
+    capture_entity_version(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+        reason="soft_delete",
+    )
+    resolve_entity_flags(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        user=user,
+    )
 
     return {"status": "deleted"}
+
+
+@router.post("/{shipment_id}/restore", response_model=ShipmentOut)
+def restore_shipment(
+    shipment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("admin")),
+):
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    shipment.deleted_at = None
+    db.commit()
+    db.refresh(shipment)
+
+    AuditLogger.log_update(
+        db=db,
+        user=user,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        old_data={"deleted_at": "set"},
+        new_data={"deleted_at": None},
+    )
+    capture_entity_version(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+        reason="restore",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+    )
+
+    return _build_shipment_out(db, shipment)
 
 
 @router.post("/{shipment_id}/track", response_model=ShipmentOut)
@@ -220,7 +434,11 @@ def add_tracking_event(
     user: User = Depends(require_role("admin", "analyst")),
 ):
     """Add a tracking event to a shipment."""
-    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    shipment = (
+        db.query(Shipment)
+        .filter(Shipment.id == shipment_id, Shipment.deleted_at.is_(None))
+        .first()
+    )
     if not shipment:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -250,6 +468,23 @@ def add_tracking_event(
     db.commit()
     db.refresh(shipment)
 
+    occurred_at = datetime.utcnow()
+    try:
+        occurred_at = datetime.fromisoformat(event.timestamp)
+    except ValueError:
+        pass
+    db.add(
+        TransportEvent(
+            shipment_id=shipment_id,
+            event_type=event.event,
+            location=event.location,
+            occurred_at=occurred_at,
+            status=shipment.status,
+            details={"details": event.details} if event.details else None,
+        )
+    )
+    db.commit()
+
     # Log tracking event for audit trail
     AuditLogger.log_update(
         db=db,
@@ -259,5 +494,20 @@ def add_tracking_event(
         old_data={"tracking_event_count": len(tracking_events) - 1},
         new_data={"tracking_event": new_event},
     )
+    capture_entity_version(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+        reason="tracking_event",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="shipment",
+        entity_id=shipment_id,
+        instance=shipment,
+        user=user,
+    )
 
-    return shipment
+    return _build_shipment_out(db, shipment)

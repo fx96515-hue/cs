@@ -14,3 +14,11 @@ class TimestampMixin:
         onupdate=sa.func.now(),  # ORM-side update timestamp
         nullable=False,
     )
+
+
+class SoftDeleteMixin:
+    deleted_at: Mapped[sa.DateTime | None] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )

@@ -28,3 +28,6 @@ class CoffeePriceHistory(Base, TimestampMixin):
     market_source: Mapped[str] = mapped_column(
         String(64), nullable=False
     )  # actual_trade, market_estimate, futures
+    market_key: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )  # aligns with market_observations.key

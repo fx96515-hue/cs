@@ -1,6 +1,7 @@
 from typing import Annotated, Any
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
 from fastapi.responses import StreamingResponse
 import structlog
 from sqlalchemy.orm import Session
@@ -14,6 +15,8 @@ from app.schemas.cooperative import CooperativeCreate, CooperativeOut, Cooperati
 from app.services.scoring import recompute_and_persist_cooperative
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
+from app.core.versioning import capture_entity_version
+from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 from app.core.config import settings
 
 router = APIRouter()
@@ -29,8 +32,12 @@ NOT_FOUND_RESPONSES: dict[int | str, dict[str, Any]] = {
 def list_coops(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    include_deleted: bool = Query(False),
 ):
-    return db.query(Cooperative).order_by(Cooperative.name.asc()).all()
+    q = db.query(Cooperative)
+    if not include_deleted:
+        q = q.filter(Cooperative.deleted_at.is_(None))
+    return q.order_by(Cooperative.name.asc()).all()
 
 
 @router.post("/", response_model=CooperativeOut)
@@ -53,6 +60,21 @@ def create_coop(
         entity_type="cooperative",
         entity_id=coop.id,
         entity_data=payload.model_dump(),
+    )
+    capture_entity_version(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop.id,
+        instance=coop,
+        user=user,
+        reason="create",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop.id,
+        instance=coop,
+        user=user,
     )
 
     apply_create_status(request, response, created=True)
@@ -83,8 +105,12 @@ def get_coop(
     coop_id: int,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    include_deleted: bool = Query(False),
 ):
-    coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
+    q = db.query(Cooperative).filter(Cooperative.id == coop_id)
+    if not include_deleted:
+        q = q.filter(Cooperative.deleted_at.is_(None))
+    coop = q.first()
     if not coop:
         raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return coop
@@ -101,7 +127,11 @@ def update_coop(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
-    coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
+    coop = (
+        db.query(Cooperative)
+        .filter(Cooperative.id == coop_id, Cooperative.deleted_at.is_(None))
+        .first()
+    )
     if not coop:
         raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
@@ -123,6 +153,21 @@ def update_coop(
         entity_id=coop_id,
         old_data=old_data,
         new_data=payload.model_dump(exclude_unset=True),
+    )
+    capture_entity_version(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        instance=coop,
+        user=user,
+        reason="update",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        instance=coop,
+        user=user,
     )
 
     # Queue embedding generation task (async, non-blocking)
@@ -162,7 +207,7 @@ def delete_coop(
         "status": coop.status,
     }
 
-    db.delete(coop)
+    coop.deleted_at = datetime.utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -173,8 +218,65 @@ def delete_coop(
         entity_id=coop_id,
         entity_data=entity_data,
     )
+    capture_entity_version(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        instance=coop,
+        user=user,
+        reason="soft_delete",
+    )
+    resolve_entity_flags(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        user=user,
+    )
 
     return {"status": "deleted"}
+
+
+@router.post(
+    "/{coop_id}/restore",
+    responses=NOT_FOUND_RESPONSES,
+)
+def restore_coop(
+    coop_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
+):
+    coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
+    if not coop:
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    coop.deleted_at = None
+    db.commit()
+    db.refresh(coop)
+
+    AuditLogger.log_update(
+        db=db,
+        user=user,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        old_data={"deleted_at": "set"},
+        new_data={"deleted_at": None},
+    )
+    capture_entity_version(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        instance=coop,
+        user=user,
+        reason="restore",
+    )
+    recompute_entity_flags(
+        db=db,
+        entity_type="cooperative",
+        entity_id=coop_id,
+        instance=coop,
+        user=user,
+    )
+
+    return coop
 
 
 @router.post(
@@ -197,7 +299,11 @@ def recompute_score(
 def export_cooperatives_csv(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    include_deleted: bool = Query(False),
 ):
     """Export all cooperatives to CSV format."""
-    cooperatives = db.query(Cooperative).order_by(Cooperative.name.asc()).all()
+    q = db.query(Cooperative)
+    if not include_deleted:
+        q = q.filter(Cooperative.deleted_at.is_(None))
+    cooperatives = q.order_by(Cooperative.name.asc()).all()
     return DataExporter.cooperatives_to_csv(cooperatives)

@@ -2,10 +2,10 @@ from sqlalchemy import String, Text, Float, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
-from app.models.common import TimestampMixin
+from app.models.common import TimestampMixin, SoftDeleteMixin
 
 
-class Region(Base, TimestampMixin):
+class Region(Base, TimestampMixin, SoftDeleteMixin):
     """Coffee producing regions with comprehensive sourcing intelligence data."""
 
     __tablename__ = "regions"
