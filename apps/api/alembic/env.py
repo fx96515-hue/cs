@@ -26,6 +26,13 @@ from app.models.cupping import CuppingResult  # noqa: F401
 from app.models.freight_history import FreightHistory  # noqa: F401
 from app.models.coffee_price_history import CoffeePriceHistory  # noqa: F401
 from app.models.ml_model import MLModel  # noqa: F401
+from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.entity_version import EntityVersion  # noqa: F401
+from app.models.data_quality_flag import DataQualityFlag  # noqa: F401
+from app.models.shipment_lot import ShipmentLot  # noqa: F401
+from app.models.deal import Deal  # noqa: F401
+from app.models.price_quote import PriceQuote  # noqa: F401
+from app.models.transport_event import TransportEvent  # noqa: F401
 
 MODEL_IMPORTS = (
     User,
@@ -48,6 +55,13 @@ MODEL_IMPORTS = (
     FreightHistory,
     CoffeePriceHistory,
     MLModel,
+    AuditLog,
+    EntityVersion,
+    DataQualityFlag,
+    ShipmentLot,
+    Deal,
+    PriceQuote,
+    TransportEvent,
 )
 
 config = context.config

@@ -11,10 +11,10 @@ except Exception:  # pragma: no cover - fallback for test environments without p
 
 
 from app.db.session import Base
-from app.models.common import TimestampMixin
+from app.models.common import TimestampMixin, SoftDeleteMixin
 
 
-class Roaster(Base, TimestampMixin):
+class Roaster(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "roasters"
 
     id: Mapped[int] = mapped_column(primary_key=True)

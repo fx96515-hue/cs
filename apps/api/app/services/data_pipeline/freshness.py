@@ -200,26 +200,28 @@ class DataFreshnessMonitor:
         if entity_type == "cooperative":
             from app.models.cooperative import Cooperative
 
+            query = self.db.query(Cooperative.id).filter(
+                (Cooperative.last_verified_at.is_(None))
+                | (Cooperative.last_verified_at < cutoff)
+            )
+            if hasattr(Cooperative, "deleted_at"):
+                query = query.filter(Cooperative.deleted_at.is_(None))
             stale = (
-                self.db.query(Cooperative.id)
-                .filter(
-                    (Cooperative.last_verified_at.is_(None))
-                    | (Cooperative.last_verified_at < cutoff)
-                )
-                .order_by(Cooperative.last_verified_at.asc().nullsfirst())
+                query.order_by(Cooperative.last_verified_at.asc().nullsfirst())
                 .limit(10)
                 .all()
             )
         elif entity_type == "roaster":
             from app.models.roaster import Roaster
 
+            query = self.db.query(Roaster.id).filter(
+                (Roaster.last_verified_at.is_(None))
+                | (Roaster.last_verified_at < cutoff)
+            )
+            if hasattr(Roaster, "deleted_at"):
+                query = query.filter(Roaster.deleted_at.is_(None))
             stale = (
-                self.db.query(Roaster.id)
-                .filter(
-                    (Roaster.last_verified_at.is_(None))
-                    | (Roaster.last_verified_at < cutoff)
-                )
-                .order_by(Roaster.last_verified_at.asc().nullsfirst())
+                query.order_by(Roaster.last_verified_at.asc().nullsfirst())
                 .limit(10)
                 .all()
             )

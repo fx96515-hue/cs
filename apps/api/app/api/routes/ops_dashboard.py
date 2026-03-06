@@ -7,6 +7,7 @@ from app.api.deps import require_role, get_db
 from app.models.cooperative import Cooperative
 from app.models.roaster import Roaster
 from app.services.data_pipeline.freshness import DataFreshnessMonitor
+from app.models.data_quality_flag import DataQualityFlag
 from app.services.quality_alerts import get_alert_summary
 
 
@@ -20,10 +21,18 @@ def get_overview(
 ):
     """Get system health overview."""
     # Entity counts
-    total_coops = db.query(Cooperative).count()
-    active_coops = db.query(Cooperative).filter(Cooperative.status == "active").count()
-    total_roasters = db.query(Roaster).count()
-    active_roasters = db.query(Roaster).filter(Roaster.status == "active").count()
+    total_coops = db.query(Cooperative).filter(Cooperative.deleted_at.is_(None)).count()
+    active_coops = (
+        db.query(Cooperative)
+        .filter(Cooperative.status == "active", Cooperative.deleted_at.is_(None))
+        .count()
+    )
+    total_roasters = db.query(Roaster).filter(Roaster.deleted_at.is_(None)).count()
+    active_roasters = (
+        db.query(Roaster)
+        .filter(Roaster.status == "active", Roaster.deleted_at.is_(None))
+        .count()
+    )
 
     # Data freshness
     monitor = DataFreshnessMonitor(db)
@@ -51,6 +60,15 @@ def get_overview(
             "freshness_status": "good"
             if len(stale_coops) < 10 and len(stale_roasters) < 10
             else "needs_attention",
+            "open_flags": db.query(DataQualityFlag)
+            .filter(DataQualityFlag.resolved_at.is_(None))
+            .count(),
+            "critical_flags": db.query(DataQualityFlag)
+            .filter(
+                DataQualityFlag.resolved_at.is_(None),
+                DataQualityFlag.severity == "critical",
+            )
+            .count(),
         },
     }
 
@@ -64,7 +82,10 @@ def get_entity_health(
     # Get cooperatives with scores
     coops = (
         db.query(Cooperative)
-        .filter(Cooperative.quality_score.isnot(None))
+        .filter(
+            Cooperative.quality_score.isnot(None),
+            Cooperative.deleted_at.is_(None),
+        )
         .order_by(Cooperative.total_score.desc())
         .limit(50)
         .all()
@@ -73,7 +94,7 @@ def get_entity_health(
     # Get roasters with scores
     roasters = (
         db.query(Roaster)
-        .filter(Roaster.total_score.isnot(None))
+        .filter(Roaster.total_score.isnot(None), Roaster.deleted_at.is_(None))
         .order_by(Roaster.total_score.desc())
         .limit(50)
         .all()
