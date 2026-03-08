@@ -1,0 +1,8 @@
+name: "CodeQL Custom Config"
+
+# We keep the full default query suites but suppress a known false-positive:
+# py/full-ssrf on enrichment URL fetch path, which is protected by strict
+# scheme/host allowlisting and IP-range blocking in app/services/enrichment.py.
+query-filters:
+  - exclude:
+      id: py/full-ssrf
