@@ -54,6 +54,9 @@ jobs:
       
       - name: Run Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@0.34.1
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -61,13 +64,51 @@ jobs:
           output: 'trivy-fs-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
+          exit-code: '0'
+          timeout: '10m'
+      
+      - name: Enforce Trivy Filesystem Findings Threshold
+        run: |
+          python - <<'PY'
+          import collections
+          import json
+          import os
+          import sys
+          
+          sarif_path = "trivy-fs-results.sarif"
+          if not os.path.exists(sarif_path):
+              print(f"::error::Trivy did not produce {sarif_path}.")
+              sys.exit(1)
+          
+          with open(sarif_path, encoding="utf-8") as f:
+              sarif = json.load(f)
+          
+          findings = []
+          for run in sarif.get("runs", []):
+              findings.extend(run.get("results", []))
+          
+          if findings:
+              by_rule = collections.Counter((item.get("ruleId") or "unknown") for item in findings)
+              summary = ", ".join(f"{rule}({count})" for rule, count in by_rule.most_common(10))
+              print(f"::error::{len(findings)} HIGH/CRITICAL findings in Trivy filesystem scan. Top rules: {summary}")
+              sys.exit(1)
+          
+          print("No HIGH/CRITICAL findings in Trivy filesystem scan.")
+          PY
+      
+      - name: Upload Trivy Filesystem Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-sarif
+          path: trivy-fs-results.sarif
+        if: always() && hashFiles('trivy-fs-results.sarif') != ''
       
       - name: Upload Trivy FS Results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-fs-results.sarif'
           category: 'trivy-fs'
-        if: always()
+        if: always() && hashFiles('trivy-fs-results.sarif') != ''
         continue-on-error: true
 
   trivy-backend-image:
@@ -86,19 +127,60 @@ jobs:
       
       - name: Run Trivy Container Scan
         uses: aquasecurity/trivy-action@0.34.1
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
         with:
           image-ref: coffeestudio-backend:test
           format: 'sarif'
           output: 'trivy-backend-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
+          exit-code: '0'
+          timeout: '10m'
+      
+      - name: Enforce Trivy Backend Findings Threshold
+        run: |
+          python - <<'PY'
+          import collections
+          import json
+          import os
+          import sys
+          
+          sarif_path = "trivy-backend-results.sarif"
+          if not os.path.exists(sarif_path):
+              print(f"::error::Trivy did not produce {sarif_path}.")
+              sys.exit(1)
+          
+          with open(sarif_path, encoding="utf-8") as f:
+              sarif = json.load(f)
+          
+          findings = []
+          for run in sarif.get("runs", []):
+              findings.extend(run.get("results", []))
+          
+          if findings:
+              by_rule = collections.Counter((item.get("ruleId") or "unknown") for item in findings)
+              summary = ", ".join(f"{rule}({count})" for rule, count in by_rule.most_common(10))
+              print(f"::error::{len(findings)} HIGH/CRITICAL findings in Trivy backend container scan. Top rules: {summary}")
+              sys.exit(1)
+          
+          print("No HIGH/CRITICAL findings in Trivy backend container scan.")
+          PY
+      
+      - name: Upload Trivy Backend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-backend-sarif
+          path: trivy-backend-results.sarif
+        if: always() && hashFiles('trivy-backend-results.sarif') != ''
       
       - name: Upload Trivy Backend Results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-backend-results.sarif'
           category: 'trivy-backend'
-        if: always()
+        if: always() && hashFiles('trivy-backend-results.sarif') != ''
         continue-on-error: true
 
   trivy-frontend-image:
@@ -120,13 +202,54 @@ jobs:
       - name: Run Trivy Container Scan
         if: steps.build_frontend.outcome == 'success'
         uses: aquasecurity/trivy-action@0.34.1
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
         with:
           image-ref: coffeestudio-frontend:test
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-        continue-on-error: true
+          exit-code: '0'
+          timeout: '10m'
+      
+      - name: Enforce Trivy Frontend Findings Threshold
+        if: steps.build_frontend.outcome == 'success'
+        run: |
+          python - <<'PY'
+          import collections
+          import json
+          import os
+          import sys
+          
+          sarif_path = "trivy-frontend-results.sarif"
+          if not os.path.exists(sarif_path):
+              print(f"::error::Trivy did not produce {sarif_path}.")
+              sys.exit(1)
+          
+          with open(sarif_path, encoding="utf-8") as f:
+              sarif = json.load(f)
+          
+          findings = []
+          for run in sarif.get("runs", []):
+              findings.extend(run.get("results", []))
+          
+          if findings:
+              by_rule = collections.Counter((item.get("ruleId") or "unknown") for item in findings)
+              summary = ", ".join(f"{rule}({count})" for rule, count in by_rule.most_common(10))
+              print(f"::error::{len(findings)} HIGH/CRITICAL findings in Trivy frontend container scan. Top rules: {summary}")
+              sys.exit(1)
+          
+          print("No HIGH/CRITICAL findings in Trivy frontend container scan.")
+          PY
+      
+      - name: Upload Trivy Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-frontend-sarif
+          path: trivy-frontend-results.sarif
+        if: steps.build_frontend.outcome == 'success' && hashFiles('trivy-frontend-results.sarif') != ''
       
       - name: Upload Trivy Frontend Results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4

@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from jose import JWTError, ExpiredSignatureError
+from jwt import ExpiredSignatureError, InvalidTokenError
 import structlog
 
 from app.core.security import decode_token
@@ -31,7 +31,7 @@ def get_current_user(
             detail="Authentifizierung fehlgeschlagen",  # Generic message to prevent info disclosure
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except JWTError as e:
+    except InvalidTokenError as e:
         logger.warning(
             "auth.invalid_token",
             error=str(e),

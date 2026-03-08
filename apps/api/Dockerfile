@@ -22,7 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install dependencies in a virtual environment for easy copying
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN python -m pip install --upgrade pip==26.0
+RUN python -m pip install --upgrade \
+    pip==26.0.1 \
+    "setuptools>=78.1.1" \
+    wheel
 
 # Copy only requirements first for better layer caching
 COPY requirements.txt ./
@@ -43,7 +46,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
-    && python -m pip install --upgrade pip==26.0
+    && python -m pip install --upgrade \
+       pip==26.0.1 \
+       "setuptools>=78.1.1" \
+       wheel
 
 WORKDIR /app
 

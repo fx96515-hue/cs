@@ -5,7 +5,7 @@ uvicorn[standard]==0.32.1
 pydantic[email]==2.12.5
 email-validator==2.3.0
 pydantic-settings==2.13.1
-python-jose[cryptography]==3.4.0
+PyJWT[crypto]==2.10.1
 # IMPORTANT: do NOT depend on bcrypt in this project (Windows/Docker stability).
 # Using argon2 as the secure, cross-platform password hashing backend.
 passlib[argon2]==1.7.4
@@ -46,3 +46,6 @@ openai>=1.0.0
 
 # Knowledge graph analysis
 networkx>=3.2
+
+# Ensure patched packaging tooling inside container/CI environments.
+setuptools>=78.1.1
