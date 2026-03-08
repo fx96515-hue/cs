@@ -48,6 +48,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     
     steps:
       - uses: actions/checkout@v4
@@ -118,6 +119,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     
     steps:
       - uses: actions/checkout@v4
@@ -191,6 +193,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      packages: read
     
     steps:
       - uses: actions/checkout@v4
