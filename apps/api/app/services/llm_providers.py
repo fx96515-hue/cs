@@ -93,7 +93,7 @@ class OllamaProvider(BaseLLMProvider):
             Exception: If Ollama is unavailable or request fails
         """
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(trust_env=False) as client:
                 response = await client.post(
                     f"{self.base_url}/api/chat",
                     json={
@@ -158,7 +158,7 @@ class OllamaProvider(BaseLLMProvider):
             Text chunks of the assistant response
         """
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(trust_env=False) as client:
                 async with client.stream(
                     "POST",
                     f"{self.base_url}/api/chat",
@@ -194,7 +194,9 @@ class OllamaProvider(BaseLLMProvider):
             True if Ollama responds to /api/tags
         """
         try:
-            response = httpx.get(f"{self.base_url}/api/tags", timeout=5.0)
+            response = httpx.get(
+                f"{self.base_url}/api/tags", timeout=5.0, trust_env=False
+            )
             return response.status_code == 200
         except Exception as e:
             log.debug("ollama_availability_check_failed", error=str(e))

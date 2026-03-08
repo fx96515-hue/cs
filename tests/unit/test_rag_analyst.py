@@ -47,12 +47,10 @@ def mock_settings_no_key():
 def service(mock_settings):
     """Create RAGAnalystService with mocked settings."""
     with patch("app.services.llm_providers.settings", mock_settings):
-        with patch("httpx.get") as mock_get:
-            # Mock Ollama availability check
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_get.return_value = mock_response
-            return RAGAnalystService()
+        service = RAGAnalystService()
+        # Keep tests deterministic and independent from local Ollama/network env.
+        service.llm_provider.is_available = MagicMock(return_value=True)
+        return service
 
 
 @pytest.fixture

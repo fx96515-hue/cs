@@ -29,7 +29,11 @@ RUN python -m pip install --upgrade \
 
 # Copy only requirements first for better layer caching
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY constraints-docker.txt ./
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -c constraints-docker.txt \
+    -r requirements.txt
 
 # =============================================================================
 # Runtime stage: Minimal production image (MUST be slim, NOT alpine)
