@@ -31,7 +31,7 @@ def enrich(
             db,
             entity_type=entity_type,
             entity_id=entity_id,
-            url=payload.url,
+            url=None,
             use_llm=payload.use_llm,
         )
         return out
