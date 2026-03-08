@@ -1,0 +1,4 @@
+# CVE-2026-22184 affects the optional zlib contrib/untgz demo utility.
+# The frontend runtime image does not ship or invoke untgz.
+# Revisit once Trivy vendor matching for this CVE is refined.
+CVE-2026-22184

@@ -213,6 +213,7 @@ jobs:
             --output /work/trivy-frontend-results.sarif \
             --scanners vuln \
             --severity CRITICAL,HIGH \
+            --ignorefile /work/apps/web/.trivyignore \
             --ignore-unfixed \
             --timeout 10m \
             --exit-code 0 \
