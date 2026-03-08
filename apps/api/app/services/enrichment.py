@@ -180,11 +180,10 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
     ) as client:
         redirects_followed = 0
         while True:
-            # `current_url` has always been produced by `_validate_public_http_url`
-            # and thus is safe to use as the request target.
-            r = client.get(  # lgtm[py/full-ssrf] - URL validated via _validate_public_http_url
-                current_url
-            )
+            # Re-apply URL sanitizer in the same control flow right before the sink
+            # so static analysis can prove SSRF protection.
+            safe_request_url = _validate_public_http_url(current_url)
+            r = client.get(safe_request_url)
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break
