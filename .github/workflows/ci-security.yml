@@ -60,6 +60,7 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
           format: 'sarif'
           output: 'trivy-fs-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -132,6 +133,7 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
         with:
           image-ref: coffeestudio-backend:test
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
           format: 'sarif'
           output: 'trivy-backend-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -207,6 +209,7 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
         with:
           image-ref: coffeestudio-frontend:test
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
           severity: 'CRITICAL,HIGH'
