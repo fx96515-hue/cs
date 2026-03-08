@@ -56,12 +56,11 @@ jobs:
       - name: Run Trivy Filesystem Scan
         uses: aquasecurity/trivy-action@0.34.1
         env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          github-pat: ${{ secrets.GITHUB_TOKEN }}
           format: 'sarif'
           output: 'trivy-fs-results.sarif'
           scanners: 'vuln'
@@ -132,11 +131,10 @@ jobs:
       - name: Run Trivy Container Scan
         uses: aquasecurity/trivy-action@0.34.1
         env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
           image-ref: coffeestudio-backend:test
-          github-pat: ${{ secrets.GITHUB_TOKEN }}
           format: 'sarif'
           output: 'trivy-backend-results.sarif'
           scanners: 'vuln'
@@ -210,11 +208,10 @@ jobs:
         if: steps.build_frontend.outcome == 'success'
         uses: aquasecurity/trivy-action@0.34.1
         env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         with:
           image-ref: coffeestudio-frontend:test
-          github-pat: ${{ secrets.GITHUB_TOKEN }}
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
           scanners: 'vuln'
