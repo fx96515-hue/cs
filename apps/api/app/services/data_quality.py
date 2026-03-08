@@ -24,7 +24,14 @@ def _missing_field_flags(entity_type: str, instance: Any) -> list[dict[str, Any]
     rules: dict[str, list[str]] = {
         "cooperative": ["region_id", "region", "contact_email", "website"],
         "roaster": ["city", "contact_email", "website", "price_position"],
-        "lot": ["price_per_kg", "currency", "weight_kg", "expected_cupping_score", "processing", "varieties"],
+        "lot": [
+            "price_per_kg",
+            "currency",
+            "weight_kg",
+            "expected_cupping_score",
+            "processing",
+            "varieties",
+        ],
         "shipment": [
             "container_number",
             "bill_of_lading",
@@ -70,21 +77,21 @@ def recompute_entity_flags(
         )
         .all()
     )
-    for flag in existing:
-        flag.resolved_at = now
-        flag.resolved_by = user.email if user else "system"
+    for existing_flag in existing:
+        existing_flag.resolved_at = now
+        existing_flag.resolved_by = user.email if user else "system"
 
     new_flags = _missing_field_flags(entity_type, instance)
-    for flag in new_flags:
+    for new_flag in new_flags:
         db.add(
             DataQualityFlag(
                 entity_type=entity_type,
                 entity_id=entity_id,
-                field_name=flag.get("field_name"),
-                issue_type=flag.get("issue_type"),
-                severity=flag.get("severity", "info"),
-                message=flag.get("message"),
-                confidence=flag.get("confidence"),
+                field_name=new_flag.get("field_name"),
+                issue_type=new_flag.get("issue_type"),
+                severity=new_flag.get("severity", "info"),
+                message=new_flag.get("message"),
+                confidence=new_flag.get("confidence"),
                 detected_at=now,
                 source_id=source_id,
             )
@@ -111,8 +118,8 @@ def resolve_entity_flags(
         )
         .all()
     )
-    for flag in existing:
-        flag.resolved_at = now
-        flag.resolved_by = user.email if user else "system"
+    for existing_flag in existing:
+        existing_flag.resolved_at = now
+        existing_flag.resolved_by = user.email if user else "system"
     db.commit()
     return len(existing)

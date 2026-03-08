@@ -277,7 +277,8 @@ export default function DealsDashboard() {
                     borderRadius: "12px",
                   }}
                 >
-                  Geben Sie Werte ein und klicken Sie auf "Marge berechnen", um Ergebnisse zu sehen
+                  Geben Sie Werte ein und klicken Sie auf
+                  &quot;Marge berechnen&quot;, um Ergebnisse zu sehen
                 </div>
               )}
             </div>

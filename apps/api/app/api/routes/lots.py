@@ -97,11 +97,7 @@ def update_lot(
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "analyst")),
 ):
-    lot = (
-        db.query(Lot)
-        .filter(Lot.id == lot_id, Lot.deleted_at.is_(None))
-        .first()
-    )
+    lot = db.query(Lot).filter(Lot.id == lot_id, Lot.deleted_at.is_(None)).first()
     if not lot:
         raise HTTPException(status_code=404, detail="Not found")
 

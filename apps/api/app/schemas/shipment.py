@@ -28,6 +28,7 @@ class ShipmentCreate(BaseModel):
     destination_port: str = Field(..., max_length=100)
     departure_date: Optional[str] = None
     estimated_arrival: Optional[str] = None
+    actual_arrival: Optional[str] = None
     departure_at: Optional[datetime] = None
     estimated_arrival_at: Optional[datetime] = None
     actual_arrival_at: Optional[datetime] = None

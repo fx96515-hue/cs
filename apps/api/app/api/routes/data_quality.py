@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -74,11 +73,10 @@ def recompute_flags(
     model = ENTITY_MODEL_MAP.get(entity_type)
     if not model:
         raise HTTPException(status_code=400, detail="Unsupported entity_type")
-    instance = (
-        db.query(model)
-        .filter(model.id == entity_id)
-        .first()
-    )
+    model_id_column = getattr(model, "id", None)
+    if model_id_column is None:
+        raise HTTPException(status_code=400, detail="Unsupported entity_type")
+    instance = db.query(model).filter(model_id_column == entity_id).first()
     if not instance:
         raise HTTPException(status_code=404, detail="Not found")
     result = recompute_entity_flags(

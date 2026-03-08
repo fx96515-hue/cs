@@ -215,7 +215,9 @@ export default function DashboardPage() {
               </div>
             ))}
             {(!news || news.length === 0) && !loading ? (
-              <div className="empty">Noch keine News. In Ops - "News refresh" starten.</div>
+              <div className="empty">
+                Noch keine News. In Ops - &quot;News refresh&quot; starten.
+              </div>
             ) : null}
           </div>
         </div>
@@ -302,7 +304,8 @@ export default function DashboardPage() {
         <div className="panel small">
           <div className="panelTitle">Hinweis</div>
           <div className="muted">
-            Wenn "ui.localhost"/"api.localhost" zicken: direkt nutzen:
+            Wenn &quot;ui.localhost&quot;/&quot;api.localhost&quot; zicken: direkt
+            nutzen:
             <div className="code">UI: http://localhost:3000 | API: http://localhost:8000/docs</div>
           </div>
         </div>

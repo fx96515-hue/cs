@@ -42,6 +42,4 @@ def enrich(
             entity_type=entity_type,
             entity_id=entity_id,
         )
-        raise HTTPException(
-            status_code=400, detail="Invalid enrichment request"
-        )
+        raise HTTPException(status_code=400, detail="Invalid enrichment request")

@@ -41,11 +41,7 @@ def _build_shipment_list_out(
         return []
     shipment_ids = [s.id for s in shipments]
     lot_map: dict[int, list[int]] = {sid: [] for sid in shipment_ids}
-    rows = (
-        db.query(ShipmentLot)
-        .filter(ShipmentLot.shipment_id.in_(shipment_ids))
-        .all()
-    )
+    rows = db.query(ShipmentLot).filter(ShipmentLot.shipment_id.in_(shipment_ids)).all()
     for row in rows:
         lot_map.setdefault(row.shipment_id, []).append(row.lot_id)
     result: list[ShipmentOut] = []
@@ -169,7 +165,9 @@ def create_shipment(
             pass
     if payload.estimated_arrival_at is None and payload.estimated_arrival:
         try:
-            shipment.estimated_arrival_at = datetime.fromisoformat(payload.estimated_arrival)
+            shipment.estimated_arrival_at = datetime.fromisoformat(
+                payload.estimated_arrival
+            )
         except ValueError:
             pass
     if payload.actual_arrival_at is None and payload.actual_arrival:
@@ -267,7 +265,9 @@ def update_shipment(
         update_dict.setdefault(
             "departure_date", update_dict["departure_at"].isoformat()
         )
-    if "estimated_arrival_at" in update_dict and update_dict.get("estimated_arrival_at"):
+    if "estimated_arrival_at" in update_dict and update_dict.get(
+        "estimated_arrival_at"
+    ):
         update_dict.setdefault(
             "estimated_arrival", update_dict["estimated_arrival_at"].isoformat()
         )
@@ -277,7 +277,9 @@ def update_shipment(
         )
     if "departure_at" not in update_dict and "departure_date" in update_dict:
         try:
-            update_dict["departure_at"] = datetime.fromisoformat(update_dict["departure_date"])
+            update_dict["departure_at"] = datetime.fromisoformat(
+                update_dict["departure_date"]
+            )
         except ValueError:
             pass
     if "estimated_arrival_at" not in update_dict and "estimated_arrival" in update_dict:

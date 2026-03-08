@@ -19,7 +19,11 @@ router = APIRouter()
 def _apply_value_fallbacks(deal: Deal) -> None:
     if deal.value_total is None and deal.price_per_kg and deal.weight_kg:
         deal.value_total = deal.price_per_kg * deal.weight_kg
-    if deal.value_eur is None and deal.currency == "EUR" and deal.value_total is not None:
+    if (
+        deal.value_eur is None
+        and deal.currency == "EUR"
+        and deal.value_total is not None
+    ):
         deal.value_eur = deal.value_total
 
 

@@ -1,7 +1,9 @@
 """Audit logging for tracking all data modifications."""
 
-from datetime import datetime
+from datetime import date, datetime, time
+from decimal import Decimal
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,22 @@ from app.models.user import User
 from app.models.audit_log import AuditLog
 
 logger = structlog.get_logger(__name__)
+
+
+def _to_json_safe(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, (datetime, date, time)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, UUID):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(k): _to_json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_to_json_safe(v) for v in value]
+    return str(value)
 
 
 class AuditLogger:
@@ -28,6 +46,7 @@ class AuditLogger:
         request_id: Optional[str] = None,
     ) -> None:
         try:
+            safe_payload = _to_json_safe(payload) if payload is not None else None
             entry = AuditLog(
                 actor_id=user.id if user else None,
                 actor_email=user.email if user else None,
@@ -36,7 +55,7 @@ class AuditLogger:
                 entity_type=entity_type or "unknown",
                 entity_id=entity_id,
                 request_id=request_id,
-                payload=payload,
+                payload=safe_payload,
                 created_at=datetime.utcnow(),
             )
             db.add(entry)

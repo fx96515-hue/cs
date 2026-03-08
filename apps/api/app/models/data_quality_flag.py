@@ -37,4 +37,8 @@ class DataQualityFlag(Base):
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
-Index("ix_data_quality_flags_entity", DataQualityFlag.entity_type, DataQualityFlag.entity_id)
+Index(
+    "ix_data_quality_flags_entity",
+    DataQualityFlag.entity_type,
+    DataQualityFlag.entity_id,
+)

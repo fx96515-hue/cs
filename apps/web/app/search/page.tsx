@@ -162,7 +162,7 @@ export default function SearchPage() {
             Ergebnisse: {results.length}
             {results.length > 0 && (
               <span className="muted" style={{ marginLeft: "0.5rem", fontWeight: "normal" }}>
-                fuer "{query}"
+                fuer &quot;{query}&quot;
               </span>
             )}
           </div>
@@ -237,7 +237,7 @@ export default function SearchPage() {
                               }}
                             >
                               <div style={{ marginBottom: "0.5rem", fontWeight: "600" }}>
-                                Aehnliche Entitaeten zu "{result.name}":
+                                Aehnliche Entitaeten zu &quot;{result.name}&quot;:
                               </div>
                               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
                                 {similar.map((sim) => (

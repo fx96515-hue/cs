@@ -26,4 +26,8 @@ class TransportEvent(Base, TimestampMixin):
     shipment = relationship("Shipment", lazy="joined")
 
 
-Index("ix_transport_events_shipment_time", TransportEvent.shipment_id, TransportEvent.occurred_at)
+Index(
+    "ix_transport_events_shipment_time",
+    TransportEvent.shipment_id,
+    TransportEvent.occurred_at,
+)

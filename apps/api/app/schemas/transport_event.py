@@ -17,7 +17,9 @@ class TransportEventCreate(BaseModel):
     @field_validator("event_type")
     @classmethod
     def validate_event_type(cls, v: str) -> str:
-        return validate_text_field(v, field_name="event_type", max_length=64)
+        return validate_text_field(
+            v, field_name="event_type", required=True, max_length=64
+        )
 
     @field_validator("location")
     @classmethod
