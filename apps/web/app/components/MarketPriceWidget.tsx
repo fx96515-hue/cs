@@ -5,8 +5,8 @@ import { apiFetch, apiBaseUrl, getToken } from "../../lib/api";
 
 interface MarketPoint {
   value: number;
-  unit?: string | null;
-  currency?: string | null;
+  unit: string | null;
+  currency: string | null;
   observed_at: string;
 }
 
@@ -20,14 +20,10 @@ interface RealtimePrice {
   source_name: string;
 }
 
-// Default reference price when live data unavailable
-const FALLBACK_COFFEE_PRICE = 2.50;
+const FALLBACK_COFFEE_PRICE = 2.5;
 
-// Feature flag: set NEXT_PUBLIC_REALTIME_PRICE_FEED_ENABLED=true to enable WebSocket
-const REALTIME_ENABLED =
-  process.env.NEXT_PUBLIC_REALTIME_PRICE_FEED_ENABLED === "true";
+const REALTIME_ENABLED = process.env.NEXT_PUBLIC_REALTIME_PRICE_FEED_ENABLED === "true";
 
-/** Build the WebSocket URL for the realtime price endpoint. */
 function buildWsUrl(): string {
   const http = apiBaseUrl();
   const ws = http.replace(/^http/, "ws");
@@ -42,7 +38,6 @@ export default function MarketPriceWidget() {
   const [realtimePrice, setRealtimePrice] = useState<RealtimePrice | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // --- WebSocket path (when feature flag is on) ---
   useEffect(() => {
     if (!REALTIME_ENABLED) return;
 
@@ -77,12 +72,11 @@ export default function MarketPriceWidget() {
 
         ws.onclose = () => {
           if (alive) {
-            // Reconnect after 5 s
             reconnectTimer = setTimeout(connect, 5000);
           }
         };
       } catch {
-        setError("WebSocket nicht verfügbar");
+        setError("WebSocket nicht verfuegbar");
         setLoading(false);
       }
     };
@@ -99,7 +93,6 @@ export default function MarketPriceWidget() {
     };
   }, []);
 
-  // --- HTTP snapshot fetch (always used; realtime only overrides coffee price) ---
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -109,8 +102,6 @@ export default function MarketPriceWidget() {
         const data = await apiFetch<MarketSnapshot>("/market/latest");
         if (!alive) return;
         setMarket(data);
-        // When realtime is enabled, loading is controlled by the WebSocket,
-        // but we still need the snapshot data (e.g. EUR/USD).
         if (!REALTIME_ENABLED) setLoading(false);
       } catch (e: unknown) {
         if (!alive) return;
@@ -124,18 +115,16 @@ export default function MarketPriceWidget() {
     };
   }, []);
 
-  // Derive display values: realtime overrides coffee price when WS is connected;
-  // HTTP snapshot provides EUR/USD and serves as coffee fallback during WS setup.
   const coffeePrice = realtimePrice
     ? { value: realtimePrice.price_usd_per_lb, observed_at: realtimePrice.observed_at }
-    : (market?.["COFFEE_C:USD_LB"] ?? null);
+    : market?.["COFFEE_C:USD_LB"] ?? null;
 
   const eurUsd = market?.["FX:USD_EUR"] ?? null;
 
   const isRealtime = REALTIME_ENABLED && realtimePrice !== null;
 
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return "–";
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     return d.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
   };
@@ -143,7 +132,7 @@ export default function MarketPriceWidget() {
   return (
     <div className="panel card">
       <div className="cardLabel">
-        Kaffeebörsenpreis
+        Kaffeeboersenpreis
         {isRealtime && (
           <span
             style={{
@@ -153,7 +142,7 @@ export default function MarketPriceWidget() {
               fontWeight: 600,
             }}
           >
-            ● LIVE
+            LIVE
           </span>
         )}
       </div>
@@ -163,7 +152,7 @@ export default function MarketPriceWidget() {
           Fehler beim Laden
         </div>
       ) : loading ? (
-        <div className="cardValue">…</div>
+        <div className="cardValue">...</div>
       ) : (
         <>
           <div className="cardValue">
@@ -173,8 +162,8 @@ export default function MarketPriceWidget() {
           </div>
           <div className="cardHint">
             {coffeePrice
-              ? `Coffee C · ${formatDate(coffeePrice.observed_at)}`
-              : "Coffee C · Referenzwert"}
+              ? `Coffee C | ${formatDate(coffeePrice.observed_at)}`
+              : "Coffee C | Referenzwert"}
           </div>
 
           {eurUsd && (
@@ -192,7 +181,7 @@ export default function MarketPriceWidget() {
                 fontStyle: "italic",
               }}
             >
-              Keine Live-Daten · Referenzwert: ${FALLBACK_COFFEE_PRICE}/lb
+              Keine Live-Daten | Referenzwert: ${FALLBACK_COFFEE_PRICE}/lb
             </div>
           )}
         </>

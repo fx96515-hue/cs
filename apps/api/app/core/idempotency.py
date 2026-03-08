@@ -13,6 +13,8 @@ def find_existing_by_fields(
     if not fields:
         return None
     query = db.query(model)
+    if hasattr(model, "deleted_at"):
+        query = query.filter(getattr(model, "deleted_at").is_(None))
     for key, value in fields.items():
         query = query.filter(getattr(model, key) == value)
     return query.first()

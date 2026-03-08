@@ -85,3 +85,6 @@ diagnostics/
 # patches
 *.patch
 
+# Local GitHub CLI cache used by CI log downloads
+.localapp/
+

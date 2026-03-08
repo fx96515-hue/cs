@@ -22,6 +22,7 @@ class EntityEvidence(Base, TimestampMixin):
 
     source_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     evidence_url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    field_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     title: Mapped[str | None] = mapped_column(String(500), nullable=True)
     snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     extracted_at: Mapped[datetime | None] = mapped_column(
@@ -38,6 +39,10 @@ class EntityEvidence(Base, TimestampMixin):
 
     __table_args__ = (
         UniqueConstraint(
-            "entity_type", "entity_id", "evidence_url", name="uq_entity_evidence"
+            "entity_type",
+            "entity_id",
+            "evidence_url",
+            "field_name",
+            name="uq_entity_evidence",
         ),
     )

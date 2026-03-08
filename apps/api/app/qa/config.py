@@ -1,10 +1,16 @@
 """Configuration for AI-powered QA system."""
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class QAConfig(BaseSettings):
     """Configuration for AI-powered QA system."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="QA_",
+        extra="ignore",
+    )
 
     # AI Provider
     ai_provider: str = "openai"  # openai | anthropic | azure
@@ -23,7 +29,3 @@ class QAConfig(BaseSettings):
     # Notification settings
     notify_on_failure: bool = True
     notification_webhook: str | None = None
-
-    class Config:
-        env_file = ".env"
-        env_prefix = "QA_"

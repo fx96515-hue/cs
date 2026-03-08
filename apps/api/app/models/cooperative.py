@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Text, Float, JSON, DateTime
+from sqlalchemy import String, Text, Float, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 try:
@@ -11,15 +11,18 @@ except Exception:  # pragma: no cover - fallback for test environments without p
 
 
 from app.db.session import Base
-from app.models.common import TimestampMixin
+from app.models.common import TimestampMixin, SoftDeleteMixin
 
 
-class Cooperative(Base, TimestampMixin):
+class Cooperative(Base, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "cooperatives"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     region: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    region_id: Mapped[int | None] = mapped_column(
+        ForeignKey("regions.id"), nullable=True, index=True
+    )
     altitude_m: Mapped[float | None] = mapped_column(Float, nullable=True)
     varieties: Mapped[str | None] = mapped_column(String(255), nullable=True)
     certifications: Mapped[str | None] = mapped_column(String(255), nullable=True)

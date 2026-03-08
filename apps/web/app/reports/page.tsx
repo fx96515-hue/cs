@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import DataQualityMini from "../components/DataQualityMini";
 
 type Report = {
   id: number;
   kind: string;
-  title?: string | null;
+  title: string | null;
   report_at: string;
 };
 
@@ -17,7 +18,9 @@ export default function ReportsPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch<Report[]>("/reports?limit=50").then(setReports).catch((e) => setErr(e.message));
+    apiFetch<Report[]>("/reports?limit=50")
+      .then(setReports)
+      .catch((e) => setErr(e?.message ?? String(e)));
   }, []);
 
   return (
@@ -25,10 +28,10 @@ export default function ReportsPage() {
       <div className="pageHeader">
         <div>
           <div className="pageTitle">Berichte</div>
-          <div className="pageSubtitle">Generierte Tages-/Systemreports (aus DB) – neueste oben.</div>
+          <div className="pageSubtitle">Generierte Tages-/Systemreports (aus DB) - neueste oben.</div>
         </div>
         <a className="btn" href="http://prom.localhost" target="_blank" rel="noreferrer">
-          Prometheus öffnen
+          Prometheus oeffnen
         </a>
       </div>
 
@@ -46,18 +49,22 @@ export default function ReportsPage() {
                     {r.title || `Report #${r.id}`}
                   </Link>
                   <div className="rowSub">
-                    {new Date(r.report_at).toLocaleString()} — <Badge>{r.kind}</Badge>
+                    {new Date(r.report_at).toLocaleString()} - <Badge>{r.kind}</Badge>
                   </div>
                 </div>
                 <div className="rowActions">
                   <Link className="btn" href={`/reports/${r.id}`}>
-                    öffnen
+                    oeffnen
                   </Link>
                 </div>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <DataQualityMini title="Data Quality (Reports Kontext)" limit={10} />
       </div>
     </div>
   );

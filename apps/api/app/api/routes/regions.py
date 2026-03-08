@@ -1,14 +1,30 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
 from app.db.session import get_db
 from app.models.peru_region import PeruRegion
-from app.schemas.regions import PeruRegionOut
+from app.models.region import Region
+from app.schemas.regions import PeruRegionOut, RegionOut
 from app.services.peru_regions import seed_default_regions
 
 
 router = APIRouter()
+
+
+@router.get("/", response_model=list[RegionOut])
+def list_regions(
+    country: str | None = None,
+    limit: int = Query(500, ge=1, le=2000),
+    db: Session = Depends(get_db),
+    _=Depends(require_role("admin", "analyst", "viewer")),
+):
+    q = db.query(Region)
+    if country:
+        q = q.filter(Region.country == country)
+    if hasattr(Region, "deleted_at"):
+        q = q.filter(Region.deleted_at.is_(None))
+    return q.order_by(Region.country.asc(), Region.name.asc()).limit(limit).all()
 
 
 @router.get("/peru", response_model=list[PeruRegionOut])

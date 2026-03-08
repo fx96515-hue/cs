@@ -31,6 +31,9 @@ export default function AnalyticsDashboard() {
 
   const { data: coopsData } = useCooperatives({ limit: 5 });
   const { data: roastersData } = useRoasters({ country: "Germany", limit: 5 });
+  const coopsTotal = coopsData?.total ?? 0;
+  const coopsItems = coopsData?.items ?? [];
+  const roastersTotal = roastersData?.total ?? 0;
 
   const handleFreightPredict = () => {
     freightMutation.mutate(freightForm);
@@ -56,23 +59,23 @@ export default function AnalyticsDashboard() {
         <MarketPriceWidget />
         <div className="panel card">
           <div className="cardLabel">Aktive Kooperativen</div>
-          <div className="cardValue">{coopsData?.total || 0}</div>
+          <div className="cardValue">{coopsTotal}</div>
           <div className="cardHint">In Peru Sourcing-Datenbank</div>
         </div>
         <div className="panel card">
           <div className="cardLabel">Deutsche Röstereien</div>
-          <div className="cardValue">{roastersData?.total || 0}</div>
+          <div className="cardValue">{roastersTotal}</div>
           <div className="cardHint">In Vertriebspipeline</div>
         </div>
         <div className="panel card">
           <div className="cardLabel">Durchschn. Qualitäts-Score</div>
           <div className="cardValue">
-            {coopsData?.items.length
+            {coopsItems.length
               ? (
-                  coopsData.items.reduce((sum, c) => sum + (c.quality_score || 0), 0) /
-                  coopsData.items.length
+                  coopsItems.reduce((sum, c) => sum + (c.quality_score || 0), 0) /
+                  coopsItems.length
                 ).toFixed(1)
-              : "–"}
+              : "-"}
           </div>
           <div className="cardHint">Kooperativen-Qualität</div>
         </div>
@@ -199,8 +202,8 @@ export default function AnalyticsDashboard() {
             <div className="alert bad" style={{ marginTop: "14px" }}>
               <div className="alertTitle">Vorhersage fehlgeschlagen</div>
               <div className="alertText">
-                {freightMutation.error instanceof Error 
-                  ? freightMutation.error.message 
+                {freightMutation.error instanceof Error
+                  ? freightMutation.error.message
                   : "Frachtkosten konnten nicht vorhergesagt werden"}
               </div>
             </div>
@@ -353,8 +356,8 @@ export default function AnalyticsDashboard() {
             <div className="alert bad" style={{ marginTop: "14px" }}>
               <div className="alertTitle">Vorhersage fehlgeschlagen</div>
               <div className="alertText">
-                {priceMutation.error instanceof Error 
-                  ? priceMutation.error.message 
+                {priceMutation.error instanceof Error
+                  ? priceMutation.error.message
                   : "Preis konnte nicht vorhergesagt werden"}
               </div>
             </div>

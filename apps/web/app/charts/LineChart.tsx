@@ -15,8 +15,8 @@ interface LineChartProps {
   data: any[];
   xKey: string;
   yKey: string;
-  title?: string;
-  color?: string;
+  title: string;
+  color: string;
 }
 
 export default function LineChart({ data, xKey, yKey, title, color = "#5786ff" }: LineChartProps) {

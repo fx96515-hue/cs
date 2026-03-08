@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch, getToken, apiBaseUrl } from "../../lib/api";
+import { apiFetch, getToken } from "../../lib/api";
 
 // Constants
 const MAX_QUESTION_LENGTH = 1000; // Must match backend RAGQuestion.question max_length
@@ -11,7 +11,7 @@ const MAX_QUESTION_LENGTH = 1000; // Must match backend RAGQuestion.question max
 interface Message {
   role: "user" | "assistant";
   content: string;
-  sources?: Source[];
+  sources: Source[];
 }
 
 interface Source {
@@ -30,9 +30,9 @@ interface ServiceStatus {
 }
 
 const EXAMPLE_QUESTIONS = [
-  "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung?",
+  "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung",
   "Vergleiche Röstereien in München nach Bewertung",
-  "Was sind die besten Regionen für Specialty Coffee in Peru?",
+  "Was sind die besten Regionen für Specialty Coffee in Peru",
 ];
 
 export default function AnalystPage() {
@@ -60,7 +60,7 @@ export default function AnalystPage() {
         setError(getProviderErrorMessage(data.provider));
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.message?.includes("401")) {
+      if (err instanceof Error && err.message.includes("401")) {
         router.push("/login");
         return;
       }
@@ -110,7 +110,7 @@ export default function AnalystPage() {
     setError(null);
     setLoading(true);
 
-    const userMessage: Message = { role: "user", content: question };
+    const userMessage: Message = { role: "user", content: question, sources: [] };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
@@ -128,7 +128,7 @@ export default function AnalystPage() {
 
       const data = await apiFetch<{
         answer: string;
-        sources?: Source[];
+        sources: Source[];
       }>(
         "/analyst/ask",
         {
@@ -147,14 +147,15 @@ export default function AnalystPage() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message?.includes("401")) {
+      if (err instanceof Error && err.message.includes("401")) {
         router.push("/login");
         return;
       }
       
-      const errorMessage = err instanceof Error && err.message?.includes("503") 
-        ? "Service nicht verfügbar." 
-        : "Fehler beim Senden der Nachricht.";
+      const errorMessage =
+        err instanceof Error && err.message.includes("503")
+          ? "Service nicht verfuegbar."
+          : "Fehler beim Senden der Nachricht.";
       setMessages((prev) => prev.slice(0, -1));
       setError(errorMessage);
     } finally {
@@ -222,7 +223,7 @@ export default function AnalystPage() {
         {messages.map((msg, idx) => (
           <div key={idx} className={`message message-${msg.role}`}>
             <div className="message-avatar">
-              {msg.role === "user" ? "👤" : "🤖"}
+              {msg.role === "user" ? "User" : "KI"}
             </div>
             <div className="message-content">
               <div className="message-text">{msg.content}</div>

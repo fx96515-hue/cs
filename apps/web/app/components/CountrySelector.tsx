@@ -19,7 +19,7 @@ export default function CountrySelector({ value, onChange, className }: CountryS
       value={value}
       onChange={(e) => onChange(e.target.value as SupportedCountry)}
       className={className}
-      title="Herkunftsland wählen"
+      title="Herkunftsland waehlen"
       style={{
         background: "var(--surface, #1e293b)",
         color: "var(--text, #f1f5f9)",
@@ -34,7 +34,13 @@ export default function CountrySelector({ value, onChange, className }: CountryS
         const cfg = COUNTRY_CONFIGS[code];
         return (
           <option key={code} value={code}>
-            {(cfg.flag_emoji ? cfg.flag_emoji + " " : "") + code + " – " + cfg.name + " (" + cfg.currency + ")"}
+            {(cfg.flag_emoji ? cfg.flag_emoji + " " : "") +
+              code +
+              " - " +
+              cfg.name +
+              " (" +
+              cfg.currency +
+              ")"}
           </option>
         );
       })}

@@ -2,10 +2,10 @@ from sqlalchemy import String, Text, Float, JSON, Integer, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
-from app.models.common import TimestampMixin
+from app.models.common import TimestampMixin, SoftDeleteMixin
 
 
-class Lot(Base, TimestampMixin):
+class Lot(Base, TimestampMixin, SoftDeleteMixin):
     """A tradable coffee lot (usually from a cooperative), used for margin calculations."""
 
     __tablename__ = "lots"

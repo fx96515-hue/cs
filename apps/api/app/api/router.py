@@ -3,10 +3,11 @@ from fastapi import APIRouter
 from app.api.routes import auth, cooperatives, roasters, health, discovery
 from app.api.routes import sources, market, reports, lots, margins
 from app.api.routes import enrich, dedup, news, logistics, outreach, regions
+from app.api.routes import deals, price_quotes, transport_events
 from app.api.routes import kb, cuppings, ml_predictions, peru_sourcing, shipments
 from app.api.routes import data_health, quality_alerts, auto_outreach, ops_dashboard
 from app.api.routes import ml_routes, semantic_search, rag_analyst, knowledge_graph
-from app.api.routes import assistant
+from app.api.routes import assistant, data_quality
 from app.api.routes import sentiment
 
 api_router = APIRouter()
@@ -21,6 +22,7 @@ api_router.include_router(sources.router, prefix="/sources", tags=["sources"])
 api_router.include_router(market.router, prefix="/market", tags=["market"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(lots.router, prefix="/lots", tags=["lots"])
+api_router.include_router(deals.router, prefix="/deals", tags=["deals"])
 api_router.include_router(margins.router, prefix="/margins", tags=["margins"])
 api_router.include_router(enrich.router, prefix="/enrich", tags=["enrich"])
 api_router.include_router(dedup.router, prefix="/dedup", tags=["dedup"])
@@ -33,6 +35,12 @@ api_router.include_router(cuppings.router, prefix="/cuppings", tags=["cuppings"]
 api_router.include_router(ml_predictions.router, prefix="/ml", tags=["ml"])
 api_router.include_router(peru_sourcing.router, prefix="/peru", tags=["peru-sourcing"])
 api_router.include_router(shipments.router, prefix="/shipments", tags=["shipments"])
+api_router.include_router(
+    transport_events.router, prefix="/transport-events", tags=["transport-events"]
+)
+api_router.include_router(
+    price_quotes.router, prefix="/price-quotes", tags=["price-quotes"]
+)
 api_router.include_router(
     data_health.router, prefix="/data-health", tags=["data-health"]
 )
@@ -54,3 +62,6 @@ api_router.include_router(
 )
 api_router.include_router(assistant.router, prefix="/assistant", tags=["assistant"])
 api_router.include_router(sentiment.router, prefix="/sentiment", tags=["sentiment"])
+api_router.include_router(
+    data_quality.router, prefix="/data-quality", tags=["data-quality"]
+)

@@ -7,7 +7,7 @@ from app.core.security import (
     create_access_token,
     decode_token,
 )
-from jose import JWTError
+from jwt import InvalidTokenError
 
 
 def test_hash_password():
@@ -78,7 +78,7 @@ def test_decode_token_invalid():
     """Test decoding an invalid token."""
     invalid_token = "invalid.token.here"
 
-    with pytest.raises(JWTError):
+    with pytest.raises(InvalidTokenError):
         decode_token(invalid_token)
 
 

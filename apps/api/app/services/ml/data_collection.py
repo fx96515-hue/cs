@@ -175,8 +175,14 @@ class DataCollectionService:
         )
         ice_price = ice_price_obs.value if ice_price_obs else 2.0
 
+        from app.models.cooperative import Cooperative
+
+        cooperative = getattr(deal, "cooperative", None)
+        if cooperative is None and deal.cooperative_id:
+            cooperative = self.db.query(Cooperative).get(deal.cooperative_id)
+
         # Create CoffeePriceHistory record from deal data
-        if deal.price_per_kg and deal.cooperative:
+        if deal.price_per_kg and cooperative:
             price_usd_per_kg = deal.price_per_kg
             price_usd_per_lb = price_usd_per_kg * 0.453592  # kg to lb
             differential = price_usd_per_lb - ice_price
@@ -184,7 +190,7 @@ class DataCollectionService:
             price_record = CoffeePriceHistory(
                 date=deal.closed_at or deal.created_at,
                 origin_country="Peru",
-                origin_region=deal.cooperative.region or "Unknown",
+                origin_region=cooperative.region or "Unknown",
                 variety=deal.variety or "Unknown",
                 process_method=deal.process_method or "Unknown",
                 quality_grade=deal.quality_grade or "Unknown",

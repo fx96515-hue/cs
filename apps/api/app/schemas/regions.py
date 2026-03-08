@@ -14,3 +14,12 @@ class PeruRegionOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RegionOut(BaseModel):
+    id: int
+    name: str
+    country: str
+
+    class Config:
+        from_attributes = True

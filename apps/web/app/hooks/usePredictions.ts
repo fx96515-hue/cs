@@ -46,61 +46,65 @@ export function usePricePrediction() {
 }
 
 // Fetch freight cost trend
-export function useFreightCostTrend(params?: { route?: string; months_back?: number }) {
+export function useFreightCostTrend(params: { route: string; months_back: number }) {
   const searchParams = new URLSearchParams();
-  if (params?.route) searchParams.set("route", params.route);
-  if (params?.months_back) searchParams.set("months_back", String(params.months_back));
+  if (params.route) searchParams.set("route", params.route);
+  if (params.months_back) searchParams.set("months_back", String(params.months_back));
 
   return useQuery({
     queryKey: ["freight-cost-trend", params],
     queryFn: async () => {
-      const data = await apiFetch<FreightCostTrend>(`/ml/freight-cost-trend?${searchParams.toString()}`);
+      const qs = searchParams.toString();
+      const data = await apiFetch<FreightCostTrend>(`/ml/freight-cost-trend${qs ? `?${qs}` : ""}`);
       return data;
     },
-    enabled: !!params?.route,
+    enabled: !!params.route,
   });
 }
 
 // Fetch historical freight data (legacy endpoint for backward compat)
-export function useFreightHistory(params?: { route?: string; months?: number }) {
+export function useFreightHistory(params: { route: string; months: number }) {
   const searchParams = new URLSearchParams();
-  if (params?.route) searchParams.set("route", params.route);
-  if (params?.months) searchParams.set("months_back", String(params.months));
+  if (params.route) searchParams.set("route", params.route);
+  if (params.months) searchParams.set("months_back", String(params.months));
 
   return useQuery({
     queryKey: ["freight-history", params],
     queryFn: async () => {
-      const data = await apiFetch<FreightCostTrend>(`/ml/freight-cost-trend?${searchParams.toString()}`);
+      const qs = searchParams.toString();
+      const data = await apiFetch<FreightCostTrend>(`/ml/freight-cost-trend${qs ? `?${qs}` : ""}`);
       return data;
     },
-    enabled: !!params?.route,
+    enabled: !!params.route,
   });
 }
 
 // Fetch historical price data
-export function usePriceHistory(params?: { origin?: string; months?: number }) {
+export function usePriceHistory(params: { origin: string; months: number }) {
   const searchParams = new URLSearchParams();
-  if (params?.origin) searchParams.set("origin_region", params.origin);
-  if (params?.months) searchParams.set("months_ahead", String(params.months));
+  if (params.origin) searchParams.set("origin_region", params.origin);
+  if (params.months) searchParams.set("months_ahead", String(params.months));
 
   return useQuery({
     queryKey: ["price-history", params],
     queryFn: async () => {
-      const data = await apiFetch<PriceTrend>(`/ml/forecast-price-trend?${searchParams.toString()}`);
+      const qs = searchParams.toString();
+      const data = await apiFetch<PriceTrend>(`/ml/forecast-price-trend${qs ? `?${qs}` : ""}`);
       return data;
     },
   });
 }
 
 // List ML models
-export function useMLModels(modelType?: string) {
+export function useMLModels(modelType: string) {
   const params = new URLSearchParams();
   if (modelType) params.set("model_type", modelType);
 
   return useQuery({
     queryKey: ["ml-models", modelType],
     queryFn: async () => {
-      const data = await apiFetch<MLModel[]>(`/ml/models?${params.toString()}`);
+      const qs = params.toString();
+      const data = await apiFetch<MLModel[]>(`/ml/models${qs ? `?${qs}` : ""}`);
       return data;
     },
   });

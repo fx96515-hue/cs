@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "../../lib/api";
 import { usePeruRegions, useCooperatives } from "../hooks/usePeruRegions";
 import { CooperativeFilters } from "../types";
 
 export default function PeruSourcingDashboard() {
-  const [filters, setFilters] = useState<CooperativeFilters>({});
+  const [filters, setFilters] = useState<Partial<CooperativeFilters>>({});
+  const [showArchived, setShowArchived] = useState(false);
+  const [busyId, setBusyId] = useState<number | null>(null);
 
   const { data: regions, isLoading: regionsLoading, refetch: refetchRegions } = usePeruRegions();
-  const { data: coopsData, isLoading: coopsLoading, refetch: refetchCoops } = useCooperatives({ ...filters, limit: 50 });
+  const { data: coopsData, isLoading: coopsLoading, refetch: refetchCoops } = useCooperatives({
+    ...filters,
+    include_deleted: showArchived,
+    limit: 50,
+  });
 
   const cooperatives = coopsData?.items || [];
 
@@ -18,30 +25,62 @@ export default function PeruSourcingDashboard() {
     refetchCoops();
   };
 
+  async function archiveCoop(id: number) {
+    if (!confirm("Kooperative archivieren?")) return;
+    setBusyId(id);
+    try {
+      await apiFetch(`/cooperatives/${id}`, { method: "DELETE" });
+      await refetchCoops();
+    } catch (e) {
+      console.error("Failed to archive cooperative:", e);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function restoreCoop(id: number) {
+    setBusyId(id);
+    try {
+      await apiFetch(`/cooperatives/${id}/restore`, { method: "POST" });
+      await refetchCoops();
+    } catch (e) {
+      console.error("Failed to restore cooperative:", e);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="page">
       <div className="pageHeader">
         <div>
           <div className="h1">Peru Einkaufs-Intelligence</div>
           <div className="muted">
-            Entdecken Sie Kaffeeregionen, Kooperativen und Beschaffungsmöglichkeiten in Peru
+            Entdecken Sie Kaffeeregionen, Kooperativen und Beschaffungsmoeglichkeiten in Peru
           </div>
         </div>
         <div className="actions">
+          <label className="row" style={{ gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            <span className="small muted">Archivierte anzeigen</span>
+          </label>
           <button type="button" className="btn btnPrimary" onClick={handleRefresh}>
             Aktualisieren
           </button>
         </div>
       </div>
 
-      {/* Peru Regions Overview */}
       <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
         <div className="h2">Peru-Kaffeeregionen</div>
         <div className="muted" style={{ marginBottom: "14px" }}>
           {regionsLoading ? "Lade Regionen..." : `${regions?.length || 0} Kaffeeanbaugebiete`}
         </div>
         <div className="grid gridCols4">
-          {regions?.map((region) => (
+          {(regions || []).map((region) => (
             <Link
               key={region.id}
               href={`/peru-sourcing/regions/${region.name}`}
@@ -67,7 +106,6 @@ export default function PeruSourcingDashboard() {
         </div>
       </div>
 
-      {/* Filters Section */}
       <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
         <div className="h2">Kooperativen filtern</div>
         <div className="grid gridCols4" style={{ marginTop: "14px", gap: "10px" }}>
@@ -78,12 +116,10 @@ export default function PeruSourcingDashboard() {
             <select
               className="input"
               value={filters.region || ""}
-              onChange={(e) =>
-                setFilters({ ...filters, region: e.target.value || undefined })
-              }
+              onChange={(e) => setFilters({ ...filters, region: e.target.value || undefined })}
             >
               <option value="">Alle Regionen</option>
-              {regions?.map((r) => (
+              {(regions || []).map((r) => (
                 <option key={r.id} value={r.name}>
                   {r.name}
                 </option>
@@ -92,7 +128,7 @@ export default function PeruSourcingDashboard() {
           </div>
           <div>
             <label style={{ fontSize: "12px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-              Min. Kapazität (kg)
+              Min. Kapazitaet (kg)
             </label>
             <input
               type="number"
@@ -127,25 +163,17 @@ export default function PeruSourcingDashboard() {
             />
           </div>
           <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setFilters({})}
-              style={{ width: "100%" }}
-            >
-              Filter löschen
+            <button type="button" className="btn" onClick={() => setFilters({})} style={{ width: "100%" }}>
+              Filter loeschen
             </button>
           </div>
         </div>
       </div>
 
-      {/* Cooperatives Table */}
       <div className="panel" style={{ padding: "18px" }}>
         <div className="h2">Kooperativen-Verzeichnis</div>
         <div className="muted" style={{ marginBottom: "14px" }}>
-          {coopsLoading
-            ? "Lade Kooperativen..."
-            : `${cooperatives.length} Kooperativen gefunden`}
+          {coopsLoading ? "Lade Kooperativen..." : `${cooperatives.length} Kooperativen gefunden`}
         </div>
 
         {cooperatives.length > 0 ? (
@@ -156,9 +184,9 @@ export default function PeruSourcingDashboard() {
                   <th>Name</th>
                   <th>Region</th>
                   <th>Mitglieder</th>
-                  <th>Kapazität (kg)</th>
+                  <th>Kapazitaet (kg)</th>
                   <th>Zertifizierungen</th>
-                  <th>Qualitäts-Score</th>
+                  <th>Qualitaets-Score</th>
                   <th>Kontakt</th>
                   <th>Aktionen</th>
                 </tr>
@@ -166,14 +194,21 @@ export default function PeruSourcingDashboard() {
               <tbody>
                 {cooperatives.map((coop) => (
                   <tr key={coop.id}>
-                    <td style={{ fontWeight: "600" }}>{coop.name}</td>
-                    <td>{coop.region || "–"}</td>
-                    <td>{coop.members_count?.toLocaleString() || "–"}</td>
-                    <td>{coop.annual_production_kg?.toLocaleString() || "–"}</td>
+                    <td style={{ fontWeight: "600" }}>
+                      {coop.name}
+                      {coop.deleted_at ? (
+                        <span style={{ marginLeft: 8 }}>
+                          <span className="badge badgeWarn">archiviert</span>
+                        </span>
+                      ) : null}
+                    </td>
+                    <td>{coop.region || "-"}</td>
+                    <td>{coop.members_count?.toLocaleString() || "-"}</td>
+                    <td>{coop.annual_production_kg?.toLocaleString() || "-"}</td>
                     <td>
                       {coop.certifications?.length > 0 ? (
                         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                          {coop.certifications.slice(0, 2).map((cert, i) => (
+                          {coop.certifications.slice(0, 2).map((cert: string, i: number) => (
                             <span key={i} className="badge">
                               {cert}
                             </span>
@@ -183,7 +218,7 @@ export default function PeruSourcingDashboard() {
                           )}
                         </div>
                       ) : (
-                        "–"
+                        "-"
                       )}
                     </td>
                     <td>
@@ -195,20 +230,20 @@ export default function PeruSourcingDashboard() {
                               coop.quality_score >= 80
                                 ? "rgba(64,214,123,0.12)"
                                 : coop.quality_score >= 60
-                                ? "rgba(255,183,64,0.12)"
-                                : "rgba(255,92,92,0.12)",
+                                  ? "rgba(255,183,64,0.12)"
+                                  : "rgba(255,92,92,0.12)",
                             borderColor:
                               coop.quality_score >= 80
                                 ? "rgba(64,214,123,0.35)"
                                 : coop.quality_score >= 60
-                                ? "rgba(255,183,64,0.35)"
-                                : "rgba(255,92,92,0.35)",
+                                  ? "rgba(255,183,64,0.35)"
+                                  : "rgba(255,92,92,0.35)",
                           }}
                         >
                           {coop.quality_score}
                         </span>
                       ) : (
-                        "–"
+                        "-"
                       )}
                     </td>
                     <td>
@@ -219,9 +254,28 @@ export default function PeruSourcingDashboard() {
                       )}
                     </td>
                     <td>
-                      <Link href={`/cooperatives/${coop.id}`} className="link">
-                        Ansehen →
-                      </Link>
+                      <div className="row" style={{ gap: 8 }}>
+                        <Link href={`/cooperatives/${coop.id}`} className="link">
+                          Ansehen -
+                        </Link>
+                        {coop.deleted_at ? (
+                          <button
+                            className="btn"
+                            onClick={() => restoreCoop(coop.id)}
+                            disabled={busyId === coop.id}
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <button
+                            className="btn"
+                            onClick={() => archiveCoop(coop.id)}
+                            disabled={busyId === coop.id}
+                          >
+                            Archivieren
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -230,7 +284,7 @@ export default function PeruSourcingDashboard() {
           </div>
         ) : (
           <div className="empty" style={{ padding: "40px", textAlign: "center", color: "var(--muted)" }}>
-            Keine Kooperativen gefunden. Passen Sie Ihre Filter an oder führen Sie Discovery Seed in Betrieb aus.
+            Keine Kooperativen gefunden. Passen Sie Ihre Filter an oder fuehren Sie Discovery Seed in Betrieb aus.
           </div>
         )}
       </div>
