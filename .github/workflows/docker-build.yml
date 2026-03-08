@@ -50,7 +50,7 @@ jobs:
       
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}/backend
@@ -64,7 +64,7 @@ jobs:
       - name: Extract metadata (Docker Hub)
         if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
         id: meta-dockerhub
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/coffeestudio-backend
           tags: |
@@ -150,7 +150,7 @@ jobs:
       
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}/frontend
@@ -164,7 +164,7 @@ jobs:
       - name: Extract metadata (Docker Hub)
         if: env.HAS_DOCKER_HUB == 'true' && env.DO_PUSH == 'true'
         id: meta-dockerhub
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/coffeestudio-frontend
           tags: |
