@@ -15,16 +15,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Docker and Compose CLI plugin
+      - name: Verify Docker and Compose
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io curl
-          DOCKER_COMPOSE_VERSION="v2.20.2"
-          mkdir -p ~/.docker/cli-plugins
-          curl -SL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose
-          chmod +x ~/.docker/cli-plugins/docker-compose
           docker --version
-          docker compose version
+          if ! docker compose version; then
+            DOCKER_COMPOSE_VERSION="v2.20.2"
+            mkdir -p ~/.docker/cli-plugins
+            curl -SL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose
+            chmod +x ~/.docker/cli-plugins/docker-compose
+            docker compose version
+          fi
 
       - name: CI Debug Info
         run: |
@@ -53,4 +53,6 @@ jobs:
       - name: Teardown
         if: always()
         run: |
-          docker compose -f infra/deploy/docker-compose.enterprise.yml down -v
+          if [ -f infra/deploy/docker-compose.enterprise.yml ]; then
+            docker compose -f infra/deploy/docker-compose.enterprise.yml down -v || true
+          fi
