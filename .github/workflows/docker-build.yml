@@ -254,4 +254,4 @@ jobs:
         with:
           sarif_file: 'trivy-${{ matrix.image }}-results.sarif'
           category: 'trivy-${{ matrix.image }}-pushed'
-        if: always()
+        if: always() && hashFiles('trivy-*.sarif') != ''
