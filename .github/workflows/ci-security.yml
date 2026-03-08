@@ -54,20 +54,18 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Run Trivy Filesystem Scan
-        uses: aquasecurity/trivy-action@0.34.1
-        env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-fs-results.sarif'
-          scanners: 'vuln'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-          exit-code: '0'
-          timeout: '10m'
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/work" \
+            aquasec/trivy:0.69.1 fs \
+            --format sarif \
+            --output /work/trivy-fs-results.sarif \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --timeout 10m \
+            --exit-code 0 \
+            /work
       
       - name: Enforce Trivy Filesystem Findings Threshold
         run: |
@@ -129,19 +127,19 @@ jobs:
           docker build -t coffeestudio-backend:test apps/api/
       
       - name: Run Trivy Container Scan
-        uses: aquasecurity/trivy-action@0.34.1
-        env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          image-ref: coffeestudio-backend:test
-          format: 'sarif'
-          output: 'trivy-backend-results.sarif'
-          scanners: 'vuln'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-          exit-code: '0'
-          timeout: '10m'
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${{ github.workspace }}:/work" \
+            aquasec/trivy:0.69.1 image \
+            --format sarif \
+            --output /work/trivy-backend-results.sarif \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --timeout 10m \
+            --exit-code 0 \
+            coffeestudio-backend:test
       
       - name: Enforce Trivy Backend Findings Threshold
         run: |
@@ -206,19 +204,19 @@ jobs:
       
       - name: Run Trivy Container Scan
         if: steps.build_frontend.outcome == 'success'
-        uses: aquasecurity/trivy-action@0.34.1
-        env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          image-ref: coffeestudio-frontend:test
-          format: 'sarif'
-          output: 'trivy-frontend-results.sarif'
-          scanners: 'vuln'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-          exit-code: '0'
-          timeout: '10m'
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${{ github.workspace }}:/work" \
+            aquasec/trivy:0.69.1 image \
+            --format sarif \
+            --output /work/trivy-frontend-results.sarif \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --timeout 10m \
+            --exit-code 0 \
+            coffeestudio-frontend:test
       
       - name: Enforce Trivy Frontend Findings Threshold
         if: steps.build_frontend.outcome == 'success'
