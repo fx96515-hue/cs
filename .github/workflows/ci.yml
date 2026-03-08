@@ -15,6 +15,7 @@ permissions:
   pull-requests: write
   security-events: write
   actions: read
+  packages: write
 
 jobs:
   # This job serves as a status check for branch protection
