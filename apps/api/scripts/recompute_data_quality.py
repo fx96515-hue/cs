@@ -7,11 +7,7 @@ from app.services.data_quality import recompute_entity_flags
 
 
 def _recompute_for_all(db, model, entity_type: str) -> int:
-    rows = (
-        db.query(model)
-        .filter(getattr(model, "deleted_at").is_(None))
-        .all()
-    )
+    rows = db.query(model).filter(getattr(model, "deleted_at").is_(None)).all()
     count = 0
     for row in rows:
         recompute_entity_flags(

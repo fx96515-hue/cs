@@ -96,7 +96,9 @@ def downgrade() -> None:
             op.drop_index("ix_cooperatives_region_id", table_name="cooperatives")
             # Drop FK if exists (ignore if already gone)
             try:
-                op.drop_constraint("fk_cooperatives_region_id", "cooperatives", type_="foreignkey")
+                op.drop_constraint(
+                    "fk_cooperatives_region_id", "cooperatives", type_="foreignkey"
+                )
             except Exception:
                 pass
             op.drop_column("cooperatives", "region_id")

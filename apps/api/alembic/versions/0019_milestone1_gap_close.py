@@ -49,7 +49,9 @@ def upgrade() -> None:
             sa.Column("cooperative_id", sa.Integer(), nullable=True),
             sa.Column("roaster_id", sa.Integer(), nullable=True),
             sa.Column("lot_id", sa.Integer(), nullable=True),
-            sa.Column("status", sa.String(length=32), nullable=False, server_default="open"),
+            sa.Column(
+                "status", sa.String(length=32), nullable=False, server_default="open"
+            ),
             sa.Column("incoterm", sa.String(length=16), nullable=True),
             sa.Column("price_per_kg", sa.Float(), nullable=True),
             sa.Column("currency", sa.String(length=8), nullable=True),
@@ -84,7 +86,9 @@ def upgrade() -> None:
             sa.ForeignKeyConstraint(["lot_id"], ["lots.id"]),
         )
         op.create_index("ix_deals_status", "deals", ["status"], unique=False)
-        op.create_index("ix_deals_cooperative_id", "deals", ["cooperative_id"], unique=False)
+        op.create_index(
+            "ix_deals_cooperative_id", "deals", ["cooperative_id"], unique=False
+        )
         op.create_index("ix_deals_roaster_id", "deals", ["roaster_id"], unique=False)
         op.create_index("ix_deals_lot_id", "deals", ["lot_id"], unique=False)
         op.create_index("ix_deals_closed_at", "deals", ["closed_at"], unique=False)
@@ -97,7 +101,9 @@ def upgrade() -> None:
             sa.Column("deal_id", sa.Integer(), nullable=True),
             sa.Column("source_id", sa.Integer(), nullable=True),
             sa.Column("price_per_kg", sa.Float(), nullable=False),
-            sa.Column("currency", sa.String(length=8), nullable=False, server_default="USD"),
+            sa.Column(
+                "currency", sa.String(length=8), nullable=False, server_default="USD"
+            ),
             sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
             sa.Column("confidence", sa.Float(), nullable=True),
             sa.Column("notes", sa.String(length=500), nullable=True),
@@ -118,10 +124,18 @@ def upgrade() -> None:
             sa.ForeignKeyConstraint(["deal_id"], ["deals.id"]),
             sa.ForeignKeyConstraint(["source_id"], ["sources.id"]),
         )
-        op.create_index("ix_price_quotes_lot_id", "price_quotes", ["lot_id"], unique=False)
-        op.create_index("ix_price_quotes_deal_id", "price_quotes", ["deal_id"], unique=False)
-        op.create_index("ix_price_quotes_source_id", "price_quotes", ["source_id"], unique=False)
-        op.create_index("ix_price_quotes_observed_at", "price_quotes", ["observed_at"], unique=False)
+        op.create_index(
+            "ix_price_quotes_lot_id", "price_quotes", ["lot_id"], unique=False
+        )
+        op.create_index(
+            "ix_price_quotes_deal_id", "price_quotes", ["deal_id"], unique=False
+        )
+        op.create_index(
+            "ix_price_quotes_source_id", "price_quotes", ["source_id"], unique=False
+        )
+        op.create_index(
+            "ix_price_quotes_observed_at", "price_quotes", ["observed_at"], unique=False
+        )
 
     if "transport_events" not in inspector.get_table_names():
         op.create_table(
@@ -169,12 +183,16 @@ def upgrade() -> None:
         if not _column_exists(inspector, "shipments", "estimated_arrival_at"):
             op.add_column(
                 "shipments",
-                sa.Column("estimated_arrival_at", sa.DateTime(timezone=True), nullable=True),
+                sa.Column(
+                    "estimated_arrival_at", sa.DateTime(timezone=True), nullable=True
+                ),
             )
         if not _column_exists(inspector, "shipments", "actual_arrival_at"):
             op.add_column(
                 "shipments",
-                sa.Column("actual_arrival_at", sa.DateTime(timezone=True), nullable=True),
+                sa.Column(
+                    "actual_arrival_at", sa.DateTime(timezone=True), nullable=True
+                ),
             )
 
     if "entity_evidence" in inspector.get_table_names():
@@ -192,9 +210,9 @@ def upgrade() -> None:
         )
 
     if "data_quality_flags" in inspector.get_table_names():
-        if _column_exists(inspector, "data_quality_flags", "source_id") and not _fk_exists(
-            inspector, "data_quality_flags", "source_id", "sources"
-        ):
+        if _column_exists(
+            inspector, "data_quality_flags", "source_id"
+        ) and not _fk_exists(inspector, "data_quality_flags", "source_id", "sources"):
             op.create_foreign_key(
                 "fk_data_quality_flags_source_id",
                 "data_quality_flags",
