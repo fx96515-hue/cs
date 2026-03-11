@@ -7,7 +7,6 @@ import KpiCard from "../components/KpiCard";
 import Badge from "../components/Badge";
 import MarketPriceWidget from "../components/MarketPriceWidget";
 import AnomalyFeedWidget from "../components/AnomalyFeedWidget";
-import LoadingState from "../components/LoadingState";
 import ErrorState from "../components/ErrorState";
 
 // ============================================================================
