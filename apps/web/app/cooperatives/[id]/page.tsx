@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
 import { DataQualityFlag } from "../../types";
+import { toErrorMessage } from "../../utils/error";
 
 type Cooperative = {
   id: number;
@@ -19,13 +20,31 @@ type Cooperative = {
   deleted_at?: string | null;
 };
 
+type CooperativeFormState = {
+  name: string;
+  country: string;
+  region: string;
+  region_id: number | "";
+  website: string;
+  sca_score: number | "";
+  notes: string;
+};
+
 export default function CooperativeDetailsPage() {
   const params = useParams();
   const id = Number(params?.id);
   const router = useRouter();
 
   const [data, setData] = useState<Cooperative | null>(null);
-  const [form, setForm] = useState<Partial<Cooperative>>({});
+  const [form, setForm] = useState<CooperativeFormState>({
+    name: "",
+    country: "",
+    region: "",
+    region_id: "",
+    website: "",
+    sca_score: "",
+    notes: "",
+  });
   const [saving, setSaving] = useState(false);
   const [flags, setFlags] = useState<DataQualityFlag[]>([]);
   const [qualityBusy, setQualityBusy] = useState(false);
@@ -51,13 +70,13 @@ export default function CooperativeDetailsPage() {
           name: d.name,
           country: d.country ?? "",
           region: d.region ?? "",
-          region_id: d.region_id ?? undefined,
+          region_id: d.region_id ?? "",
           website: d.website ?? "",
-          sca_score: d.sca_score ?? undefined,
+          sca_score: d.sca_score ?? "",
           notes: d.notes ?? "",
         });
-      } catch (e: any) {
-        setErr(e?.message ?? String(e));
+      } catch (error: unknown) {
+        setErr(toErrorMessage(error));
       }
     })();
   }, [id]);
@@ -70,8 +89,8 @@ export default function CooperativeDetailsPage() {
         `/data-quality/flags?entity_type=cooperative&entity_id=${id}`,
       );
       setFlags(f);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setQualityBusy(false);
     }
@@ -85,8 +104,8 @@ export default function CooperativeDetailsPage() {
         `/data-quality/flags?entity_type=cooperative&entity_id=${id}`,
       );
       setFlags(f);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setQualityBusy(false);
     }
@@ -97,18 +116,14 @@ export default function CooperativeDetailsPage() {
     setErr(null);
     setSaving(true);
     try {
-      const payload: any = {
+      const payload: Partial<Cooperative> = {
         name: (form.name ?? "").toString(),
         country: (form.country ?? "").toString() || null,
         region: (form.region ?? "").toString() || null,
         region_id: form.region_id ? Number(form.region_id) : null,
         website: (form.website ?? "").toString() || null,
         sca_score:
-          form.sca_score === undefined ||
-          form.sca_score === null ||
-          form.sca_score === ("" as any)
-            ? null
-            : Number(form.sca_score),
+          form.sca_score === "" || form.sca_score === null ? null : Number(form.sca_score),
         notes: (form.notes ?? "").toString() || null,
       };
       const updated = await apiFetch<Cooperative>(`/cooperatives/${id}`, {
@@ -117,8 +132,8 @@ export default function CooperativeDetailsPage() {
       });
       setData(updated);
       setMsg("Gespeichert.");
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -131,8 +146,8 @@ export default function CooperativeDetailsPage() {
     try {
       await apiFetch(`/cooperatives/${id}`, { method: "DELETE" });
       router.push("/cooperatives");
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
   }
 
@@ -145,8 +160,8 @@ export default function CooperativeDetailsPage() {
       });
       setData(restored);
       setMsg("Wiederhergestellt.");
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
   }
 
@@ -209,7 +224,7 @@ export default function CooperativeDetailsPage() {
               <div className="label">Name</div>
               <input
                 className="input"
-                value={(form.name ?? "") as string}
+                value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </label>
@@ -219,7 +234,7 @@ export default function CooperativeDetailsPage() {
                 <div className="label">Land</div>
                 <input
                   className="input"
-                  value={(form.country ?? "") as string}
+                  value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
                 />
               </label>
@@ -227,7 +242,7 @@ export default function CooperativeDetailsPage() {
                 <div className="label">Region</div>
                 <input
                   className="input"
-                  value={(form.region ?? "") as string}
+                  value={form.region}
                   onChange={(e) => setForm({ ...form, region: e.target.value })}
                 />
               </label>
@@ -239,7 +254,7 @@ export default function CooperativeDetailsPage() {
                 className="input"
                 value={form.region_id ?? ""}
                 onChange={(e) =>
-                  setForm({ ...form, region_id: e.target.value ? Number(e.target.value) : null })
+                  setForm({ ...form, region_id: e.target.value ? Number(e.target.value) : "" })
                 }
               >
                 <option value="">-</option>
@@ -255,7 +270,7 @@ export default function CooperativeDetailsPage() {
               <div className="label">Website</div>
               <input
                 className="input"
-                value={(form.website ?? "") as string}
+                value={form.website}
                 onChange={(e) => setForm({ ...form, website: e.target.value })}
                 placeholder="https://"
               />
@@ -267,8 +282,13 @@ export default function CooperativeDetailsPage() {
                 className="input"
                 type="number"
                 step="0.1"
-                value={(form.sca_score ?? "") as any}
-                onChange={(e) => setForm({ ...form, sca_score: e.target.value as any })}
+                value={form.sca_score}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    sca_score: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
               />
             </label>
 
@@ -276,7 +296,7 @@ export default function CooperativeDetailsPage() {
               <div className="label">Notizen</div>
               <textarea
                 className="textarea"
-                value={(form.notes ?? "") as string}
+                value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 rows={6}
               />

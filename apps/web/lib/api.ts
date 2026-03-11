@@ -52,7 +52,7 @@ export function apiBaseUrl(): string {
   return "http://localhost:8000";
 }
 
-export async function apiFetch<T = any>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   const { skipAuth, ...req } = options;
 
   const token = !skipAuth ? getToken() : null;

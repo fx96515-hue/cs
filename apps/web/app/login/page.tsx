@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { apiFetch, setToken, Token } from "../../lib/api";
 import { useRouter } from "next/navigation";
+import { toErrorMessage } from "../utils/error";
 
 export default function LoginPage() {
   // Must be a valid email; avoid .local/.test (EmailStr rejects these).
@@ -21,8 +22,8 @@ export default function LoginPage() {
       });
       setToken(t.access_token);
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (error: unknown) {
+      setError(toErrorMessage(error) || "Login failed");
     }
   }
 

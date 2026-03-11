@@ -4,8 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
 import { useDeals, useCalculateMargin } from "../hooks/useDeals";
-import { MarginCalcRequest } from "../types";
+import { Deal, MarginCalcRequest } from "../types";
 import PieChart from "../charts/PieChart";
+
+function readMetaString(meta: Deal["meta"], key: string): string | null {
+  if (!meta) return null;
+  const value = meta[key];
+  return typeof value === "string" ? value : null;
+}
+
+function formatOutputValue(value: unknown): string {
+  if (typeof value === "number") return value.toFixed(2);
+  if (typeof value === "string") return value;
+  if (typeof value === "boolean") return value ? "true" : "false";
+  return "-";
+}
 
 export default function DealsDashboard() {
   const [showCalculator, setShowCalculator] = useState(false);
@@ -29,11 +42,11 @@ export default function DealsDashboard() {
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const deals = dealsData?.items || [];
-  const activeDeals = deals.filter((d) => !(d as any).deleted_at);
+  const activeDeals = deals.filter((d) => !d.deleted_at);
 
   const stats = {
     total: activeDeals.length,
-    totalValue: activeDeals.reduce((sum, d) => sum + ((d as any).value_eur || 0), 0),
+    totalValue: activeDeals.reduce((sum, d) => sum + (d.value_eur || 0), 0),
     avgMargin: 15.5,
   };
 
@@ -121,7 +134,7 @@ export default function DealsDashboard() {
         </div>
         <div className="panel card">
           <div className="cardLabel">Aktive Deals</div>
-          <div className="cardValue">{activeDeals.filter((d) => (d as any).status !== "closed").length}</div>
+          <div className="cardValue">{activeDeals.filter((d) => d.status !== "closed").length}</div>
           <div className="cardHint">In Bearbeitung</div>
         </div>
       </div>
@@ -258,7 +271,7 @@ export default function DealsDashboard() {
                             {key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                           </span>
                           <span style={{ fontWeight: "700" }}>
-                            {typeof value === "number" ? value.toFixed(2) : value}
+                            {formatOutputValue(value)}
                           </span>
                         </div>
                       ))}
@@ -309,38 +322,40 @@ export default function DealsDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {deals.map((lot) => (
-                  <tr key={lot.id}>
-                    <td style={{ fontWeight: "600" }}>{(lot as any).reference || `LOT-${lot.id}`}</td>
-                    <td>{(lot as any).origin || "-"}</td>
-                    <td>{(lot as any).variety || "-"}</td>
-                    <td>{(lot as any).process || "-"}</td>
-                    <td>{(lot as any).grade || "-"}</td>
-                    <td>{(lot as any).weight_kg?.toLocaleString() || "-"}</td>
+                {deals.map((deal) => (
+                  <tr key={deal.id}>
+                    <td style={{ fontWeight: "600" }}>
+                      {readMetaString(deal.meta, "reference") || `LOT-${deal.id}`}
+                    </td>
+                    <td>{deal.origin_region || deal.origin_country || "-"}</td>
+                    <td>{deal.variety || "-"}</td>
+                    <td>{deal.process_method || "-"}</td>
+                    <td>{deal.quality_grade || "-"}</td>
+                    <td>{deal.weight_kg?.toLocaleString() || "-"}</td>
                     <td>
-                      {(lot as any).cupping_score ? (
-                        <span className="badge badgeOk">{(lot as any).cupping_score}</span>
+                      {deal.cupping_score ? (
+                        <span className="badge badgeOk">{deal.cupping_score}</span>
                       ) : (
                         "-"
                       )}
                     </td>
                     <td>
-                      {(lot as any).deleted_at ? (
+                      {deal.deleted_at ? (
                         <span className="badge badgeWarn">archiviert</span>
                       ) : (
-                        <span className="badge">{(lot as any).status || "active"}</span>
+                        <span className="badge">{deal.status || "active"}</span>
                       )}
                     </td>
                     <td>
-                      <Link href={`/lots/${lot.id}`} className="link">
+                      <Link href={`/lots/${deal.id}`} className="link">
                         Ansehen -
                       </Link>
-                      {(lot as any).deleted_at ? (
+                      {deal.deleted_at ? (
                         <button
                           className="btn"
                           style={{ marginLeft: 8 }}
-                          onClick={() => restoreLot(lot.id)}
-                          disabled={busyId === lot.id}
+                          onClick={() => restoreLot(deal.id)}
+                          disabled={busyId === deal.id}
                         >
                           Restore
                         </button>
@@ -348,8 +363,8 @@ export default function DealsDashboard() {
                         <button
                           className="btn"
                           style={{ marginLeft: 8 }}
-                          onClick={() => archiveLot(lot.id)}
-                          disabled={busyId === lot.id}
+                          onClick={() => archiveLot(deal.id)}
+                          disabled={busyId === deal.id}
                         >
                           Archivieren
                         </button>

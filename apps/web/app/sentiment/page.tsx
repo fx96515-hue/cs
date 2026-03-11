@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import LineChart from "../charts/LineChart";
 import Badge from "../components/Badge";
+import { toErrorMessage } from "../utils/error";
 
 type SentimentPoint = {
   id: number;
@@ -42,8 +43,8 @@ export default function SentimentPage() {
     try {
       const res = await apiFetch<SentimentResponse>(`/sentiment/${encodeURIComponent(r)}`);
       setData(res.data);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
       setData([]);
     } finally {
       setLoading(false);

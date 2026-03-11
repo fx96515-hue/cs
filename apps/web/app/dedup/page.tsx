@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import { toErrorMessage } from "../utils/error";
+
+type EntityType = "cooperative" | "roaster";
 
 type DedupPair = {
   a_id: number;
@@ -16,18 +19,22 @@ type DedupPair = {
 type MergeHistory = {
   entity_id: number;
   created_at: string;
-  payload: any;
+  payload: unknown;
 };
 
+function parseEntityType(value: string): EntityType {
+  return value === "roaster" ? "roaster" : "cooperative";
+}
+
 export default function DedupPage() {
-  const [entityType, setEntityType] = useState<"cooperative" | "roaster">("cooperative");
+  const [entityType, setEntityType] = useState<EntityType>("cooperative");
   const [suggestions, setSuggestions] = useState<DedupPair[]>([]);
   const [history, setHistory] = useState<MergeHistory[]>([]);
   const [loading, setLoading] = useState(false);
   const [threshold, setThreshold] = useState(90);
   const [selectedPair, setSelectedPair] = useState<DedupPair | null>(null);
 
-  async function fetchSuggestions() {
+  const fetchSuggestions = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiFetch<DedupPair[]>(
@@ -39,9 +46,9 @@ export default function DedupPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [entityType, threshold]);
 
-  async function fetchHistory() {
+  const fetchHistory = useCallback(async () => {
     try {
       const data = await apiFetch<MergeHistory[]>(
         `/dedup/history?entity_type=${entityType}&limit=50`,
@@ -50,7 +57,7 @@ export default function DedupPage() {
     } catch (e) {
       console.error("Failed to fetch history:", e);
     }
-  }
+  }, [entityType]);
 
   async function mergePair(keepId: number, mergeId: number) {
     try {
@@ -66,15 +73,15 @@ export default function DedupPage() {
       setSelectedPair(null);
       fetchSuggestions();
       fetchHistory();
-    } catch (e: any) {
-      alert(`Fehler beim Zusammenfuehren: ${e?.message || e}`);
+    } catch (error: unknown) {
+      alert(`Fehler beim Zusammenfuehren: ${toErrorMessage(error)}`);
     }
   }
 
   useEffect(() => {
     fetchSuggestions();
     fetchHistory();
-  }, [entityType]);
+  }, [fetchHistory, fetchSuggestions]);
 
   const scoreColor = (score: number) => {
     if (score >= 95) return "bad";
@@ -96,7 +103,11 @@ export default function DedupPage() {
         <div className="row gap" style={{ flexWrap: "wrap" }}>
           <div>
             <div className="label">Entitaetstyp</div>
-            <select className="input" value={entityType} onChange={(e) => setEntityType(e.target.value as any)}>
+            <select
+              className="input"
+              value={entityType}
+              onChange={(e) => setEntityType(parseEntityType(e.target.value))}
+            >
               <option value="cooperative">Kooperativen</option>
               <option value="roaster">Roestereien</option>
             </select>

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
 import { DataQualityFlag } from "../types";
+import { toErrorMessage } from "../utils/error";
 
 type Coop = {
   id: number;
@@ -20,6 +21,13 @@ type Coop = {
 type CoopList = { items: Coop[]; total: number };
 
 type FlagSummary = { count: number; tone: "bad" | "warn" | "neutral" };
+type DqFilter = "all" | "any" | "none" | "critical" | "warning" | "info";
+
+const DQ_FILTER_VALUES: DqFilter[] = ["all", "any", "none", "critical", "warning", "info"];
+
+function parseDqFilter(value: string): DqFilter {
+  return DQ_FILTER_VALUES.includes(value as DqFilter) ? (value as DqFilter) : "all";
+}
 
 export default function CooperativesPage() {
   const [data, setData] = useState<CoopList | null>(null);
@@ -27,11 +35,11 @@ export default function CooperativesPage() {
   const [regionMap, setRegionMap] = useState<Record<number, string>>({});
   const [q, setQ] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const [dqFilter, setDqFilter] = useState<"all" | "any" | "none" | "critical" | "warning" | "info">("all");
+  const [dqFilter, setDqFilter] = useState<DqFilter>("all");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [res, flags, regions] = await Promise.all([
         apiFetch<Coop[] | CoopList>(
@@ -68,14 +76,14 @@ export default function CooperativesPage() {
         map[region.id] = `${region.name} (${region.country})`;
       }
       setRegionMap(map);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
-  }
+  }, [showArchived]);
 
   useEffect(() => {
-    load();
-  }, [showArchived]);
+    void load();
+  }, [load]);
 
   async function archiveCoop(id: number) {
     if (!confirm("Kooperative archivieren?")) return;
@@ -83,8 +91,8 @@ export default function CooperativesPage() {
     try {
       await apiFetch(`/cooperatives/${id}`, { method: "DELETE" });
       await load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -95,8 +103,8 @@ export default function CooperativesPage() {
     try {
       await apiFetch(`/cooperatives/${id}/restore`, { method: "POST" });
       await load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -156,7 +164,7 @@ export default function CooperativesPage() {
           <select
             className="input"
             value={dqFilter}
-            onChange={(e) => setDqFilter(e.target.value as any)}
+            onChange={(e) => setDqFilter(parseDqFilter(e.target.value))}
             style={{ width: 160 }}
           >
             <option value="all">DQ: alle</option>

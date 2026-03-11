@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
+import { JsonObject } from "../../types";
+import { toErrorMessage } from "../../utils/error";
 
 type Lot = {
   id: number;
@@ -23,8 +25,41 @@ type MarginRun = {
   lot_id: number;
   profile: string;
   computed_at: string;
-  inputs: any;
-  outputs: any;
+  inputs: JsonObject;
+  outputs: JsonObject;
+};
+
+type CalcState = {
+  purchase_price_per_kg: string;
+  purchase_currency: string;
+  landed_costs_per_kg: string;
+  roast_and_pack_costs_per_kg: string;
+  yield_factor: string;
+  selling_price_per_kg: string;
+  selling_currency: string;
+  fx_usd_to_eur: string;
+};
+
+type MarginRunPayload = {
+  purchase_price_per_kg: number;
+  purchase_currency: string;
+  landed_costs_per_kg: number;
+  roast_and_pack_costs_per_kg: number;
+  yield_factor: number;
+  selling_price_per_kg: number;
+  selling_currency: string;
+  fx_usd_to_eur?: number;
+};
+
+const INITIAL_CALC: CalcState = {
+  purchase_price_per_kg: "",
+  purchase_currency: "USD",
+  landed_costs_per_kg: "0.0",
+  roast_and_pack_costs_per_kg: "0.0",
+  yield_factor: "0.84",
+  selling_price_per_kg: "",
+  selling_currency: "EUR",
+  fx_usd_to_eur: "",
 };
 
 export default function LotDetailPage() {
@@ -37,44 +72,38 @@ export default function LotDetailPage() {
   const [busy, setBusy] = useState(false);
 
   const [profile, setProfile] = useState("conservative");
-  const [calc, setCalc] = useState<any>({
-    purchase_price_per_kg: "",
-    purchase_currency: "USD",
-    landed_costs_per_kg: "0.0",
-    roast_and_pack_costs_per_kg: "0.0",
-    yield_factor: "0.84",
-    selling_price_per_kg: "",
-    selling_currency: "EUR",
-    fx_usd_to_eur: "",
-  });
+  const [calc, setCalc] = useState<CalcState>(INITIAL_CALC);
 
-  async function loadAll() {
+  const loadAll = useCallback(async () => {
     setErr(null);
     try {
       const l = await apiFetch<Lot>(`/lots/${id}?include_deleted=true`);
       setLot(l);
-      setCalc((prev: any) => ({
+      setCalc((prev) => ({
         ...prev,
-        purchase_price_per_kg: l.price_per_kg ?? prev.purchase_price_per_kg,
+        purchase_price_per_kg:
+          l.price_per_kg !== null && l.price_per_kg !== undefined
+            ? String(l.price_per_kg)
+            : prev.purchase_price_per_kg,
         purchase_currency: l.currency || prev.purchase_currency,
       }));
       const r = await apiFetch<MarginRun[]>(`/margins/lots/${id}/runs?limit=50`);
       setRuns(r);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
-  }
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
     loadAll();
-  }, [id]);
+  }, [id, loadAll]);
 
   async function computeAndStore() {
     setBusy(true);
     setErr(null);
     try {
-      const payload: any = {
+      const payload: MarginRunPayload = {
         purchase_price_per_kg: Number(calc.purchase_price_per_kg),
         purchase_currency: String(calc.purchase_currency || "USD"),
         landed_costs_per_kg: Number(calc.landed_costs_per_kg || 0),
@@ -91,8 +120,8 @@ export default function LotDetailPage() {
       );
       const r = await apiFetch<MarginRun[]>(`/margins/lots/${id}/runs?limit=50`);
       setRuns(r);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusy(false);
     }
@@ -105,8 +134,8 @@ export default function LotDetailPage() {
       await apiFetch(`/lots/${id}`, { method: "DELETE" });
       const l = await apiFetch<Lot>(`/lots/${id}?include_deleted=true`);
       setLot(l);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
   }
 
@@ -115,8 +144,8 @@ export default function LotDetailPage() {
     try {
       const l = await apiFetch<Lot>(`/lots/${id}/restore`, { method: "POST" });
       setLot(l);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
   }
 
@@ -255,14 +284,20 @@ export default function LotDetailPage() {
           ) : (
             <ul>
               {runs.map((r) => {
+                const grossMarginPerKg = r.outputs.gross_margin_per_kg;
                 const gmKg =
-                  typeof r.outputs?.gross_margin_per_kg === "number"
-                    ? r.outputs.gross_margin_per_kg.toFixed(2)
-                    : r.outputs?.gross_margin_per_kg ?? "-";
+                  typeof grossMarginPerKg === "number"
+                    ? grossMarginPerKg.toFixed(2)
+                    : typeof grossMarginPerKg === "string"
+                      ? grossMarginPerKg
+                      : "-";
+                const grossMarginPct = r.outputs.gross_margin_pct;
                 const gmPct =
-                  typeof r.outputs?.gross_margin_pct === "number"
-                    ? r.outputs.gross_margin_pct.toFixed(1)
-                    : r.outputs?.gross_margin_pct ?? "-";
+                  typeof grossMarginPct === "number"
+                    ? grossMarginPct.toFixed(1)
+                    : typeof grossMarginPct === "string"
+                      ? grossMarginPct
+                      : "-";
                 return (
                   <li key={r.id} style={{ marginBottom: 10 }}>
                     <div>

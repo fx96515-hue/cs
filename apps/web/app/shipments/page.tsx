@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { format, differenceInDays } from "date-fns";
 import { useShipments, useCreateShipment } from "../hooks/useShipments";
 import { apiFetch } from "../../lib/api";
@@ -27,8 +27,7 @@ export default function ShipmentsDashboard() {
     include_deleted: showArchived,
   });
   const createShipment = useCreateShipment();
-  const [now, setNow] = useState(0);
-  useEffect(() => setNow(Date.now()), []);
+  const [now] = useState(() => Date.now());
 
   const shipments = shipmentsResponse?.items ?? [];
   const activeShipments = shipments.filter((s) => !s.deleted_at);

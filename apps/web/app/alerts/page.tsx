@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
 import DataQualityMini from "../components/DataQualityMini";
@@ -40,7 +40,7 @@ export default function AlertsPage() {
   }>({ severity: "all", acknowledged: "false", entity_type: "all" });
   const [loading, setLoading] = useState(true);
 
-  async function fetchAlerts() {
+  const fetchAlerts = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -56,16 +56,16 @@ export default function AlertsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter]);
 
-  async function fetchSummary() {
+  const fetchSummary = useCallback(async () => {
     try {
       const data = await apiFetch<AlertSummary>("/alerts/summary");
       setSummary(data);
     } catch (e) {
       console.error("Failed to fetch summary:", e);
     }
-  }
+  }, []);
 
   async function acknowledgeAlert(id: number) {
     try {
@@ -73,8 +73,8 @@ export default function AlertsPage() {
         method: "POST",
         body: JSON.stringify({ acknowledged_by: "user" }),
       });
-      fetchAlerts();
-      fetchSummary();
+      void fetchAlerts();
+      void fetchSummary();
     } catch (e) {
       console.error("Failed to acknowledge alert:", e);
     }
@@ -83,17 +83,17 @@ export default function AlertsPage() {
   async function checkNow() {
     try {
       await apiFetch("/alerts/check-now", { method: "POST" });
-      fetchAlerts();
-      fetchSummary();
+      void fetchAlerts();
+      void fetchSummary();
     } catch (e) {
       console.error("Failed to check alerts:", e);
     }
   }
 
   useEffect(() => {
-    fetchAlerts();
-    fetchSummary();
-  }, [filter]);
+    void fetchAlerts();
+    void fetchSummary();
+  }, [fetchAlerts, fetchSummary]);
 
   const severityBadge = (severity: string) => {
     const tone = severity === "critical" ? "bad" : severity === "warning" ? "warn" : "neutral";

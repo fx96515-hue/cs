@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
 import { DataQualityFlag } from "../../types";
+import { toErrorMessage } from "../../utils/error";
 
 type Roaster = {
   id: number;
@@ -38,8 +39,8 @@ export default function RoasterDetailPage() {
         ]);
         setR(d);
         setFlags(f);
-      } catch (e: any) {
-        setErr(e?.message ?? String(e));
+      } catch (error: unknown) {
+        setErr(toErrorMessage(error));
       }
     })();
   }, [id]);
@@ -52,8 +53,8 @@ export default function RoasterDetailPage() {
         `/data-quality/flags?entity_type=roaster&entity_id=${id}`,
       );
       setFlags(f);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setQualityBusy(false);
     }
@@ -67,8 +68,8 @@ export default function RoasterDetailPage() {
         `/data-quality/flags?entity_type=roaster&entity_id=${id}`,
       );
       setFlags(f);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setQualityBusy(false);
     }
@@ -92,8 +93,8 @@ export default function RoasterDetailPage() {
       });
       setR(d);
       setMsg("Gespeichert.");
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -106,8 +107,8 @@ export default function RoasterDetailPage() {
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
       router.push("/roasters");
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
   }
 
@@ -120,8 +121,8 @@ export default function RoasterDetailPage() {
       });
       setR(restored);
       setMsg("Wiederhergestellt.");
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
   }
 
