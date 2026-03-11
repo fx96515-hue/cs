@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { useShipments, useCreateShipment } from "../hooks/useShipments";
 import { apiFetch } from "../../lib/api";
@@ -15,6 +15,32 @@ import EmptyState from "../components/EmptyState";
 // ============================================================================
 // Sub-Components
 // ============================================================================
+
+type ShipmentFormData = {
+  container_number: string;
+  bill_of_lading: string;
+  weight_kg: number;
+  container_type: string;
+  origin_port: string;
+  destination_port: string;
+  departure_date: string;
+  estimated_arrival: string;
+  notes: string;
+  lot_ids: string;
+};
+
+const createInitialShipmentForm = (): ShipmentFormData => ({
+  container_number: "",
+  bill_of_lading: "",
+  weight_kg: 18000,
+  container_type: "40ft",
+  origin_port: "Callao, Peru",
+  destination_port: "Hamburg, Germany",
+  departure_date: "",
+  estimated_arrival: "",
+  notes: "",
+  lot_ids: "",
+});
 
 function ShipmentStats({ shipments }: { shipments: Shipment[] }) {
   const stats = useMemo(() => {
@@ -41,7 +67,7 @@ function ShipmentStats({ shipments }: { shipments: Shipment[] }) {
   );
 }
 
-function ArrivingSoonWidget({ shipments, now }: { shipments: Shipment[]; now: number }) {
+function ArrivingSoonWidget({ shipments }: { shipments: Shipment[] }) {
   const arrivingSoon = useMemo(() => {
     return shipments.filter((s) => {
       if (s.deleted_at) return false;
@@ -110,7 +136,6 @@ function ActiveShipmentCard({
   onViewDetails: (id: number) => void;
 }) {
   const progress = useMemo(() => {
-    if (now === 0) return 0;
     if (shipment.status === "arrived" || shipment.actual_arrival) return 100;
     const eta = shipment.estimated_arrival || shipment.eta;
     if (!shipment.departure_date || !eta) return 0;
@@ -328,21 +353,10 @@ function CreateShipmentModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: ShipmentFormData) => void;
   isPending: boolean;
 }) {
-  const [form, setForm] = useState({
-    container_number: "",
-    bill_of_lading: "",
-    weight_kg: 18000,
-    container_type: "40ft",
-    origin_port: "Callao, Peru",
-    destination_port: "Hamburg, Germany",
-    departure_date: "",
-    estimated_arrival: "",
-    notes: "",
-    lot_ids: "",
-  });
+  const [form, setForm] = useState<ShipmentFormData>(createInitialShipmentForm);
 
   if (!isOpen) return null;
 
@@ -555,8 +569,9 @@ function CreateShipmentModal({
 
 export default function ShipmentsDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createModalKey, setCreateModalKey] = useState(0);
   const [showArchived, setShowArchived] = useState(false);
-  const [now, setNow] = useState(0);
+  const [now] = useState(() => Date.now());
 
   const { data: shipmentsResponse, isLoading, error, refetch } = useShipments({
     limit: 200,
@@ -564,13 +579,16 @@ export default function ShipmentsDashboard() {
   });
   const createShipment = useCreateShipment();
 
-  useEffect(() => setNow(Date.now()), []);
-
   const shipments = shipmentsResponse?.items ?? [];
   const activeShipments = shipments.filter((s) => !s.deleted_at);
   const inTransitShipments = activeShipments.filter((s) => s.status === "in_transit");
 
-  const handleCreateSubmit = async (formData: any) => {
+  const openCreateModal = () => {
+    setCreateModalKey((prev) => prev + 1);
+    setShowCreateModal(true);
+  };
+
+  const handleCreateSubmit = async (formData: ShipmentFormData) => {
     try {
       const parsedLotIds = formData.lot_ids
         ? formData.lot_ids
@@ -667,7 +685,7 @@ export default function ShipmentsDashboard() {
             <div className="muted">Verfolgen Sie Kaffeesendungen von Peru nach Deutschland und Europa</div>
           </div>
           <div className="actions">
-            <button type="button" className="btn btnPrimary" onClick={() => setShowCreateModal(true)}>
+            <button type="button" className="btn btnPrimary" onClick={openCreateModal}>
               Sendung hinzufuegen
             </button>
           </div>
@@ -680,7 +698,7 @@ export default function ShipmentsDashboard() {
               <button
                 type="button"
                 className="btn btnPrimary"
-                onClick={() => setShowCreateModal(true)}
+                onClick={openCreateModal}
               >
                 Erste Sendung erstellen
               </button>
@@ -688,6 +706,7 @@ export default function ShipmentsDashboard() {
           />
         </div>
         <CreateShipmentModal
+          key={createModalKey}
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateSubmit}
@@ -713,7 +732,7 @@ export default function ShipmentsDashboard() {
             />
             <span className="small muted">Archivierte anzeigen</span>
           </label>
-          <button type="button" className="btn btnPrimary" onClick={() => setShowCreateModal(true)}>
+          <button type="button" className="btn btnPrimary" onClick={openCreateModal}>
             Sendung hinzufuegen
           </button>
         </div>
@@ -723,7 +742,7 @@ export default function ShipmentsDashboard() {
       <ShipmentStats shipments={shipments} />
 
       {/* Arriving Soon Widget */}
-      <ArrivingSoonWidget shipments={shipments} now={now} />
+      <ArrivingSoonWidget shipments={shipments} />
 
       {/* Active Shipments Grid */}
       {inTransitShipments.length > 0 && (
@@ -760,6 +779,7 @@ export default function ShipmentsDashboard() {
 
       {/* Create Modal */}
       <CreateShipmentModal
+        key={createModalKey}
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateSubmit}
