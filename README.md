@@ -47,6 +47,13 @@ docker compose up --build
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8000/docs
 
+Hinweis: Standardmäßig startet der Dev-Stack nur Core-Services (Postgres, Redis, Backend, Frontend), um Ressourcen zu sparen.
+Für Worker + Beat explizit starten:
+
+```bash
+docker compose --profile workers up --build
+```
+
 ### 3) Erster Admin-User
 
 1) Migration:

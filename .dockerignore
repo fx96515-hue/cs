@@ -1,23 +1,53 @@
+# VCS
+.git
+.gitignore
+
 # Python
-__pycache__
-*.pyc
+__pycache__/
+*.py[cod]
 *.pyo
 *.pyd
-.pytest_cache
-.mypy_cache
-.ruff_cache
-.venv
-venv
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Node
-node_modules
-.next
-out
-dist
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.npm-cache/
+npm-cache/
+playwright-report/
+test-results/
 
-# Git
-.git
-
-# Secrets
+# Local env and secrets
 .env
 .env.*
+!.env.example
+
+# Local logs and diagnostics
+*.log
+diagnostics/
+logs/
+*.bak_*
+*.patch
+*.rej
+*.orig
+
+# Local DB / runtime artifacts
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

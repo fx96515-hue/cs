@@ -73,6 +73,8 @@ services:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
+    profiles:
+    - workers
     command:
     - sh
     - -c
@@ -102,6 +104,8 @@ services:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
+    profiles:
+    - workers
     command:
     - sh
     - -c
