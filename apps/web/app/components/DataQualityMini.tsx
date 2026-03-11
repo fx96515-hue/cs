@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "./Badge";
 import { DataQualityFlag } from "../types";
+import { toErrorMessage } from "../utils/error";
 
 type Props = {
   title?: string;
@@ -16,7 +17,7 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
@@ -27,16 +28,16 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
       if (includeResolved) params.set("include_resolved", "true");
       const data = await apiFetch<DataQualityFlag[]>(`/data-quality/flags?${params.toString()}`);
       setFlags(data);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setLoading(false);
     }
-  }
+  }, [entityType, includeResolved, limit, severity]);
 
   useEffect(() => {
-    load();
-  }, [severity, entityType, includeResolved]);
+    void load();
+  }, [load]);
 
   const severityTone = (s: string) =>
     s === "critical" ? "bad" : s === "warning" ? "warn" : "neutral";
@@ -48,7 +49,7 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
           <div className="panelTitle">{title}</div>
           <div className="muted">Offene Data-Quality-Flags</div>
         </div>
-        <button className="btn" onClick={load} disabled={loading}>
+        <button className="btn" onClick={() => void load()} disabled={loading}>
           Refresh
         </button>
       </div>

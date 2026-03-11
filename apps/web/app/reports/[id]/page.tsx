@@ -12,7 +12,7 @@ type Report = {
   title: string | null;
   report_at: string;
   markdown: string;
-  payload: any;
+  payload: unknown;
 };
 
 export default function ReportDetailPage() {

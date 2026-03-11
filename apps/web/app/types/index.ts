@@ -1,5 +1,9 @@
 // TypeScript types matching backend Pydantic schemas
 
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
+export type JsonObject = { [key: string]: JsonValue };
+
 // Multi-Country Support
 export type SupportedCountry = "PE" | "CO" | "ET" | "BR";
 
@@ -181,7 +185,7 @@ export interface Shipment {
   status_updated_at: string | null;
   delay_hours: number;
   notes: string | null;
-  tracking_events: any[] | null;
+  tracking_events: JsonValue[] | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -220,10 +224,10 @@ export interface Deal {
   process_method: string | null;
   quality_grade: string | null;
   cupping_score: number | null;
-  certifications: Record<string, any> | null;
+  certifications: JsonObject | null;
   closed_at: string | null;
   notes: string | null;
-  meta: Record<string, any> | null;
+  meta: JsonObject | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -247,10 +251,10 @@ export interface CreateDealRequest {
   process_method?: string;
   quality_grade?: string;
   cupping_score?: number;
-  certifications?: Record<string, any>;
+  certifications?: JsonObject;
   closed_at?: string;
   notes?: string;
-  meta?: Record<string, any>;
+  meta?: JsonObject;
 }
 
 export interface UpdateDealRequest {
@@ -270,10 +274,10 @@ export interface UpdateDealRequest {
   process_method?: string;
   quality_grade?: string;
   cupping_score?: number;
-  certifications?: Record<string, any>;
+  certifications?: JsonObject;
   closed_at?: string;
   notes?: string;
-  meta?: Record<string, any>;
+  meta?: JsonObject;
 }
 
 export interface MarginCalcRequest {
@@ -289,8 +293,8 @@ export interface MarginCalcRequest {
 
 export interface MarginCalcResult {
   computed_at: string;
-  inputs: Record<string, any>;
-  outputs: Record<string, any>;
+  inputs: JsonObject;
+  outputs: JsonObject;
 }
 
 // Margin Run type

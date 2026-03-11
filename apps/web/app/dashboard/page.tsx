@@ -7,6 +7,7 @@ import KpiCard from "../components/KpiCard";
 import Badge from "../components/Badge";
 import MarketPriceWidget from "../components/MarketPriceWidget";
 import AnomalyFeedWidget from "../components/AnomalyFeedWidget";
+import { toErrorMessage } from "../utils/error";
 
 type ApiStatus = { status: string };
 
@@ -20,6 +21,8 @@ type MarketPoint = {
 type MarketSnapshot = Record<string, MarketPoint | null>;
 
 type Paged<T> = { items: T[]; total: number };
+
+type InventoryRow = Record<string, unknown>;
 
 type NewsItem = {
   id: number;
@@ -73,8 +76,8 @@ export default function DashboardPage() {
         const [h, m, coops, roasters, n, r, ops] = await Promise.all([
           apiFetch<ApiStatus>("/health", { skipAuth: true }),
           apiFetch<MarketSnapshot>("/market/latest"),
-          apiFetch<Paged<any> | any[]>("/cooperatives?limit=1"),
-          apiFetch<Paged<any> | any[]>("/roasters?limit=1"),
+          apiFetch<Paged<InventoryRow> | InventoryRow[]>("/cooperatives?limit=1"),
+          apiFetch<Paged<InventoryRow> | InventoryRow[]>("/roasters?limit=1"),
           apiFetch<NewsItem[]>("/news?limit=6"),
           apiFetch<Report[]>("/reports?limit=6"),
           apiFetch<OpsOverview>("/ops/overview"),
@@ -88,9 +91,9 @@ export default function DashboardPage() {
         setNews(Array.isArray(n) ? n : []);
         setReports(Array.isArray(r) ? r : []);
         setOpsOverview(ops);
-      } catch (e: any) {
+      } catch (error: unknown) {
         if (!alive) return;
-        setErr(e?.message ?? String(e));
+        setErr(toErrorMessage(error));
       } finally {
         if (!alive) return;
         setLoading(false);

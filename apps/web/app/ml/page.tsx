@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import { toErrorMessage } from "../utils/error";
 
 type MLModel = {
   id: number;
@@ -11,7 +12,7 @@ type MLModel = {
   algorithm: string | null;
   model_version: string;
   training_date: string;
-  performance_metrics: any;
+  performance_metrics: Record<string, unknown> | null;
   training_data_count: number;
   status: string;
 };
@@ -80,8 +81,8 @@ export default function MLPage() {
       await apiFetch(`/ml/train/${modelType}`, { method: "POST" });
       alert(`Modelltraining fuer ${modelType} gestartet!`);
       fetchModels();
-    } catch (e: any) {
-      alert(`Fehler beim Training: ${e?.message || e}`);
+    } catch (error: unknown) {
+      alert(`Fehler beim Training: ${toErrorMessage(error)}`);
     } finally {
       setTrainingModel(null);
     }

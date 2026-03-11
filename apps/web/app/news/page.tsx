@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
 import DataQualityMini from "../components/DataQualityMini";
+import { toErrorMessage } from "../utils/error";
 
 type NewsItem = {
   id: number;
@@ -24,7 +25,7 @@ export default function NewsPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
@@ -32,16 +33,16 @@ export default function NewsPage() {
         `/news?topic=${encodeURIComponent(topic)}&days=${days}&limit=60`,
       );
       setItems(d);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setLoading(false);
     }
-  }
+  }, [days, topic]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const sorted = useMemo(() => {
     const copy = [...items];
@@ -54,7 +55,12 @@ export default function NewsPage() {
     setMsg(null);
     setErr(null);
     try {
-      const r = await apiFetch<{ status: string; created: number; updated: number; errors: any[] }>(
+      const r = await apiFetch<{
+        status: string;
+        created: number;
+        updated: number;
+        errors: unknown[];
+      }>(
         `/news/refresh?topic=${encodeURIComponent(topic)}`,
         { method: "POST" },
       );
@@ -63,8 +69,8 @@ export default function NewsPage() {
       if (typeof r.updated === "number") parts.push(`aktualisiert ${r.updated}`);
       setMsg(parts.join(" | "));
       await load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setRefreshing(false);
     }

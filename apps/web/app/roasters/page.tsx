@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
 import { DataQualityFlag } from "../types";
+import { toErrorMessage } from "../utils/error";
 
 type Roaster = {
   id: number;
@@ -18,17 +19,24 @@ type Roaster = {
 type RoasterList = { items: Roaster[]; total: number };
 
 type FlagSummary = { count: number; tone: "bad" | "warn" | "neutral" };
+type DqFilter = "all" | "any" | "none" | "critical" | "warning" | "info";
+
+const DQ_FILTER_VALUES: DqFilter[] = ["all", "any", "none", "critical", "warning", "info"];
+
+function parseDqFilter(value: string): DqFilter {
+  return DQ_FILTER_VALUES.includes(value as DqFilter) ? (value as DqFilter) : "all";
+}
 
 export default function RoastersPage() {
   const [data, setData] = useState<RoasterList | null>(null);
   const [flagSummary, setFlagSummary] = useState<Record<number, FlagSummary>>({});
   const [q, setQ] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const [dqFilter, setDqFilter] = useState<"all" | "any" | "none" | "critical" | "warning" | "info">("all");
+  const [dqFilter, setDqFilter] = useState<DqFilter>("all");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const [res, flags] = await Promise.all([
         apiFetch<Roaster[] | RoasterList>(
@@ -59,14 +67,14 @@ export default function RoastersPage() {
         }
       }
       setFlagSummary(summary);
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     }
-  }
+  }, [showArchived]);
 
   useEffect(() => {
-    load();
-  }, [showArchived]);
+    void load();
+  }, [load]);
 
   async function archiveRoaster(id: number) {
     if (!confirm("Roesterei archivieren?")) return;
@@ -74,8 +82,8 @@ export default function RoastersPage() {
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
       await load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -86,8 +94,8 @@ export default function RoastersPage() {
     try {
       await apiFetch(`/roasters/${id}/restore`, { method: "POST" });
       await load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -146,7 +154,7 @@ export default function RoastersPage() {
           <select
             className="input"
             value={dqFilter}
-            onChange={(e) => setDqFilter(e.target.value as any)}
+            onChange={(e) => setDqFilter(parseDqFilter(e.target.value))}
             style={{ width: 160 }}
           >
             <option value="all">DQ: alle</option>

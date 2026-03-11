@@ -12,7 +12,7 @@ import {
 } from "recharts";
 
 interface BarChartProps {
-  data: any[];
+  data: Array<Record<string, string | number | null | undefined>>;
   xKey: string;
   yKey: string;
   title: string;

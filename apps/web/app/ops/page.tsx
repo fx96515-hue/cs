@@ -1,12 +1,22 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
 import { DataQualityFlag } from "../types";
+import { toErrorMessage } from "../utils/error";
 
 type JobResponse = { status: string; task_id: string; report_id: number; message: string };
+type EntityType = "cooperative" | "roaster" | "both";
+type NewsRefreshResponse = { status: string; created?: number; updated?: number; errors?: unknown[] };
+
+function parseEntityType(value: string): EntityType {
+  if (value === "cooperative" || value === "roaster" || value === "both") {
+    return value;
+  }
+  return "both";
+}
 
 type OpsOverview = {
   data_quality: {
@@ -20,7 +30,7 @@ function OpsPageContent() {
   const searchParams = useSearchParams();
   const [health, setHealth] = useState<string>("");
   const [topic, setTopic] = useState("peru coffee");
-  const [entityType, setEntityType] = useState<"cooperative" | "roaster" | "both">("both");
+  const [entityType, setEntityType] = useState<EntityType>("both");
   const [max, setMax] = useState(50);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -31,22 +41,22 @@ function OpsPageContent() {
   const [dqEntityType, setDqEntityType] = useState<string>("all");
   const [dqIncludeResolved, setDqIncludeResolved] = useState(false);
 
-  function push(line: string) {
+  const push = useCallback((line: string) => {
     setLog((prev) => [`${new Date().toLocaleTimeString()}  ${line}`, ...prev].slice(0, 120));
-  }
+  }, []);
 
-  async function ping() {
+  const ping = useCallback(async () => {
     try {
       const d = await apiFetch<{ status: string }>("/health");
       setHealth(d.status);
       push(`health: ${d.status}`);
-    } catch (e: any) {
+    } catch (error: unknown) {
       setHealth("down");
-      push(`health: ERROR ${e?.message ?? e}`);
+      push(`health: ERROR ${toErrorMessage(error)}`);
     }
-  }
+  }, [push]);
 
-  async function loadQuality() {
+  const loadQuality = useCallback(async () => {
     setQualityBusy(true);
     try {
       const qs = new URLSearchParams();
@@ -60,16 +70,16 @@ function OpsPageContent() {
       ]);
       setOverview(o);
       setFlags(f.slice(0, 12));
-    } catch (e: any) {
-      push(`data-quality: ERROR ${e?.message ?? e}`);
+    } catch (error: unknown) {
+      push(`data-quality: ERROR ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
-  }
+  }, [dqEntityType, dqIncludeResolved, dqSeverity, push]);
 
   useEffect(() => {
     ping();
-  }, []);
+  }, [ping]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -85,16 +95,16 @@ function OpsPageContent() {
 
   useEffect(() => {
     loadQuality();
-  }, [dqSeverity, dqEntityType, dqIncludeResolved]);
+  }, [loadQuality]);
 
-  async function run(name: string, fn: () => Promise<any>) {
+  async function run(name: string, fn: () => Promise<unknown>) {
     setBusy(true);
     try {
       push(`${name}...`);
       const r = await fn();
       push(`${name}: OK ${JSON.stringify(r)}`);
-    } catch (e: any) {
-      push(`${name}: ERROR ${e?.message ?? e}`);
+    } catch (error: unknown) {
+      push(`${name}: ERROR ${toErrorMessage(error)}`);
     } finally {
       setBusy(false);
     }
@@ -105,8 +115,8 @@ function OpsPageContent() {
     try {
       await apiFetch(`/data-quality/flags/${id}/resolve`, { method: "POST" });
       await loadQuality();
-    } catch (e: any) {
-      push(`resolve-flag: ERROR ${e?.message ?? e}`);
+    } catch (error: unknown) {
+      push(`resolve-flag: ERROR ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
@@ -119,8 +129,8 @@ function OpsPageContent() {
         method: "POST",
       });
       await loadQuality();
-    } catch (e: any) {
-      push(`recompute: ERROR ${e?.message ?? e}`);
+    } catch (error: unknown) {
+      push(`recompute: ERROR ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
@@ -171,7 +181,7 @@ function OpsPageContent() {
               disabled={busy}
               onClick={() =>
                 run("News refresh", async () => {
-                  return apiFetch<any>(`/news/refresh?topic=${encodeURIComponent(topic)}`, {
+                  return apiFetch<NewsRefreshResponse>(`/news/refresh?topic=${encodeURIComponent(topic)}`, {
                     method: "POST",
                   });
                 })
@@ -199,7 +209,7 @@ function OpsPageContent() {
               <select
                 className="input"
                 value={entityType}
-                onChange={(e) => setEntityType(e.target.value as any)}
+                onChange={(e) => setEntityType(parseEntityType(e.target.value))}
                 style={{ width: 220 }}
               >
                 <option value="both">beide</option>
@@ -225,7 +235,7 @@ function OpsPageContent() {
                 disabled={busy}
                 onClick={() =>
                   run("Seed discovery", async () => {
-                    return apiFetch<any>("/discovery/seed", {
+                    return apiFetch<JobResponse>("/discovery/seed", {
                       method: "POST",
                       body: JSON.stringify({
                         entity_type: entityType,

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "../../lib/api";
+import { toErrorMessage } from "../utils/error";
 
 type Lot = {
   id: number;
@@ -17,31 +18,56 @@ type Lot = {
   deleted_at: string | null;
 };
 
+type LotFormState = {
+  cooperative_id: string;
+  name: string;
+  crop_year: string;
+  incoterm: string;
+  price_per_kg: string;
+  currency: string;
+  weight_kg: string;
+  expected_cupping_score: string;
+};
+
+type CreateLotPayload = {
+  cooperative_id: number;
+  name: string;
+  incoterm: string | null;
+  currency: string | null;
+  crop_year?: number;
+  price_per_kg?: number;
+  weight_kg?: number;
+  expected_cupping_score?: number;
+};
+
+const INITIAL_FORM: LotFormState = {
+  cooperative_id: "",
+  name: "",
+  crop_year: "",
+  incoterm: "FOB",
+  price_per_kg: "",
+  currency: "USD",
+  weight_kg: "",
+  expected_cupping_score: "",
+};
+
 export default function LotsPage() {
   const [lots, setLots] = useState<Lot[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [form, setForm] = useState<any>({
-    cooperative_id: "",
-    name: "",
-    crop_year: "",
-    incoterm: "FOB",
-    price_per_kg: "",
-    currency: "USD",
-    weight_kg: "",
-    expected_cupping_score: "",
-  });
+  const [form, setForm] = useState<LotFormState>(INITIAL_FORM);
 
-  const load = () =>
-    apiFetch<Lot[]>(`/lots?limit=200&include_deleted=${showArchived ? "true" : "false"}`)
+  const load = useCallback(() => {
+    return apiFetch<Lot[]>(`/lots?limit=200&include_deleted=${showArchived ? "true" : "false"}`)
       .then(setLots)
-      .catch((e) => setErr(e?.message ?? String(e)));
+      .catch((error: unknown) => setErr(toErrorMessage(error)));
+  }, [showArchived]);
 
   useEffect(() => {
     load();
-  }, [showArchived]);
+  }, [load]);
 
   async function archiveLot(id: number) {
     if (!confirm("Lot archivieren?")) return;
@@ -49,8 +75,8 @@ export default function LotsPage() {
     try {
       await apiFetch(`/lots/${id}`, { method: "DELETE" });
       load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -61,8 +87,8 @@ export default function LotsPage() {
     try {
       await apiFetch(`/lots/${id}/restore`, { method: "POST" });
       load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
@@ -72,7 +98,7 @@ export default function LotsPage() {
     setErr(null);
     setCreating(true);
     try {
-      const payload: any = {
+      const payload: CreateLotPayload = {
         cooperative_id: Number(form.cooperative_id),
         name: String(form.name || "").trim(),
         incoterm: form.incoterm || null,
@@ -88,19 +114,10 @@ export default function LotsPage() {
         payload.expected_cupping_score = Number(form.expected_cupping_score);
 
       await apiFetch<Lot>("/lots", { method: "POST", body: JSON.stringify(payload) });
-      setForm({
-        cooperative_id: "",
-        name: "",
-        crop_year: "",
-        incoterm: "FOB",
-        price_per_kg: "",
-        currency: "USD",
-        weight_kg: "",
-        expected_cupping_score: "",
-      });
+      setForm(INITIAL_FORM);
       load();
-    } catch (e: any) {
-      setErr(e?.message ?? String(e));
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
     } finally {
       setCreating(false);
     }
