@@ -264,9 +264,21 @@ jobs:
           done
           exit 1
 
+      - name: Run Integration Test Suite
+        env:
+          E2E_BASE_URL: http://localhost:8000
+          BOOTSTRAP_ADMIN_PASSWORD: TestAdmin123!
+        run: |
+          pytest tests/integration/test_e2e_flows.py -v
+
       - name: Show Backend Logs on Failure
         if: failure()
         run: |
           echo "=== Backend Logs ==="
           jobs || true
           ps aux | grep uvicorn || true
+
+      - name: Stop Backend API
+        if: always()
+        run: |
+          pkill -f "uvicorn app.main:app" || true
