@@ -1,0 +1,39 @@
+# VCS
+.git
+.gitignore
+
+# Local environment and secrets
+.env
+.env.*
+
+# Python caches and virtual envs
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test, docs and developer-only assets
+tests/
+docs/
+scripts/
+
+# Local runtime artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.log
+htmlcov/
+.coverage
+coverage.xml
+bandit-report.json
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

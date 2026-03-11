@@ -1,14 +1,15 @@
 PYTHON ?= python3
 ENTERPRISE_COMPOSE ?= infra/deploy/docker-compose.enterprise.yml
 
-.PHONY: help up down logs status migrate bootstrap smoke smoke-win \
+.PHONY: help up up-full down logs status migrate bootstrap smoke smoke-win \
         start-enterprise stop-enterprise enterprise-logs enterprise-status enterprise-restart
 
 help:
 	@echo "CoffeeStudio Platform — common targets"
 	@echo ""
 	@echo "Dev stack:"
-	@echo "  make up            # docker compose up -d --build"
+	@echo "  make up            # docker compose up -d --build (core services)"
+	@echo "  make up-full       # docker compose --profile workers up -d --build"
 	@echo "  make down          # docker compose down"
 	@echo "  make logs          # follow logs (dev)"
 	@echo "  make status        # docker compose ps"
@@ -32,6 +33,9 @@ help:
 # -----------------------
 up:
 	docker compose up -d --build
+
+up-full:
+	docker compose --profile workers up -d --build
 
 down:
 	docker compose down

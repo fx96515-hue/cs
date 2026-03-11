@@ -2,8 +2,9 @@ name: Post-deploy Smoke Check
 
 on:
   workflow_run:
-    workflows: ["Integration Tests", "Unit Tests"]
+    workflows: ["Backend CI", "Frontend CI"]
     types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,16 +13,56 @@ jobs:
   smoke:
     name: Smoke Health Check
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create smoke .env
+        run: |
+          DB_PASSWORD="$(openssl rand -hex 16)"
+          BOOTSTRAP_PASSWORD="$(openssl rand -hex 16)"
+          cat > .env << EOF
+          APP_ENV=test
+          POSTGRES_PASSWORD=${DB_PASSWORD}
+          DATABASE_URL=postgresql+psycopg://coffeestudio:${DB_PASSWORD}@postgres:5432/coffeestudio
+          REDIS_URL=redis://redis:6379/0
+          JWT_SECRET=test_secret_key_for_smoke_checks_minimum_32_characters_long
+          JWT_ISSUER=coffeestudio
+          JWT_AUDIENCE=coffeestudio-users
+          BOOTSTRAP_ADMIN_EMAIL=admin@coffeestudio.com
+          BOOTSTRAP_ADMIN_PASSWORD=${BOOTSTRAP_PASSWORD}
+          NEXT_PUBLIC_API_URL=http://localhost:8000
+          EOF
+
+      - name: Start smoke services
+        run: |
+          docker compose up -d --build postgres redis backend frontend
+
       - name: Wait for services
         run: |
-          echo 'Sleeping 10s to allow services to become healthy'
-          sleep 10
+          timeout 180 bash -c 'until curl -fsS http://localhost:8000/health; do sleep 5; done'
+          timeout 180 bash -c 'until curl -fsS http://localhost:3000; do sleep 5; done'
+
       - name: Backend health
         run: |
           curl -f http://localhost:8000/health || (echo 'Backend health failed' && exit 1)
+
       - name: API docs
         run: |
-          curl -f http://localhost:8000/docs || echo 'docs missing'
+          curl -f http://localhost:8000/docs
+
+      - name: Frontend health
+        run: |
+          curl -f http://localhost:3000
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose logs --tail=200 backend || true
+          docker compose logs --tail=200 frontend || true
+          docker compose logs --tail=200 postgres || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v

@@ -88,3 +88,9 @@ diagnostics/
 # Local GitHub CLI cache used by CI log downloads
 .localapp/
 
+# Local runtime databases and transient npm cache
+*.db
+*.sqlite
+*.sqlite3
+apps/web/.npm-cache/
+

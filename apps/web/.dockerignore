@@ -1,23 +1,33 @@
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/docker-compose*
-**/compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-LICENSE
-README.md
+# VCS and metadata
+.git
+.gitignore
+
+# Local environment and secrets
+.env
+.env.*
+
+# Node artifacts and caches
+node_modules/
+.npm-cache/
+npm-cache/
+
+# Next.js build outputs
+.next/
+out/
+dist/
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+
+# Logs and misc local files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Docker/compose files not needed in app build context
+docker-compose*.yml
+docker-compose*.yaml

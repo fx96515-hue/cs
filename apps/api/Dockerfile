@@ -42,6 +42,8 @@ FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PATH="/opt/venv/bin:$PATH"
 
 # Install runtime dependencies (curl for healthchecks, libpq5 for psycopg, libgomp1 for xgboost)
@@ -49,11 +51,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq5 \
     libgomp1 \
-    && rm -rf /var/lib/apt/lists/* \
-    && python -m pip install --upgrade \
-       pip==26.0.1 \
-       "setuptools>=78.1.1" \
-       wheel
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
