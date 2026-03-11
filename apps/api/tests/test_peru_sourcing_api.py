@@ -77,6 +77,19 @@ def test_get_region_intelligence_not_found(client, auth_headers, db):
         pass
 
 
+def test_get_region_intelligence_alias_name(client, auth_headers, db):
+    """Test region intelligence accepts frontend display aliases with qualifiers."""
+    client.post("/peru/regions/seed", headers=auth_headers)
+
+    response = client.get(
+        "/peru/regions/Jun%C3%ADn%20(Satipo%2FChanchamayo)/intelligence",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Junín"
+
+
 def test_analyze_cooperative_not_found(client, auth_headers, db):
     """Test analyzing non-existent cooperative."""
     response = client.post("/peru/cooperatives/99999/analyze", headers=auth_headers)
@@ -190,3 +203,17 @@ def test_refresh_region_data(client, auth_headers, db):
     assert data["region"] == "Cajamarca"
     assert data["refreshed"] is True
     assert "sources" in data
+
+
+def test_refresh_region_data_alias_name(client, auth_headers, db):
+    """Test refreshing with frontend display alias resolves to canonical region."""
+    client.post("/peru/regions/seed", headers=auth_headers)
+
+    response = client.post(
+        "/peru/regions/refresh",
+        json={"region_name": "Cusco (La Convención)"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["region"] == "Cusco"

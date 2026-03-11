@@ -8,6 +8,8 @@ Provides comprehensive intelligence on Peru coffee regions including:
 - External data integration
 """
 
+import re
+import unicodedata
 from typing import Any
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -26,6 +28,38 @@ class PeruRegionIntelService:
     def __init__(self, db: Session):
         self.db = db
 
+    @staticmethod
+    def _normalize_region_name(value: str) -> str:
+        """Normalize region names for robust matching.
+
+        Handles frontend display names like "Junín (Satipo/Chanchamayo)" by
+        removing parenthetical qualifiers and diacritics.
+        """
+        base = re.sub(r"\s*\(.*\)\s*$", "", (value or "").strip())
+        no_diacritics = "".join(
+            ch
+            for ch in unicodedata.normalize("NFKD", base)
+            if not unicodedata.combining(ch)
+        )
+        return re.sub(r"\s+", " ", no_diacritics).strip().lower()
+
+    def _resolve_region(self, region_name: str) -> Region | None:
+        """Resolve a Peru region by exact or normalized alias name."""
+        exact_stmt = select(Region).where(
+            Region.name == region_name, Region.country == "Peru"
+        )
+        exact_region = self.db.scalar(exact_stmt)
+        if exact_region:
+            return exact_region
+
+        target = self._normalize_region_name(region_name)
+        stmt = select(Region).where(Region.country == "Peru")
+        regions = self.db.scalars(stmt).all()
+        for region in regions:
+            if self._normalize_region_name(region.name) == target:
+                return region
+        return None
+
     def get_region_intelligence(self, region_name: str) -> dict[str, Any] | None:
         """
         Get comprehensive intelligence for a Peru coffee region.
@@ -36,10 +70,7 @@ class PeruRegionIntelService:
         Returns:
             Dictionary with region intelligence or None if not found
         """
-        stmt = select(Region).where(
-            Region.name == region_name, Region.country == "Peru"
-        )
-        region = self.db.scalar(stmt)
+        region = self._resolve_region(region_name)
 
         if not region:
             return None
@@ -176,18 +207,13 @@ class PeruRegionIntelService:
         Returns:
             Dictionary with refresh status and data sources
         """
-        from sqlalchemy import select
+        region = self._resolve_region(region_name)
+        lookup_name = region.name if region else region_name
 
-        # Fetch from external sources
-        jnc_data = fetch_jnc_data(region_name)
-        minagri_data = fetch_minagri_data(region_name)
-        weather_data = fetch_senamhi_weather(region_name)
-
-        # Update region model with fresh data
-        stmt = select(Region).where(
-            Region.name == region_name, Region.country == "Peru"
-        )
-        region = self.db.scalar(stmt)
+        # Fetch from external sources using canonical name when available
+        jnc_data = fetch_jnc_data(lookup_name)
+        minagri_data = fetch_minagri_data(lookup_name)
+        weather_data = fetch_senamhi_weather(lookup_name)
 
         updated_fields = []
 
@@ -203,7 +229,7 @@ class PeruRegionIntelService:
             self.db.commit()
 
         return {
-            "region": region_name,
+            "region": lookup_name,
             "refreshed": True,
             "updated_fields": updated_fields,
             "sources": {

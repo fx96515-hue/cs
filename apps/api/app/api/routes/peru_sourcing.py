@@ -52,7 +52,8 @@ def list_peru_regions(
 
 
 @router.get(
-    "/regions/{region_name}/intelligence", response_model=RegionIntelligenceResponse
+    "/regions/{region_name:path}/intelligence",
+    response_model=RegionIntelligenceResponse,
 )
 def get_region_intelligence(
     region_name: str,
