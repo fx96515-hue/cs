@@ -113,6 +113,36 @@ def test_refresh_intelligence_redacts_internal_errors(
     assert payload["sources"] == []
 
 
+def test_refresh_market_runtime_error_returns_500(client, auth_headers, monkeypatch):
+    _patch_data_health_deps(monkeypatch)
+    monkeypatch.setattr(
+        _DummyOrchestrator,
+        "run_market_pipeline",
+        lambda self: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+
+    response = client.post("/data-health/refresh-market", headers=auth_headers)
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Market refresh failed"
+
+
+def test_refresh_intelligence_runtime_error_returns_500(
+    client, auth_headers, monkeypatch
+):
+    _patch_data_health_deps(monkeypatch)
+    monkeypatch.setattr(
+        _DummyOrchestrator,
+        "run_intelligence_pipeline",
+        lambda self: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+
+    response = client.post("/data-health/refresh-intelligence", headers=auth_headers)
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Intelligence refresh failed"
+
+
 def test_refresh_all_redacts_top_level_errors(client, auth_headers, monkeypatch):
     _patch_data_health_deps(monkeypatch)
 

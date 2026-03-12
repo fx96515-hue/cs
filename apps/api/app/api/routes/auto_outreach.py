@@ -47,11 +47,11 @@ def create_campaign(
             refine_with_llm=payload.refine_with_llm,
         )
         return result
-    except ValueError as e:
-        log.warning("create_campaign_invalid", error_type=type(e).__name__)
+    except ValueError:
+        log.warning("create_campaign_invalid")
         raise HTTPException(status_code=400, detail="Invalid request") from None
-    except Exception as e:
-        log.error("create_campaign_failed", error_type=type(e).__name__)
+    except Exception:
+        log.error("create_campaign_failed")
         raise HTTPException(
             status_code=500, detail="Campaign creation failed"
         ) from None
@@ -74,8 +74,8 @@ def get_suggestions(
             db, entity_type=entity_type, limit=limit
         )
         return suggestions
-    except Exception as e:
-        log.error("get_suggestions_failed", error_type=type(e).__name__)
+    except Exception:
+        log.error("get_suggestions_failed")
         raise HTTPException(
             status_code=500, detail="Failed to get outreach suggestions"
         ) from None
@@ -98,8 +98,8 @@ def get_entity_status(
             db, entity_type=entity_type, entity_id=entity_id
         )
         return status
-    except Exception as e:
-        log.error("get_entity_status_failed", error_type=type(e).__name__)
+    except Exception:
+        log.error("get_entity_status_failed")
         raise HTTPException(
             status_code=500, detail="Failed to get entity outreach status"
         ) from None
