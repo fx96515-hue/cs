@@ -10,10 +10,14 @@ This repository uses `.github/workflows/sonar.yml` for optional Sonar analysis.
 ## Required Configuration
 - Secret: `SONAR_TOKEN`
 - Variable: `SONAR_PROJECT_KEY`
+- Variable: `SONAR_ORGANIZATION` (required when using SonarCloud host)
 
 ## Optional Configuration
-- Variable: `SONAR_ORGANIZATION` (required for SonarCloud org mapping)
 - Secret: `SONAR_HOST_URL` (set for self-hosted SonarQube; defaults to SonarCloud URL if absent)
+
+## SonarCloud Note
+- The workflow disables SonarCloud Automatic Analysis via API before CI scan.
+- `SONAR_TOKEN` must have permission to administer the SonarCloud project.
 
 ## Sonar Issue Sync
 - `.github/workflows/sonar_issues_sync.yml` syncs Sonar issues into GitHub issues.

@@ -62,6 +62,25 @@ jobs:
           cd apps/api
           pytest tests/ -q --cov=app --cov-report=xml:coverage.xml --cov-fail-under=0
 
+      - name: Disable SonarCloud Automatic Analysis
+        if: steps.sonar_config.outputs.enabled == 'true' && secrets.SONAR_HOST_URL == ''
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+        shell: bash
+        run: |
+          http_code=$(curl -sS -o autoscan_response.json -w "%{http_code}" \
+            -u "${SONAR_TOKEN}:" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "projectKey=${SONAR_PROJECT_KEY}" \
+            --data-urlencode "enable=false" \
+            "https://sonarcloud.io/api/autoscan/activation")
+          if [ "${http_code}" -ge 400 ]; then
+            echo "Unable to disable SonarCloud automatic analysis (HTTP ${http_code})."
+            cat autoscan_response.json
+            exit 1
+          fi
+
       - name: Build Sonar arguments
         if: steps.sonar_config.outputs.enabled == 'true'
         id: sonar_args
