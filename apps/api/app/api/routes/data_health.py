@@ -32,27 +32,6 @@ def _sanitize_errors(errors: list[str] | None) -> list[str]:
     return ["Pipeline operation failed"] * len(errors)
 
 
-def _sanitize_result_payload(payload: object) -> object:
-    """Recursively redact exception-like fields from pipeline payloads."""
-    if isinstance(payload, dict):
-        sanitized: dict[str, object] = {}
-        for key, value in payload.items():
-            lowered = key.lower()
-            if lowered in {"error", "errors", "exception", "traceback"}:
-                if isinstance(value, list):
-                    sanitized[key] = _sanitize_errors([str(v) for v in value])
-                elif value is None:
-                    sanitized[key] = None
-                else:
-                    sanitized[key] = "Pipeline operation failed"
-                continue
-            sanitized[key] = _sanitize_result_payload(value)
-        return sanitized
-    if isinstance(payload, list):
-        return [_sanitize_result_payload(item) for item in payload]
-    return payload
-
-
 @router.get("/status")
 def data_health_status(
     db: Annotated[Session, Depends(get_db)],
@@ -152,7 +131,7 @@ def trigger_market_refresh(
         return {
             "status": result["status"],
             "duration_seconds": result["duration_seconds"],
-            "results": _sanitize_result_payload(result.get("results", {})),
+            "sources": sorted((result.get("results") or {}).keys()),
             "errors": _sanitize_errors(result.get("errors")),
         }
     finally:
@@ -176,7 +155,7 @@ def trigger_intelligence_refresh(
         return {
             "status": result["status"],
             "duration_seconds": result["duration_seconds"],
-            "results": _sanitize_result_payload(result.get("results", {})),
+            "sources": sorted((result.get("results") or {}).keys()),
             "errors": _sanitize_errors(result.get("errors")),
         }
     finally:

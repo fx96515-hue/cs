@@ -183,9 +183,8 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
             # Re-apply URL sanitizer in the same control flow right before the sink
             # so static analysis can prove SSRF protection.
             safe_request_url = _validate_public_http_url(current_url)
-            r = client.get(
-                safe_request_url
-            )  # codeql[py/full-ssrf] NOSONAR: URL validated via strict allowlist, port, and IP checks
+            # codeql[py/full-ssrf]
+            r = client.get(safe_request_url)  # NOSONAR: URL is strictly validated
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break
