@@ -31,7 +31,9 @@ RUN python -m pip install --upgrade \
 COPY requirements.txt ./
 COPY constraints-docker.txt ./
 RUN pip install --no-cache-dir \
-    --extra-index-url https://download.pytorch.org/whl/cpu \
+    --index-url https://download.pytorch.org/whl/cpu \
+    torch==2.10.0+cpu && \
+    pip install --no-cache-dir \
     -c constraints-docker.txt \
     -r requirements.txt
 

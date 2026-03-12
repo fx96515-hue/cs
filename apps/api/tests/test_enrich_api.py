@@ -66,3 +66,21 @@ def test_enrich_without_auth(client, db):
     response = client.post("/enrich/cooperative/1", json=payload)
 
     assert response.status_code == 401
+
+
+def test_enrich_handles_unexpected_errors(client, auth_headers, monkeypatch):
+    """Unexpected internal exceptions must return a sanitized 500 response."""
+
+    def _raise_internal_error(*args, **kwargs):
+        raise RuntimeError("internal stack trace should not leak")
+
+    monkeypatch.setattr("app.api.routes.enrich.enrich_entity", _raise_internal_error)
+
+    response = client.post(
+        "/enrich/cooperative/1",
+        json={"url": "https://example.com", "use_llm": False},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Enrichment failed"

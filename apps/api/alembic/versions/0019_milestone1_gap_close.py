@@ -38,6 +38,12 @@ def _unique_exists(
     return any(uc["name"] == name for uc in inspector.get_unique_constraints(table))
 
 
+def _fk_constraint_exists(
+    inspector: sa.engine.reflection.Inspector, table: str, name: str
+) -> bool:
+    return any(fk.get("name") == name for fk in inspector.get_foreign_keys(table))
+
+
 def upgrade() -> None:
     bind = op.get_bind()
     inspector = inspect(bind)
@@ -209,14 +215,14 @@ def downgrade() -> None:
     inspector = inspect(bind)
 
     if "data_quality_flags" in inspector.get_table_names():
-        try:
+        if _fk_constraint_exists(
+            inspector, "data_quality_flags", "fk_data_quality_flags_source_id"
+        ):
             op.drop_constraint(
                 "fk_data_quality_flags_source_id",
                 "data_quality_flags",
                 type_="foreignkey",
             )
-        except Exception:
-            pass
 
     if "entity_evidence" in inspector.get_table_names():
         if _unique_exists(inspector, "entity_evidence", "uq_entity_evidence"):

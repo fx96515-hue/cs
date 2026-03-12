@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Literal
+import structlog
 from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import Session
 
@@ -14,6 +15,7 @@ from app.services.outreach import generate_outreach, Language, Purpose
 
 
 OutreachStatus = Literal["pending", "sent", "responded", "follow_up_needed"]
+log = structlog.get_logger(__name__)
 
 
 def select_top_candidates(
@@ -189,12 +191,18 @@ def create_campaign(
                 }
             )
         except Exception as e:
+            log.warning(
+                "outreach_generation_failed",
+                entity_type=entity_type,
+                entity_id=candidate["entity_id"],
+                error_type=type(e).__name__,
+            )
             targets.append(
                 {
                     "entity_id": candidate["entity_id"],
                     "name": candidate["name"],
                     "status": "error",
-                    "error": str(e),
+                    "error": "Outreach generation failed",
                 }
             )
 

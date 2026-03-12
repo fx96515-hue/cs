@@ -456,6 +456,46 @@ def test_shipment_validation_weight(client, auth_headers):
     assert response.status_code == 422  # Validation error
 
 
+def test_shipment_validation_invalid_departure_date(client, auth_headers):
+    """Invalid ISO date strings should be rejected explicitly."""
+    payload = {
+        "container_number": "DATE001",
+        "bill_of_lading": "BOL_DATE001",
+        "weight_kg": 18000,
+        "container_type": "40ft",
+        "origin_port": "Callao",
+        "destination_port": "Hamburg",
+        "departure_date": "not-a-date",
+    }
+
+    response = client.post("/shipments", json=payload, headers=auth_headers)
+    assert response.status_code == 422
+    assert "departure_date" in response.json()["detail"]
+
+
+def test_shipment_patch_invalid_actual_arrival(client, auth_headers, db):
+    """PATCH should reject invalid actual_arrival strings."""
+    shipment = Shipment(
+        container_number="PATCHDATE001",
+        bill_of_lading="BOL_PATCHDATE001",
+        weight_kg=18000,
+        container_type="40ft",
+        origin_port="Callao",
+        destination_port="Hamburg",
+    )
+    db.add(shipment)
+    db.commit()
+    db.refresh(shipment)
+
+    response = client.patch(
+        f"/shipments/{shipment.id}",
+        json={"actual_arrival": "not-a-date"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+    assert "actual_arrival" in response.json()["detail"]
+
+
 def test_shipment_unauthorized_access(client):
     """Test that accessing shipments without token fails."""
     response = client.get("/shipments")
@@ -526,3 +566,29 @@ def test_add_tracking_event_nonexistent_shipment(client, auth_headers):
         "/shipments/99999/track", json=event_payload, headers=auth_headers
     )
     assert response.status_code == 404
+
+
+def test_add_tracking_event_invalid_timestamp_returns_422(client, auth_headers, db):
+    """Invalid tracking timestamps should not be silently accepted."""
+    shipment = Shipment(
+        container_number="TRACKBAD001",
+        bill_of_lading="BOL_TRACKBAD001",
+        weight_kg=18000,
+        container_type="40ft",
+        origin_port="Callao",
+        destination_port="Hamburg",
+    )
+    db.add(shipment)
+    db.commit()
+    db.refresh(shipment)
+
+    event_payload = {
+        "timestamp": "invalid-timestamp",
+        "location": "Panama Canal",
+        "event": "Transit",
+    }
+    response = client.post(
+        f"/shipments/{shipment.id}/track", json=event_payload, headers=auth_headers
+    )
+    assert response.status_code == 422
+    assert "timestamp" in response.json()["detail"]

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 import structlog
@@ -12,9 +12,17 @@ from app.services.enrichment import enrich_entity
 
 router = APIRouter()
 log = structlog.get_logger(__name__)
+ENRICH_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {"description": "Invalid enrichment request"},
+    500: {"description": "Enrichment failed"},
+}
 
 
-@router.post("/{entity_type}/{entity_id}", response_model=EnrichResponse)
+@router.post(
+    "/{entity_type}/{entity_id}",
+    response_model=EnrichResponse,
+    responses=ENRICH_ERROR_RESPONSES,
+)
 def enrich(
     entity_type: str,
     entity_id: int,
@@ -43,3 +51,11 @@ def enrich(
             entity_id=entity_id,
         )
         raise HTTPException(status_code=400, detail="Invalid enrichment request")
+    except Exception as e:
+        log.error(
+            "enrich_request_failed",
+            error_type=type(e).__name__,
+            entity_type=entity_type,
+            entity_id=entity_id,
+        )
+        raise HTTPException(status_code=500, detail="Enrichment failed")

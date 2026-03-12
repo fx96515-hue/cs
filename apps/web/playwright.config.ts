@@ -10,6 +10,12 @@ export default defineConfig({
   },
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
+  webServer: {
+    command: "npm run dev",
+    url: baseURL,
+    reuseExistingServer: true,
+    timeout: 120_000,
+  },
   use: {
     baseURL,
     trace: "retain-on-failure",
