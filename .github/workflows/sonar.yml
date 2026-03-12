@@ -63,12 +63,17 @@ jobs:
           pytest tests/ -q --cov=app --cov-report=xml:coverage.xml --cov-fail-under=0
 
       - name: Disable SonarCloud Automatic Analysis
-        if: steps.sonar_config.outputs.enabled == 'true' && secrets.SONAR_HOST_URL == ''
+        if: steps.sonar_config.outputs.enabled == 'true'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         shell: bash
         run: |
+          if [ -n "${SONAR_HOST_URL}" ]; then
+            echo "Skipping autoscan toggle for self-hosted SonarQube."
+            exit 0
+          fi
           http_code=$(curl -sS -o autoscan_response.json -w "%{http_code}" \
             -u "${SONAR_TOKEN}:" \
             -H "Content-Type: application/x-www-form-urlencoded" \
