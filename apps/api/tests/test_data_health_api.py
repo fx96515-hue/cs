@@ -73,7 +73,7 @@ class _DummyOrchestrator:
 
 
 def _patch_data_health_deps(monkeypatch):
-    monkeypatch.setattr(data_health_routes, "_get_redis", lambda: _DummyRedis())
+    monkeypatch.setattr(data_health_routes, "_get_redis", _DummyRedis)
     monkeypatch.setattr(
         data_health_routes, "DataPipelineOrchestrator", _DummyOrchestrator
     )

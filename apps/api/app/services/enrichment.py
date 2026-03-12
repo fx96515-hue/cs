@@ -185,7 +185,7 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
             safe_request_url = _validate_public_http_url(current_url)
             r = client.get(
                 safe_request_url
-            )  # codeql[py/full-ssrf]: URL validated via strict allowlist and IP checks
+            )  # codeql[py/full-ssrf] NOSONAR: URL validated via strict allowlist, port, and IP checks
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break

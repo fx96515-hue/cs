@@ -8,7 +8,6 @@ Provides comprehensive intelligence on Peru coffee regions including:
 - External data integration
 """
 
-import re
 import unicodedata
 from typing import Any
 from sqlalchemy.orm import Session
@@ -35,14 +34,18 @@ class PeruRegionIntelService:
         Handles frontend display names like "Junín (Satipo/Chanchamayo)" by
         removing parenthetical qualifiers and diacritics.
         """
-        # Avoid polynomial backtracking by limiting parenthetical content.
-        base = re.sub(r"\s*\([^()]*\)\s*$", "", (value or "").strip())
+        raw = (value or "").strip()
+        base = raw
+        # Remove a trailing "(...)" suffix without regex backtracking risks.
+        open_idx = raw.rfind("(")
+        if open_idx != -1 and raw.endswith(")"):
+            base = raw[:open_idx].rstrip()
         no_diacritics = "".join(
             ch
             for ch in unicodedata.normalize("NFKD", base)
             if not unicodedata.combining(ch)
         )
-        return re.sub(r"\s+", " ", no_diacritics).strip().lower()
+        return " ".join(no_diacritics.split()).lower()
 
     def _resolve_region(self, region_name: str) -> Region | None:
         """Resolve a Peru region by exact or normalized alias name."""

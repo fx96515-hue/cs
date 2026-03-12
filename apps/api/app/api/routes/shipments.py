@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 from datetime import datetime
+from typing import Any
 
 from app.api.deps import require_role
 from app.api.response_utils import apply_create_status
@@ -21,6 +22,12 @@ from app.core.versioning import capture_entity_version
 from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 
 router = APIRouter()
+
+SHIPMENT_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {"description": "Invalid request"},
+    404: {"description": "Shipment not found"},
+    422: {"description": "Invalid datetime format"},
+}
 
 
 def _parse_iso_datetime_or_422(value: str, field_name: str) -> datetime:
@@ -115,7 +122,12 @@ def list_delayed_shipments(
     return _build_shipment_list_out(db, shipments)
 
 
-@router.post("/", response_model=ShipmentOut, status_code=201)
+@router.post(
+    "/",
+    response_model=ShipmentOut,
+    status_code=201,
+    responses=SHIPMENT_ERROR_RESPONSES,
+)
 def create_shipment(
     payload: ShipmentCreate,
     request: Request,
@@ -243,7 +255,11 @@ def get_shipment(
     return _build_shipment_out(db, shipment)
 
 
-@router.patch("/{shipment_id}", response_model=ShipmentOut)
+@router.patch(
+    "/{shipment_id}",
+    response_model=ShipmentOut,
+    responses=SHIPMENT_ERROR_RESPONSES,
+)
 def update_shipment(
     shipment_id: int,
     payload: ShipmentUpdate,
@@ -424,7 +440,11 @@ def restore_shipment(
     return _build_shipment_out(db, shipment)
 
 
-@router.post("/{shipment_id}/track", response_model=ShipmentOut)
+@router.post(
+    "/{shipment_id}/track",
+    response_model=ShipmentOut,
+    responses=SHIPMENT_ERROR_RESPONSES,
+)
 def add_tracking_event(
     shipment_id: int,
     event: TrackingEventCreate,

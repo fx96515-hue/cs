@@ -473,6 +473,29 @@ def test_shipment_validation_invalid_departure_date(client, auth_headers):
     assert "departure_date" in response.json()["detail"]
 
 
+def test_shipment_patch_invalid_actual_arrival(client, auth_headers, db):
+    """PATCH should reject invalid actual_arrival strings."""
+    shipment = Shipment(
+        container_number="PATCHDATE001",
+        bill_of_lading="BOL_PATCHDATE001",
+        weight_kg=18000,
+        container_type="40ft",
+        origin_port="Callao",
+        destination_port="Hamburg",
+    )
+    db.add(shipment)
+    db.commit()
+    db.refresh(shipment)
+
+    response = client.patch(
+        f"/shipments/{shipment.id}",
+        json={"actual_arrival": "not-a-date"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+    assert "actual_arrival" in response.json()["detail"]
+
+
 def test_shipment_unauthorized_access(client):
     """Test that accessing shipments without token fails."""
     response = client.get("/shipments")
