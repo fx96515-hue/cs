@@ -72,6 +72,14 @@ class _DummyOrchestrator:
         }
 
 
+class _DummyFreshnessMonitor:
+    def __init__(self, db):
+        self.db = db
+
+    def get_freshness_report(self) -> dict:
+        return {"overall_status": "healthy", "sources": {"fx": {"stale": False}}}
+
+
 def _patch_data_health_deps(monkeypatch):
     monkeypatch.setattr(data_health_routes, "_get_redis", _DummyRedis)
     monkeypatch.setattr(
@@ -130,3 +138,36 @@ def test_reset_circuit_unknown_provider_returns_safe_response(
     payload = response.json()
     assert payload["error"] == "Unknown provider: unknown"
     assert "available_providers" in payload
+
+
+def test_data_health_status_endpoint(client, auth_headers, monkeypatch):
+    monkeypatch.setattr(
+        data_health_routes, "DataFreshnessMonitor", _DummyFreshnessMonitor
+    )
+
+    response = client.get("/data-health/status", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json()["overall_status"] == "healthy"
+
+
+def test_data_health_sources_endpoint(client, auth_headers, monkeypatch):
+    _patch_data_health_deps(monkeypatch)
+
+    response = client.get("/data-health/sources", headers=auth_headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "sources" in payload
+    assert payload["sources"]["news"]["state"] == "open"
+
+
+def test_reset_circuit_known_provider(client, auth_headers, monkeypatch):
+    _patch_data_health_deps(monkeypatch)
+
+    response = client.post("/data-health/reset-circuit/news", headers=auth_headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["provider"] == "news"
+    assert payload["new_state"] == "closed"
