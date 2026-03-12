@@ -49,10 +49,12 @@ def create_campaign(
         return result
     except ValueError as e:
         log.warning("create_campaign_invalid", error_type=type(e).__name__)
-        raise HTTPException(status_code=400, detail="Invalid request")
+        raise HTTPException(status_code=400, detail="Invalid request") from None
     except Exception as e:
         log.error("create_campaign_failed", error_type=type(e).__name__)
-        raise HTTPException(status_code=500, detail="Campaign creation failed")
+        raise HTTPException(
+            status_code=500, detail="Campaign creation failed"
+        ) from None
 
 
 @router.get(
@@ -76,7 +78,7 @@ def get_suggestions(
         log.error("get_suggestions_failed", error_type=type(e).__name__)
         raise HTTPException(
             status_code=500, detail="Failed to get outreach suggestions"
-        )
+        ) from None
 
 
 @router.get(
@@ -100,4 +102,4 @@ def get_entity_status(
         log.error("get_entity_status_failed", error_type=type(e).__name__)
         raise HTTPException(
             status_code=500, detail="Failed to get entity outreach status"
-        )
+        ) from None

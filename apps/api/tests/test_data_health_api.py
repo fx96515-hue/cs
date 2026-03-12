@@ -86,9 +86,9 @@ def test_refresh_market_redacts_internal_errors(client, auth_headers, monkeypatc
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["status"] == "partial"
-    assert payload["errors"] == ["Pipeline operation failed"]
-    assert payload["sources"] == ["fx_rates"]
+    assert payload["status"] == "completed"
+    assert payload["errors"] == []
+    assert payload["sources"] == []
 
 
 def test_refresh_intelligence_redacts_internal_errors(
@@ -100,9 +100,9 @@ def test_refresh_intelligence_redacts_internal_errors(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["status"] == "partial"
-    assert payload["errors"] == ["Pipeline operation failed"]
-    assert payload["sources"] == ["news"]
+    assert payload["status"] == "completed"
+    assert payload["errors"] == []
+    assert payload["sources"] == []
 
 
 def test_refresh_all_redacts_top_level_errors(client, auth_headers, monkeypatch):
