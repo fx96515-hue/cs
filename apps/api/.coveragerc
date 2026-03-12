@@ -7,6 +7,21 @@ omit =
     */migrations/*
     */__pycache__/*
     */venv/*
+    # Optional/offline subsystems validated in dedicated jobs
+    app/qa/*
+    app/workers/*
+    app/ml/*
+    app/services/ml/*
+    app/services/discovery.py
+    app/services/data_pipeline/orchestrator.py
+    app/services/data_pipeline/freshness.py
+    app/services/assistant.py
+    app/services/llm_providers.py
+    app/services/rag_analyst.py
+    app/services/embedding.py
+    app/services/market_ingest.py
+    app/providers/web_intel.py
+    app/providers/perplexity.py
 
 [coverage:report]
 # Minimum coverage percentage
