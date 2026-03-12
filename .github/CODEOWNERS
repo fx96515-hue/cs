@@ -1,0 +1,8 @@
+# Global owner fallback
+* @fx96515-hue
+
+# Frontend + deployment surfaces
+/apps/web/ @fx96515-hue
+/vercel.json @fx96515-hue
+/apps/web/vercel.json @fx96515-hue
+/.github/workflows/ @fx96515-hue
