@@ -2,6 +2,7 @@
 
 import pytest
 from app.services.auto_outreach import (
+    create_campaign,
     select_top_candidates,
     get_outreach_suggestions,
     get_entity_outreach_status,
@@ -216,3 +217,37 @@ def test_get_entity_outreach_status_with_history(db):
 
     assert status["status"] in ["pending", "follow_up_needed"]
     assert len(status["events"]) == 1
+
+
+def test_create_campaign_masks_generation_errors(db, monkeypatch):
+    """Internal exceptions must not be returned verbatim to API callers."""
+    coop = Cooperative(
+        name="Failing Generation Coop",
+        region="Cajamarca",
+        quality_score=82.0,
+        reliability_score=80.0,
+        total_score=81.0,
+        status="active",
+    )
+    db.add(coop)
+    db.commit()
+
+    def _raise_generation_error(*args, **kwargs):
+        raise RuntimeError("sensitive stack details should not be exposed")
+
+    monkeypatch.setattr(
+        "app.services.auto_outreach.generate_outreach", _raise_generation_error
+    )
+
+    result = create_campaign(
+        db,
+        name="Security Campaign",
+        entity_type="cooperative",
+        refine_with_llm=False,
+        limit=1,
+    )
+
+    assert result["status"] == "ok"
+    assert result["targets"]
+    assert result["targets"][0]["status"] == "error"
+    assert result["targets"][0]["error"] == "Outreach generation failed"

@@ -183,8 +183,9 @@ def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]
             # Re-apply URL sanitizer in the same control flow right before the sink
             # so static analysis can prove SSRF protection.
             safe_request_url = _validate_public_http_url(current_url)
-            # codeql[py/full-ssrf]: URL is validated via scheme/host/IP allowlist checks
-            r = client.get(safe_request_url)
+            r = client.get(
+                safe_request_url
+            )  # codeql[py/full-ssrf]: URL validated via strict allowlist and IP checks
             # If this is not a redirect, stop here.
             if r.status_code not in {301, 302, 303, 307, 308}:
                 break
@@ -858,6 +859,22 @@ def enrich_entity(
         }
 
     except Exception as e:
+        error_type = type(e).__name__
+        safe_error = "Enrichment failed"
+        error_payload = {"error": "enrichment_failed", "error_type": error_type}
+        try:
+            db.add(
+                EntityEvent(
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                    event_type="enrich_exception",
+                    payload=error_payload,
+                )
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+
         # Record a failed web extract but defend against duplicate inserts.
         try:
             we = WebExtract(
@@ -866,7 +883,7 @@ def enrich_entity(
                 url=target_url,
                 status="failed",
                 retrieved_at=now,
-                meta={"error": str(e)},
+                meta=error_payload,
             )
             db.add(we)
             db.add(
@@ -874,7 +891,7 @@ def enrich_entity(
                     entity_type=entity_type,
                     entity_id=entity_id,
                     event_type="enrich_failed",
-                    payload={"url": target_url, "error": str(e)},
+                    payload={"url": target_url, **error_payload},
                 )
             )
             try:
@@ -896,7 +913,7 @@ def enrich_entity(
 
         return {
             "status": "failed",
-            "error": str(e),
+            "error": safe_error,
             "entity_type": entity_type,
             "entity_id": entity_id,
             "url": target_url,

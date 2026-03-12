@@ -21,6 +21,14 @@ def _column_exists(
     return any(col["name"] == column for col in inspector.get_columns(table))
 
 
+def _fk_constraint_exists(
+    inspector: sa.engine.reflection.Inspector, table: str, constraint_name: str
+) -> bool:
+    return any(
+        fk.get("name") == constraint_name for fk in inspector.get_foreign_keys(table)
+    )
+
+
 def upgrade() -> None:
     bind = op.get_bind()
     inspector = inspect(bind)
@@ -94,11 +102,10 @@ def downgrade() -> None:
     if "cooperatives" in inspector.get_table_names():
         if _column_exists(inspector, "cooperatives", "region_id"):
             op.drop_index("ix_cooperatives_region_id", table_name="cooperatives")
-            # Drop FK if exists (ignore if already gone)
-            try:
+            if _fk_constraint_exists(
+                inspector, "cooperatives", "fk_cooperatives_region_id"
+            ):
                 op.drop_constraint("fk_cooperatives_region_id", "cooperatives", type_="foreignkey")
-            except Exception:
-                pass
             op.drop_column("cooperatives", "region_id")
 
     if "coffee_price_history" in inspector.get_table_names():

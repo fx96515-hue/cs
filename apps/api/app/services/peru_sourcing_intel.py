@@ -35,7 +35,8 @@ class PeruRegionIntelService:
         Handles frontend display names like "Junín (Satipo/Chanchamayo)" by
         removing parenthetical qualifiers and diacritics.
         """
-        base = re.sub(r"\s*\(.*\)\s*$", "", (value or "").strip())
+        # Avoid polynomial backtracking by limiting parenthetical content.
+        base = re.sub(r"\s*\([^()]*\)\s*$", "", (value or "").strip())
         no_diacritics = "".join(
             ch
             for ch in unicodedata.normalize("NFKD", base)

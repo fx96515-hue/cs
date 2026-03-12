@@ -23,6 +23,16 @@ from app.services.data_quality import recompute_entity_flags, resolve_entity_fla
 router = APIRouter()
 
 
+def _parse_iso_datetime_or_422(value: str, field_name: str) -> datetime:
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid ISO-8601 datetime for '{field_name}'",
+        ) from exc
+
+
 def _build_shipment_out(db: Session, shipment: Shipment) -> ShipmentOut:
     lot_ids = [
         row.lot_id
@@ -159,22 +169,17 @@ def create_shipment(
         shipment.actual_arrival = payload.actual_arrival_at.isoformat()
 
     if payload.departure_at is None and payload.departure_date:
-        try:
-            shipment.departure_at = datetime.fromisoformat(payload.departure_date)
-        except ValueError:
-            pass
+        shipment.departure_at = _parse_iso_datetime_or_422(
+            payload.departure_date, "departure_date"
+        )
     if payload.estimated_arrival_at is None and payload.estimated_arrival:
-        try:
-            shipment.estimated_arrival_at = datetime.fromisoformat(
-                payload.estimated_arrival
-            )
-        except ValueError:
-            pass
+        shipment.estimated_arrival_at = _parse_iso_datetime_or_422(
+            payload.estimated_arrival, "estimated_arrival"
+        )
     if payload.actual_arrival_at is None and payload.actual_arrival:
-        try:
-            shipment.actual_arrival_at = datetime.fromisoformat(payload.actual_arrival)
-        except ValueError:
-            pass
+        shipment.actual_arrival_at = _parse_iso_datetime_or_422(
+            payload.actual_arrival, "actual_arrival"
+        )
     lot_ids: list[int] = []
     if payload.lot_ids:
         lot_ids = list(dict.fromkeys(payload.lot_ids))
@@ -276,26 +281,17 @@ def update_shipment(
             "actual_arrival", update_dict["actual_arrival_at"].isoformat()
         )
     if "departure_at" not in update_dict and "departure_date" in update_dict:
-        try:
-            update_dict["departure_at"] = datetime.fromisoformat(
-                update_dict["departure_date"]
-            )
-        except ValueError:
-            pass
+        update_dict["departure_at"] = _parse_iso_datetime_or_422(
+            update_dict["departure_date"], "departure_date"
+        )
     if "estimated_arrival_at" not in update_dict and "estimated_arrival" in update_dict:
-        try:
-            update_dict["estimated_arrival_at"] = datetime.fromisoformat(
-                update_dict["estimated_arrival"]
-            )
-        except ValueError:
-            pass
+        update_dict["estimated_arrival_at"] = _parse_iso_datetime_or_422(
+            update_dict["estimated_arrival"], "estimated_arrival"
+        )
     if "actual_arrival_at" not in update_dict and "actual_arrival" in update_dict:
-        try:
-            update_dict["actual_arrival_at"] = datetime.fromisoformat(
-                update_dict["actual_arrival"]
-            )
-        except ValueError:
-            pass
+        update_dict["actual_arrival_at"] = _parse_iso_datetime_or_422(
+            update_dict["actual_arrival"], "actual_arrival"
+        )
     if "status" in update_dict and update_dict["status"] != shipment.status:
         update_dict["status_updated_at"] = datetime.now().isoformat()
 
@@ -470,11 +466,7 @@ def add_tracking_event(
     db.commit()
     db.refresh(shipment)
 
-    occurred_at = datetime.utcnow()
-    try:
-        occurred_at = datetime.fromisoformat(event.timestamp)
-    except ValueError:
-        pass
+    occurred_at = _parse_iso_datetime_or_422(event.timestamp, "timestamp")
     db.add(
         TransportEvent(
             shipment_id=shipment_id,

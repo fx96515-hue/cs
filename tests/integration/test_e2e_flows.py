@@ -228,10 +228,12 @@ def test_e2e_shipment_flow(auth_token):
 
 def test_health_endpoints():
     """Verify system health and readiness."""
+    health = None
     try:
         health = requests.get(f"{BASE_URL}/health", timeout=5)
     except requests.exceptions.RequestException:
         pytest.skip("Backend not accessible for integration health checks")
+    assert health is not None
     assert health.status_code == 200
     
     # Check Prometheus metrics endpoint

@@ -43,3 +43,11 @@ def enrich(
             entity_id=entity_id,
         )
         raise HTTPException(status_code=400, detail="Invalid enrichment request")
+    except Exception as e:
+        log.error(
+            "enrich_request_failed",
+            error_type=type(e).__name__,
+            entity_type=entity_type,
+            entity_id=entity_id,
+        )
+        raise HTTPException(status_code=500, detail="Enrichment failed")
