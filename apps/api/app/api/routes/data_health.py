@@ -7,7 +7,7 @@ and manual pipeline triggers.
 from typing import Annotated
 from time import perf_counter
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 import redis
 from sqlalchemy.orm import Session
 
@@ -137,6 +137,8 @@ def trigger_market_refresh(
             "sources": [],
             "errors": [],
         }
+    except Exception:
+        raise HTTPException(status_code=500, detail="Market refresh failed") from None
     finally:
         redis_client.close()
 
@@ -163,6 +165,10 @@ def trigger_intelligence_refresh(
             "sources": [],
             "errors": [],
         }
+    except Exception:
+        raise HTTPException(
+            status_code=500, detail="Intelligence refresh failed"
+        ) from None
     finally:
         redis_client.close()
 

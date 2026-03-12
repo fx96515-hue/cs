@@ -41,20 +41,18 @@ def enrich(
             use_llm=payload.use_llm,
         )
         return out
-    except ValueError as e:
+    except ValueError:
         log.warning(
             "enrich_request_invalid",
-            error_type=type(e).__name__,
             entity_type=entity_type,
             entity_id=entity_id,
         )
         raise HTTPException(
             status_code=400, detail="Invalid enrichment request"
         ) from None
-    except Exception as e:
+    except Exception:
         log.error(
             "enrich_request_failed",
-            error_type=type(e).__name__,
             entity_type=entity_type,
             entity_id=entity_id,
         )
