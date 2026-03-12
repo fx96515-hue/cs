@@ -19,10 +19,15 @@ jobs:
         id: sonar_config
         shell: bash
         run: |
-          if [ -n "${{ secrets.SONAR_TOKEN }}" ] && [ -n "${{ vars.SONAR_PROJECT_KEY }}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ -z "${{ secrets.SONAR_TOKEN }}" ] || [ -z "${{ vars.SONAR_PROJECT_KEY }}" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "reason=missing SONAR_TOKEN or SONAR_PROJECT_KEY" >> "$GITHUB_OUTPUT"
+          elif [ -z "${{ secrets.SONAR_HOST_URL }}" ] && [ -z "${{ vars.SONAR_ORGANIZATION }}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "reason=missing SONAR_ORGANIZATION for SonarCloud" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "reason=ok" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/checkout@v6
@@ -83,4 +88,4 @@ jobs:
       - name: Explain why sonar is skipped
         if: steps.sonar_config.outputs.enabled != 'true'
         run: |
-          echo "Skipping Sonar scan: missing SONAR_TOKEN or SONAR_PROJECT_KEY."
+          echo "Skipping Sonar scan: ${{ steps.sonar_config.outputs.reason }}"
