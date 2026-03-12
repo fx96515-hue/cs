@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import redis as redis_lib
+import structlog
 
 from app.core.config import settings
 from app.db.session import get_db
 
 router = APIRouter()
+log = structlog.get_logger(__name__)
+_SERVICE_ERROR = "error"
+_DB_HEALTH_FAILURE = "Database health check failed"
+_REDIS_HEALTH_FAILURE = "Redis health check failed"
 
 
 @router.get("/health")
@@ -27,8 +32,9 @@ def ready(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1")).scalar()
         checks["services"]["database"] = "ok"
-    except Exception as e:
-        checks["services"]["database"] = f"error: {str(e)}"
+    except Exception as exc:
+        log.warning("ready_database_check_failed", error=str(exc))
+        checks["services"]["database"] = _SERVICE_ERROR
 
     # Redis check (non-fatal)
     try:
@@ -38,8 +44,9 @@ def ready(db: Session = Depends(get_db)):
             checks["services"]["redis"] = "ok"
         finally:
             client.close()
-    except Exception as e:
-        checks["services"]["redis"] = f"error: {str(e)}"
+    except Exception as exc:
+        log.warning("ready_redis_check_failed", error=str(exc))
+        checks["services"]["redis"] = _SERVICE_ERROR
 
     # overall status
     overall_ok = all(v == "ok" for v in checks["services"].values())
@@ -51,16 +58,24 @@ def ready(db: Session = Depends(get_db)):
 @router.get("/health/db")
 def health_db(db: Session = Depends(get_db)):
     """Check database connectivity."""
-    db.execute(text("SELECT 1")).scalar()
-    return {"status": "ok", "service": "database"}
+    try:
+        db.execute(text("SELECT 1")).scalar()
+        return {"status": "ok", "service": "database"}
+    except Exception as exc:
+        log.warning("health_db_failed", error=str(exc))
+        raise HTTPException(status_code=503, detail=_DB_HEALTH_FAILURE) from None
 
 
 @router.get("/health/redis")
 def health_redis():
     """Check Redis connectivity."""
-    client = redis_lib.from_url(settings.REDIS_URL, socket_connect_timeout=2)
     try:
-        client.ping()
-    finally:
-        client.close()
-    return {"status": "ok", "service": "redis"}
+        client = redis_lib.from_url(settings.REDIS_URL, socket_connect_timeout=2)
+        try:
+            client.ping()
+        finally:
+            client.close()
+        return {"status": "ok", "service": "redis"}
+    except Exception as exc:
+        log.warning("health_redis_failed", error=str(exc))
+        raise HTTPException(status_code=503, detail=_REDIS_HEALTH_FAILURE) from None
