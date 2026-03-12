@@ -1,0 +1,88 @@
+name: V0 Safety Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited, labeled, unlabeled]
+
+jobs:
+  v0-guard:
+    name: V0 PR Guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Validate v0 PR boundaries
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.notice("No pull request payload. Nothing to validate.");
+              return;
+            }
+
+            const headRef = pr.head.ref;
+            const baseRef = pr.base.ref;
+            const labels = (pr.labels || []).map((l) => String(l.name || "").toLowerCase());
+
+            const isV0Branch = /^v0([/-]|$)/i.test(headRef) || /^ui\/v0-/i.test(headRef);
+            const isV0Label = labels.includes("v0");
+            const isV0Pr = isV0Branch || isV0Label;
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const changedFiles = files.map((f) => f.filename);
+            const allowedPrefixes = [
+              "apps/web/",
+              "docs/ui/",
+              ".github/workflows/vercel.yml",
+              ".github/workflows/v0-safety-gate.yml",
+              ".github/CODEOWNERS",
+              "vercel.json",
+              "apps/web/vercel.json",
+              "README.md",
+            ];
+
+            const outOfScope = changedFiles.filter(
+              (f) => !allowedPrefixes.some((allowed) => f === allowed || f.startsWith(allowed))
+            );
+
+            if (isV0Branch && baseRef === "main") {
+              core.setFailed(
+                "Direct v0-* branches into main are blocked. Use ui/v0-sandbox first, then a reviewed follow-up PR to main."
+              );
+              return;
+            }
+
+            if (!isV0Pr) {
+              core.notice("Non-v0 PR detected; safety guard passed.");
+              return;
+            }
+
+            if (baseRef !== "ui/v0-sandbox") {
+              core.setFailed(
+                `v0 PRs must target ui/v0-sandbox. Current base is '${baseRef}'.`
+              );
+              return;
+            }
+
+            if (outOfScope.length > 0) {
+              core.setFailed(
+                [
+                  "v0 PR changes are out of allowed scope.",
+                  "Allowed scope: apps/web/, docs/ui/, Vercel workflow/config files.",
+                  "Out-of-scope files:",
+                  ...outOfScope.map((f) => `- ${f}`),
+                ].join("\n")
+              );
+              return;
+            }
+
+            core.notice("v0 safety guard passed.");
