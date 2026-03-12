@@ -1,22 +1,24 @@
 # SonarQube / SonarCloud Integration
 
-This document explains the minimal SonarCloud integration scaffold added to the repository.
+This repository uses `.github/workflows/sonar.yml` for optional Sonar analysis.
 
-What was added
-- `.github/workflows/sonarcloud.yml` — GitHub Actions workflow that runs SonarCloud analysis on push/PR.
-- `sonar.projectKey` and `sonar.organization` are configured in the workflow. You must update these values for your SonarCloud organization if different.
+## Workflow Behavior
+- Runs on `push` to `main`, PR updates, and manual dispatch.
+- Automatically skips (green) when required Sonar credentials are missing.
+- Runs API tests with coverage and uploads coverage-aware scan results.
 
-Requirements
-- Create a repository secret `SONAR_TOKEN` with a SonarCloud token (or SonarQube token if using self-hosted scanner).
-- If you use SonarCloud, register the project under your organization and update `sonar.projectKey`.
+## Required Configuration
+- Secret: `SONAR_TOKEN`
+- Variable: `SONAR_PROJECT_KEY`
 
-How it works
-- The workflow installs Python dependencies and runs the SonarCloud GitHub Action.
-- The action uploads analysis results to SonarCloud where you can see security hotspots, code smells, and metric trends.
+## Optional Configuration
+- Variable: `SONAR_ORGANIZATION` (required for SonarCloud org mapping)
+- Secret: `SONAR_HOST_URL` (set for self-hosted SonarQube; defaults to SonarCloud URL if absent)
 
-Local testing
-- You can run `sonar-scanner` locally against the codebase if you have SonarQube installed.
+## Sonar Issue Sync
+- `.github/workflows/sonar_issues_sync.yml` syncs Sonar issues into GitHub issues.
+- It also skips cleanly when `SONAR_TOKEN` or `SONAR_PROJECT_KEY` is missing.
 
-More
+## References
 - SonarCloud docs: https://sonarcloud.io/documentation
-- Self-hosted SonarQube: https://docs.sonarqube.org
+- SonarQube docs: https://docs.sonarsource.com/sonarqube-server

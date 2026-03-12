@@ -15,11 +15,12 @@ concurrency:
 
 jobs:
   sync:
+    if: ${{ secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -43,3 +44,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python scripts/automation/sonar_sync_issues.py
+
+  sync-disabled:
+    if: ${{ !(secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain why sync is skipped
+        run: |
+          echo "Skipping Sonar issue sync: missing SONAR_TOKEN or SONAR_PROJECT_KEY."
