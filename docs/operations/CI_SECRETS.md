@@ -1,45 +1,31 @@
-# CI Secrets (GitHub Actions)
+# CI Secrets
 
-This file documents the repository secrets required by the enterprise CI workflows and recommended scopes.
+This file documents repository-level secrets and variables used by GitHub Actions workflows.
 
-Required secrets
-- `SONAR_TOKEN` — SonarCloud token with project analyze permissions.
-- `CODECOV_TOKEN` — Codecov upload token (if using Codecov).
-- `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` — (or `GHCR_TOKEN`) for publishing images from workflows.
-- `PYPI_API_TOKEN` — (optional) for publishing packages.
-- `SLS_TOKEN` / `SENTRY_DSN` — (optional) for error reporting in CI.
+## Required for Core CI
+- `SONAR_TOKEN`: token for SonarQube/SonarCloud scan upload.
+- `SONAR_PROJECT_KEY` (repository variable): project key used by Sonar scanner.
+- `CODECOV_TOKEN` (optional): enables Codecov coverage upload if configured.
 
-Recommended setup steps
-1. Go to the repository on GitHub → Settings → Secrets and variables → Actions → New repository secret.
-2. Paste the token value and use the secret name above.
-3. For `SONAR_TOKEN`, also ensure the SonarCloud organization has the project key matching this repo.
+## Required for Docker Image Publishing
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
 
-Notes on minimal scopes
-- `SONAR_TOKEN`: token generated from SonarCloud user/account with 'Execute Analysis' rights.
-- `CODECOV_TOKEN`: project token from Codecov; keep private.
-- Docker registry tokens: only give push access for the specific repository/namespace.
+If Docker Hub credentials are not set, workflows still publish to GHCR where configured.
 
-CI troubleshooting
-- If Sonar or Codecov steps fail with 401/403, verify the token in the UI and the repository/org membership for the token owner.
-- For private registries: confirm the runner has network access to the registry and credentials are current.
+## Required for Vercel Deploy Workflow
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
 
-Reference
-- See `.github/workflows/sonarcloud.yml` and `.github/workflows/smoke-check.yml` for which secrets are referenced.
-# CI Secrets Checklist
+When these are missing, `.github/workflows/vercel.yml` exits cleanly with a skip message.
 
-This document lists the repository secrets required to enable full CI, coverage and security scans.
+## Optional Sonar Variables
+- `SONAR_ORGANIZATION` (for SonarCloud)
+- `SONAR_HOST_URL` (secret, for self-hosted SonarQube; defaults to `https://sonarcloud.io` when not set)
+- `SONAR_BRANCH`, `SONAR_SEVERITIES`, `SONAR_STATUSES`, `SONAR_MAX_CREATE`, `SONAR_LABEL`, `SONAR_AUTO_CLOSE` (used by Sonar issues sync workflow)
 
-Required GitHub Secrets
-
-- `CODECOV_TOKEN`: Token for Codecov to upload coverage reports. Add via repo Settings → Secrets.
-- `SONAR_TOKEN`: SonarCloud (or SonarQube) token for analysis upload.
-- `DOCKER_REGISTRY_USER` / `DOCKER_REGISTRY_PASSWORD`: If CI pushes images to a private registry.
-- `PYPI_API_TOKEN` (optional): For publishing Python packages if configured.
-
-How to add
-1. Go to repository Settings → Secrets → Actions
-2. Add a new secret with name and value
-3. Keep tokens secure; do not commit them into the repo
-
-Notes
-- After adding `CODECOV_TOKEN` and `SONAR_TOKEN`, re-run CI to populate badges and dashboards.
+## Notes
+- Add secrets under: `Repository Settings -> Secrets and variables -> Actions`.
+- Add non-secret parameters (for example `SONAR_PROJECT_KEY`) under repository variables.
+- For pull requests from forks, secrets are intentionally unavailable; optional workflows are skipped by design.
