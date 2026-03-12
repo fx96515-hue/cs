@@ -9,17 +9,29 @@ on:
 
 jobs:
   sonar:
-    if: ${{ secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
     steps:
+      - name: Check Sonar configuration
+        id: sonar_config
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.SONAR_TOKEN }}" ] && [ -n "${{ vars.SONAR_PROJECT_KEY }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v6
+        if: steps.sonar_config.outputs.enabled == 'true'
         with:
           fetch-depth: 0
 
       - name: Setup Python
+        if: steps.sonar_config.outputs.enabled == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -29,12 +41,14 @@ jobs:
             apps/api/requirements-dev.txt
 
       - name: Install deps (API)
+        if: steps.sonar_config.outputs.enabled == 'true'
         run: |
           cd apps/api
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
       - name: Run tests with coverage (API)
+        if: steps.sonar_config.outputs.enabled == 'true'
         env:
           DATABASE_URL: postgresql+psycopg://test_user:test_pass@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
@@ -44,6 +58,7 @@ jobs:
           pytest tests/ -q --cov=app --cov-report=xml:coverage.xml
 
       - name: Build Sonar arguments
+        if: steps.sonar_config.outputs.enabled == 'true'
         id: sonar_args
         shell: bash
         run: |
@@ -57,6 +72,7 @@ jobs:
           echo "args=$args" >> "$GITHUB_OUTPUT"
 
       - name: Sonar scan (Python coverage)
+        if: steps.sonar_config.outputs.enabled == 'true'
         uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -64,10 +80,7 @@ jobs:
         with:
           args: ${{ steps.sonar_args.outputs.args }}
 
-  sonar-disabled:
-    if: ${{ !(secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '') }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Explain why sonar is skipped
+        if: steps.sonar_config.outputs.enabled != 'true'
         run: |
           echo "Skipping Sonar scan: missing SONAR_TOKEN or SONAR_PROJECT_KEY."

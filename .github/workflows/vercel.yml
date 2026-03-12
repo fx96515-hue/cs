@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,9 +26,21 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
+      - name: Check Vercel configuration
+        id: vercel_config
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ] && [ -n "${{ secrets.VERCEL_ORG_ID }}" ] && [ -n "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v6
+        if: steps.vercel_config.outputs.enabled == 'true'
 
       - name: Setup Node
+        if: steps.vercel_config.outputs.enabled == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -36,31 +48,36 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install dependencies
+        if: steps.vercel_config.outputs.enabled == 'true'
         run: npm ci --no-audit --no-fund
 
       - name: Lint
+        if: steps.vercel_config.outputs.enabled == 'true'
         run: npm run lint
 
       - name: Build
+        if: steps.vercel_config.outputs.enabled == 'true'
         run: npm run build
 
       - name: Install Vercel CLI
+        if: steps.vercel_config.outputs.enabled == 'true'
         run: npm install --global vercel@latest
 
       - name: Pull Vercel Environment (preview)
-        if: github.event_name == 'pull_request'
+        if: steps.vercel_config.outputs.enabled == 'true' && github.event_name == 'pull_request'
         run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
       - name: Pull Vercel Environment (production)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.vercel_config.outputs.enabled == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build Vercel Artifact
+        if: steps.vercel_config.outputs.enabled == 'true'
         run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy Preview
         id: deploy_preview
-        if: github.event_name == 'pull_request'
+        if: steps.vercel_config.outputs.enabled == 'true' && github.event_name == 'pull_request'
         shell: bash
         run: |
           URL=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
@@ -68,14 +85,14 @@ jobs:
           echo "Preview URL: $URL"
 
       - name: Deploy Production
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.vercel_config.outputs.enabled == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
           echo "Production URL: $URL"
 
       - name: Comment Preview URL
-        if: github.event_name == 'pull_request' && steps.deploy_preview.outputs.url != ''
+        if: steps.vercel_config.outputs.enabled == 'true' && github.event_name == 'pull_request' && steps.deploy_preview.outputs.url != ''
         uses: actions/github-script@v8
         with:
           script: |
@@ -88,10 +105,7 @@ jobs:
         env:
           PREVIEW_URL: ${{ steps.deploy_preview.outputs.url }}
 
-  deploy-disabled:
-    if: ${{ !(secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '') }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Explain why deploy is skipped
+        if: steps.vercel_config.outputs.enabled != 'true'
         run: |
           echo "Skipping Vercel deploy: missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID."

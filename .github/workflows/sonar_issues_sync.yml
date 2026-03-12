@@ -15,22 +15,35 @@ concurrency:
 
 jobs:
   sync:
-    if: ${{ secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check Sonar sync configuration
+        id: sonar_sync_config
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.SONAR_TOKEN }}" ] && [ -n "${{ vars.SONAR_PROJECT_KEY }}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.sonar_sync_config.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       - name: Setup Python
+        if: steps.sonar_sync_config.outputs.enabled == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       
       - name: Install dependencies
+        if: steps.sonar_sync_config.outputs.enabled == 'true'
         run: pip install httpx
 
       - name: Run Sonar -> GitHub Issues sync
+        if: steps.sonar_sync_config.outputs.enabled == 'true'
         env:
           SONAR_API_BASE: https://sonarcloud.io/api
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -45,10 +58,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python scripts/automation/sonar_sync_issues.py
 
-  sync-disabled:
-    if: ${{ !(secrets.SONAR_TOKEN != '' && vars.SONAR_PROJECT_KEY != '') }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Explain why sync is skipped
+        if: steps.sonar_sync_config.outputs.enabled != 'true'
         run: |
           echo "Skipping Sonar issue sync: missing SONAR_TOKEN or SONAR_PROJECT_KEY."
