@@ -31,9 +31,7 @@ def enrich(
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     if entity_type not in ("cooperative", "roaster"):
-        raise HTTPException(
-            status_code=400, detail=f"Invalid entity_type: {entity_type}"
-        )
+        raise HTTPException(status_code=400, detail="Invalid entity_type")
     try:
         out = enrich_entity(
             db,
@@ -46,7 +44,7 @@ def enrich(
     except ValueError as e:
         log.warning(
             "enrich_request_invalid",
-            error=str(e),
+            error_type=type(e).__name__,
             entity_type=entity_type,
             entity_id=entity_id,
         )
