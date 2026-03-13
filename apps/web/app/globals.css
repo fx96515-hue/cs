@@ -2228,6 +2228,248 @@ textarea.input {
    OFFLINE INDICATOR
    ============================================================ */
 
+/* ============================================================
+   CHAT / KI-ANALYST
+   ============================================================ */
+
+/* Overrides .page overflow so the chat can manage its own scroll */
+.chatPage {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--space-4);
+}
+
+.chatPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  min-height: 0;
+}
+
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+}
+
+.chatExamples {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-4);
+  padding: var(--space-6) 0;
+}
+
+.chatExampleList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 560px;
+}
+
+.chatExampleBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.chatExampleBtn:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.chatExampleBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chatMsgRow {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.chatMsgRowUser {
+  flex-direction: row-reverse;
+}
+
+.chatAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chatAvatarUser {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.chatAvatarAi {
+  background: var(--color-accent-subtle);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-accent);
+}
+
+.chatBubble {
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chatBubbleInner {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  white-space: pre-wrap;
+}
+
+.chatBubbleUser {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border-radius: var(--radius-lg) var(--radius-sm) var(--radius-lg) var(--radius-lg);
+}
+
+.chatBubbleAi {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-lg);
+  color: var(--color-text);
+}
+
+.chatSources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-1);
+}
+
+.chatSourceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-subtle);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.chatSourceChip:hover {
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.chatTyping {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+}
+
+.chatTypingDot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-muted);
+  animation: chatDot 1.2s ease-in-out infinite;
+}
+
+.chatTypingDot:nth-child(2) { animation-delay: 0.2s; }
+.chatTypingDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes chatDot {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+.chatInputBar {
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.chatInputRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.chatInputWrap {
+  flex: 1;
+  position: relative;
+}
+
+.chatInputCounter {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.chatStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.chatStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+  flex-shrink: 0;
+}
+
+.chatStatusDotOffline {
+  background: var(--color-text-muted);
+}
+
 .offlineBanner {
   display: flex;
   align-items: center;
