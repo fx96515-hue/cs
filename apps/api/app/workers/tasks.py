@@ -233,14 +233,16 @@ def auto_enrich_stale():
 @celery.task(name="app.workers.tasks.seed_discovery")
 def seed_discovery_task(
     entity_type: str,
+    mode: str = "standard",
     max_entities: int = 100,
     dry_run: bool = False,
     country_filter: str | None = None,
 ):
-    """Seed cooperatives/roasters via Perplexity discovery.
+    """Seed cooperatives/roasters via discovery providers.
 
     Notes:
-    - Requires PERPLEXITY_API_KEY.
+    - standard mode requires PERPLEXITY_API_KEY.
+    - deep mode combines Perplexity + Tavily search breadth.
     - Uses conservative upsert: fill empty fields, store evidence URLs.
     """
     db = _db()
@@ -249,6 +251,7 @@ def seed_discovery_task(
             a = seed_discovery(
                 db,
                 entity_type="cooperative",
+                mode=mode,
                 max_entities=max_entities,
                 dry_run=dry_run,
                 country_filter=country_filter,
@@ -256,6 +259,7 @@ def seed_discovery_task(
             b = seed_discovery(
                 db,
                 entity_type="roaster",
+                mode=mode,
                 max_entities=max_entities,
                 dry_run=dry_run,
                 country_filter=country_filter,
@@ -264,6 +268,7 @@ def seed_discovery_task(
         return seed_discovery(
             db,
             entity_type=entity_type,
+            mode=mode,
             max_entities=max_entities,
             dry_run=dry_run,
             country_filter=country_filter,

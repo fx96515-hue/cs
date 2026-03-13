@@ -51,6 +51,9 @@ services:
       PERPLEXITY_BASE_URL: ${PERPLEXITY_BASE_URL:-https://api.perplexity.ai}
       PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
       PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      TAVILY_BASE_URL: ${TAVILY_BASE_URL:-https://api.tavily.com}
+      TAVILY_TIMEOUT_SECONDS: ${TAVILY_TIMEOUT_SECONDS:-30}
     ports:
     - 8000:8000
     depends_on:
@@ -97,6 +100,9 @@ services:
       PERPLEXITY_BASE_URL: ${PERPLEXITY_BASE_URL:-https://api.perplexity.ai}
       PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
       PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      TAVILY_BASE_URL: ${TAVILY_BASE_URL:-https://api.tavily.com}
+      TAVILY_TIMEOUT_SECONDS: ${TAVILY_TIMEOUT_SECONDS:-30}
     depends_on:
       backend:
         condition: service_healthy
@@ -131,6 +137,9 @@ services:
       PERPLEXITY_BASE_URL: ${PERPLEXITY_BASE_URL:-https://api.perplexity.ai}
       PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
       PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      TAVILY_BASE_URL: ${TAVILY_BASE_URL:-https://api.tavily.com}
+      TAVILY_TIMEOUT_SECONDS: ${TAVILY_TIMEOUT_SECONDS:-30}
     depends_on:
       redis:
         condition: service_healthy

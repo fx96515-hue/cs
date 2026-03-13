@@ -1,19 +1,24 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import re
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.cooperative import Cooperative
 from app.models.evidence import EntityEvidence
 from app.models.roaster import Roaster
 from app.models.source import Source
 from app.providers.perplexity import PerplexityClient, PerplexityError, safe_json_loads
+from app.providers.tavily import TavilyClient, TavilyError
 from app.services.country_config import get_country_config
+from app.services.seed_demo_data import seed_demo_cooperatives, seed_demo_roasters
 
 
 def _cooperative_response_format() -> dict[str, Any]:
@@ -248,6 +253,215 @@ def _get_or_create_source(
     return src
 
 
+def _discovery_source_name(provider: str) -> tuple[str, str]:
+    if provider == "perplexity+tavily":
+        return ("Deep Discovery", "https://docs.perplexity.ai/")
+    if provider == "tavily":
+        return ("Tavily Discovery", "https://docs.tavily.com/")
+    return ("Perplexity Discovery", "https://docs.perplexity.ai/")
+
+def _is_perplexity_provider_error(message: str) -> bool:
+    normalized = (message or "").lower()
+    return any(
+        token in normalized
+        for token in [
+            "perplexity",
+            "insufficient_quota",
+            "current quota",
+            "billing details",
+            "/search error 401",
+            "/chat/completions error 401",
+            "api_key fehlt",
+        ]
+    )
+
+
+def _seed_demo_fallback(db: Session, entity_type: str) -> dict[str, Any] | None:
+    if entity_type == "cooperative":
+        return seed_demo_cooperatives(db)
+    if entity_type == "roaster":
+        return seed_demo_roasters(db)
+    return None
+
+
+def _clip_text(value: Any, limit: int = 2400) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    return text[:limit]
+
+
+def _tavily_country(country: str) -> str | None:
+    normalized = (country or "").strip().upper()
+    if normalized == "PE":
+        return "peru"
+    if normalized == "DE":
+        return "germany"
+    return None
+
+
+def _search_perplexity_query(
+    client: PerplexityClient, *, query: str, country: str
+) -> list[dict[str, Any]]:
+    results = client.search(
+        query, max_results=20, country=country, max_tokens_per_page=512
+    )
+    return [
+        {
+            "title": item.title,
+            "url": item.url,
+            "snippet": _clip_text(item.snippet, 1200),
+            "provider": "perplexity",
+        }
+        for item in results
+    ]
+
+
+def _search_tavily_query(
+    client: TavilyClient, *, query: str, country: str
+) -> list[dict[str, Any]]:
+    results = client.search(
+        query,
+        max_results=8,
+        country=_tavily_country(country),
+        search_depth="advanced",
+        include_raw_content="text",
+    )
+    return [
+        {
+            "title": item.title,
+            "url": item.url,
+            "snippet": _clip_text(item.snippet, 1200),
+            "content": _clip_text(item.raw_content, 2400),
+            "provider": "tavily",
+        }
+        for item in results
+    ]
+
+
+def _clean_name_candidate(value: str | None) -> str:
+    text = re.sub(r"\s+", " ", str(value or "").strip())
+    return text.strip(" -|:;/")
+
+
+def _is_generic_title(candidate: str) -> bool:
+    normalized = candidate.lower()
+    generic_tokens = [
+        "best ",
+        "top ",
+        "guide",
+        "news",
+        "blog",
+        "article",
+        "list",
+        "2024",
+        "2025",
+        "2026",
+        "specialty coffee germany",
+        "peru coffee cooperative exporter list",
+    ]
+    return len(candidate) < 4 or any(token in normalized for token in generic_tokens)
+
+
+def _name_from_url(url: str) -> str | None:
+    host = (urlparse(url).hostname or "").lower()
+    if not host:
+        return None
+    host = re.sub(r"^www\.", "", host)
+    label = host.split(".")[0]
+    label = re.sub(r"[-_]+", " ", label).strip()
+    if len(label) < 3:
+        return None
+    return " ".join(part.capitalize() for part in label.split())
+
+
+def _pick_tavily_name(result: dict[str, Any], entity_type: str) -> str | None:
+    title = _clean_name_candidate(result.get("title"))
+    segments = [title]
+    segments.extend(
+        _clean_name_candidate(part)
+        for part in re.split(r"\s+[|–—-]\s+|:\s+", title)
+        if part
+    )
+
+    coop_hints = ("cooper", "coop", "cafetal", "agraria", "coffee", "cafe", "asoci")
+    roaster_hints = ("roast", "röst", "coffee", "kaffee", "espresso", "cafe")
+
+    for candidate in segments:
+        if not candidate or _is_generic_title(candidate):
+            continue
+        normalized = candidate.lower()
+        if entity_type == "cooperative":
+            if any(token in normalized for token in coop_hints):
+                return candidate[:255]
+        else:
+            if any(token in normalized for token in roaster_hints):
+                return candidate[:255]
+            return candidate[:255]
+
+    return _name_from_url(str(result.get("url") or ""))
+
+
+def _extract_tavily_entities(
+    *, entity_type: str, country: str, search_results: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    entities: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for result in search_results:
+        if result.get("provider") != "tavily":
+            continue
+
+        name = _pick_tavily_name(result, entity_type)
+        if not name:
+            continue
+
+        key = _norm_name(name)
+        if not key or key in seen:
+            continue
+
+        url = str(result.get("url") or "").strip() or None
+        snippet = _clip_text(result.get("snippet"), 400)
+        content = _clip_text(result.get("content"), 800)
+        notes_parts = [part for part in [snippet, content] if part]
+
+        entity: dict[str, Any] = {
+            "name": name,
+            "country": country,
+            "website": url,
+            "notes": "\n\n".join(notes_parts) if notes_parts else None,
+            "evidence_urls": [url] if url else [],
+        }
+
+        if entity_type == "roaster":
+            text = f"{result.get('title') or ''} {snippet or ''} {content or ''}".lower()
+            if "berlin" in text:
+                entity["city"] = "Berlin"
+            elif "hamburg" in text:
+                entity["city"] = "Hamburg"
+            elif "munich" in text or "münchen" in text:
+                entity["city"] = "München"
+            elif "cologne" in text or "köln" in text:
+                entity["city"] = "Köln"
+            entity["specialty_focus"] = True
+            if "peru" in text:
+                entity["peru_focus"] = True
+        else:
+            text = f"{result.get('title') or ''} {snippet or ''} {content or ''}".lower()
+            if "cajamarca" in text:
+                entity["region"] = "Cajamarca"
+            elif "junin" in text or "satipo" in text:
+                entity["region"] = "Junin"
+            elif "cusco" in text or "quillabamba" in text:
+                entity["region"] = "Cusco"
+            elif "puno" in text or "sandia" in text:
+                entity["region"] = "Puno"
+
+        seen.add(key)
+        entities.append(entity)
+
+    return entities
+
 COOP_QUERIES = [
     "Peru coffee cooperative exporter list",
     "cooperativa cafetalera peru exportadora",
@@ -353,20 +567,15 @@ def seed_discovery(
     db: Session,
     *,
     entity_type: str,
+    mode: str = "standard",
     max_entities: int = 200,
     dry_run: bool = False,
     country_filter: str | None = None,
 ) -> dict[str, Any]:
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
-
-    src = _get_or_create_source(
-        db,
-        name="Perplexity Discovery",
-        url="https://docs.perplexity.ai/",
-        kind="api",
-        reliability=0.6,
-    )
+    if mode not in {"standard", "deep"}:
+        raise ValueError("mode must be standard|deep")
 
     default_country = "PE" if entity_type == "cooperative" else "DE"
     country = country_filter or default_country
@@ -383,42 +592,158 @@ def seed_discovery(
     updated = 0
     skipped = 0
     errors: list[str] = []
+    fallback_result: dict[str, Any] | None = None
+    provider_status = "ok"
+    status = "success"
+    provider_name = "perplexity+tavily" if mode == "deep" else "perplexity"
+    src: Source | None = None
+    search_providers_used: set[str] = set()
 
-    client = PerplexityClient()
+    try:
+        client = PerplexityClient()
+    except PerplexityError as exc:
+        provider_status = "unavailable"
+        errors.append(str(exc))
+        client = None
+
+    tavily_client: TavilyClient | None = None
+    if mode == "deep" or settings.TAVILY_API_KEY:
+        try:
+            tavily_client = TavilyClient()
+        except TavilyError as exc:
+            if provider_status == "ok":
+                provider_status = "degraded"
+            errors.append(str(exc))
+
     try:
         aggregated: list[dict[str, Any]] = []
         seen_urls: set[str] = set()
 
-        for q in queries:
-            if len(aggregated) >= 120:
-                break
-            try:
-                results = client.search(
-                    q, max_results=20, country=country, max_tokens_per_page=512
-                )
-                for r in results:
-                    if r.url in seen_urls:
-                        continue
-                    seen_urls.add(r.url)
-                    aggregated.append(
-                        {"title": r.title, "url": r.url, "snippet": r.snippet}
-                    )
-            except Exception as exc:
-                errors.append(f"search failed for '{q}': {exc}")
+        max_workers = 2 if client is not None and tavily_client is not None else 1
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for q in queries:
+                if len(aggregated) >= 120:
+                    break
+
+                futures: dict[Any, str] = {}
+                if client is not None:
+                    futures[executor.submit(_search_perplexity_query, client, query=q, country=country)] = "perplexity"
+                if mode == "deep" and tavily_client is not None:
+                    futures[executor.submit(_search_tavily_query, tavily_client, query=q, country=country)] = "tavily"
+
+                for future in as_completed(futures):
+                    provider = futures[future]
+                    try:
+                        results = future.result()
+                        if results:
+                            search_providers_used.add(provider)
+                        for result in results:
+                            url = str(result.get("url") or "").strip()
+                            if not url or url in seen_urls:
+                                continue
+                            seen_urls.add(url)
+                            aggregated.append(result)
+                            if len(aggregated) >= 120:
+                                break
+                    except Exception as exc:
+                        if provider_status == "ok":
+                            provider_status = "degraded"
+                        errors.append(f"{provider} search failed for '{q}': {exc}")
+
+        if mode == "deep":
+            if {"perplexity", "tavily"}.issubset(search_providers_used):
+                provider_name = "perplexity+tavily"
+            elif "tavily" in search_providers_used and "perplexity" not in search_providers_used:
+                provider_name = "tavily"
+            else:
+                provider_name = "perplexity"
 
         entities: list[dict[str, Any]] = []
         chunk_size = 20
-        for i in range(0, len(aggregated), chunk_size):
-            chunk = aggregated[i : i + chunk_size]
-            if not chunk:
-                continue
-            try:
-                ents = _extract_entities_with_llm(
-                    client, entity_type=entity_type, search_results=chunk
-                )
-                entities.extend(ents)
-            except Exception as exc:
-                errors.append(f"extract failed chunk {i}-{i + chunk_size}: {exc}")
+        if client is not None:
+            for i in range(0, len(aggregated), chunk_size):
+                chunk = aggregated[i : i + chunk_size]
+                if not chunk:
+                    continue
+                try:
+                    ents = _extract_entities_with_llm(
+                        client, entity_type=entity_type, search_results=chunk
+                    )
+                    entities.extend(ents)
+                except Exception as exc:
+                    if provider_status == "ok":
+                        provider_status = "degraded"
+                    errors.append(f"extract failed chunk {i}-{i + chunk_size}: {exc}")
+
+        tavily_results = [item for item in aggregated if item.get("provider") == "tavily"]
+        should_try_tavily_fallback = bool(tavily_client) and (
+            mode == "deep"
+            or client is None
+            or any(_is_perplexity_provider_error(err) for err in errors)
+        )
+
+        if not entities and should_try_tavily_fallback:
+            if not tavily_results:
+                tavily_seen_urls = set(seen_urls)
+                for q in queries[: min(len(queries), 8)]:
+                    try:
+                        results = _search_tavily_query(
+                            tavily_client, query=q, country=country
+                        )
+                        if results:
+                            search_providers_used.add("tavily")
+                        for result in results:
+                            url = str(result.get("url") or "").strip()
+                            if not url or url in tavily_seen_urls:
+                                continue
+                            tavily_seen_urls.add(url)
+                            aggregated.append(result)
+                            tavily_results.append(result)
+                    except Exception as exc:
+                        if provider_status == "ok":
+                            provider_status = "degraded"
+                        errors.append(f"tavily search failed for '{q}': {exc}")
+
+            heuristic_entities = _extract_tavily_entities(
+                entity_type=entity_type,
+                country=country,
+                search_results=tavily_results,
+            )
+            if heuristic_entities:
+                entities = heuristic_entities
+                provider_name = "tavily"
+                provider_status = "heuristic_tavily"
+                if status == "fallback_demo":
+                    status = "success"
+
+        elif aggregated and client is None:
+            errors.append(
+                "Search results found, but entity extraction requires either Perplexity or Tavily fallback data."
+            )
+
+        if (
+            settings.DISCOVERY_DEMO_FALLBACK_ENABLED
+            and not entities
+            and any(_is_perplexity_provider_error(err) for err in errors)
+        ):
+            fallback_result = _seed_demo_fallback(db, entity_type)
+            provider_status = "fallback_demo"
+            status = "fallback_demo"
+            if fallback_result:
+                if fallback_result.get("status") == "success":
+                    created = int(fallback_result.get("created") or 0)
+                elif fallback_result.get("status") == "skipped":
+                    skipped = int(fallback_result.get("existing_count") or 0)
+
+        if entities:
+            source_name, source_url = _discovery_source_name(provider_name)
+            src = _get_or_create_source(
+                db,
+                name=source_name,
+                url=source_url,
+                kind="api",
+                reliability=0.6,
+            )
 
         deduped: dict[str, dict[str, Any]] = {}
         for ent in entities:
@@ -594,7 +919,7 @@ def seed_discovery(
                 coop.meta = coop.meta or {}
                 coop.meta.setdefault("discovery", {})
                 coop.meta["discovery"].update(
-                    {"provider": "perplexity", "last_run": now.isoformat()}
+                    {"provider": provider_name, "last_run": now.isoformat(), "mode": mode}
                 )
 
                 # Quality data in meta["quality"]
@@ -690,7 +1015,7 @@ def seed_discovery(
                 roaster.meta = roaster.meta or {}
                 roaster.meta.setdefault("discovery", {})
                 roaster.meta["discovery"].update(
-                    {"provider": "perplexity", "last_run": now.isoformat()}
+                    {"provider": provider_name, "last_run": now.isoformat(), "mode": mode}
                 )
 
                 # Sourcing data in meta["sourcing"]
@@ -798,7 +1123,7 @@ def seed_discovery(
 
             ev_urls = list(dict.fromkeys((ent.get("evidence_urls") or [])))
 
-            if ev_urls and (not dry_run) and entity_id is not None:
+            if ev_urls and src is not None and (not dry_run) and entity_id is not None:
                 for u in ev_urls[:10]:
                     try:
                         ev = EntityEvidence(
@@ -807,7 +1132,7 @@ def seed_discovery(
                             source_id=src.id,
                             evidence_url=u,
                             extracted_at=now,
-                            meta={"provider": "perplexity"},
+                            meta={"provider": provider_name, "mode": mode},
                         )
                         db.add(ev)
                         db.commit()
@@ -819,20 +1144,39 @@ def seed_discovery(
             else:
                 updated += 1
 
+        if status == "success":
+            if errors and created == 0 and updated == 0:
+                status = "provider_error"
+            elif errors:
+                status = "partial_success"
+
         if dry_run:
             db.rollback()
 
     except PerplexityError as exc:
+        provider_status = "failed"
+        status = "provider_error"
         errors.append(str(exc))
     finally:
-        client.close()
+        if client is not None:
+            client.close()
+        if tavily_client is not None:
+            tavily_client.close()
 
     return {
+        "status": status,
         "entity_type": entity_type,
         "country": country,
         "dry_run": dry_run,
+        "mode": mode,
+        "provider": provider_name,
+        "provider_status": provider_status,
+        "search_providers": sorted(search_providers_used),
         "created": created,
         "updated": updated,
         "skipped": skipped,
         "errors": errors,
+        "fallback": fallback_result,
     }
+
+

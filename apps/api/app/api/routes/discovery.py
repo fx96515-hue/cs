@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from typing import Annotated, Literal, Optional, Any
+from typing import Annotated, Any, Literal, Optional
 
 
 from app.api.deps import require_role
@@ -13,10 +13,14 @@ router = APIRouter()
 
 
 EntityType = Literal["cooperative", "roaster", "both"]
+DiscoveryMode = Literal["standard", "deep"]
 
 
 class SeedRequest(BaseModel):
     entity_type: EntityType = Field(..., description="cooperative|roaster|both")
+    mode: DiscoveryMode = Field(
+        "standard", description="standard=Perplexity, deep=Perplexity+Tavily"
+    )
     max_entities: int = Field(100, ge=1, le=2000)
     dry_run: bool = False
     country_filter: Optional[str] = Field(
@@ -31,7 +35,8 @@ def enqueue_seed(
 ):
     """Enqueue a discovery seed job.
 
-    Requires PERPLEXITY_API_KEY configured.
+    standard: PERPLEXITY_API_KEY
+    deep: PERPLEXITY_API_KEY + optional TAVILY_API_KEY
     """
     task = celery.send_task(
         "app.workers.tasks.seed_discovery",

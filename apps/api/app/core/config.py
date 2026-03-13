@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     # For discovery tasks we prefer models with web/search + structured outputs
     PERPLEXITY_MODEL_DISCOVERY: str = "sonar-pro"
     PERPLEXITY_TIMEOUT_SECONDS: int = 60
+    TAVILY_API_KEY: str | None = None
+    TAVILY_BASE_URL: str = "https://api.tavily.com"
+    TAVILY_TIMEOUT_SECONDS: int = 30
+    DISCOVERY_DEMO_FALLBACK_ENABLED: bool = True
 
     # --- Enrichment HTTP allowlists (SSRF protection) ---
     # Comma-separated hostnames and/or domain suffixes for fetch_text().

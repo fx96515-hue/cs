@@ -9,11 +9,17 @@ import { toErrorMessage } from "../utils/error";
 
 type JobResponse = { status: string; task_id: string; report_id: number; message: string };
 type EntityType = "cooperative" | "roaster" | "both";
+type DiscoveryMode = "standard" | "deep";
 type NewsRefreshResponse = { status: string; created?: number; updated?: number; errors?: unknown[] };
 
 function parseEntityType(value: string): EntityType {
   if (value === "cooperative" || value === "roaster" || value === "both") return value;
   return "both";
+}
+
+function parseDiscoveryMode(value: string): DiscoveryMode {
+  if (value === "standard" || value === "deep") return value;
+  return "standard";
 }
 
 type OpsOverview = {
@@ -29,6 +35,7 @@ function OpsPageContent() {
   const [health, setHealth] = useState<string>("");
   const [topic, setTopic] = useState("peru coffee");
   const [entityType, setEntityType] = useState<EntityType>("both");
+  const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>("deep");
   const [max, setMax] = useState(50);
   const [log, setLog] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -254,6 +261,18 @@ function OpsPageContent() {
                 </select>
               </div>
               <div className="field">
+                <label className="fieldLabel" htmlFor="discovery-mode-select">Modus</label>
+                <select
+                  id="discovery-mode-select"
+                  className="input"
+                  value={discoveryMode}
+                  onChange={(e) => setDiscoveryMode(parseDiscoveryMode(e.target.value))}
+                >
+                  <option value="standard">Standard (Perplexity)</option>
+                  <option value="deep">Deep Discovery (Perplexity + Tavily)</option>
+                </select>
+              </div>
+              <div className="field">
                 <label className="fieldLabel" htmlFor="max-input">Max. Einträge</label>
                 <input
                   id="max-input"
@@ -273,7 +292,12 @@ function OpsPageContent() {
                 onClick={() => run("Ersterfassung", () =>
                   apiFetch<JobResponse>("/discovery/seed", {
                     method: "POST",
-                    body: JSON.stringify({ entity_type: entityType, max_entities: max, dry_run: false }),
+                    body: JSON.stringify({
+                      entity_type: entityType,
+                      mode: discoveryMode,
+                      max_entities: max,
+                      dry_run: false,
+                    }),
                   })
                 )}
               >
@@ -434,3 +458,7 @@ export default function OpsPage() {
     </Suspense>
   );
 }
+
+
+
+
