@@ -5,6 +5,10 @@ import Link from "next/link";
 import { apiFetch } from "../../lib/api";
 import { toErrorMessage } from "../utils/error";
 
+/* ============================================================
+   LOTS MANAGEMENT - ENTERPRISE VIEW
+   ============================================================ */
+
 type Lot = {
   id: number;
   cooperative_id: number;
@@ -56,6 +60,7 @@ export default function LotsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [form, setForm] = useState<LotFormState>(INITIAL_FORM);
 
@@ -105,7 +110,7 @@ export default function LotsPage() {
         currency: form.currency || null,
       };
       if (!payload.name) throw new Error("Name fehlt");
-      if (!payload.cooperative_id) throw new Error("cooperative_id fehlt");
+      if (!payload.cooperative_id) throw new Error("Kooperativen-ID fehlt");
 
       if (form.crop_year) payload.crop_year = Number(form.crop_year);
       if (form.price_per_kg) payload.price_per_kg = Number(form.price_per_kg);
@@ -115,6 +120,7 @@ export default function LotsPage() {
 
       await apiFetch<Lot>("/lots", { method: "POST", body: JSON.stringify(payload) });
       setForm(INITIAL_FORM);
+      setShowForm(false);
       load();
     } catch (error: unknown) {
       setErr(toErrorMessage(error));
@@ -123,130 +129,356 @@ export default function LotsPage() {
     }
   }
 
-  return (
-    <div>
-      <h1>Lots</h1>
-      <label style={{ display: "block", marginBottom: 10 }}>
-        <input
-          type="checkbox"
-          checked={showArchived}
-          onChange={(e) => setShowArchived(e.target.checked)}
-          style={{ marginRight: 6 }}
-        />
-        Archivierte anzeigen
-      </label>
-      {err && <div style={{ color: "crimson" }}>{err}</div>}
+  // Stats
+  const activeLots = lots.filter(l => !l.deleted_at);
+  const stats = {
+    total: activeLots.length,
+    totalWeight: activeLots.reduce((sum, l) => sum + (l.weight_kg || 0), 0),
+    avgScore: activeLots.filter(l => l.expected_cupping_score).length > 0
+      ? activeLots.reduce((sum, l) => sum + (l.expected_cupping_score || 0), 0) / 
+        activeLots.filter(l => l.expected_cupping_score).length
+      : 0,
+    currentYear: activeLots.filter(l => l.crop_year === new Date().getFullYear()).length,
+  };
 
-      <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, marginBottom: 16 }}>
-        <b>Neues Lot</b>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 10,
-            marginTop: 10,
-          }}
-        >
-          <input
-            placeholder="cooperative_id"
-            value={form.cooperative_id}
-            onChange={(e) => setForm({ ...form, cooperative_id: e.target.value })}
-          />
-          <input
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <input
-            placeholder="Erntejahr"
-            value={form.crop_year}
-            onChange={(e) => setForm({ ...form, crop_year: e.target.value })}
-          />
-          <input
-            placeholder="Incoterm (FOB/CIF...)"
-            value={form.incoterm}
-            onChange={(e) => setForm({ ...form, incoterm: e.target.value })}
-          />
-          <input
-            placeholder="Preis/kg"
-            value={form.price_per_kg}
-            onChange={(e) => setForm({ ...form, price_per_kg: e.target.value })}
-          />
-          <input
-            placeholder="Waehrung"
-            value={form.currency}
-            onChange={(e) => setForm({ ...form, currency: e.target.value })}
-          />
-          <input
-            placeholder="Gewicht (kg)"
-            value={form.weight_kg}
-            onChange={(e) => setForm({ ...form, weight_kg: e.target.value })}
-          />
-          <input
-            placeholder="Erwarteter SCA-Score"
-            value={form.expected_cupping_score}
-            onChange={(e) => setForm({ ...form, expected_cupping_score: e.target.value })}
-          />
+  return (
+    <div className="page">
+      <div className="content">
+        {/* Page Header */}
+        <header className="pageHeader">
+          <div className="pageHeaderContent">
+            <h1 className="h1">Kaffee Lots</h1>
+            <p className="subtitle">
+              Verwalten Sie Kaffeelots, Preise und Qualitaetsdaten
+            </p>
+          </div>
+          <div className="pageHeaderActions">
+            <label className="checkboxLabel">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+              />
+              Archivierte anzeigen
+            </label>
+            <button 
+              type="button" 
+              className={`btn ${showForm ? "" : "btnPrimary"}`}
+              onClick={() => setShowForm(!showForm)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              {showForm ? "Abbrechen" : "Neues Lot"}
+            </button>
+          </div>
+        </header>
+
+        {/* Error Display */}
+        {err && (
+          <div className="alert bad" style={{ marginBottom: "var(--space-6)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{err}</span>
+            <button className="btn btnSm btnGhost" onClick={() => setErr(null)}>
+              Schliessen
+            </button>
+          </div>
+        )}
+
+        {/* KPI Grid */}
+        <div className="kpiGrid">
+          <div className="kpiCard">
+            <span className="cardLabel">Lots Gesamt</span>
+            <span className="cardValue">{stats.total}</span>
+            <span className="cardHint">Aktive Lots</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Gesamtgewicht</span>
+            <span className="cardValue">
+              {stats.totalWeight > 1000 
+                ? `${(stats.totalWeight / 1000).toFixed(1)}t`
+                : `${stats.totalWeight}kg`}
+            </span>
+            <span className="cardHint">Verfuegbare Menge</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Durchschn. Score</span>
+            <span className="cardValue">{stats.avgScore > 0 ? stats.avgScore.toFixed(1) : "-"}</span>
+            <span className="cardHint">Erwarteter SCA Score</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Aktuelle Ernte</span>
+            <span className="cardValue">{stats.currentYear}</span>
+            <span className="cardHint">Lots {new Date().getFullYear()}</span>
+          </div>
         </div>
-        <button
-          onClick={createLot}
-          disabled={creating}
-          style={{
-            marginTop: 10,
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "1px solid #eee",
-            background: "white",
-            cursor: "pointer",
-          }}
-        >
-          {creating ? "Speichern..." : "Lot anlegen"}
-        </button>
-        <div style={{ fontSize: 12, color: "#555", marginTop: 6 }}>
-          Hinweis: cooperative_id bekommst du aus der Kooperativen-Liste.
+
+        {/* Create Form */}
+        {showForm && (
+          <div className="panel" style={{ marginBottom: "var(--space-6)" }}>
+            <div className="panelHeader">
+              <h2 className="panelTitle">Neues Lot anlegen</h2>
+              <span className="badge badgeInfo">Formular</span>
+            </div>
+            <div className="panelBody">
+              <div className="fieldGrid2">
+                <div className="field">
+                  <label className="fieldLabel">Kooperativen-ID *</label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder="ID der Kooperative"
+                    value={form.cooperative_id}
+                    onChange={(e) => setForm({ ...form, cooperative_id: e.target.value })}
+                  />
+                  <span className="fieldHint">Finden Sie die ID in der Kooperativen-Liste</span>
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Name *</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="z.B. Cajamarca Lot A"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Erntejahr</label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder={`z.B. ${new Date().getFullYear()}`}
+                    value={form.crop_year}
+                    onChange={(e) => setForm({ ...form, crop_year: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Incoterm</label>
+                  <select
+                    className="input"
+                    value={form.incoterm}
+                    onChange={(e) => setForm({ ...form, incoterm: e.target.value })}
+                  >
+                    <option value="FOB">FOB</option>
+                    <option value="CIF">CIF</option>
+                    <option value="EXW">EXW</option>
+                    <option value="FCA">FCA</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Preis/kg</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="input"
+                    placeholder="z.B. 4.50"
+                    value={form.price_per_kg}
+                    onChange={(e) => setForm({ ...form, price_per_kg: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Waehrung</label>
+                  <select
+                    className="input"
+                    value={form.currency}
+                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="PEN">PEN</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Gewicht (kg)</label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder="z.B. 5000"
+                    value={form.weight_kg}
+                    onChange={(e) => setForm({ ...form, weight_kg: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label className="fieldLabel">Erwarteter SCA Score</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="100"
+                    className="input"
+                    placeholder="z.B. 85"
+                    value={form.expected_cupping_score}
+                    onChange={(e) => setForm({ ...form, expected_cupping_score: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="btnGroup">
+                <button
+                  type="button"
+                  className="btn btnPrimary"
+                  onClick={createLot}
+                  disabled={creating}
+                >
+                  {creating ? "Speichere..." : "Lot anlegen"}
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setForm(INITIAL_FORM);
+                    setShowForm(false);
+                  }}
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lots Table */}
+        <div className="panel">
+          <div className="panelHeader">
+            <h2 className="panelTitle">Alle Lots</h2>
+            <span className="badge">{lots.length} Eintraege</span>
+          </div>
+
+          {lots.length > 0 ? (
+            <div className="tableWrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Kooperative</th>
+                    <th>Erntejahr</th>
+                    <th>Incoterm</th>
+                    <th>Preis/kg</th>
+                    <th>Gewicht</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lots.map((lot) => (
+                    <tr key={lot.id}>
+                      <td>
+                        <Link 
+                          href={`/lots/${lot.id}`}
+                          style={{ fontWeight: 600, color: "var(--color-text)" }}
+                        >
+                          {lot.name}
+                        </Link>
+                      </td>
+                      <td>
+                        <Link 
+                          href={`/cooperatives/${lot.cooperative_id}`}
+                          className="badge"
+                        >
+                          #{lot.cooperative_id}
+                        </Link>
+                      </td>
+                      <td>{lot.crop_year || "-"}</td>
+                      <td>
+                        {lot.incoterm ? (
+                          <span className="badge">{lot.incoterm}</span>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td>
+                        {lot.price_per_kg != null ? (
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--font-size-sm)" }}>
+                            {lot.price_per_kg.toFixed(2)} {lot.currency || "USD"}
+                          </span>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td>
+                        {lot.weight_kg != null
+                          ? lot.weight_kg >= 1000
+                            ? `${(lot.weight_kg / 1000).toFixed(1)}t`
+                            : `${lot.weight_kg}kg`
+                          : "-"}
+                      </td>
+                      <td>
+                        {lot.expected_cupping_score ? (
+                          <span className={`badge ${
+                            lot.expected_cupping_score >= 85 ? "badgeOk" :
+                            lot.expected_cupping_score >= 80 ? "badgeWarn" : ""
+                          }`}>
+                            {lot.expected_cupping_score}
+                          </span>
+                        ) : (
+                          <span className="badge">-</span>
+                        )}
+                      </td>
+                      <td>
+                        {lot.deleted_at ? (
+                          <span className="badge badgeWarn">Archiviert</span>
+                        ) : (
+                          <span className="badge badgeOk">Aktiv</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="tableActions">
+                          <Link href={`/lots/${lot.id}`} className="btn btnSm btnGhost">
+                            Details
+                          </Link>
+                          {lot.deleted_at ? (
+                            <button
+                              className="btn btnSm"
+                              onClick={() => restoreLot(lot.id)}
+                              disabled={busyId === lot.id}
+                            >
+                              Wiederherstellen
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btnSm btnDanger"
+                              onClick={() => archiveLot(lot.id)}
+                              disabled={busyId === lot.id}
+                            >
+                              Archivieren
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="panelBody">
+              <div className="emptyState">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3, marginBottom: "var(--space-4)" }}>
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+                <h3 className="h4">Keine Lots vorhanden</h3>
+                <p className="subtitle">
+                  Erstellen Sie ein neues Lot, um Kaffeemengen zu verwalten.
+                </p>
+                <button 
+                  type="button" 
+                  className="btn btnPrimary"
+                  onClick={() => setShowForm(true)}
+                  style={{ marginTop: "var(--space-4)" }}
+                >
+                  Erstes Lot anlegen
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {lots.length === 0 ? (
-        <div>Keine Lots vorhanden.</div>
-      ) : (
-        <ul>
-          {lots.map((l) => (
-            <li key={l.id} style={{ marginBottom: 8 }}>
-              <Link href={`/lots/${l.id}`}>{l.name}</Link>
-              {l.deleted_at ? (
-                <span style={{ marginLeft: 8, fontSize: 12, color: "#b07b2c" }}>
-                  archiviert
-                </span>
-              ) : null}
-              <span style={{ marginLeft: 8 }}>
-                {l.deleted_at ? (
-                  <button
-                    className="btn"
-                    onClick={() => restoreLot(l.id)}
-                    disabled={busyId === l.id}
-                  >
-                    Restore
-                  </button>
-                ) : (
-                  <button
-                    className="btn"
-                    onClick={() => archiveLot(l.id)}
-                    disabled={busyId === l.id}
-                  >
-                    Archivieren
-                  </button>
-                )}
-              </span>
-              <div style={{ fontSize: 12, color: "#555" }}>
-                Koop #{l.cooperative_id}
-                {l.crop_year ? ` - ${l.crop_year}` : ""}
-                {l.price_per_kg != null ? ` - ${l.price_per_kg} ${l.currency || ""}/kg` : ""}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

@@ -6,6 +6,10 @@ import { useShipments, useCreateShipment } from "../hooks/useShipments";
 import { apiFetch } from "../../lib/api";
 import { Shipment } from "../types";
 
+/* ============================================================
+   SHIPMENTS TRACKING - ENTERPRISE VIEW
+   ============================================================ */
+
 export default function ShipmentsDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -73,36 +77,6 @@ export default function ShipmentsDashboard() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="page">
-        <div className="pageHeader">
-          <div className="h1">Sendungsverfolgung</div>
-        </div>
-        <div className="panel" style={{ padding: "40px", textAlign: "center" }}>
-          <div>Laden...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="page">
-        <div className="pageHeader">
-          <div className="h1">Sendungsverfolgung</div>
-        </div>
-        <div
-          className="panel"
-          style={{ padding: "40px", textAlign: "center", color: "var(--danger)" }}
-        >
-          <div>Fehler beim Laden der Sendungen</div>
-          <div style={{ fontSize: "14px", marginTop: "8px" }}>{String(error)}</div>
-        </div>
-      </div>
-    );
-  }
-
   const stats = {
     total: activeShipments.length,
     inTransit: activeShipments.filter((s) => s.status === "in_transit").length,
@@ -153,54 +127,50 @@ export default function ShipmentsDashboard() {
     return daysUntilArrival >= 0 && daysUntilArrival <= 7;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "in_transit":
-        return { bg: "rgba(87,134,255,0.12)", border: "rgba(87,134,255,0.35)" };
-      case "arrived":
-        return { bg: "rgba(64,214,123,0.12)", border: "rgba(64,214,123,0.35)" };
-      case "delayed":
-        return { bg: "rgba(255,183,64,0.12)", border: "rgba(255,183,64,0.35)" };
-      default:
-        return { bg: "rgba(255,255,255,0.02)", border: "var(--border)" };
-    }
+  const getStatusBadge = (status: string): { className: string; label: string } => {
+    const map: Record<string, { className: string; label: string }> = {
+      in_transit: { className: "badgeInfo", label: "In Transit" },
+      arrived: { className: "badgeOk", label: "Angekommen" },
+      delivered: { className: "badgeOk", label: "Geliefert" },
+      delayed: { className: "badgeWarn", label: "Verspaetet" },
+      pending: { className: "badge", label: "Ausstehend" },
+    };
+    return map[status] || { className: "badge", label: status };
   };
 
-  if (shipments.length === 0) {
+  if (isLoading) {
     return (
       <div className="page">
-        <div className="pageHeader">
-          <div>
-            <div className="h1">Sendungsverfolgung</div>
-            <div className="muted">
-              Verfolgen Sie Kaffeesendungen von Peru nach Deutschland und Europa
+        <div className="content">
+          <header className="pageHeader">
+            <div className="pageHeaderContent">
+              <h1 className="h1">Sendungsverfolgung</h1>
+            </div>
+          </header>
+          <div className="panel">
+            <div className="panelBody">
+              <div className="loading">
+                <div className="spinner"></div>
+              </div>
             </div>
           </div>
-          <div className="actions">
-            <button
-              type="button"
-              className="btn btnPrimary"
-              onClick={() => setShowCreateModal(true)}
-            >
-              Sendung hinzufuegen
-            </button>
-          </div>
         </div>
-        <div style={{ padding: "60px 40px", textAlign: "center" }}>
-          <div style={{ fontSize: "28px", marginBottom: "16px" }}>[BOX]</div>
-          <div style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
-            Keine Sendungen vorhanden
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page">
+        <div className="content">
+          <header className="pageHeader">
+            <div className="pageHeaderContent">
+              <h1 className="h1">Sendungsverfolgung</h1>
+            </div>
+          </header>
+          <div className="alert bad">
+            <span>Fehler beim Laden der Sendungen: {String(error)}</span>
           </div>
-          <div style={{ fontSize: "14px", color: "var(--muted)", marginBottom: "20px" }}>
-            Erstellen Sie Ihre erste Sendung, um mit dem Tracking zu beginnen
-          </div>
-          <button
-            type="button"
-            className="btn btnPrimary"
-            onClick={() => setShowCreateModal(true)}
-          >
-            Erste Sendung erstellen
-          </button>
         </div>
       </div>
     );
@@ -208,518 +178,459 @@ export default function ShipmentsDashboard() {
 
   return (
     <div className="page">
-      <div className="pageHeader">
-        <div>
-          <div className="h1">Sendungsverfolgung</div>
-          <div className="muted">
-            Verfolgen Sie Kaffeesendungen von Peru nach Deutschland und Europa
+      <div className="content">
+        {/* Page Header */}
+        <header className="pageHeader">
+          <div className="pageHeaderContent">
+            <h1 className="h1">Sendungsverfolgung</h1>
+            <p className="subtitle">
+              Verfolgen Sie Kaffeesendungen von Peru nach Deutschland und Europa
+            </p>
           </div>
-        </div>
-        <div className="actions">
-          <label className="row" style={{ gap: 6 }}>
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-            />
-            <span className="small muted">Archivierte anzeigen</span>
-          </label>
-          <button
-            type="button"
-            className="btn btnPrimary"
-            onClick={() => setShowCreateModal(true)}
-          >
-            Sendung hinzufuegen
-          </button>
-        </div>
-      </div>
-
-      <div className="grid gridCols4" style={{ marginBottom: "18px" }}>
-        <div className="panel card">
-          <div className="cardLabel">Sendungen gesamt</div>
-          <div className="cardValue">{stats.total}</div>
-          <div className="cardHint">Alle Zeiten</div>
-        </div>
-        <div className="panel card">
-          <div className="cardLabel">In Transit</div>
-          <div className="cardValue">{stats.inTransit}</div>
-          <div className="cardHint">Aktuell im Versand</div>
-        </div>
-        <div className="panel card">
-          <div className="cardLabel">Angekommen</div>
-          <div className="cardValue">{stats.arrived}</div>
-          <div className="cardHint">Abgeschlossene Lieferungen</div>
-        </div>
-        <div className="panel card">
-          <div className="cardLabel">Gesamtgewicht</div>
-          <div className="cardValue">{(stats.totalWeight / 1000).toFixed(1)}t</div>
-          <div className="cardHint">Kaffee verschifft</div>
-        </div>
-      </div>
-
-      {arrivingSoon.length > 0 && (
-        <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
-          <div className="h2">Bald ankommend</div>
-          <div className="muted" style={{ marginBottom: "14px" }}>
-            Sendungen, die innerhalb von 7 Tagen ankommen
-          </div>
-          <div className="grid gridCols3" style={{ gap: "12px" }}>
-            {arrivingSoon.map((shipment) => {
-              const eta = shipment.estimated_arrival || shipment.eta;
-              if (!eta) return null;
-              const daysUntilArrival = differenceInDays(new Date(eta), new Date());
-              return (
-                <div
-                  key={shipment.id}
-                  className="panel"
-                  style={{
-                    padding: "14px",
-                    background: "rgba(255,183,64,0.08)",
-                    border: "1px solid rgba(255,183,64,0.25)",
-                  }}
-                >
-                  <div style={{ fontWeight: "700", marginBottom: "6px" }}>
-                    {shipment.container_number || `ID-${shipment.id}`}
-                  </div>
-                  <div style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "8px" }}>
-                    {shipment.origin_port} - {shipment.destination_port}
-                  </div>
-                  <div style={{ fontSize: "20px", fontWeight: "800", marginBottom: "4px" }}>
-                    {daysUntilArrival} Tage
-                  </div>
-                  <div style={{ fontSize: "12px", color: "var(--muted)" }}>
-                    ETA: {format(new Date(eta), "dd. MMM yyyy")}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
-        <div className="h2">Aktive Sendungen</div>
-        <div className="muted" style={{ marginBottom: "14px" }}>
-          Aktuell in Transit
-        </div>
-        <div className="grid gridCols2" style={{ gap: "14px" }}>
-          {activeShipments
-            .filter((s) => s.status === "in_transit")
-            .map((shipment) => {
-              const statusColors = getStatusColor(shipment.status);
-              const progress = calculateProgress(shipment);
-              const eta = shipment.estimated_arrival || shipment.eta;
-
-              return (
-                <div
-                  key={shipment.id}
-                  className="panel"
-                  style={{
-                    padding: "18px",
-                    background: statusColors.bg,
-                    border: `1px solid ${statusColors.border}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "start",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "4px" }}>
-                        {shipment.container_number || `ID-${shipment.id}`}
-                      </div>
-                      <div style={{ fontSize: "13px", color: "var(--muted)" }}>
-                        {shipment.carrier || "Carrier"}
-                      </div>
-                    </div>
-                    <span
-                      className="badge"
-                      style={{ background: statusColors.bg, borderColor: statusColors.border }}
-                    >
-                      {shipment.status.replace("_", " ")}
-                    </span>
-                  </div>
-
-                  <div style={{ marginBottom: "12px" }}>
-                    <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                      <strong>Route:</strong> {shipment.origin_port} - {shipment.destination_port}
-                    </div>
-                    <div style={{ fontSize: "13px", color: "var(--muted)" }}>
-                      {shipment.current_location || "In Transit"}
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: "12px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: "12px",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      <span>Fortschritt</span>
-                      <span>{Math.round(progress)}%</span>
-                    </div>
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "6px",
-                        background: "rgba(0,0,0,0.2)",
-                        borderRadius: "999px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${progress}%`,
-                          height: "100%",
-                          background: "rgba(200,149,108,0.8)",
-                          transition: "width 0.3s ease",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gridCols2" style={{ gap: "10px", fontSize: "12px" }}>
-                    <div>
-                      <div style={{ color: "var(--muted)" }}>Abfahrt</div>
-                      <div style={{ fontWeight: "600" }}>
-                        {shipment.departure_date
-                          ? format(new Date(shipment.departure_date), "dd. MMM")
-                          : "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ color: "var(--muted)" }}>ETA</div>
-                      <div style={{ fontWeight: "600" }}>
-                        {eta ? format(new Date(eta), "dd. MMM") : "-"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "12px",
-                      paddingTop: "12px",
-                      borderTop: "1px solid var(--border)",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="btn"
-                      style={{ width: "100%", fontSize: "12px" }}
-                      onClick={() => alert(`Shipment details page coming soon (ID: ${shipment.id})`)}
-                    >
-                      Details anzeigen -
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
-
-      <div className="panel" style={{ padding: "18px" }}>
-        <div className="h2">Alle Sendungen</div>
-        <div className="muted" style={{ marginBottom: "14px" }}>
-          Vollstaendiger Sendungsverlauf
-        </div>
-
-        <div style={{ overflowX: "auto" }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Referenz</th>
-                <th>Route</th>
-                <th>Spediteur</th>
-                <th>Container</th>
-                <th>Lots</th>
-                <th>Gewicht (kg)</th>
-                <th>Abfahrt</th>
-                <th>ETA / Ankunft</th>
-                <th>Status</th>
-                <th>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shipments.map((shipment) => {
-                const statusColors = getStatusColor(shipment.status);
-                const eta = shipment.estimated_arrival || shipment.eta;
-                return (
-                  <tr key={shipment.id}>
-                    <td style={{ fontWeight: "600" }}>
-                      {shipment.container_number || `ID-${shipment.id}`}
-                    </td>
-                    <td>
-                      {shipment.origin_port} - {shipment.destination_port}
-                    </td>
-                    <td>{shipment.carrier || "-"}</td>
-                    <td className="mono" style={{ fontSize: "12px" }}>
-                      {shipment.container_number || "-"}
-                    </td>
-                    <td>{shipment.lot_ids?.length ?? (shipment.lot_id ? 1 : 0)}</td>
-                    <td>{shipment.weight_kg ? shipment.weight_kg.toLocaleString() : "-"}</td>
-                    <td>
-                      {shipment.departure_date
-                        ? format(new Date(shipment.departure_date), "MMM dd, yyyy")
-                        : "-"}
-                    </td>
-                    <td>
-                      {shipment.actual_arrival
-                        ? format(new Date(shipment.actual_arrival), "MMM dd, yyyy")
-                        : eta
-                          ? format(new Date(eta), "MMM dd, yyyy")
-                          : "-"}
-                    </td>
-                    <td>
-                      {shipment.deleted_at ? (
-                        <span className="badge badgeWarn">archiviert</span>
-                      ) : (
-                        <span
-                          className="badge"
-                          style={{
-                            background: statusColors.bg,
-                            borderColor: statusColors.border,
-                          }}
-                        >
-                          {shipment.status.replace("_", " ")}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="row" style={{ gap: 8 }}>
-                        <button
-                          type="button"
-                          className="link"
-                          style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                          onClick={() => alert(`Shipment details page coming soon (ID: ${shipment.id})`)}
-                        >
-                          Details -
-                        </button>
-                        {shipment.deleted_at ? (
-                          <button
-                            type="button"
-                            className="link"
-                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                            onClick={() => restoreShipment(shipment.id)}
-                          >
-                            Restore
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="link"
-                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                            onClick={() => archiveShipment(shipment.id)}
-                          >
-                            Archivieren
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {showCreateModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-          onClick={() => setShowCreateModal(false)}
-        >
-          <div
-            className="panel"
-            style={{
-              width: "90%",
-              maxWidth: "600px",
-              padding: "24px",
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "20px",
-              }}
+          <div className="pageHeaderActions">
+            <label className="checkboxLabel">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+              />
+              Archivierte anzeigen
+            </label>
+            <button type="button" className="btn" onClick={() => refetch()}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M16 21h5v-5"/>
+              </svg>
+              Aktualisieren
+            </button>
+            <button
+              type="button"
+              className="btn btnPrimary"
+              onClick={() => setShowCreateModal(true)}
             >
-              <h2 style={{ margin: 0 }}>Neue Sendung erstellen</h2>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Neue Sendung
+            </button>
+          </div>
+        </header>
+
+        {/* KPI Grid */}
+        <div className="kpiGrid">
+          <div className="kpiCard">
+            <span className="cardLabel">Sendungen Gesamt</span>
+            <span className="cardValue">{stats.total}</span>
+            <span className="cardHint">Alle Zeiten</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">In Transit</span>
+            <span className="cardValue">{stats.inTransit}</span>
+            <span className="cardHint">Aktuell unterwegs</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Angekommen</span>
+            <span className="cardValue">{stats.arrived}</span>
+            <span className="cardHint">Abgeschlossene Lieferungen</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Gesamtgewicht</span>
+            <span className="cardValue">
+              {stats.totalWeight > 1000 
+                ? `${(stats.totalWeight / 1000).toFixed(1)}t`
+                : `${stats.totalWeight}kg`}
+            </span>
+            <span className="cardHint">Kaffee verschifft</span>
+          </div>
+        </div>
+
+        {/* Arriving Soon Alert */}
+        {arrivingSoon.length > 0 && (
+          <div className="panel" style={{ marginBottom: "var(--space-6)" }}>
+            <div className="panelHeader">
+              <h2 className="panelTitle">Bald ankommend</h2>
+              <span className="badge badgeWarn">{arrivingSoon.length} Sendungen</span>
+            </div>
+            <div className="panelBody">
+              <div className="shipmentCards">
+                {arrivingSoon.map((shipment) => {
+                  const eta = shipment.estimated_arrival || shipment.eta;
+                  if (!eta) return null;
+                  const daysUntilArrival = differenceInDays(new Date(eta), new Date());
+                  return (
+                    <div key={shipment.id} className="shipmentCard arriving">
+                      <div className="shipmentCardHeader">
+                        <span className="shipmentCardTitle">
+                          {shipment.container_number || `ID-${shipment.id}`}
+                        </span>
+                        <span className="badge badgeWarn">
+                          {daysUntilArrival === 0 ? "Heute" : `${daysUntilArrival} Tage`}
+                        </span>
+                      </div>
+                      <p className="shipmentCardRoute">
+                        {shipment.origin_port} - {shipment.destination_port}
+                      </p>
+                      <span className="shipmentCardEta">
+                        ETA: {format(new Date(eta), "dd.MM.yyyy")}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Shipments */}
+        {activeShipments.filter((s) => s.status === "in_transit").length > 0 && (
+          <div className="panel" style={{ marginBottom: "var(--space-6)" }}>
+            <div className="panelHeader">
+              <h2 className="panelTitle">Aktive Sendungen</h2>
+              <span className="badge badgeInfo">
+                {activeShipments.filter((s) => s.status === "in_transit").length} in Transit
+              </span>
+            </div>
+            <div className="panelBody">
+              <div className="shipmentCards">
+                {activeShipments
+                  .filter((s) => s.status === "in_transit")
+                  .map((shipment) => {
+                    const progress = calculateProgress(shipment);
+                    const eta = shipment.estimated_arrival || shipment.eta;
+                    const statusBadge = getStatusBadge(shipment.status);
+
+                    return (
+                      <div key={shipment.id} className="shipmentCard">
+                        <div className="shipmentCardHeader">
+                          <div>
+                            <span className="shipmentCardTitle">
+                              {shipment.container_number || `ID-${shipment.id}`}
+                            </span>
+                            <span className="shipmentCardCarrier">
+                              {shipment.carrier || "Carrier"}
+                            </span>
+                          </div>
+                          <span className={`badge ${statusBadge.className}`}>
+                            {statusBadge.label}
+                          </span>
+                        </div>
+
+                        <p className="shipmentCardRoute">
+                          {shipment.origin_port} - {shipment.destination_port}
+                        </p>
+                        
+                        {shipment.current_location && (
+                          <p className="shipmentCardLocation">
+                            Aktuell: {shipment.current_location}
+                          </p>
+                        )}
+
+                        <div className="shipmentProgress">
+                          <div className="shipmentProgressHeader">
+                            <span>Fortschritt</span>
+                            <span>{Math.round(progress)}%</span>
+                          </div>
+                          <div className="shipmentProgressBar">
+                            <div 
+                              className="shipmentProgressFill" 
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="shipmentCardDates">
+                          <div>
+                            <span className="shipmentCardDateLabel">Abfahrt</span>
+                            <span className="shipmentCardDateValue">
+                              {shipment.departure_date
+                                ? format(new Date(shipment.departure_date), "dd.MM.")
+                                : "-"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="shipmentCardDateLabel">ETA</span>
+                            <span className="shipmentCardDateValue">
+                              {eta ? format(new Date(eta), "dd.MM.") : "-"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* All Shipments Table */}
+        <div className="panel">
+          <div className="panelHeader">
+            <h2 className="panelTitle">Alle Sendungen</h2>
+            <span className="badge">{shipments.length} Eintraege</span>
+          </div>
+
+          {shipments.length > 0 ? (
+            <div className="tableWrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Referenz</th>
+                    <th>Route</th>
+                    <th>Spediteur</th>
+                    <th>Lots</th>
+                    <th>Gewicht</th>
+                    <th>Abfahrt</th>
+                    <th>ETA / Ankunft</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shipments.map((shipment) => {
+                    const statusBadge = getStatusBadge(shipment.status);
+                    const eta = shipment.estimated_arrival || shipment.eta;
+                    return (
+                      <tr key={shipment.id}>
+                        <td>
+                          <span style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: "var(--font-size-sm)" }}>
+                            {shipment.container_number || `ID-${shipment.id}`}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="small">
+                            {shipment.origin_port} - {shipment.destination_port}
+                          </span>
+                        </td>
+                        <td>{shipment.carrier || "-"}</td>
+                        <td>
+                          <span className="badge">
+                            {shipment.lot_ids?.length ?? (shipment.lot_id ? 1 : 0)}
+                          </span>
+                        </td>
+                        <td>
+                          {shipment.weight_kg 
+                            ? `${(shipment.weight_kg / 1000).toFixed(1)}t`
+                            : "-"}
+                        </td>
+                        <td>
+                          {shipment.departure_date
+                            ? format(new Date(shipment.departure_date), "dd.MM.yy")
+                            : "-"}
+                        </td>
+                        <td>
+                          {shipment.actual_arrival
+                            ? format(new Date(shipment.actual_arrival), "dd.MM.yy")
+                            : eta
+                              ? format(new Date(eta), "dd.MM.yy")
+                              : "-"}
+                        </td>
+                        <td>
+                          {shipment.deleted_at ? (
+                            <span className="badge badgeWarn">Archiviert</span>
+                          ) : (
+                            <span className={`badge ${statusBadge.className}`}>
+                              {statusBadge.label}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="tableActions">
+                            {shipment.deleted_at ? (
+                              <button
+                                className="btn btnSm"
+                                onClick={() => restoreShipment(shipment.id)}
+                              >
+                                Wiederherstellen
+                              </button>
+                            ) : (
+                              <button
+                                className="btn btnSm btnDanger"
+                                onClick={() => archiveShipment(shipment.id)}
+                              >
+                                Archivieren
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="panelBody">
+              <div className="emptyState">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3, marginBottom: "var(--space-4)" }}>
+                  <rect x="1" y="3" width="15" height="13" rx="1"/>
+                  <path d="M16 8h4l3 3v5h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                <h3 className="h4">Keine Sendungen vorhanden</h3>
+                <p className="subtitle">
+                  Erstellen Sie Ihre erste Sendung, um mit dem Tracking zu beginnen.
+                </p>
+                <button
+                  type="button"
+                  className="btn btnPrimary"
+                  onClick={() => setShowCreateModal(true)}
+                  style={{ marginTop: "var(--space-4)" }}
+                >
+                  Erste Sendung erstellen
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="modalOverlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <h2 className="h2">Neue Sendung erstellen</h2>
               <button
                 type="button"
-                className="btn"
+                className="btn btnSm btnGhost"
                 onClick={() => setShowCreateModal(false)}
-                style={{ padding: "4px 12px" }}
               >
-                X
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
               </button>
             </div>
 
             <form onSubmit={handleCreateSubmit}>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                  Container-Nummer *
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={createForm.container_number}
-                  onChange={(e) => setCreateForm({ ...createForm, container_number: e.target.value })}
-                  required
-                  minLength={5}
-                  maxLength={50}
-                  placeholder="MSCU1234567"
-                />
-              </div>
+              <div className="modalBody">
+                <div className="fieldGrid2">
+                  <div className="field">
+                    <label className="fieldLabel">Container-Nummer *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={createForm.container_number}
+                      onChange={(e) => setCreateForm({ ...createForm, container_number: e.target.value })}
+                      required
+                      minLength={5}
+                      maxLength={50}
+                      placeholder="MSCU1234567"
+                    />
+                  </div>
+                  <div className="field">
+                    <label className="fieldLabel">Bill of Lading *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={createForm.bill_of_lading}
+                      onChange={(e) => setCreateForm({ ...createForm, bill_of_lading: e.target.value })}
+                      required
+                      minLength={3}
+                      maxLength={100}
+                      placeholder="BOL-2024-001"
+                    />
+                  </div>
+                  <div className="field">
+                    <label className="fieldLabel">Gewicht (kg) *</label>
+                    <input
+                      type="number"
+                      className="input"
+                      value={createForm.weight_kg}
+                      onChange={(e) => setCreateForm({ ...createForm, weight_kg: Number(e.target.value) })}
+                      required
+                      min={1}
+                    />
+                  </div>
+                  <div className="field">
+                    <label className="fieldLabel">Container-Typ *</label>
+                    <select
+                      className="input"
+                      value={createForm.container_type}
+                      onChange={(e) => setCreateForm({ ...createForm, container_type: e.target.value })}
+                      required
+                    >
+                      <option value="20ft">20ft</option>
+                      <option value="40ft">40ft</option>
+                      <option value="40ft_hc">40ft HC</option>
+                    </select>
+                  </div>
+                </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                  Bill of Lading *
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={createForm.bill_of_lading}
-                  onChange={(e) => setCreateForm({ ...createForm, bill_of_lading: e.target.value })}
-                  required
-                  minLength={3}
-                  maxLength={100}
-                  placeholder="BOL-2024-001"
-                />
-              </div>
-
-              <div className="grid gridCols2" style={{ gap: "16px", marginBottom: "16px" }}>
-                <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                    Gewicht (kg) *
-                  </label>
+                <div className="field">
+                  <label className="fieldLabel">Ursprungshafen *</label>
                   <input
-                    type="number"
+                    type="text"
                     className="input"
-                    value={createForm.weight_kg}
-                    onChange={(e) => setCreateForm({ ...createForm, weight_kg: Number(e.target.value) })}
+                    value={createForm.origin_port}
+                    onChange={(e) => setCreateForm({ ...createForm, origin_port: e.target.value })}
                     required
-                    min={1}
+                    maxLength={100}
                   />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                    Container-Typ *
-                  </label>
-                  <select
+
+                <div className="field">
+                  <label className="fieldLabel">Zielhafen *</label>
+                  <input
+                    type="text"
                     className="input"
-                    value={createForm.container_type}
-                    onChange={(e) => setCreateForm({ ...createForm, container_type: e.target.value })}
+                    value={createForm.destination_port}
+                    onChange={(e) => setCreateForm({ ...createForm, destination_port: e.target.value })}
                     required
-                  >
-                    <option value="20ft">20ft</option>
-                    <option value="40ft">40ft</option>
-                    <option value="40ft_hc">40ft HC</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                  Ursprungshafen *
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={createForm.origin_port}
-                  onChange={(e) => setCreateForm({ ...createForm, origin_port: e.target.value })}
-                  required
-                  maxLength={100}
-                />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                  Zielhafen *
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={createForm.destination_port}
-                  onChange={(e) => setCreateForm({ ...createForm, destination_port: e.target.value })}
-                  required
-                  maxLength={100}
-                />
-              </div>
-
-              <div className="grid gridCols2" style={{ gap: "16px", marginBottom: "16px" }}>
-                <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                    Abfahrtsdatum
-                  </label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={createForm.departure_date}
-                    onChange={(e) => setCreateForm({ ...createForm, departure_date: e.target.value })}
+                    maxLength={100}
                   />
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                    Voraussichtliche Ankunft
-                  </label>
+
+                <div className="fieldGrid2">
+                  <div className="field">
+                    <label className="fieldLabel">Abfahrtsdatum</label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={createForm.departure_date}
+                      onChange={(e) => setCreateForm({ ...createForm, departure_date: e.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label className="fieldLabel">Voraussichtliche Ankunft</label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={createForm.estimated_arrival}
+                      onChange={(e) => setCreateForm({ ...createForm, estimated_arrival: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label className="fieldLabel">Lot-IDs (optional)</label>
                   <input
-                    type="date"
+                    type="text"
                     className="input"
-                    value={createForm.estimated_arrival}
-                    onChange={(e) => setCreateForm({ ...createForm, estimated_arrival: e.target.value })}
+                    value={createForm.lot_ids}
+                    onChange={(e) => setCreateForm({ ...createForm, lot_ids: e.target.value })}
+                    placeholder="101, 102, 103"
+                  />
+                  <span className="fieldHint">Kommasepariert</span>
+                </div>
+
+                <div className="field">
+                  <label className="fieldLabel">Notizen</label>
+                  <textarea
+                    className="input"
+                    value={createForm.notes}
+                    onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
+                    rows={3}
+                    maxLength={2000}
                   />
                 </div>
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                  Lot-IDs (optional, kommasepariert)
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={createForm.lot_ids}
-                  onChange={(e) => setCreateForm({ ...createForm, lot_ids: e.target.value })}
-                  placeholder="101, 102, 103"
-                />
-              </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>
-                  Notizen
-                </label>
-                <textarea
-                  className="input"
-                  value={createForm.notes}
-                  onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
-                  rows={3}
-                  maxLength={2000}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <div className="modalFooter">
                 <button type="button" className="btn" onClick={() => setShowCreateModal(false)}>
                   Abbrechen
                 </button>
@@ -731,6 +642,134 @@ export default function ShipmentsDashboard() {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        .shipmentCards {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: var(--space-4);
+        }
+        .shipmentCard {
+          padding: var(--space-4);
+          background: var(--color-bg-subtle);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+        }
+        .shipmentCard.arriving {
+          background: var(--color-warning-subtle);
+          border-color: var(--color-warning-border);
+        }
+        .shipmentCardHeader {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: var(--space-3);
+        }
+        .shipmentCardTitle {
+          font-weight: var(--font-weight-semibold);
+          font-size: var(--font-size-base);
+          display: block;
+        }
+        .shipmentCardCarrier {
+          font-size: var(--font-size-sm);
+          color: var(--color-text-muted);
+        }
+        .shipmentCardRoute {
+          font-size: var(--font-size-sm);
+          color: var(--color-text-secondary);
+          margin: 0 0 var(--space-2);
+        }
+        .shipmentCardLocation {
+          font-size: var(--font-size-xs);
+          color: var(--color-text-muted);
+          margin: 0 0 var(--space-3);
+        }
+        .shipmentCardEta {
+          font-size: var(--font-size-xs);
+          color: var(--color-text-muted);
+        }
+        .shipmentProgress {
+          margin-bottom: var(--space-3);
+        }
+        .shipmentProgressHeader {
+          display: flex;
+          justify-content: space-between;
+          font-size: var(--font-size-xs);
+          color: var(--color-text-muted);
+          margin-bottom: var(--space-2);
+        }
+        .shipmentProgressBar {
+          width: 100%;
+          height: 6px;
+          background: var(--color-border);
+          border-radius: var(--radius-full);
+          overflow: hidden;
+        }
+        .shipmentProgressFill {
+          height: 100%;
+          background: var(--color-accent);
+          transition: width 300ms ease;
+        }
+        .shipmentCardDates {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: var(--space-3);
+          padding-top: var(--space-3);
+          border-top: 1px solid var(--color-border);
+        }
+        .shipmentCardDateLabel {
+          font-size: var(--font-size-xs);
+          color: var(--color-text-muted);
+          display: block;
+        }
+        .shipmentCardDateValue {
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-semibold);
+        }
+        .modalOverlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: var(--space-4);
+        }
+        .modal {
+          width: 100%;
+          max-width: 600px;
+          background: var(--color-surface);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-xl);
+          max-height: 90vh;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        .modalHeader {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: var(--space-5);
+          border-bottom: 1px solid var(--color-border);
+        }
+        .modalBody {
+          padding: var(--space-5);
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
+        }
+        .modalFooter {
+          display: flex;
+          justify-content: flex-end;
+          gap: var(--space-3);
+          padding: var(--space-4) var(--space-5);
+          border-top: 1px solid var(--color-border);
+          background: var(--color-bg-subtle);
+        }
+      `}</style>
     </div>
   );
 }
