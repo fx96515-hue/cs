@@ -1,3 +1,4 @@
+// v3 - fixed JSX structure
 "use client";
 
 import { useState } from "react";
@@ -333,6 +334,6 @@ export default function AnalyticsDashboard() {
             </p>
           </div>
         </div>
-      </div>
+    </div>
   );
 }
