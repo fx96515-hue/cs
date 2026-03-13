@@ -109,28 +109,31 @@ export default function DashboardPage() {
 
   return (
     <div className="page">
+      {/* Page Header */}
       <div className="pageHeader">
         <div>
-          <div className="h1">Uebersicht</div>
-          <div className="muted">Status, KPIs und die wichtigsten Signale auf einen Blick.</div>
+          <h1 className="h1">Uebersicht</h1>
+          <p className="muted small">Status, KPIs und die wichtigsten Signale auf einen Blick.</p>
         </div>
-        <div className="actions">
+        <div className="row">
           <Link className="btn" href="/ops">
             Ops & Jobs
           </Link>
           <button className="btn" onClick={() => window.location.reload()}>
-            Reload
+            Neu laden
           </button>
         </div>
       </div>
 
-      {err ? (
+      {/* Error State */}
+      {err && (
         <div className="alert bad">
           <div className="alertTitle">Fehler beim Laden</div>
           <div className="alertText">{err}</div>
         </div>
-      ) : null}
+      )}
 
+      {/* KPI Grid */}
       <div className="gridKpi">
         <KpiCard
           label="Backend"
@@ -154,25 +157,11 @@ export default function DashboardPage() {
         <KpiCard
           label="Data Quality"
           value={
-            <div className="row gap">
-              <Link className="link" href="/ops?severity=critical">
-                <Badge tone={opsOverview?.data_quality?.critical_flags ? "bad" : "good"}>
-                  Critical {opsOverview?.data_quality?.critical_flags ?? (loading ? "..." : "0")}
-                </Badge>
-              </Link>
-              <Link className="link" href="/ops?severity=all">
-                <Badge
-                  tone={
-                    opsOverview?.data_quality?.open_flags &&
-                    opsOverview.data_quality.open_flags > 0
-                      ? "warn"
-                      : "good"
-                  }
-                >
-                  Open {opsOverview?.data_quality?.open_flags ?? (loading ? "..." : "0")}
-                </Badge>
-              </Link>
-            </div>
+            <Link href="/ops?severity=critical">
+              <Badge tone={opsOverview?.data_quality?.critical_flags ? "bad" : "good"}>
+                C: {opsOverview?.data_quality?.critical_flags ?? (loading ? "..." : "0")}
+              </Badge>
+            </Link>
           }
           hint="Filter in Ops"
         />
@@ -184,55 +173,56 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Main Content Grid */}
       <div className="grid2">
-        <div className="panel">
-          <div className="panelHeader">
+        {/* Marktradar */}
+        <div className="panel" style={{ padding: "20px" }}>
+          <div className="rowBetween" style={{ marginBottom: "16px" }}>
             <div>
-              <div className="panelTitle">Marktradar</div>
-              <div className="muted">Neueste Headlines (Default: Peru Coffee)</div>
+              <h3 className="h2" style={{ margin: 0 }}>Marktradar</h3>
+              <p className="muted small" style={{ marginTop: "4px" }}>Neueste Headlines (Default: Peru Coffee)</p>
             </div>
-            <Link className="link" href="/news">
-              oeffnen -
+            <Link className="link small" href="/news">
+              Alle anzeigen
             </Link>
           </div>
           <div className="list">
             {(news ?? []).slice(0, 6).map((n) => (
               <div key={n.id} className="listRow">
                 <div className="listMain">
-                  <div className="listTitle">
-                    {n.url ? (
-                      <a className="link" href={n.url} target="_blank" rel="noreferrer">
-                        {n.title}
-                      </a>
-                    ) : (
-                      n.title
-                    )}
-                  </div>
+                  {n.url ? (
+                    <a className="link listTitle" href={n.url} target="_blank" rel="noreferrer">
+                      {n.title}
+                    </a>
+                  ) : (
+                    <div className="listTitle">{n.title}</div>
+                  )}
                   <div className="listMeta">
                     <span>{n.source ?? "-"}</span>
-                    <span className="dot">|</span>
+                    <span className="dot">•</span>
                     <span>{fmtDate(n.published_at)}</span>
                   </div>
                 </div>
                 <Badge tone="neutral">{n.topic}</Badge>
               </div>
             ))}
-            {(!news || news.length === 0) && !loading ? (
+            {(!news || news.length === 0) && !loading && (
               <div className="empty">
-                Noch keine News. In Ops - &quot;News refresh&quot; starten.
+                Noch keine News. In Ops - "News refresh" starten.
               </div>
-            ) : null}
+            )}
           </div>
         </div>
 
-        <div className="panel">
-          <div className="panelHeader">
+        {/* Reports */}
+        <div className="panel" style={{ padding: "20px" }}>
+          <div className="rowBetween" style={{ marginBottom: "16px" }}>
             <div>
-              <div className="panelTitle">Reports & Runs</div>
-              <div className="muted">Letzte Ingest-/Job-Reports</div>
+              <h3 className="h2" style={{ margin: 0 }}>Reports & Runs</h3>
+              <p className="muted small" style={{ marginTop: "4px" }}>Letzte Ingest-/Job-Reports</p>
             </div>
-            <Link className="link" href="/reports">
-              oeffnen -
+            <Link className="link small" href="/reports">
+              Alle anzeigen
             </Link>
           </div>
           <div className="list">
@@ -242,7 +232,7 @@ export default function DashboardPage() {
                   <div className="listTitle">{r.name}</div>
                   <div className="listMeta">
                     <span>{r.kind}</span>
-                    <span className="dot">|</span>
+                    <span className="dot">•</span>
                     <span>{fmtDate(r.report_at)}</span>
                   </div>
                 </div>
@@ -261,55 +251,48 @@ export default function DashboardPage() {
                 </Badge>
               </div>
             ))}
-            {(!reports || reports.length === 0) && !loading ? (
-              <div className="empty">Noch keine Reports.</div>
-            ) : null}
+            {(!reports || reports.length === 0) && !loading && (
+              <div className="empty">
+                Noch keine Reports.
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="grid2" style={{ marginTop: 14 }}>
-        <AnomalyFeedWidget />
-      </div>
+      {/* Anomaly Feed */}
+      <AnomalyFeedWidget />
 
-      <div className="grid3">
-        <div className="panel small">
-          <div className="panelTitle">Naechste Schritte</div>
+      {/* Bottom Cards */}
+      <div className="grid3" style={{ marginTop: "20px" }}>
+        <div className="panel" style={{ padding: "20px" }}>
+          <h3 className="h2">Naechste Schritte</h3>
           <ol className="steps">
-            <li>
-              <b>Discovery Seed</b> ausfuehren (Ops) - Kooperativen/Roester initial fuellen.
-            </li>
-            <li>
-              <b>Enrichment</b> aktivieren - Webseiten/Infos ziehen - Scoring.
-            </li>
-            <li>
-              <b>CRM</b> nutzen: Roasters - Outreach - Deals.
-            </li>
+            <li><b>Discovery Seed</b> ausfuehren (Ops) - Kooperativen/Roester initial fuellen.</li>
+            <li><b>Enrichment</b> aktivieren - Webseiten/Infos ziehen - Scoring.</li>
+            <li><b>CRM</b> nutzen: Roasters - Outreach - Deals.</li>
           </ol>
         </div>
-        <div className="panel small">
-          <div className="panelTitle">Quick Links</div>
-          <div className="chips">
-            <Link className="chip" href="/cooperatives">
+        <div className="panel" style={{ padding: "20px" }}>
+          <h3 className="h2">Quick Links</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <Link className="btn btnFull" href="/cooperatives">
               Kooperativen
             </Link>
-            <Link className="chip" href="/roasters">
+            <Link className="btn btnFull" href="/roasters">
               Roestereien
             </Link>
-            <Link className="chip" href="/ops">
+            <Link className="btn btnFull" href="/ops">
               Jobs / Ops
             </Link>
-            <a className="chip" href="http://localhost:8000/docs" target="_blank" rel="noreferrer">
-              API Docs (direct)
-            </a>
           </div>
         </div>
-        <div className="panel small">
-          <div className="panelTitle">Hinweis</div>
-          <div className="muted">
-            Wenn &quot;ui.localhost&quot;/&quot;api.localhost&quot; zicken: direkt
-            nutzen:
-            <div className="code">UI: http://localhost:3000 | API: http://localhost:8000/docs</div>
+        <div className="panel" style={{ padding: "20px" }}>
+          <h3 className="h2">Info</h3>
+          <div className="muted small" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <p style={{ margin: 0 }}>Direkter Zugriff:</p>
+            <div className="code">UI: localhost:3000</div>
+            <div className="code">API: localhost:8000</div>
           </div>
         </div>
       </div>

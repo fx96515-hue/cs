@@ -22,13 +22,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Keep login page clean (no chrome)
   if (pathname === "/login") {
-    return <div className="center">{children}</div>;
+    return <>{children}</>;
   }
 
   return (
-    <div className="shell">
+    <div className="flex h-screen bg-background">
       <Sidebar authed={authed} />
-      <div className="main">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <Topbar
           authed={authed}
           onLogout={() => {
@@ -37,7 +37,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             router.push("/login");
           }}
         />
-        <div className="content">{children}</div>
+        <div className="flex-1 overflow-auto">{children}</div>
       </div>
     </div>
   );
