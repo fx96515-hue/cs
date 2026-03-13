@@ -274,7 +274,7 @@ export default function GraphPage() {
 
   if (loading) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="pageHeader"><div><div className="h1">Knowledge Graph</div></div></div>
         <div className="panel"><div className="panelBody"><div className="muted">Lädt Netzwerk-Daten...</div></div></div>
       </div>
@@ -282,7 +282,7 @@ export default function GraphPage() {
   }
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">Knowledge Graph</div>

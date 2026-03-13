@@ -68,7 +68,7 @@ export default function SentimentPage() {
   const latest = data.length > 0 ? data[data.length - 1] : null;
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">Sentiment-Analyse</div>

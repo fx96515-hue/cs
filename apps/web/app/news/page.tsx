@@ -80,7 +80,7 @@ export default function NewsPage() {
   }
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">Marktradar</div>

@@ -49,17 +49,16 @@ export default function AnalyticsDashboard() {
   };
 
   return (
-    <div className="page">
-      <div className="content">
-        {/* Page Header */}
-        <header className="pageHeader">
-          <div className="pageHeaderContent">
-            <h1 className="h1">Analytik & ML-Vorhersagen</h1>
-            <p className="subtitle">
-              Machine-Learning-Modelle zur Vorhersage von Frachtkosten, Kaffeepreisen und Trends
-            </p>
-          </div>
-        </header>
+    <div className="content">
+      {/* Page Header */}
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <h1 className="h1">Analytik & ML-Vorhersagen</h1>
+          <p className="subtitle">
+            Machine-Learning-Modelle zur Vorhersage von Frachtkosten, Kaffeepreisen und Trends
+          </p>
+        </div>
+      </header>
 
         {/* KPI Grid with Market Widget */}
         <div className="kpiGrid">
@@ -165,12 +164,12 @@ export default function AnalyticsDashboard() {
               </button>
 
               {freightMutation.isSuccess && freightMutation.data && (
-                <div className="predictionResult">
+                <div style={{ marginTop: "var(--space-4)", padding: "var(--space-4)", background: "var(--color-accent-subtle)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)" }}>
                   <h4 className="h4">Vorhersageergebnis</h4>
-                  <div className="predictionValue">
+                  <div style={{ fontSize: "var(--font-size-3xl)", fontWeight: "var(--font-weight-bold)", color: "var(--color-text)", margin: "var(--space-2) 0", fontFamily: "var(--font-mono)" }}>
                     ${freightMutation.data.predicted_cost_usd.toLocaleString()}
                   </div>
-                  <div className="predictionMeta">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>
                     <span>Konfidenz: {(freightMutation.data.confidence_score * 100).toFixed(1)}%</span>
                     <span>
                       Bereich: ${freightMutation.data.confidence_interval_low.toLocaleString()} - 
@@ -291,12 +290,12 @@ export default function AnalyticsDashboard() {
               </button>
 
               {priceMutation.isSuccess && priceMutation.data && (
-                <div className="predictionResult success">
+                <div style={{ marginTop: "var(--space-4)", padding: "var(--space-4)", background: "var(--color-success-subtle)", border: "1px solid var(--color-success-border)", borderRadius: "var(--radius-lg)" }}>
                   <h4 className="h4">Vorhersageergebnis</h4>
-                  <div className="predictionValue">
+                  <div style={{ fontSize: "var(--font-size-3xl)", fontWeight: "var(--font-weight-bold)", color: "var(--color-text)", margin: "var(--space-2) 0", fontFamily: "var(--font-mono)" }}>
                     ${priceMutation.data.predicted_price_usd_per_kg.toFixed(2)}/kg
                   </div>
-                  <div className="predictionMeta">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>
                     <span>Konfidenz: {(priceMutation.data.confidence_score * 100).toFixed(1)}%</span>
                     <span>
                       Bereich: ${priceMutation.data.confidence_interval_low.toFixed(2)} - 
@@ -335,34 +334,6 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .predictionResult {
-          margin-top: var(--space-4);
-          padding: var(--space-4);
-          background: var(--color-accent-subtle);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg);
-        }
-        .predictionResult.success {
-          background: var(--color-success-subtle);
-          border-color: var(--color-success-border);
-        }
-        .predictionValue {
-          font-size: var(--font-size-3xl);
-          font-weight: var(--font-weight-bold);
-          color: var(--color-text);
-          margin: var(--space-2) 0;
-          font-family: var(--font-mono);
-        }
-        .predictionMeta {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-1);
-          font-size: var(--font-size-sm);
-          color: var(--color-text-muted);
-        }
-      `}</style>
     </div>
   );
 }

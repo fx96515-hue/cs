@@ -104,7 +104,7 @@ export default function MLPage() {
   };
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">ML-Modelle</div>
@@ -194,8 +194,8 @@ export default function MLPage() {
                 <div className="muted" style={{ marginBottom: "var(--space-3)" }}>
                   {forecast.note}
                 </div>
-                <div className="table">
-                  <table>
+              <div className="tableWrap">
+                <table className="table">
                     <thead>
                       <tr>
                         <th>Datum</th>

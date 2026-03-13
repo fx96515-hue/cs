@@ -387,6 +387,14 @@ input, select, textarea {
   flex-wrap: wrap;
 }
 
+/* Alias: viele Seiten nutzen pageActions statt pageHeaderActions */
+.pageActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 /* ============================================================
    TYPOGRAPHY
    ============================================================ */
