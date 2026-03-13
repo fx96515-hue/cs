@@ -7,6 +7,10 @@ import Badge from "../components/Badge";
 import { DataQualityFlag } from "../types";
 import { toErrorMessage } from "../utils/error";
 
+/* ============================================================
+   TYPES
+   ============================================================ */
+
 type Coop = {
   id: number;
   name: string;
@@ -19,7 +23,6 @@ type Coop = {
 };
 
 type CoopList = { items: Coop[]; total: number };
-
 type FlagSummary = { count: number; tone: "bad" | "warn" | "neutral" };
 type DqFilter = "all" | "any" | "none" | "critical" | "warning" | "info";
 
@@ -28,6 +31,27 @@ const DQ_FILTER_VALUES: DqFilter[] = ["all", "any", "none", "critical", "warning
 function parseDqFilter(value: string): DqFilter {
   return DQ_FILTER_VALUES.includes(value as DqFilter) ? (value as DqFilter) : "all";
 }
+
+/* ============================================================
+   ICONS
+   ============================================================ */
+
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="7" cy="7" r="5" />
+    <path d="M12 12L10.5 10.5" />
+  </svg>
+);
+
+const ExternalIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 3L3 9M9 3H5M9 3v4" />
+  </svg>
+);
+
+/* ============================================================
+   COOPERATIVES PAGE
+   ============================================================ */
 
 export default function CooperativesPage() {
   const [data, setData] = useState<CoopList | null>(null);
@@ -38,9 +62,11 @@ export default function CooperativesPage() {
   const [dqFilter, setDqFilter] = useState<DqFilter>("all");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
+      setLoading(true);
       const [res, flags, regions] = await Promise.all([
         apiFetch<Coop[] | CoopList>(
           `/cooperatives?limit=200&include_deleted=${showArchived ? "true" : "false"}`,
@@ -56,11 +82,8 @@ export default function CooperativesPage() {
       const summary: Record<number, FlagSummary> = {};
       for (const flag of flags) {
         const tone =
-          flag.severity === "critical"
-            ? "bad"
-            : flag.severity === "warning"
-              ? "warn"
-              : "neutral";
+          flag.severity === "critical" ? "bad" :
+          flag.severity === "warning" ? "warn" : "neutral";
         const entry = summary[flag.entity_id];
         if (!entry) {
           summary[flag.entity_id] = { count: 1, tone };
@@ -78,6 +101,8 @@ export default function CooperativesPage() {
       setRegionMap(map);
     } catch (error: unknown) {
       setErr(toErrorMessage(error));
+    } finally {
+      setLoading(false);
     }
   }, [showArchived]);
 
@@ -123,68 +148,91 @@ export default function CooperativesPage() {
       const summary = flagSummary[c.id];
       const tone = summary?.tone ?? null;
       const passesDq =
-        dqFilter === "all"
-          ? true
-          : dqFilter === "any"
-            ? !!summary
-            : dqFilter === "none"
-              ? !summary
-              : dqFilter === "critical"
-                ? tone === "bad"
-                : dqFilter === "warning"
-                  ? tone === "warn"
-                  : tone === "neutral";
+        dqFilter === "all" ? true :
+        dqFilter === "any" ? !!summary :
+        dqFilter === "none" ? !summary :
+        dqFilter === "critical" ? tone === "bad" :
+        dqFilter === "warning" ? tone === "warn" :
+        tone === "neutral";
 
       return (!qq || hay) && passesDq;
     });
   }, [data, q, regionMap, flagSummary, dqFilter]);
 
   return (
-    <div className="page">
-      <div className="pageHeader">
-        <div>
-          <div className="h1">Kooperativen</div>
-          <div className="muted">Alles an einem Ort - Suche, Bewertung, Website, Enrichment.</div>
+    <div className="content">
+      {/* Page Header */}
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <h1 className="h1">Kooperativen</h1>
+          <p className="subtitle">Alles an einem Ort - Suche, Bewertung, Website, Enrichment.</p>
         </div>
-        <div className="row gap">
-          <label className="row" style={{ gap: 6 }}>
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-            />
-            <span className="small muted">Archivierte anzeigen</span>
-          </label>
-          <input
-            className="input"
-            placeholder="Suchen (Name, Region, Website)..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <select
-            className="input"
-            value={dqFilter}
-            onChange={(e) => setDqFilter(parseDqFilter(e.target.value))}
-            style={{ width: 160 }}
-          >
-            <option value="all">DQ: alle</option>
-            <option value="any">DQ: nur mit Flags</option>
-            <option value="none">DQ: keine Flags</option>
-            <option value="critical">DQ: critical</option>
-            <option value="warning">DQ: warning</option>
-            <option value="info">DQ: info</option>
-          </select>
-          <Link className="btn" href="/ops">
-            Enrichment starten
-          </Link>
+        <div className="pageHeaderActions">
+          <Link href="/ops" className="btn">Enrichment starten</Link>
+        </div>
+      </header>
+
+      {/* Filters */}
+      <div className="panel" style={{ marginBottom: "var(--space-5)" }}>
+        <div className="panelBody">
+          <div className="row" style={{ gap: "var(--space-4)", flexWrap: "wrap" }}>
+            <div className="field" style={{ flex: "1 1 240px", minWidth: "200px" }}>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)" }}>
+                  <SearchIcon />
+                </span>
+                <input
+                  className="input"
+                  style={{ paddingLeft: "36px" }}
+                  placeholder="Suchen (Name, Region, Website)..."
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="field" style={{ width: "160px" }}>
+              <select
+                className="input"
+                value={dqFilter}
+                onChange={(e) => setDqFilter(parseDqFilter(e.target.value))}
+              >
+                <option value="all">DQ: Alle</option>
+                <option value="any">DQ: Mit Flags</option>
+                <option value="none">DQ: Ohne Flags</option>
+                <option value="critical">DQ: Kritisch</option>
+                <option value="warning">DQ: Warnung</option>
+                <option value="info">DQ: Info</option>
+              </select>
+            </div>
+
+            <label className="row" style={{ gap: "var(--space-2)", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                style={{ width: "16px", height: "16px", accentColor: "var(--color-primary)" }}
+              />
+              <span className="small muted">Archivierte anzeigen</span>
+            </label>
+          </div>
         </div>
       </div>
 
-      {err ? <div className="error">{err}</div> : null}
+      {/* Error */}
+      {err && (
+        <div className="alert bad">
+          <div className="alertText">{err}</div>
+        </div>
+      )}
 
-      <div className="panel">
-        <div className="panelTitle">
-          Treffer: {rows.length} {data ? <span className="muted">(gesamt {data.total})</span> : null}
+      {/* Table */}
+      <section className="panel">
+        <div className="panelHeader">
+          <span className="panelTitle">
+            {loading ? "Laden..." : `${rows.length} Treffer`}
+            {data && !loading && <span className="muted" style={{ fontWeight: "normal" }}> von {data.total} gesamt</span>}
+          </span>
         </div>
 
         <div className="tableWrap">
@@ -197,71 +245,83 @@ export default function CooperativesPage() {
                 <th>Website</th>
                 <th>SCA</th>
                 <th>DQ</th>
-                <th>Aktionen</th>
+                <th style={{ width: "120px" }}>Aktionen</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link className="link" href={`/cooperatives/${c.id}`}>
-                      {c.name}
-                    </Link>
-                    {c.deleted_at ? (
-                      <span style={{ marginLeft: 8 }}>
-                        <Badge tone="warn">archiviert</Badge>
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="muted">{c.region_id ? regionMap[c.region_id] ?? "-" : c.region ?? "-"}</td>
-                  <td className="muted">{c.country ?? "-"}</td>
-                  <td>
-                    {c.website ? (
-                      <a
-                        className="link"
-                        href={c.website.startsWith("http") ? c.website : `https://${c.website}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {c.website}
-                      </a>
-                    ) : (
-                      <Badge tone="warn">fehlend</Badge>
-                    )}
-                  </td>
-                  <td>{c.sca_score ? <Badge tone="good">{c.sca_score}</Badge> : <Badge>-</Badge>}</td>
-                  <td>
-                    {flagSummary[c.id] ? (
-                      <Badge tone={flagSummary[c.id].tone}>{flagSummary[c.id].count}</Badge>
-                    ) : (
-                      <Badge>0</Badge>
-                    )}
-                  </td>
-                  <td>
-                    {c.deleted_at ? (
-                      <button
-                        className="btn"
-                        onClick={() => restoreCoop(c.id)}
-                        disabled={busyId === c.id}
-                      >
-                        Restore
-                      </button>
-                    ) : (
-                      <button
-                        className="btn"
-                        onClick={() => archiveCoop(c.id)}
-                        disabled={busyId === c.id}
-                      >
-                        Archivieren
-                      </button>
-                    )}
+              {rows.length === 0 && !loading ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="empty">
+                      <p className="emptyText">Keine Kooperativen gefunden.</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                rows.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <Link className="link" href={`/cooperatives/${c.id}`} style={{ fontWeight: 500 }}>
+                        {c.name}
+                      </Link>
+                      {c.deleted_at && (
+                        <Badge tone="warn" style={{ marginLeft: "var(--space-2)" }}>archiviert</Badge>
+                      )}
+                    </td>
+                    <td className="muted">{c.region_id ? regionMap[c.region_id] ?? "-" : c.region ?? "-"}</td>
+                    <td className="muted">{c.country ?? "-"}</td>
+                    <td>
+                      {c.website ? (
+                        <a
+                          className="link row"
+                          href={c.website.startsWith("http") ? c.website : `https://${c.website}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ gap: "var(--space-1)" }}
+                        >
+                          {c.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                          <ExternalIcon />
+                        </a>
+                      ) : (
+                        <Badge tone="warn">fehlend</Badge>
+                      )}
+                    </td>
+                    <td>
+                      {c.sca_score ? <Badge tone="good">{c.sca_score}</Badge> : <Badge>-</Badge>}
+                    </td>
+                    <td>
+                      {flagSummary[c.id] ? (
+                        <Badge tone={flagSummary[c.id].tone}>{flagSummary[c.id].count}</Badge>
+                      ) : (
+                        <Badge>0</Badge>
+                      )}
+                    </td>
+                    <td>
+                      {c.deleted_at ? (
+                        <button
+                          className="btn btnSm"
+                          onClick={() => restoreCoop(c.id)}
+                          disabled={busyId === c.id}
+                        >
+                          Wiederherstellen
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btnSm"
+                          onClick={() => archiveCoop(c.id)}
+                          disabled={busyId === c.id}
+                        >
+                          Archivieren
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

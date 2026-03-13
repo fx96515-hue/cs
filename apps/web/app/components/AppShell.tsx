@@ -26,9 +26,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="shell">
       <Sidebar authed={authed} />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="main">
         <Topbar
           authed={authed}
           onLogout={() => {
@@ -37,7 +37,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             router.push("/login");
           }}
         />
-        <div className="flex-1 overflow-auto">{children}</div>
+        <main className="page">{children}</main>
       </div>
     </div>
   );

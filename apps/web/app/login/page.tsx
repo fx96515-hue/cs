@@ -33,7 +33,7 @@ export default function LoginPage() {
       setToken(t.access_token);
       router.push("/dashboard");
     } catch (error: unknown) {
-      const msg = toErrorMessage(error) || "Login failed";
+      const msg = toErrorMessage(error) || "Login fehlgeschlagen";
       if (msg.includes("fetch") || msg.includes("network")) {
         setError("API nicht erreichbar. Aktiviere den Demo-Modus oder starte das Backend.");
       } else {
@@ -47,7 +47,8 @@ export default function LoginPage() {
   return (
     <div className="authRoot">
       <div className="authShell">
-        <section className="authPanel">
+        <div className="authPanel">
+          {/* Brand */}
           <div className="authBrand">
             <div className="authBadge">CS</div>
             <div>
@@ -56,15 +57,18 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Header */}
           <div className="authPanelHeader">
-            <div className="authPanelTitle">Willkommen</div>
-            <div className="authPanelSub">Melde dich an, um fortzufahren</div>
+            <h1 className="authPanelTitle">Willkommen</h1>
+            <p className="authPanelSub">Melde dich an, um fortzufahren</p>
           </div>
 
+          {/* Form */}
           <form onSubmit={onSubmit} className="authForm">
-            <label className="field">
-              <span className="fieldLabel">E-Mail</span>
+            <div className="field">
+              <label className="fieldLabel" htmlFor="email">E-Mail-Adresse</label>
               <input
+                id="email"
                 className="input"
                 type="email"
                 value={email}
@@ -73,10 +77,12 @@ export default function LoginPage() {
                 autoComplete="email"
                 disabled={demoMode}
               />
-            </label>
-            <label className="field">
-              <span className="fieldLabel">Passwort</span>
+            </div>
+
+            <div className="field">
+              <label className="fieldLabel" htmlFor="password">Passwort</label>
               <input
+                id="password"
                 className="input"
                 type="password"
                 value={password}
@@ -85,7 +91,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 disabled={demoMode}
               />
-            </label>
+            </div>
 
             <label className="demoCheckbox">
               <input
@@ -103,19 +109,20 @@ export default function LoginPage() {
 
             <button 
               type="submit" 
-              className="btn btnPrimary btnFull"
+              className="btn btnPrimary btnFull btnLg"
               disabled={loading}
             >
               {loading ? "Wird geladen..." : demoMode ? "Demo starten" : "Anmelden"}
             </button>
           </form>
 
+          {/* Footer */}
           <div className="authFooter">
             <div className="authFootItem">
               End-to-End Audit Trail
             </div>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );
