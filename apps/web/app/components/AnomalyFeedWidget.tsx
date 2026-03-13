@@ -77,7 +77,7 @@ export default function AnomalyFeedWidget() {
       </div>
       <div className="list">
         {loading ? (
-          <div className="muted">Laedt...</div>
+          <div className="muted">Lädt...</div>
         ) : error ? (
           <div className="muted">Fehler: {error}</div>
         ) : anomalies.length === 0 ? (

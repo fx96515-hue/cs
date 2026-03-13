@@ -84,7 +84,7 @@ export default function GermanSalesDashboard() {
               Aktualisieren
             </button>
             <Link href="/roasters" className="btn btnPrimary">
-              Alle Roestereien
+              Alle Röstereien
             </Link>
           </div>
         </header>
@@ -92,7 +92,7 @@ export default function GermanSalesDashboard() {
         {/* KPI Grid */}
         <div className="kpiGrid">
           <div className="kpiCard">
-            <span className="cardLabel">Roestereien Gesamt</span>
+            <span className="cardLabel">Röstereien Gesamt</span>
             <span className="cardValue">{stats.total}</span>
             <span className="cardHint">In CRM-Datenbank</span>
           </div>
@@ -104,7 +104,7 @@ export default function GermanSalesDashboard() {
           <div className="kpiCard">
             <span className="cardLabel">Qualifiziert</span>
             <span className="cardValue">{stats.qualified}</span>
-            <span className="cardHint">Bereit fuer Angebote</span>
+            <span className="cardHint">Bereit für Angebote</span>
           </div>
           <div className="kpiCard">
             <span className="cardLabel">Durchschn. Sales Score</span>
@@ -123,7 +123,7 @@ export default function GermanSalesDashboard() {
             </div>
             <div className="panelBody">
               <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
-                Top 10 Roestereien nach Vertriebs-Fit-Score
+                Top 10 Röstereien nach Vertriebs-Fit-Score
               </p>
               {priorityRoasters.length > 0 ? (
                 <div className="list">
@@ -170,7 +170,7 @@ export default function GermanSalesDashboard() {
             </div>
             <div className="panelBody">
               <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
-                Roestereien mit faelliger Nachverfolgung
+                Röstereien mit faelliger Nachverfolgung
               </p>
               {pendingFollowups.length > 0 ? (
                 <div className="list">
@@ -281,7 +281,7 @@ export default function GermanSalesDashboard() {
         {/* Main Table */}
         <div className="panel" style={{ marginTop: "var(--space-6)" }}>
           <div className="panelHeader">
-            <h2 className="panelTitle">Alle Roestereien</h2>
+            <h2 className="panelTitle">Alle Röstereien</h2>
             <span className="badge">
               {isLoading ? "..." : `${roasters.length} Eintraege`}
             </span>
@@ -370,9 +370,9 @@ export default function GermanSalesDashboard() {
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                <h3 className="h4">Keine Roestereien gefunden</h3>
+                <h3 className="h4">Keine Röstereien gefunden</h3>
                 <p className="subtitle">
-                  Fuehren Sie Discovery Seed unter Betrieb aus, um die Datenbank zu befuellen.
+                  Führen Sie Discovery Seed unter Betrieb aus, um die Datenbank zu befüllen.
                 </p>
               </div>
             </div>

@@ -204,7 +204,7 @@ export default function LotsPage() {
                 ? `${(stats.totalWeight / 1000).toFixed(1)}t`
                 : `${stats.totalWeight}kg`}
             </span>
-            <span className="cardHint">Verfuegbare Menge</span>
+            <span className="cardHint">verfügbare Menge</span>
           </div>
           <div className="kpiCard">
             <span className="cardLabel">Durchschn. Score</span>

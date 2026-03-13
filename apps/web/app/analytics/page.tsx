@@ -69,7 +69,7 @@ export default function AnalyticsDashboard() {
             <span className="cardHint">In Sourcing-Datenbank</span>
           </div>
           <div className="kpiCard">
-            <span className="cardLabel">Deutsche Roestereien</span>
+            <span className="cardLabel">Deutsche Röstereien</span>
             <span className="cardValue">{roastersTotal}</span>
             <span className="cardHint">In Vertriebspipeline</span>
           </div>
@@ -97,7 +97,7 @@ export default function AnalyticsDashboard() {
             </div>
             <div className="panelBody">
               <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
-                Schaetzung der Versandkosten fuer Kaffeecontainer
+                Schätzung der Versandkosten für Kaffeecontainer
               </p>
 
               <div className="fieldStack">
@@ -176,7 +176,7 @@ export default function AnalyticsDashboard() {
                       ${freightMutation.data.confidence_interval_high.toLocaleString()}
                     </span>
                     {freightMutation.data.similar_historical_shipments > 0 && (
-                      <span>Basierend auf {freightMutation.data.similar_historical_shipments} aehnlichen Sendungen</span>
+                      <span>Basierend auf {freightMutation.data.similar_historical_shipments} ähnlichen Sendungen</span>
                     )}
                   </div>
                 </div>

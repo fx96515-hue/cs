@@ -102,7 +102,7 @@ export default function RoastersPage() {
   }, [load]);
 
   async function archiveRoaster(id: number) {
-    if (!confirm("Roesterei archivieren?")) return;
+    if (!confirm("Rösterei archivieren?")) return;
     setBusyId(id);
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
@@ -154,7 +154,7 @@ export default function RoastersPage() {
       {/* Page Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
-          <h1 className="h1">Roestereien</h1>
+          <h1 className="h1">Röstereien</h1>
           <p className="subtitle">CRM-Pipeline, Kontakte und Scoring verwalten.</p>
         </div>
         <div className="pageHeaderActions">
@@ -242,7 +242,7 @@ export default function RoastersPage() {
                 <tr>
                   <td colSpan={6}>
                     <div className="empty">
-                      <p className="emptyText">Keine Roestereien gefunden.</p>
+                      <p className="emptyText">Keine Röstereien gefunden.</p>
                     </div>
                   </td>
                 </tr>

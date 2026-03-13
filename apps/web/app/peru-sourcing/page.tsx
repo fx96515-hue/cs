@@ -362,7 +362,7 @@ export default function PeruSourcingDashboard() {
                 </svg>
                 <h3 className="h4">Keine Kooperativen gefunden</h3>
                 <p className="subtitle">
-                  Passen Sie die Filter an oder fuehren Sie Discovery Seed aus.
+                  Passen Sie die Filter an oder führen Sie Discovery Seed aus.
                 </p>
               </div>
             </div>

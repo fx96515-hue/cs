@@ -198,7 +198,7 @@ export default function AlertsPage() {
                 </select>
               </div>
               <div className="field">
-                <label className="fieldLabel">Entitaetstyp</label>
+                <label className="fieldLabel">Entitätstyp</label>
                 <select
                   className="input"
                   value={filter.entity_type}
@@ -206,7 +206,7 @@ export default function AlertsPage() {
                 >
                   <option value="all">Alle</option>
                   <option value="cooperative">Kooperative</option>
-                  <option value="roaster">Roesterei</option>
+                  <option value="roaster">Rösterei</option>
                 </select>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function AlertsPage() {
                   <tr>
                     <th>Schweregrad</th>
                     <th>Typ</th>
-                    <th>Entitaet</th>
+                    <th>Entität</th>
                     <th>Feld</th>
                     <th>Aenderung</th>
                     <th>Erstellt</th>

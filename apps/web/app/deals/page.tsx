@@ -183,7 +183,7 @@ export default function DealsDashboard() {
             </div>
             <div className="panelBody">
               <p className="subtitle" style={{ marginBottom: "var(--space-5)" }}>
-                Berechnen Sie Rentabilitaetsszenarien fuer Kaffee-Deals
+                Berechnen Sie Rentabilitätsszenarien für Kaffee-Deals
               </p>
 
               <div className="grid2col">

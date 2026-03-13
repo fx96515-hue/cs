@@ -179,7 +179,7 @@ export default function RegionDetailPage() {
                 <div className="cardLabel">Hoehenlage</div>
                 <div style={{ fontSize: "14px", marginTop: "6px" }}>
                   {region.elevation_range?.min_m && region.elevation_range?.max_m
-                    ? `${region.elevation_range.min_m.toLocaleString("de-DE")} - ${region.elevation_range.max_m.toLocaleString("de-DE")} m ue. NN`
+                    ? `${region.elevation_range.min_m.toLocaleString("de-DE")} - ${region.elevation_range.max_m.toLocaleString("de-DE")} m ü. NN`
                     : "Keine Daten"}
                 </div>
               </div>

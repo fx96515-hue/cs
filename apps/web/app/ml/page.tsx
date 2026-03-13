@@ -168,7 +168,7 @@ export default function MLPage() {
               </div>
             </div>
           ) : (
-            <div className="muted">{forecast?.message || "Laedt..."}</div>
+            <div className="muted">{forecast?.message || "Lädt..."}</div>
           )}
         </div>
       </div>

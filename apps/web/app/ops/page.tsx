@@ -239,12 +239,12 @@ function OpsPageContent() {
             </div>
             <div className="panelBody">
               <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
-                Seeds fuer Kooperativen und Roestereien via Web-Discovery.
+                Seeds für Kooperativen und Röstereien via Web-Discovery.
               </p>
               
               <div className="fieldGrid2">
                 <div className="field">
-                  <label className="fieldLabel">Entitaetstyp</label>
+                  <label className="fieldLabel">Entitätstyp</label>
                   <select
                     className="input"
                     value={entityType}
@@ -252,11 +252,11 @@ function OpsPageContent() {
                   >
                     <option value="both">Beide</option>
                     <option value="cooperative">Kooperative</option>
-                    <option value="roaster">Roesterei</option>
+                    <option value="roaster">Rösterei</option>
                   </select>
                 </div>
                 <div className="field">
-                  <label className="fieldLabel">Max. Entitaeten</label>
+                  <label className="fieldLabel">Max. Entitäten</label>
                   <input
                     className="input"
                     type="number"

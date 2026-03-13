@@ -103,7 +103,7 @@ export default function RoasterDetailPage() {
   async function archive() {
     setErr(null);
     setMsg(null);
-    if (!confirm("Roesterei archivieren?")) return;
+    if (!confirm("Rösterei archivieren?")) return;
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
       router.push("/roasters");
@@ -155,7 +155,7 @@ export default function RoasterDetailPage() {
     <div className="page">
       <div className="pageHeader">
         <div>
-          <div className="h1">Roesterei #{r.id}</div>
+          <div className="h1">Rösterei #{r.id}</div>
           <div className="muted">Stammdaten & Notizen</div>
         </div>
         <div className="row gap">
@@ -182,7 +182,7 @@ export default function RoasterDetailPage() {
       {r?.deleted_at ? (
         <div className="alert bad">
           <div className="alertTitle">Archiviert</div>
-          <div className="alertText">Diese Roesterei ist archiviert und nicht aktiv.</div>
+          <div className="alertText">Diese Rösterei ist archiviert und nicht aktiv.</div>
         </div>
       ) : null}
 
@@ -250,7 +250,7 @@ export default function RoasterDetailPage() {
         <div className="rowBetween" style={{ marginBottom: 10 }}>
           <div>
             <div className="panelTitle">Datenqualitaet</div>
-            <div className="muted">Offene Flags fuer diese Roesterei.</div>
+            <div className="muted">Offene Flags fuer diese Rösterei.</div>
           </div>
           <div className="row gap">
             <button className="btn" onClick={recomputeFlags} disabled={qualityBusy}>

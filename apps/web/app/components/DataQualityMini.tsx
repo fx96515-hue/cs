@@ -91,7 +91,7 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
       {err ? <div className="muted">Fehler: {err}</div> : null}
 
       {loading ? (
-        <div className="muted">Laedt...</div>
+        <div className="muted">Lädt...</div>
       ) : flags.length === 0 ? (
         <div className="muted">Keine Flags.</div>
       ) : (

@@ -343,7 +343,7 @@ export default function CooperativeDetailsPage() {
         <div className="rowBetween" style={{ marginBottom: 10 }}>
           <div>
             <div className="panelTitle">Datenqualitaet</div>
-            <div className="muted">Offene Flags fuer diese Kooperative.</div>
+            <div className="muted">Offene Flags für diese Kooperative.</div>
           </div>
           <div className="row gap">
             <button className="btn" onClick={recomputeFlags} disabled={qualityBusy}>
