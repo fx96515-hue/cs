@@ -63,12 +63,6 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
 
   const token = !skipAuth ? getToken() : null;
 
-  // Im Demo-Modus keine echten API-Aufrufe durchführen - leere Standardwerte zurückgeben
-  if (token === DEMO_TOKEN) {
-    const empty = (Array.isArray([] as unknown as T) ? [] : {}) as T;
-    return empty;
-  }
-
   const headers: Record<string, string> = {
     ...(req.headers as Record<string, string>),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

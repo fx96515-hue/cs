@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import LineChart from "../charts/LineChart";
 import Badge from "../components/Badge";
 import { toErrorMessage } from "../utils/error";
@@ -38,6 +38,7 @@ export default function SentimentPage() {
   const [err, setErr] = useState<string | null>(null);
 
   async function load(r: string) {
+    if (isDemoMode()) { setLoading(false); return; }
     setLoading(true);
     setErr(null);
     try {
