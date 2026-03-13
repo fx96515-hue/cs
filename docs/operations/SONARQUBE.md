@@ -6,6 +6,8 @@ This repository uses `.github/workflows/sonar.yml` for optional Sonar analysis.
 - Runs on `push` to `main`, PR updates, and manual dispatch.
 - Automatically skips (green) when required Sonar credentials are missing.
 - Runs API tests with coverage and uploads coverage-aware scan results.
+- Enforces a focused gate on PRs: fails only when **new code** introduces unresolved
+  `BLOCKER`/`CRITICAL` issues or `VULNERABILITY` findings.
 
 ## Required Configuration
 - Secret: `SONAR_TOKEN`
@@ -21,7 +23,12 @@ This repository uses `.github/workflows/sonar.yml` for optional Sonar analysis.
 
 ## Sonar Issue Sync
 - `.github/workflows/sonar_issues_sync.yml` syncs Sonar issues into GitHub issues.
-- It also skips cleanly when `SONAR_TOKEN` or `SONAR_PROJECT_KEY` is missing.
+- Sync is **disabled by default** and only runs when `SONAR_ISSUE_SYNC_ENABLED=true`.
+- Default sync behavior is intentionally conservative:
+  - severities: `BLOCKER,CRITICAL`
+  - statuses: `OPEN,REOPENED`
+  - max new issues per run: `5`
+  - auto-close resolved issues: enabled
 
 ## References
 - SonarCloud docs: https://sonarcloud.io/documentation

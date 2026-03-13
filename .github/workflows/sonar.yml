@@ -95,6 +95,12 @@ jobs:
           args="$args -Dsonar.sources=apps/api/app"
           args="$args -Dsonar.tests=apps/api/tests"
           args="$args -Dsonar.python.coverage.reportPaths=apps/api/coverage.xml"
+          args="$args -Dsonar.newCode.referenceBranch=main"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            args="$args -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
+            args="$args -Dsonar.pullrequest.branch=${{ github.head_ref }}"
+            args="$args -Dsonar.pullrequest.base=${{ github.base_ref }}"
+          fi
           if [ -n "${{ vars.SONAR_ORGANIZATION }}" ]; then
             args="$args -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}"
           fi
@@ -108,6 +114,17 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL != '' && secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
         with:
           args: ${{ steps.sonar_args.outputs.args }}
+
+      - name: Enforce new-code gate (critical + vulnerabilities)
+        if: steps.sonar_config.outputs.enabled == 'true' && github.event_name == 'pull_request' && vars.SONAR_ENFORCE_NEW_CODE_GATE != 'false'
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL != '' && secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_PULL_REQUEST: ${{ github.event.pull_request.number }}
+          SONAR_GATE_MAX_WAIT_SEC: ${{ vars.SONAR_GATE_MAX_WAIT_SEC != '' && vars.SONAR_GATE_MAX_WAIT_SEC || '180' }}
+          SONAR_GATE_POLL_INTERVAL_SEC: ${{ vars.SONAR_GATE_POLL_INTERVAL_SEC != '' && vars.SONAR_GATE_POLL_INTERVAL_SEC || '10' }}
+        run: python scripts/automation/sonar_enforce_new_code_gate.py
 
       - name: Explain why sonar is skipped
         if: steps.sonar_config.outputs.enabled != 'true'

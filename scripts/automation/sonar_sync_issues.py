@@ -16,11 +16,11 @@ SONAR_TOKEN = (os.getenv("SONAR_TOKEN") or "").strip()
 PROJECT_KEY = (os.getenv("SONAR_PROJECT_KEY") or "").strip()
 BRANCH = (os.getenv("SONAR_BRANCH") or "main").strip()
 
-SEVERITIES = (os.getenv("SONAR_SEVERITIES") or "").strip()
-STATUSES = (os.getenv("SONAR_STATUSES") or "OPEN,REOPENED,CONFIRMED").strip()
+SEVERITIES = (os.getenv("SONAR_SEVERITIES") or "BLOCKER,CRITICAL").strip()
+STATUSES = (os.getenv("SONAR_STATUSES") or "OPEN,REOPENED").strip()
 
-MAX_CREATE = int((os.getenv("SONAR_MAX_CREATE") or "30").strip())
-AUTO_CLOSE = (os.getenv("SONAR_AUTO_CLOSE") or "false").strip().lower() == "true"
+MAX_CREATE = int((os.getenv("SONAR_MAX_CREATE") or "5").strip())
+AUTO_CLOSE = (os.getenv("SONAR_AUTO_CLOSE") or "true").strip().lower() == "true"
 LABEL = (os.getenv("SONAR_LABEL") or "sonarcloud").strip()
 
 GH_TOKEN = (os.getenv("GITHUB_TOKEN") or "").strip()
