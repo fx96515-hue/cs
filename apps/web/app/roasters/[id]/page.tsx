@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { Breadcrumb } from "../../components/Breadcrumb";
+import { useToast } from "../../components/ToastProvider";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -22,6 +24,7 @@ export default function RoasterDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params?.id);
   const router = useRouter();
+  const toast = useToast();
   const [r, setR] = useState<Roaster | null>(null);
   const [saving, setSaving] = useState(false);
   const [flags, setFlags] = useState<DataQualityFlag[]>([]);
@@ -106,8 +109,10 @@ export default function RoasterDetailPage() {
     if (!confirm("Rösterei archivieren?")) return;
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
+      toast.success(`"${r?.name}" wurde archiviert.`);
       router.push("/roasters");
     } catch (error: unknown) {
+      toast.error(toErrorMessage(error));
       setErr(toErrorMessage(error));
     }
   }
@@ -116,12 +121,12 @@ export default function RoasterDetailPage() {
     setErr(null);
     setMsg(null);
     try {
-      const restored = await apiFetch<Roaster>(`/roasters/${id}/restore`, {
-        method: "POST",
-      });
+      const restored = await apiFetch<Roaster>(`/roasters/${id}/restore`, { method: "POST" });
       setR(restored);
+      toast.success("Rösterei wurde wiederhergestellt.");
       setMsg("Wiederhergestellt.");
     } catch (error: unknown) {
+      toast.error(toErrorMessage(error));
       setErr(toErrorMessage(error));
     }
   }
@@ -153,6 +158,11 @@ export default function RoasterDetailPage() {
 
   return (
     <div className="page">
+      <Breadcrumb items={[
+        { label: "Startseite", href: "/dashboard" },
+        { label: "Röstereien", href: "/roasters" },
+        { label: r.name },
+      ]} />
       <div className="pageHeader">
         <div>
           <div className="h1">Rösterei #{r.id}</div>

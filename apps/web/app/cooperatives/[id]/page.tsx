@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { Breadcrumb } from "../../components/Breadcrumb";
+import { useToast } from "../../components/ToastProvider";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -34,8 +36,7 @@ export default function CooperativeDetailsPage() {
   const params = useParams();
   const id = Number(params?.id);
   const router = useRouter();
-
-  const [data, setData] = useState<Cooperative | null>(null);
+  const toast = useToast(); = useState<Cooperative | null>(null);
   const [form, setForm] = useState<CooperativeFormState>({
     name: "",
     country: "",
@@ -175,6 +176,11 @@ export default function CooperativeDetailsPage() {
 
   return (
     <div className="page">
+      <Breadcrumb items={[
+        { label: "Startseite", href: "/dashboard" },
+        { label: "Kooperativen", href: "/cooperatives" },
+        { label: data?.name ?? `#${id}` },
+      ]} />
       <div className="pageHeader">
         <div>
           <div className="h1">Kooperative #{id}</div>

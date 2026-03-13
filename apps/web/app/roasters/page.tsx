@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import { EmptyState } from "../components/EmptyState";
+import { Pagination, usePagination } from "../components/Pagination";
+import { SkeletonRows } from "../components/EmptyState";
+import { useToast } from "../components/ToastProvider";
 import { DataQualityFlag } from "../types";
 import { toErrorMessage } from "../utils/error";
 
@@ -47,11 +51,18 @@ const ExternalIcon = () => (
   </svg>
 );
 
+const DownloadIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+
 /* ============================================================
    ROASTERS PAGE
    ============================================================ */
 
 export default function RoastersPage() {
+  const toast = useToast();
   const [data, setData] = useState<RoasterList | null>(null);
   const [flagSummary, setFlagSummary] = useState<Record<number, FlagSummary>>({});
   const [q, setQ] = useState("");
@@ -64,11 +75,12 @@ export default function RoastersPage() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
+      setErr(null);
       const [res, flags] = await Promise.all([
         apiFetch<Roaster[] | RoasterList>(
-          `/roasters?limit=200&include_deleted=${showArchived ? "true" : "false"}`,
+          `/roasters?limit=500&include_deleted=${showArchived ? "true" : "false"}`,
         ),
-        apiFetch<DataQualityFlag[]>(`/data-quality/flags?entity_type=roaster&limit=1000`),
+        apiFetch<DataQualityFlag[]>(`/data-quality/flags?entity_type=roaster&limit=2000`),
       ]);
       if (Array.isArray(res)) {
         setData({ items: res, total: res.length });
@@ -97,44 +109,56 @@ export default function RoastersPage() {
     }
   }, [showArchived]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
-  async function archiveRoaster(id: number) {
-    if (!confirm("Rösterei archivieren?")) return;
+  async function archiveRoaster(id: number, name: string) {
+    if (!window.confirm(`"${name}" archivieren?`)) return;
     setBusyId(id);
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
+      toast.success(`"${name}" wurde archiviert.`);
       await load();
     } catch (error: unknown) {
-      setErr(toErrorMessage(error));
+      toast.error(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
   }
 
-  async function restoreRoaster(id: number) {
+  async function restoreRoaster(id: number, name: string) {
     setBusyId(id);
     try {
       await apiFetch(`/roasters/${id}/restore`, { method: "POST" });
+      toast.success(`"${name}" wurde wiederhergestellt.`);
       await load();
     } catch (error: unknown) {
-      setErr(toErrorMessage(error));
+      toast.error(toErrorMessage(error));
     } finally {
       setBusyId(null);
     }
   }
 
-  const rows = useMemo(() => {
+  // CSV-Export
+  function exportCsv() {
+    const rows = filtered;
+    const header = ["ID", "Name", "Stadt", "Land", "Website", "DQ-Flags"].join(";");
+    const lines = rows.map((r) =>
+      [r.id, r.name, r.city ?? "", r.country ?? "", r.website ?? "", flagSummary[r.id]?.count ?? 0].join(";")
+    );
+    const blob = new Blob([header + "\n" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "roestereien.csv"; a.click();
+    URL.revokeObjectURL(url);
+    toast.info(`${rows.length} Einträge exportiert.`);
+  }
+
+  const filtered = useMemo(() => {
     const items = data?.items ?? [];
     const qq = q.trim().toLowerCase();
     return items.filter((r) => {
       const hay = [r.name, r.city ?? "", r.country ?? "", r.website ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(qq);
-
+        .join(" ").toLowerCase().includes(qq);
       const summary = flagSummary[r.id];
       const tone = summary?.tone ?? null;
       const passesDq =
@@ -142,12 +166,12 @@ export default function RoastersPage() {
         dqFilter === "any" ? !!summary :
         dqFilter === "none" ? !summary :
         dqFilter === "critical" ? tone === "bad" :
-        dqFilter === "warning" ? tone === "warn" :
-        tone === "neutral";
-
+        dqFilter === "warning" ? tone === "warn" : tone === "neutral";
       return (!qq || hay) && passesDq;
     });
   }, [data, q, flagSummary, dqFilter]);
+
+  const { page, pageSize, setPage, setPageSize, paginated, total } = usePagination(filtered, 25);
 
   return (
     <div className="content">
@@ -158,50 +182,48 @@ export default function RoastersPage() {
           <p className="subtitle">CRM-Pipeline, Kontakte und Scoring verwalten.</p>
         </div>
         <div className="pageHeaderActions">
-          <Link href="/ops" className="btn">Enrichment starten</Link>
+          <button className="btn" onClick={exportCsv} disabled={filtered.length === 0}>
+            <DownloadIcon /> CSV-Export
+          </button>
+          <Link href="/ops" className="btn btnPrimary">Enrichment starten</Link>
         </div>
       </header>
 
       {/* Filters */}
       <div className="panel" style={{ marginBottom: "var(--space-5)" }}>
         <div className="panelBody">
-          <div className="row" style={{ gap: "var(--space-4)", flexWrap: "wrap" }}>
-            <div className="field" style={{ flex: "1 1 240px", minWidth: "200px" }}>
-              <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)" }}>
-                  <SearchIcon />
-                </span>
-                <input
-                  className="input"
-                  style={{ paddingLeft: "36px" }}
-                  placeholder="Suchen (Name, Stadt, Website)..."
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="field" style={{ width: "160px" }}>
-              <select
+          <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ flex: "1 1 240px", minWidth: 200, position: "relative" }}>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)" }}>
+                <SearchIcon />
+              </span>
+              <input
                 className="input"
-                value={dqFilter}
-                onChange={(e) => setDqFilter(parseDqFilter(e.target.value))}
-              >
-                <option value="all">DQ: Alle</option>
-                <option value="any">DQ: Mit Flags</option>
-                <option value="none">DQ: Ohne Flags</option>
-                <option value="critical">DQ: Kritisch</option>
-                <option value="warning">DQ: Warnung</option>
-                <option value="info">DQ: Info</option>
-              </select>
+                style={{ paddingLeft: 36 }}
+                placeholder="Suchen (Name, Stadt, Website)..."
+                value={q}
+                onChange={(e) => { setQ(e.target.value); setPage(1); }}
+              />
             </div>
-
-            <label className="row" style={{ gap: "var(--space-2)", cursor: "pointer" }}>
+            <select
+              className="input"
+              style={{ width: 160 }}
+              value={dqFilter}
+              onChange={(e) => { setDqFilter(parseDqFilter(e.target.value)); setPage(1); }}
+            >
+              <option value="all">DQ: Alle</option>
+              <option value="any">DQ: Mit Flags</option>
+              <option value="none">DQ: Ohne Flags</option>
+              <option value="critical">DQ: Kritisch</option>
+              <option value="warning">DQ: Warnung</option>
+              <option value="info">DQ: Info</option>
+            </select>
+            <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", cursor: "pointer" }}>
               <input
                 type="checkbox"
                 checked={showArchived}
                 onChange={(e) => setShowArchived(e.target.checked)}
-                style={{ width: "16px", height: "16px", accentColor: "var(--color-primary)" }}
+                style={{ width: 16, height: 16, accentColor: "var(--color-primary)" }}
               />
               <span className="small muted">Archivierte anzeigen</span>
             </label>
@@ -209,19 +231,16 @@ export default function RoastersPage() {
         </div>
       </div>
 
-      {/* Error */}
-      {err && (
-        <div className="alert bad">
-          <div className="alertText">{err}</div>
-        </div>
-      )}
+      {err && <div className="alert bad" style={{ marginBottom: "var(--space-4)" }}><div className="alertText">{err}</div></div>}
 
       {/* Table */}
       <section className="panel">
         <div className="panelHeader">
           <span className="panelTitle">
-            {loading ? "Laden..." : `${rows.length} Treffer`}
-            {data && !loading && <span className="muted" style={{ fontWeight: "normal" }}> von {data.total} gesamt</span>}
+            {loading ? "Laden…" : `${filtered.length} Treffer`}
+            {data && !loading && (
+              <span className="muted" style={{ fontWeight: "normal" }}> von {data.total} gesamt</span>
+            )}
           </span>
         </div>
 
@@ -234,39 +253,40 @@ export default function RoastersPage() {
                 <th>Land</th>
                 <th>Website</th>
                 <th>DQ</th>
-                <th style={{ width: "120px" }}>Aktionen</th>
+                <th style={{ width: 130 }}>Aktionen</th>
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 && !loading ? (
+              {loading ? (
+                <tr><td colSpan={6}><SkeletonRows count={8} /></td></tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
-                    <div className="empty">
-                      <p className="emptyText">Keine Röstereien gefunden.</p>
-                    </div>
+                    <EmptyState
+                      title="Keine Röstereien gefunden"
+                      description={q ? `Keine Treffer für "${q}". Suche anpassen oder Filter entfernen.` : "Noch keine Röstereien vorhanden."}
+                    />
                   </td>
                 </tr>
               ) : (
-                rows.map((r) => (
+                paginated.map((r) => (
                   <tr key={r.id}>
                     <td>
                       <Link className="link" href={`/roasters/${r.id}`} style={{ fontWeight: 500 }}>
                         {r.name}
                       </Link>
-                      {r.deleted_at && (
-                        <Badge tone="warn" style={{ marginLeft: "var(--space-2)" }}>archiviert</Badge>
-                      )}
+                      {r.deleted_at && <Badge tone="warn" style={{ marginLeft: "var(--space-2)" }}>archiviert</Badge>}
                     </td>
-                    <td className="muted">{r.city ?? "-"}</td>
-                    <td className="muted">{r.country ?? "-"}</td>
+                    <td className="muted">{r.city ?? "—"}</td>
+                    <td className="muted">{r.country ?? "—"}</td>
                     <td>
                       {r.website ? (
                         <a
-                          className="link row"
+                          className="link"
                           href={r.website.startsWith("http") ? r.website : `https://${r.website}`}
                           target="_blank"
                           rel="noreferrer"
-                          style={{ gap: "var(--space-1)" }}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
                           {r.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                           <ExternalIcon />
@@ -284,19 +304,11 @@ export default function RoastersPage() {
                     </td>
                     <td>
                       {r.deleted_at ? (
-                        <button
-                          className="btn btnSm"
-                          onClick={() => restoreRoaster(r.id)}
-                          disabled={busyId === r.id}
-                        >
+                        <button className="btn btnSm" onClick={() => restoreRoaster(r.id, r.name)} disabled={busyId === r.id}>
                           Wiederherstellen
                         </button>
                       ) : (
-                        <button
-                          className="btn btnSm"
-                          onClick={() => archiveRoaster(r.id)}
-                          disabled={busyId === r.id}
-                        >
+                        <button className="btn btnSm" onClick={() => archiveRoaster(r.id, r.name)} disabled={busyId === r.id}>
                           Archivieren
                         </button>
                       )}
@@ -307,6 +319,16 @@ export default function RoastersPage() {
             </tbody>
           </table>
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <Pagination
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        )}
       </section>
     </div>
   );

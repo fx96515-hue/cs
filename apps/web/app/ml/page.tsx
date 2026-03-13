@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
+import { useToast } from "../components/ToastProvider";
 import { toErrorMessage } from "../utils/error";
 
 type MLModel = {
