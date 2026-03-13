@@ -110,7 +110,7 @@ export default function SentimentPage() {
         {loading ? (
           <div className="muted">Lade...</div>
         ) : chartData.length === 0 ? (
-          <div className="muted">Keine Daten fuer diese Region.</div>
+          <div className="muted">Keine Daten für diese Region.</div>
         ) : (
           <LineChart data={chartData} xKey="date" yKey="score" title="" color="#22c55e" />
         )}

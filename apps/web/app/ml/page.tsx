@@ -79,7 +79,7 @@ export default function MLPage() {
     try {
       setTrainingModel(modelType);
       await apiFetch(`/ml/train/${modelType}`, { method: "POST" });
-      alert(`Modelltraining fuer ${modelType} gestartet!`);
+      alert(`Modelltraining für ${modelType} gestartet!`);
       fetchModels();
     } catch (error: unknown) {
       alert(`Fehler beim Training: ${toErrorMessage(error)}`);
@@ -144,7 +144,7 @@ export default function MLPage() {
               </div>
             </div>
           ) : (
-            <div className="muted">Laedt...</div>
+            <div className="muted">Lädt...</div>
           )}
         </div>
 
@@ -181,14 +181,14 @@ export default function MLPage() {
             onClick={() => trainModel("freight_cost")}
             disabled={trainingModel === "freight_cost"}
           >
-            {trainingModel === "freight_cost" ? "Training laeuft..." : "Frachtmodell trainieren"}
+            {trainingModel === "freight_cost" ? "Training läuft..." : "Frachtmodell trainieren"}
           </button>
           <button
             className="btn btnPrimary"
             onClick={() => trainModel("coffee_price")}
             disabled={trainingModel === "coffee_price"}
           >
-            {trainingModel === "coffee_price" ? "Training laeuft..." : "Preismodell trainieren"}
+            {trainingModel === "coffee_price" ? "Training läuft..." : "Preismodell trainieren"}
           </button>
         </div>
 

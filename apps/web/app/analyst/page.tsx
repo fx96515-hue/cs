@@ -154,7 +154,7 @@ export default function AnalystPage() {
       
       const errorMessage =
         err instanceof Error && err.message.includes("503")
-          ? "Service nicht verfuegbar."
+          ? "Service nicht verfügbar."
           : "Fehler beim Senden der Nachricht.";
       setMessages((prev) => prev.slice(0, -1));
       setError(errorMessage);

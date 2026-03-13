@@ -68,7 +68,7 @@ export default function SearchPage() {
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       if (errorMessage.includes("503")) {
-        setError("Semantische Suche ist nicht verfuegbar. OpenAI API-Schluessel fehlt.");
+        setError("Semantische Suche ist nicht verfügbar. OpenAI API-Schlüssel fehlt.");
       } else {
         setError(errorMessage);
       }
@@ -114,7 +114,7 @@ export default function SearchPage() {
         <div>
           <div className="h1">Semantische Suche</div>
           <div className="muted">
-            KI-gestuetzte Suche ueber Kooperativen und Roestereien mit Embedding-Vektoren
+            KI-gestützte Suche über Kooperativen und Röstereien mit Embedding-Vektoren
           </div>
         </div>
       </div>
@@ -126,14 +126,14 @@ export default function SearchPage() {
             <label className="label">Suchbegriff</label>
             <input
               className="input"
-              placeholder="z.B. 'Bio-Kaffee aus Peru' oder 'Specialty Roesterei Hamburg'"
+              placeholder="z.B. 'Bio-Kaffee aus Peru' oder 'Specialty Rösterei Hamburg'"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
             />
           </div>
           <div style={{ minWidth: "200px" }}>
-            <label className="label">Entitaetstyp</label>
+            <label className="label">Entitätstyp</label>
             <select
               className="input"
               value={entityType}
@@ -141,7 +141,7 @@ export default function SearchPage() {
             >
               <option value="all">Alle</option>
               <option value="cooperative">Kooperativen</option>
-              <option value="roaster">Roestereien</option>
+              <option value="roaster">Röstereien</option>
             </select>
           </div>
           <button className="btn" onClick={handleSearch} disabled={loading || !query.trim()}>
@@ -162,7 +162,7 @@ export default function SearchPage() {
             Ergebnisse: {results.length}
             {results.length > 0 && (
               <span className="muted" style={{ marginLeft: "0.5rem", fontWeight: "normal" }}>
-                fuer &quot;{query}&quot;
+                für &quot;{query}&quot;
               </span>
             )}
           </div>
@@ -181,7 +181,7 @@ export default function SearchPage() {
                     <th>Region/Stadt</th>
                     <th>Zertifizierungen</th>
                     <th>Score</th>
-                    <th>Aehnlichkeit</th>
+                    <th>Ähnlichkeit</th>
                     <th>Aktionen</th>
                   </tr>
                 </thead>
@@ -200,7 +200,7 @@ export default function SearchPage() {
                           </td>
                           <td>
                             <Badge tone={result.entity_type === "cooperative" ? "good" : "neutral"}>
-                              {result.entity_type === "cooperative" ? "Kooperative" : "Roesterei"}
+                              {result.entity_type === "cooperative" ? "Kooperative" : "Rösterei"}
                             </Badge>
                           </td>
                           <td className="muted">{result.region || result.city || "-"}</td>
@@ -223,7 +223,7 @@ export default function SearchPage() {
                               onClick={() => handleFindSimilar(result)}
                               disabled={!!similar}
                             >
-                              {similar ? "Geladen" : "Aehnliche anzeigen"}
+                              {similar ? "Geladen" : "Ähnliche anzeigen"}
                             </button>
                           </td>
                         </tr>
@@ -237,7 +237,7 @@ export default function SearchPage() {
                               }}
                             >
                               <div style={{ marginBottom: "0.5rem", fontWeight: "600" }}>
-                                Aehnliche Entitaeten zu &quot;{result.name}&quot;:
+                                Ähnliche Entitäten zu &quot;{result.name}&quot;:
                               </div>
                               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
                                 {similar.map((sim) => (
@@ -279,8 +279,8 @@ export default function SearchPage() {
             <div style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>[SEARCH]</div>
             <div>Geben Sie einen Suchbegriff ein, um zu beginnen.</div>
             <div style={{ fontSize: "0.9rem", marginTop: "1rem" }}>
-              Die semantische Suche nutzt KI-Embeddings, um aehnliche Entitaeten zu finden,
-              auch wenn die exakten Suchbegriffe nicht uebereinstimmen.
+            Die semantische Suche nutzt KI-Embeddings, um ähnliche Entitäten zu finden,
+            auch wenn die exakten Suchbegriffe nicht übereinstimmen.
             </div>
           </div>
         </div>

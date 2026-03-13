@@ -127,7 +127,7 @@ export default function NewsPage() {
           </div>
         </div>
         <div className="muted" style={{ marginTop: 10 }}>
-          Tipp: Fuer Peru z.B. &quot;peru specialty coffee&quot;,
+          Tipp: Für Peru z.B. &quot;peru specialty coffee&quot;,
           &quot;cajamarca coffee cooperative&quot;, &quot;peru arabica export&quot;.
         </div>
       </div>

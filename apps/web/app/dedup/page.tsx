@@ -69,12 +69,12 @@ export default function DedupPage() {
           merge_id: mergeId,
         }),
       });
-      alert("Erfolgreich zusammengefuehrt!");
+      alert("Erfolgreich zusammengeführt!");
       setSelectedPair(null);
       fetchSuggestions();
       fetchHistory();
     } catch (error: unknown) {
-      alert(`Fehler beim Zusammenfuehren: ${toErrorMessage(error)}`);
+      alert(`Fehler beim Zusammenführen: ${toErrorMessage(error)}`);
     }
   }
 
@@ -94,7 +94,7 @@ export default function DedupPage() {
       <div className="pageHeader">
         <div>
           <div className="h1">Duplikate</div>
-          <div className="muted">Doppelte Eintraege erkennen und zusammenfuehren</div>
+          <div className="muted">Doppelte Einträge erkennen und zusammenführen</div>
         </div>
       </div>
 
@@ -102,18 +102,18 @@ export default function DedupPage() {
         <div className="panelTitle">Filter</div>
         <div className="row gap" style={{ flexWrap: "wrap" }}>
           <div>
-            <div className="label">Entitaetstyp</div>
+            <div className="label">Entitätstyp</div>
             <select
               className="input"
               value={entityType}
               onChange={(e) => setEntityType(parseEntityType(e.target.value))}
             >
               <option value="cooperative">Kooperativen</option>
-              <option value="roaster">Roestereien</option>
+              <option value="roaster">Röstereien</option>
             </select>
           </div>
           <div>
-            <div className="label">Aehnlichkeitsgrenze</div>
+            <div className="label">Ähnlichkeitsgrenze</div>
             <input
               type="number"
               className="input"
@@ -135,7 +135,7 @@ export default function DedupPage() {
       <div className="panel" style={{ marginTop: 14 }}>
         <div className="panelTitle">Vorgeschlagene Duplikate ({suggestions.length})</div>
         {loading ? (
-          <div className="muted">Laedt...</div>
+          <div className="muted">Lädt...</div>
         ) : suggestions.length === 0 ? (
           <div className="muted">Keine Duplikate gefunden.</div>
         ) : (
@@ -147,7 +147,7 @@ export default function DedupPage() {
                   <th>Name A</th>
                   <th>ID B</th>
                   <th>Name B</th>
-                  <th>Aehnlichkeit</th>
+                  <th>Ähnlichkeit</th>
                   <th>Grund</th>
                   <th>Aktion</th>
                 </tr>
@@ -165,7 +165,7 @@ export default function DedupPage() {
                     <td>{pair.reason}</td>
                     <td>
                       <button className="btn btnSmall" onClick={() => setSelectedPair(pair)}>
-                        Zusammenfuehren
+                        Zusammenführen
                       </button>
                     </td>
                   </tr>
@@ -180,16 +180,16 @@ export default function DedupPage() {
         <div className="modal" onClick={() => setSelectedPair(null)}>
           <div className="modalContent" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
-              <div className="h2">Zusammenfuehren bestaetigen</div>
+              <div className="h2">Zusammenführen bestätigen</div>
               <button className="ghost" onClick={() => setSelectedPair(null)}>
                 X
               </button>
             </div>
             <div className="modalBody">
-              <p>Welche Entitaet moechten Sie behalten?</p>
+              <p>Welche Entität möchten Sie behalten?</p>
               <div className="grid2" style={{ marginTop: 14, gap: 14 }}>
                 <div className="panel">
-                  <div className="panelTitle">Entitaet A</div>
+                  <div className="panelTitle">Entität A</div>
                   <div>
                     <strong>ID:</strong> {selectedPair.a_id}
                   </div>
@@ -201,11 +201,11 @@ export default function DedupPage() {
                     style={{ marginTop: 10 }}
                     onClick={() => mergePair(selectedPair.a_id, selectedPair.b_id)}
                   >
-                    A behalten, B zusammenfuehren
+                    A behalten, B zusammenführen
                   </button>
                 </div>
                 <div className="panel">
-                  <div className="panelTitle">Entitaet B</div>
+                  <div className="panelTitle">Entität B</div>
                   <div>
                     <strong>ID:</strong> {selectedPair.b_id}
                   </div>
@@ -217,7 +217,7 @@ export default function DedupPage() {
                     style={{ marginTop: 10 }}
                     onClick={() => mergePair(selectedPair.b_id, selectedPair.a_id)}
                   >
-                    B behalten, A zusammenfuehren
+                    B behalten, A zusammenführen
                   </button>
                 </div>
               </div>
@@ -235,7 +235,7 @@ export default function DedupPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Entitaets-ID</th>
+                  <th>Entitäts-ID</th>
                   <th>Datum</th>
                   <th>Details</th>
                 </tr>

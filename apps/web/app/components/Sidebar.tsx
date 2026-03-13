@@ -419,6 +419,7 @@ export default function Sidebar({ authed }: { authed: boolean }) {
 
       {/* Navigation */}
       <nav className="sidebarNav">
+        {/* Dashboard */}
         <div className="sidebarNavSection">
           {navGroups.slice(0, 1).map((group) => (
             <NavGroupItem 
@@ -431,8 +432,9 @@ export default function Sidebar({ authed }: { authed: boolean }) {
           ))}
         </div>
         
+        {/* Kernmodule: Einkauf, Vertrieb, Logistik */}
         <div className="sidebarNavDivider">
-          <span>Module</span>
+          <span>Kernmodule</span>
         </div>
         
         <div className="sidebarNavSection">
@@ -447,8 +449,9 @@ export default function Sidebar({ authed }: { authed: boolean }) {
           ))}
         </div>
         
+        {/* Analyse & Betrieb */}
         <div className="sidebarNavDivider">
-          <span>Analysen</span>
+          <span>Analyse & Betrieb</span>
         </div>
         
         <div className="sidebarNavSection">
@@ -463,40 +466,9 @@ export default function Sidebar({ authed }: { authed: boolean }) {
           ))}
         </div>
         
+        {/* Suche & KI */}
         <div className="sidebarNavDivider">
-          <span>Werkzeuge</span>
-        </div>
-        
-        <div className="sidebarNavSection">
-          {navGroups.slice(1, 4).map((group) => (
-            <NavGroupItem 
-              key={group.label} 
-              group={group} 
-              pathname={authed ? pathname : "/login"}
-              expandedGroups={expandedGroups}
-              toggleGroup={toggleGroup}
-            />
-          ))}
-        </div>
-        
-        <div className="sidebarNavDivider">
-          <span>Insights</span>
-        </div>
-        
-        <div className="sidebarNavSection">
-          {navGroups.slice(4, 6).map((group) => (
-            <NavGroupItem 
-              key={group.label} 
-              group={group} 
-              pathname={authed ? pathname : "/login"}
-              expandedGroups={expandedGroups}
-              toggleGroup={toggleGroup}
-            />
-          ))}
-        </div>
-        
-        <div className="sidebarNavDivider">
-          <span>Tools</span>
+          <span>Suche & KI</span>
         </div>
         
         <div className="sidebarNavSection">
