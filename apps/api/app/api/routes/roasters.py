@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -17,13 +18,22 @@ from app.services.data_quality import recompute_entity_flags, resolve_entity_fla
 from app.core.config import settings
 
 router = APIRouter()
+NOT_FOUND_DETAIL = "Not found"
+NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @router.get("/", response_model=list[RoasterOut])
 def list_roasters(
-    include_deleted: bool = Query(False),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Roaster)
     if not include_deleted:
@@ -36,8 +46,8 @@ def create_roaster(
     payload: RoasterCreate,
     request: Request,
     response: Response,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     r = Roaster(**payload.model_dump())
     db.add(r)
@@ -83,28 +93,29 @@ def create_roaster(
     return r
 
 
-@router.get("/{roaster_id}", response_model=RoasterOut)
+@router.get("/{roaster_id}", response_model=RoasterOut, responses=NOT_FOUND_RESPONSE)
 def get_roaster(
     roaster_id: int,
-    include_deleted: bool = Query(False),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Roaster).filter(Roaster.id == roaster_id)
     if not include_deleted:
         q = q.filter(Roaster.deleted_at.is_(None))
     r = q.first()
     if not r:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return r
 
 
-@router.patch("/{roaster_id}", response_model=RoasterOut)
+@router.patch("/{roaster_id}", response_model=RoasterOut, responses=NOT_FOUND_RESPONSE)
 def update_roaster(
     roaster_id: int,
     payload: RoasterUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     r = (
         db.query(Roaster)
@@ -112,7 +123,7 @@ def update_roaster(
         .first()
     )
     if not r:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture old data for audit log
     old_data = {k: getattr(r, k) for k in payload.model_dump(exclude_unset=True).keys()}
@@ -160,15 +171,15 @@ def update_roaster(
     return r
 
 
-@router.delete("/{roaster_id}")
+@router.delete("/{roaster_id}", responses=NOT_FOUND_RESPONSE)
 def delete_roaster(
     roaster_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     r = db.query(Roaster).filter(Roaster.id == roaster_id).first()
     if not r:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture data before deletion for audit log
     entity_data = {
@@ -177,7 +188,7 @@ def delete_roaster(
         "website": r.website,
     }
 
-    r.deleted_at = datetime.utcnow()
+    r.deleted_at = _utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -206,15 +217,15 @@ def delete_roaster(
     return {"status": "deleted"}
 
 
-@router.post("/{roaster_id}/restore")
+@router.post("/{roaster_id}/restore", responses=NOT_FOUND_RESPONSE)
 def restore_roaster(
     roaster_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     r = db.query(Roaster).filter(Roaster.id == roaster_id).first()
     if not r:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     r.deleted_at = None
     db.commit()
@@ -249,9 +260,10 @@ def restore_roaster(
 
 @router.get("/export/csv", response_class=StreamingResponse)
 def export_roasters_csv(
-    include_deleted: bool = Query(False),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Export all roasters to CSV format."""
     q = db.query(Roaster)

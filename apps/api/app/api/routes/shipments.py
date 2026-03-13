@@ -1,7 +1,8 @@
+from datetime import datetime, timezone
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
-from datetime import datetime
-from typing import Any
 
 from app.api.deps import require_role
 from app.api.response_utils import apply_create_status
@@ -28,6 +29,15 @@ SHIPMENT_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     404: {"description": "Shipment not found"},
     422: {"description": "Invalid datetime format"},
 }
+NOT_FOUND_DETAIL = "Not found"
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utcnow_iso() -> str:
+    return _utcnow().isoformat()
 
 
 def _parse_iso_datetime_or_422(value: str, field_name: str) -> datetime:
@@ -38,6 +48,90 @@ def _parse_iso_datetime_or_422(value: str, field_name: str) -> datetime:
             status_code=422,
             detail=f"Invalid ISO-8601 datetime for '{field_name}'",
         ) from exc
+
+
+def _ensure_unique_identifiers(db: Session, payload: ShipmentCreate) -> None:
+    checks = (
+        ("container_number", payload.container_number, "Container number already exists"),
+        ("bill_of_lading", payload.bill_of_lading, "Bill of lading already exists"),
+    )
+    for column_name, value, error_message in checks:
+        existing = (
+            db.query(Shipment)
+            .filter(
+                getattr(Shipment, column_name) == value,
+                Shipment.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(status_code=400, detail=error_message)
+
+
+def _apply_create_datetime_fields(shipment: Shipment, payload: ShipmentCreate) -> None:
+    if payload.departure_at and not payload.departure_date:
+        shipment.departure_date = payload.departure_at.isoformat()
+    if payload.estimated_arrival_at and not payload.estimated_arrival:
+        shipment.estimated_arrival = payload.estimated_arrival_at.isoformat()
+    if payload.actual_arrival_at and not payload.actual_arrival:
+        shipment.actual_arrival = payload.actual_arrival_at.isoformat()
+
+    if payload.departure_at is None and payload.departure_date:
+        shipment.departure_at = _parse_iso_datetime_or_422(
+            payload.departure_date, "departure_date"
+        )
+    if payload.estimated_arrival_at is None and payload.estimated_arrival:
+        shipment.estimated_arrival_at = _parse_iso_datetime_or_422(
+            payload.estimated_arrival, "estimated_arrival"
+        )
+    if payload.actual_arrival_at is None and payload.actual_arrival:
+        shipment.actual_arrival_at = _parse_iso_datetime_or_422(
+            payload.actual_arrival, "actual_arrival"
+        )
+
+
+def _dedupe_lot_ids(lot_ids: list[int] | None) -> list[int]:
+    if not lot_ids:
+        return []
+    return list(dict.fromkeys(lot_ids))
+
+
+def _resolve_create_lot_ids(payload: ShipmentCreate, shipment: Shipment) -> list[int]:
+    if payload.lot_ids:
+        lot_ids = _dedupe_lot_ids(payload.lot_ids)
+        if shipment.lot_id is None and lot_ids:
+            shipment.lot_id = lot_ids[0]
+        return lot_ids
+    if payload.lot_id:
+        return [payload.lot_id]
+    return []
+
+
+def _apply_update_datetime_fields(update_dict: dict[str, Any], current_status: str) -> None:
+    if "departure_at" in update_dict and update_dict.get("departure_at"):
+        update_dict.setdefault("departure_date", update_dict["departure_at"].isoformat())
+    if "estimated_arrival_at" in update_dict and update_dict.get("estimated_arrival_at"):
+        update_dict.setdefault(
+            "estimated_arrival", update_dict["estimated_arrival_at"].isoformat()
+        )
+    if "actual_arrival_at" in update_dict and update_dict.get("actual_arrival_at"):
+        update_dict.setdefault("actual_arrival", update_dict["actual_arrival_at"].isoformat())
+
+    if "departure_at" not in update_dict and "departure_date" in update_dict:
+        update_dict["departure_at"] = _parse_iso_datetime_or_422(
+            update_dict["departure_date"], "departure_date"
+        )
+    if "estimated_arrival_at" not in update_dict and "estimated_arrival" in update_dict:
+        update_dict["estimated_arrival_at"] = _parse_iso_datetime_or_422(
+            update_dict["estimated_arrival"], "estimated_arrival"
+        )
+    if "actual_arrival_at" not in update_dict and "actual_arrival" in update_dict:
+        update_dict["actual_arrival_at"] = _parse_iso_datetime_or_422(
+            update_dict["actual_arrival"], "actual_arrival"
+        )
+
+    if "status" in update_dict and update_dict["status"] != current_status:
+        update_dict["status_updated_at"] = _utcnow_iso()
 
 
 def _build_shipment_out(db: Session, shipment: Shipment) -> ShipmentOut:
@@ -73,10 +167,11 @@ def list_shipments(
     status: str | None = None,
     origin_port: str | None = None,
     destination_port: str | None = None,
-    include_deleted: bool = Query(False),
-    limit: int = Query(200, ge=1, le=500),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """List all shipments with optional filters."""
     q = db.query(Shipment)
@@ -94,8 +189,8 @@ def list_shipments(
 
 @router.get("/active", response_model=list[ShipmentOut])
 def list_active_shipments(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Get active shipments (status=in_transit)."""
     shipments = (
@@ -109,8 +204,8 @@ def list_active_shipments(
 
 @router.get("/delayed", response_model=list[ShipmentOut])
 def list_delayed_shipments(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Get delayed shipments (delay_hours > 0)."""
     shipments = (
@@ -132,8 +227,8 @@ def create_shipment(
     payload: ShipmentCreate,
     request: Request,
     response: Response,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Create a new shipment."""
     # Idempotent create: return existing shipment if both identifiers match.
@@ -150,55 +245,11 @@ def create_shipment(
         return existing
 
     # Otherwise, enforce uniqueness constraints.
-    existing_container = (
-        db.query(Shipment)
-        .filter(
-            Shipment.container_number == payload.container_number,
-            Shipment.deleted_at.is_(None),
-        )
-        .first()
-    )
-    if existing_container:
-        raise HTTPException(status_code=400, detail="Container number already exists")
-
-    existing_bol = (
-        db.query(Shipment)
-        .filter(
-            Shipment.bill_of_lading == payload.bill_of_lading,
-            Shipment.deleted_at.is_(None),
-        )
-        .first()
-    )
-    if existing_bol:
-        raise HTTPException(status_code=400, detail="Bill of lading already exists")
+    _ensure_unique_identifiers(db, payload)
 
     shipment = Shipment(**payload.model_dump(exclude={"lot_ids"}))
-    if payload.departure_at and not payload.departure_date:
-        shipment.departure_date = payload.departure_at.isoformat()
-    if payload.estimated_arrival_at and not payload.estimated_arrival:
-        shipment.estimated_arrival = payload.estimated_arrival_at.isoformat()
-    if payload.actual_arrival_at and not payload.actual_arrival:
-        shipment.actual_arrival = payload.actual_arrival_at.isoformat()
-
-    if payload.departure_at is None and payload.departure_date:
-        shipment.departure_at = _parse_iso_datetime_or_422(
-            payload.departure_date, "departure_date"
-        )
-    if payload.estimated_arrival_at is None and payload.estimated_arrival:
-        shipment.estimated_arrival_at = _parse_iso_datetime_or_422(
-            payload.estimated_arrival, "estimated_arrival"
-        )
-    if payload.actual_arrival_at is None and payload.actual_arrival:
-        shipment.actual_arrival_at = _parse_iso_datetime_or_422(
-            payload.actual_arrival, "actual_arrival"
-        )
-    lot_ids: list[int] = []
-    if payload.lot_ids:
-        lot_ids = list(dict.fromkeys(payload.lot_ids))
-        if shipment.lot_id is None and lot_ids:
-            shipment.lot_id = lot_ids[0]
-    elif payload.lot_id:
-        lot_ids = [payload.lot_id]
+    _apply_create_datetime_fields(shipment, payload)
+    lot_ids = _resolve_create_lot_ids(payload, shipment)
     shipment.tracking_events = []  # Initialize empty tracking events
     db.add(shipment)
     db.commit()
@@ -238,12 +289,17 @@ def create_shipment(
     return _build_shipment_out(db, shipment)
 
 
-@router.get("/{shipment_id}", response_model=ShipmentOut)
+@router.get(
+    "/{shipment_id}",
+    response_model=ShipmentOut,
+    responses=SHIPMENT_ERROR_RESPONSES,
+)
 def get_shipment(
     shipment_id: int,
-    include_deleted: bool = Query(False),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     """Get shipment details."""
     q = db.query(Shipment).filter(Shipment.id == shipment_id)
@@ -251,7 +307,7 @@ def get_shipment(
         q = q.filter(Shipment.deleted_at.is_(None))
     shipment = q.first()
     if not shipment:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return _build_shipment_out(db, shipment)
 
 
@@ -263,8 +319,8 @@ def get_shipment(
 def update_shipment(
     shipment_id: int,
     payload: ShipmentUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Update shipment."""
     shipment = (
@@ -273,7 +329,7 @@ def update_shipment(
         .first()
     )
     if not shipment:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture old data for audit log
     old_data = {
@@ -282,34 +338,7 @@ def update_shipment(
 
     # Update status_updated_at if status is changing
     update_dict = payload.model_dump(exclude_unset=True, exclude={"lot_ids"})
-    if "departure_at" in update_dict and update_dict.get("departure_at"):
-        update_dict.setdefault(
-            "departure_date", update_dict["departure_at"].isoformat()
-        )
-    if "estimated_arrival_at" in update_dict and update_dict.get(
-        "estimated_arrival_at"
-    ):
-        update_dict.setdefault(
-            "estimated_arrival", update_dict["estimated_arrival_at"].isoformat()
-        )
-    if "actual_arrival_at" in update_dict and update_dict.get("actual_arrival_at"):
-        update_dict.setdefault(
-            "actual_arrival", update_dict["actual_arrival_at"].isoformat()
-        )
-    if "departure_at" not in update_dict and "departure_date" in update_dict:
-        update_dict["departure_at"] = _parse_iso_datetime_or_422(
-            update_dict["departure_date"], "departure_date"
-        )
-    if "estimated_arrival_at" not in update_dict and "estimated_arrival" in update_dict:
-        update_dict["estimated_arrival_at"] = _parse_iso_datetime_or_422(
-            update_dict["estimated_arrival"], "estimated_arrival"
-        )
-    if "actual_arrival_at" not in update_dict and "actual_arrival" in update_dict:
-        update_dict["actual_arrival_at"] = _parse_iso_datetime_or_422(
-            update_dict["actual_arrival"], "actual_arrival"
-        )
-    if "status" in update_dict and update_dict["status"] != shipment.status:
-        update_dict["status_updated_at"] = datetime.now().isoformat()
+    _apply_update_datetime_fields(update_dict, shipment.status)
 
     for k, v in update_dict.items():
         setattr(shipment, k, v)
@@ -318,7 +347,7 @@ def update_shipment(
 
     if payload.lot_ids is not None:
         db.query(ShipmentLot).filter(ShipmentLot.shipment_id == shipment_id).delete()
-        for lot_id in list(dict.fromkeys(payload.lot_ids)):
+        for lot_id in _dedupe_lot_ids(payload.lot_ids):
             db.add(ShipmentLot(shipment_id=shipment_id, lot_id=lot_id))
         shipment.lot_id = payload.lot_ids[0] if payload.lot_ids else None
         db.commit()
@@ -352,16 +381,16 @@ def update_shipment(
     return _build_shipment_out(db, shipment)
 
 
-@router.delete("/{shipment_id}")
+@router.delete("/{shipment_id}", responses=SHIPMENT_ERROR_RESPONSES)
 def delete_shipment(
     shipment_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     """Delete shipment."""
     shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture data before deletion for audit log
     entity_data = {
@@ -370,7 +399,7 @@ def delete_shipment(
         "destination_port": shipment.destination_port,
     }
 
-    shipment.deleted_at = datetime.utcnow()
+    shipment.deleted_at = _utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -399,15 +428,19 @@ def delete_shipment(
     return {"status": "deleted"}
 
 
-@router.post("/{shipment_id}/restore", response_model=ShipmentOut)
+@router.post(
+    "/{shipment_id}/restore",
+    response_model=ShipmentOut,
+    responses=SHIPMENT_ERROR_RESPONSES,
+)
 def restore_shipment(
     shipment_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     shipment.deleted_at = None
     db.commit()
@@ -448,8 +481,8 @@ def restore_shipment(
 def add_tracking_event(
     shipment_id: int,
     event: TrackingEventCreate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Add a tracking event to a shipment."""
     shipment = (
@@ -458,7 +491,7 @@ def add_tracking_event(
         .first()
     )
     if not shipment:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Get existing tracking events or initialize
     # Defensive handling in case of unexpected data format
@@ -473,7 +506,7 @@ def add_tracking_event(
     tracking_events.append(new_event)
 
     # Force SQLAlchemy to detect the change by creating a new list
-    shipment.tracking_events = list(tracking_events)
+    shipment.tracking_events = tracking_events.copy()
 
     # Update current location
     shipment.current_location = event.location

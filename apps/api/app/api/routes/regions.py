@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -15,9 +17,10 @@ router = APIRouter()
 @router.get("/", response_model=list[RegionOut])
 def list_regions(
     country: str | None = None,
-    limit: int = Query(500, ge=1, le=2000),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    limit: Annotated[int, Query(ge=1, le=2000)] = 500,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Region)
     if country:
@@ -29,11 +32,15 @@ def list_regions(
 
 @router.get("/peru", response_model=list[PeruRegionOut])
 def list_peru_regions(
-    db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst", "viewer"))
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     return db.query(PeruRegion).order_by(PeruRegion.name.asc()).all()
 
 
 @router.post("/peru/seed")
-def seed(db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst"))):
+def seed(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+):
     return seed_default_regions(db)
