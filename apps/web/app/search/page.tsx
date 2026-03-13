@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
+import { EmptyState } from "../components/EmptyState";
+import { ErrorPanel } from "../components/ErrorPanel";
+import { useToast } from "../components/ToastProvider";
 
 type SearchResult = {
   entity_type: string;
@@ -29,8 +32,6 @@ type SimilarEntity = {
   similarity_score: number;
   region: string | null;
   city: string | null;
-  certifications: string | null;
-  total_score: number | null;
 };
 
 type SimilarResponse = {
@@ -41,247 +42,358 @@ type SimilarResponse = {
   total: number;
 };
 
+const SEARCH_EXAMPLES = [
+  "Bio-Kaffee aus Cajamarca mit Fair Trade",
+  "Specialty Röstereien in Hamburg",
+  "Kooperativen mit Arabica über 85 Punkte",
+  "Nachhaltige Sourcing Partner in Peru",
+];
+
+function ScoreBar({ value }: { value: number }) {
+  const pct = Math.round(value * 100);
+  const tone = pct >= 80 ? "good" : pct >= 60 ? "warn" : "neutral";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+      <div style={{
+        width: 56,
+        height: 4,
+        borderRadius: "var(--radius-full)",
+        background: "var(--color-bg-muted)",
+        overflow: "hidden",
+      }}>
+        <div style={{
+          width: `${pct}%`,
+          height: "100%",
+          borderRadius: "var(--radius-full)",
+          background: tone === "good"
+            ? "var(--color-success)"
+            : tone === "warn"
+            ? "var(--color-warning)"
+            : "var(--color-text-muted)",
+        }} />
+      </div>
+      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", fontVariantNumeric: "tabular-nums" }}>
+        {pct}%
+      </span>
+    </div>
+  );
+}
+
 export default function SearchPage() {
+  const toast = useToast();
   const [query, setQuery] = useState("");
   const [entityType, setEntityType] = useState<"all" | "cooperative" | "roaster">("all");
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [similarResults, setSimilarResults] = useState<{ [key: string]: SimilarEntity[] }>({});
+  const [similarMap, setSimilarMap] = useState<Record<string, SimilarEntity[]>>({});
+  const [loadingSimilar, setLoadingSimilar] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    if (!query.trim()) {
-      setError("Bitte Suchbegriff eingeben");
-      return;
-    }
+  async function handleSearch(q = query) {
+    if (!q.trim()) { toast.warning("Bitte Suchbegriff eingeben"); return; }
+    if (isDemoMode()) { toast.info("Semantische Suche ist im Demo-Modus nicht verfügbar."); return; }
 
     setLoading(true);
     setError(null);
     setResults(null);
-    setSimilarResults({});
+    setSimilarMap({});
 
     try {
-      const response = await apiFetch<SearchResponse>(
-        `/search/semantic?q=${encodeURIComponent(query)}&entity_type=${entityType}&limit=20`,
+      const res = await apiFetch<SearchResponse>(
+        `/search/semantic?q=${encodeURIComponent(q)}&entity_type=${entityType}&limit=20`,
       );
-      setResults(response.results);
+      setResults(Array.isArray(res.results) ? res.results : []);
+      setQuery(q);
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      if (errorMessage.includes("503")) {
-        setError("Semantische Suche ist nicht verfügbar. OpenAI API-Schlüssel fehlt.");
-      } else {
-        setError(errorMessage);
-      }
+      const msg = e instanceof Error ? e.message : String(e);
+      const friendly = msg.includes("503")
+        ? "Semantische Suche nicht verfügbar — OpenAI API-Schlüssel fehlt im Backend."
+        : msg;
+      setError(friendly);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleFindSimilar = async (result: SearchResult) => {
+  async function handleFindSimilar(result: SearchResult) {
     const key = `${result.entity_type}-${result.entity_id}`;
+    if (similarMap[key]) return;
 
+    setLoadingSimilar(key);
     try {
-      const response = await apiFetch<SimilarResponse>(
+      const res = await apiFetch<SimilarResponse>(
         `/search/entity/${result.entity_type}/${result.entity_id}/similar?limit=5`,
       );
-      setSimilarResults((prev) => ({
-        ...prev,
-        [key]: response.similar_entities,
-      }));
+      setSimilarMap((prev) => ({ ...prev, [key]: res.similar_entities ?? [] }));
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      setError(errorMessage);
+      toast.error(e instanceof Error ? e.message : "Fehler beim Laden ähnlicher Entitäten");
+    } finally {
+      setLoadingSimilar(null);
     }
-  };
+  }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  const formatSimilarity = (score: number) => `${Math.round(score * 100)}%`;
-
-  const getEntityUrl = (t: string, id: number) => {
-    if (t === "cooperative") return `/cooperatives/${id}`;
-    if (t === "roaster") return `/roasters/${id}`;
+  function getEntityUrl(type: string, id: number) {
+    if (type === "cooperative") return `/cooperatives/${id}`;
+    if (type === "roaster") return `/roasters/${id}`;
     return "#";
-  };
+  }
+
+  const hasResults = results !== null;
+  const empty = hasResults && results.length === 0;
 
   return (
     <div className="page">
+
+      {/* Header */}
       <div className="pageHeader">
         <div>
           <div className="h1">Semantische Suche</div>
           <div className="muted">
-            KI-gestützte Suche über Kooperativen und Röstereien mit Embedding-Vektoren
+            KI-gestützte Vektorsuche über Kooperativen und Röstereien
           </div>
+        </div>
+        <div className="pageActions">
+          <span className="badge badgeInfo" style={{ fontSize: "var(--font-size-xs)", letterSpacing: "0.04em" }}>
+            Embedding-Vektoren
+          </span>
         </div>
       </div>
 
-      <div className="panel">
-        <div className="panelTitle">Suchparameter</div>
-        <div className="row gap" style={{ alignItems: "flex-end", marginBottom: "1rem" }}>
-          <div style={{ flex: 1 }}>
-            <label className="label">Suchbegriff</label>
-            <input
-              className="input"
-              placeholder="z.B. 'Bio-Kaffee aus Peru' oder 'Specialty Rösterei Hamburg'"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-            />
-          </div>
-          <div style={{ minWidth: "200px" }}>
-            <label className="label">Entitätstyp</label>
-            <select
-              className="input"
-              value={entityType}
-              onChange={(e) => setEntityType(e.target.value as "all" | "cooperative" | "roaster")}
-            >
-              <option value="all">Alle</option>
-              <option value="cooperative">Kooperativen</option>
-              <option value="roaster">Röstereien</option>
-            </select>
-          </div>
-          <button className="btn" onClick={handleSearch} disabled={loading || !query.trim()}>
-            {loading ? "Suche..." : "Suchen"}
-          </button>
+      {/* Suchleiste */}
+      <div className="panel" style={{ marginBottom: "var(--space-5)" }}>
+        <div className="panelHeader">
+          <div className="panelTitle">Suchparameter</div>
         </div>
-      </div>
-
-      {error && (
-        <div className="panel" style={{ borderLeft: "4px solid var(--color-error)" }}>
-          <div style={{ color: "var(--color-error)" }}>{error}</div>
-        </div>
-      )}
-
-      {results && (
-        <div className="panel">
-          <div className="panelTitle">
-            Ergebnisse: {results.length}
-            {results.length > 0 && (
-              <span className="muted" style={{ marginLeft: "0.5rem", fontWeight: "normal" }}>
-                für &quot;{query}&quot;
-              </span>
-            )}
-          </div>
-
-          {results.length === 0 ? (
-            <div className="muted" style={{ padding: "2rem", textAlign: "center" }}>
-              Keine Ergebnisse gefunden. Versuchen Sie andere Suchbegriffe.
+        <div className="panelBody">
+          <div className="fieldGrid2" style={{ alignItems: "flex-end" }}>
+            <div className="fieldGroup" style={{ gridColumn: "1 / 3" }}>
+              <label className="fieldLabel">Suchbegriff</label>
+              <div style={{ position: "relative" }}>
+                <svg
+                  width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ position: "absolute", left: "var(--space-3)", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)", pointerEvents: "none" }}
+                >
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                  className="input"
+                  style={{ paddingLeft: "var(--space-8)" }}
+                  placeholder="z.B. Bio-Kaffee aus Peru mit Fair Trade Zertifizierung..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+              </div>
             </div>
-          ) : (
-            <div className="tableWrap">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Typ</th>
-                    <th>Region/Stadt</th>
-                    <th>Zertifizierungen</th>
-                    <th>Score</th>
-                    <th>Ähnlichkeit</th>
-                    <th>Aktionen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((result) => {
-                    const key = `${result.entity_type}-${result.entity_id}`;
-                    const similar = similarResults[key];
+            <div className="fieldGroup">
+              <label className="fieldLabel">Entitätstyp</label>
+              <select
+                className="input"
+                value={entityType}
+                onChange={(e) => setEntityType(e.target.value as typeof entityType)}
+              >
+                <option value="all">Alle Entitäten</option>
+                <option value="cooperative">Nur Kooperativen</option>
+                <option value="roaster">Nur Röstereien</option>
+              </select>
+            </div>
+            <div className="fieldGroup" style={{ display: "flex", alignItems: "flex-end" }}>
+              <button
+                className="btn btnPrimary"
+                style={{ width: "100%" }}
+                onClick={() => handleSearch()}
+                disabled={loading || !query.trim()}
+              >
+                {loading ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      style={{ animation: "spin 1s linear infinite" }}>
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    Suche...
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    Suchen
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
 
-                    return (
-                      <>
-                        <tr key={key}>
-                          <td>
-                            <Link className="link" href={getEntityUrl(result.entity_type, result.entity_id)}>
-                              {result.name}
-                            </Link>
-                          </td>
-                          <td>
-                            <Badge tone={result.entity_type === "cooperative" ? "good" : "neutral"}>
-                              {result.entity_type === "cooperative" ? "Kooperative" : "Rösterei"}
-                            </Badge>
-                          </td>
-                          <td className="muted">{result.region || result.city || "-"}</td>
-                          <td className="muted" style={{ fontSize: "0.85rem" }}>
-                            {result.certifications || "-"}
-                          </td>
-                          <td>
-                            {result.total_score ? (
-                              <Badge tone="neutral">{result.total_score.toFixed(1)}</Badge>
-                            ) : (
-                              "-"
-                            )}
-                          </td>
-                          <td>
-                            <Badge tone="warn">{formatSimilarity(result.similarity_score)}</Badge>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-sm"
-                              onClick={() => handleFindSimilar(result)}
-                              disabled={!!similar}
-                            >
-                              {similar ? "Geladen" : "Ähnliche anzeigen"}
-                            </button>
-                          </td>
-                        </tr>
-                        {similar && similar.length > 0 && (
-                          <tr key={`${key}-similar`}>
-                            <td
-                              colSpan={7}
-                              style={{
-                                backgroundColor: "var(--color-bg-secondary)",
-                                padding: "1rem",
-                              }}
-                            >
-                              <div style={{ marginBottom: "0.5rem", fontWeight: "600" }}>
-                                Ähnliche Entitäten zu &quot;{result.name}&quot;:
-                              </div>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
-                                {similar.map((sim) => (
-                                  <Link
-                                    key={sim.entity_id}
-                                    href={getEntityUrl(result.entity_type, sim.entity_id)}
-                                    className="link"
-                                    style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "0.5rem",
-                                      padding: "0.5rem 0.75rem",
-                                      backgroundColor: "var(--color-bg)",
-                                      borderRadius: "4px",
-                                      border: "1px solid var(--color-border)",
-                                    }}
-                                  >
-                                    <span>{sim.name}</span>
-                                    <Badge tone="warn">{formatSimilarity(sim.similarity_score)}</Badge>
-                                  </Link>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    );
-                  })}
-                </tbody>
-              </table>
+          {/* Beispiel-Queries */}
+          {!hasResults && (
+            <div style={{ marginTop: "var(--space-4)", display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
+              <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", alignSelf: "center", marginRight: "var(--space-1)" }}>
+                Beispiele:
+              </span>
+              {SEARCH_EXAMPLES.map((ex) => (
+                <button
+                  key={ex}
+                  className="btn"
+                  style={{ fontSize: "var(--font-size-xs)", padding: "4px 10px" }}
+                  onClick={() => { setQuery(ex); handleSearch(ex); }}
+                  disabled={loading}
+                >
+                  {ex}
+                </button>
+              ))}
             </div>
           )}
         </div>
+      </div>
+
+      {/* Fehler */}
+      {error && <ErrorPanel message={error} onRetry={() => handleSearch()} compact style={{ marginBottom: "var(--space-5)" }} />}
+
+      {/* Leerzustand vor Suche */}
+      {!hasResults && !error && !loading && (
+        <div className="panel">
+          <EmptyState
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            }
+            title="Semantische Suche"
+            text="Geben Sie einen Suchbegriff ein oder wählen Sie ein Beispiel. Die KI findet semantisch ähnliche Treffer — auch ohne exakte Schlüsselwörter."
+          />
+        </div>
       )}
 
-      {!results && !loading && (
+      {/* Keine Treffer */}
+      {empty && (
         <div className="panel">
-          <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-muted)" }}>
-            <div style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>[SEARCH]</div>
-            <div>Geben Sie einen Suchbegriff ein, um zu beginnen.</div>
-            <div style={{ fontSize: "0.9rem", marginTop: "1rem" }}>
-            Die semantische Suche nutzt KI-Embeddings, um ähnliche Entitäten zu finden,
-            auch wenn die exakten Suchbegriffe nicht übereinstimmen.
+          <EmptyState
+            icon={
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            }
+            title="Keine Treffer"
+            text={`Keine Ergebnisse für "${query}". Versuchen Sie andere Begriffe oder wählen Sie einen anderen Entitätstyp.`}
+          />
+        </div>
+      )}
+
+      {/* Ergebnistabelle */}
+      {hasResults && results.length > 0 && (
+        <div className="panel">
+          <div className="panelHeader">
+            <div className="panelTitle">
+              {results.length} Ergebnis{results.length !== 1 ? "se" : ""}
+              <span className="muted" style={{ fontWeight: "var(--font-weight-normal)", marginLeft: "var(--space-2)" }}>
+                für &ldquo;{query}&rdquo;
+              </span>
             </div>
+          </div>
+          <div className="tableWrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Typ</th>
+                  <th>Region</th>
+                  <th>Zertifizierungen</th>
+                  <th>Score</th>
+                  <th>Relevanz</th>
+                  <th style={{ width: 140 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((r) => {
+                  const key = `${r.entity_type}-${r.entity_id}`;
+                  const similar = similarMap[key];
+                  const isSimilarLoading = loadingSimilar === key;
+
+                  return (
+                    <>
+                      <tr key={key}>
+                        <td>
+                          <Link className="link" href={getEntityUrl(r.entity_type, r.entity_id)}>
+                            <strong>{r.name}</strong>
+                          </Link>
+                        </td>
+                        <td>
+                          <Badge tone={r.entity_type === "cooperative" ? "good" : "neutral"}>
+                            {r.entity_type === "cooperative" ? "Kooperative" : "Rösterei"}
+                          </Badge>
+                        </td>
+                        <td className="muted">{r.region || r.city || "—"}</td>
+                        <td className="muted" style={{ fontSize: "var(--font-size-xs)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {r.certifications || "—"}
+                        </td>
+                        <td>
+                          {r.total_score != null
+                            ? <Badge tone="neutral">{r.total_score.toFixed(1)}</Badge>
+                            : <span className="muted">—</span>
+                          }
+                        </td>
+                        <td>
+                          <ScoreBar value={r.similarity_score} />
+                        </td>
+                        <td>
+                          {similar ? (
+                            <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>
+                              {similar.length} ähnliche
+                            </span>
+                          ) : (
+                            <button
+                              className="btn"
+                              style={{ fontSize: "var(--font-size-xs)", padding: "4px 10px" }}
+                              onClick={() => handleFindSimilar(r)}
+                              disabled={isSimilarLoading}
+                            >
+                              {isSimilarLoading ? "Lädt..." : "Ähnliche"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+
+                      {/* Ähnliche Entitäten Inline-Zeile */}
+                      {similar && similar.length > 0 && (
+                        <tr key={`${key}-similar`} style={{ background: "var(--color-bg-subtle)" }}>
+                          <td colSpan={7} style={{ padding: "var(--space-3) var(--space-5)" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", fontWeight: "var(--font-weight-semibold)", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+                                Ähnlich zu {r.name}
+                              </span>
+                              {similar.map((s) => (
+                                <Link
+                                  key={s.entity_id}
+                                  href={getEntityUrl(r.entity_type, s.entity_id)}
+                                  className="link"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "var(--space-2)",
+                                    padding: "4px 10px",
+                                    background: "var(--color-surface)",
+                                    borderRadius: "var(--radius-full)",
+                                    border: "1px solid var(--color-border-strong)",
+                                    fontSize: "var(--font-size-xs)",
+                                  }}
+                                >
+                                  {s.name}
+                                  <span style={{ color: "var(--color-text-muted)" }}>
+                                    {Math.round(s.similarity_score * 100)}%
+                                  </span>
+                                </Link>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

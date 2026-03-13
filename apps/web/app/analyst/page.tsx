@@ -3,22 +3,23 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch, getToken } from "../../lib/api";
+import { apiFetch, getToken, isDemoMode } from "../../lib/api";
+import { EmptyState } from "../components/EmptyState";
+import { ErrorPanel } from "../components/ErrorPanel";
 
-// Constants
-const MAX_QUESTION_LENGTH = 1000; // Must match backend RAGQuestion.question max_length
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  sources: Source[];
-}
+const MAX_QUESTION_LENGTH = 1000;
 
 interface Source {
   entity_type: string;
   entity_id: number;
   name: string;
   similarity_score: number;
+}
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  sources: Source[];
 }
 
 interface ServiceStatus {
@@ -30,499 +31,389 @@ interface ServiceStatus {
 }
 
 const EXAMPLE_QUESTIONS = [
-  "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung",
-  "Vergleiche Röstereien in München nach Bewertung",
-  "Was sind die besten Regionen für Specialty Coffee in Peru",
+  "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung?",
+  "Vergleiche Röstereien in München nach Bewertung.",
+  "Was sind die besten Regionen für Specialty Coffee in Peru?",
+  "Zeige mir alle Bio-zertifizierten Kooperativen mit Score über 80.",
 ];
 
+const PROVIDER_LABELS: Record<string, string> = {
+  ollama: "Ollama (lokal)",
+  openai: "OpenAI",
+  groq: "Groq",
+};
+
+function TypingIndicator() {
+  return (
+    <div style={{ display: "flex", gap: 4, alignItems: "center", padding: "4px 0" }}>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "var(--color-text-muted)",
+            animation: `typingDot 1.2s ease-in-out ${i * 0.2}s infinite`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SourceChip({ source }: { source: Source }) {
+  const href = source.entity_type === "cooperative"
+    ? `/cooperatives/${source.entity_id}`
+    : source.entity_type === "roaster"
+    ? `/roasters/${source.entity_id}`
+    : "#";
+  const pct = Math.round(source.similarity_score * 100);
+
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "var(--space-2)",
+        padding: "3px 10px",
+        borderRadius: "var(--radius-full)",
+        border: "1px solid var(--color-border-strong)",
+        background: "var(--color-bg-subtle)",
+        fontSize: "var(--font-size-xs)",
+        color: "var(--color-text-secondary)",
+        textDecoration: "none",
+        transition: "background var(--transition-fast)",
+      }}
+    >
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      {source.name}
+      <span style={{ color: "var(--color-text-muted)" }}>{pct}%</span>
+    </Link>
+  );
+}
+
 export default function AnalystPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(
-    null
-  );
+  const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const checkServiceStatus = useCallback(async () => {
+  const checkStatus = useCallback(async () => {
+    if (isDemoMode()) { setStatusLoading(false); return; }
+    const token = getToken();
+    if (!token) { router.push("/login"); return; }
+
     try {
-      const token = getToken();
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const data: ServiceStatus = await apiFetch<ServiceStatus>("/analyst/status");
+      const data = await apiFetch<ServiceStatus>("/analyst/status");
       setServiceStatus(data);
       if (!data.available) {
-        setError(getProviderErrorMessage(data.provider));
+        setError(getProviderError(data.provider));
       }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("401")) {
-        router.push("/login");
-        return;
-      }
-      setServiceStatus(null);
-      setError("Fehler beim Verbinden mit dem Service");
+    } catch {
+      setError("Verbindung zum KI-Service fehlgeschlagen.");
+    } finally {
+      setStatusLoading(false);
     }
   }, [router]);
 
-  useEffect(() => {
-    checkServiceStatus();
-  }, [checkServiceStatus]);
+  useEffect(() => { checkStatus(); }, [checkStatus]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
-  const getProviderErrorMessage = (provider: string): string => {
-    switch (provider) {
-      case "ollama":
-        return "Ollama ist nicht gestartet. Starte Ollama mit: `ollama serve` und lade ein Modell: `ollama pull llama3.1:8b`";
-      case "openai":
-        return "OPENAI_API_KEY ist nicht konfiguriert";
-      case "groq":
-        return "GROQ_API_KEY ist nicht konfiguriert";
-      default:
-        return "KI-Analyst ist derzeit nicht verfügbar.";
-    }
-  };
+  function getProviderError(provider: string): string {
+    if (provider === "ollama") return "Ollama ist nicht gestartet. Starte Ollama: ollama serve && ollama pull llama3.1:8b";
+    if (provider === "openai") return "OPENAI_API_KEY ist nicht konfiguriert.";
+    if (provider === "groq") return "GROQ_API_KEY ist nicht konfiguriert.";
+    return "KI-Analyst ist derzeit nicht verfügbar.";
+  }
 
-  const getProviderBadge = (): string => {
-    if (!serviceStatus) return "";
-    switch (serviceStatus.provider) {
-      case "ollama":
-        return "🦙 Powered by Ollama";
-      case "openai":
-        return "🤖 Powered by OpenAI";
-      case "groq":
-        return "⚡ Powered by Groq";
-      default:
-        return "";
-    }
-  };
-
-  const sendMessage = async (question: string) => {
+  async function sendMessage(question: string) {
     if (!question.trim() || loading) return;
+    if (isDemoMode()) {
+      setError("KI-Analyse ist im Demo-Modus nicht verfügbar. Bitte Backend starten und einloggen.");
+      return;
+    }
+
+    const token = getToken();
+    if (!token) { router.push("/login"); return; }
 
     setError(null);
     setLoading(true);
-
-    const userMessage: Message = { role: "user", content: question, sources: [] };
-    setMessages((prev) => [...prev, userMessage]);
+    const userMsg: Message = { role: "user", content: question, sources: [] };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
     try {
-      const token = getToken();
-      if (!token) {
-        router.push("/login");
-        return;
-      }
+      const history = messages.map((m) => ({ role: m.role, content: m.content }));
+      const data = await apiFetch<{ answer: string; sources: Source[] }>("/analyst/ask", {
+        method: "POST",
+        body: JSON.stringify({ question, conversation_history: history }),
+      });
 
-      const conversationHistory = messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const data = await apiFetch<{
-        answer: string;
-        sources: Source[];
-      }>(
-        "/analyst/ask",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            question: question,
-            conversation_history: conversationHistory,
-          }),
-        }
-      );
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.answer,
-        sources: data.sources || [],
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer, sources: data.sources ?? [] },
+      ]);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("401")) {
-        router.push("/login");
-        return;
-      }
-      
-      const errorMessage =
-        err instanceof Error && err.message.includes("503")
-          ? "Service nicht verfügbar."
-          : "Fehler beim Senden der Nachricht.";
+      if (err instanceof Error && err.message.includes("401")) { router.push("/login"); return; }
+      const msg = err instanceof Error && err.message.includes("503")
+        ? "KI-Service nicht verfügbar. Bitte Backend prüfen."
+        : err instanceof Error ? err.message : "Unbekannter Fehler";
       setMessages((prev) => prev.slice(0, -1));
-      setError(errorMessage);
+      setError(msg);
     } finally {
       setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
-  };
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
-
-  const handleExampleClick = (question: string) => {
-    sendMessage(question);
-  };
-
-  const getEntityLink = (source: Source) => {
-    if (source.entity_type === "cooperative") {
-      return `/cooperatives/${source.entity_id}`;
-    } else if (source.entity_type === "roaster") {
-      return `/roasters/${source.entity_id}`;
-    }
-    return "#";
-  };
+  const isAvailable = !isDemoMode() && serviceStatus?.available;
+  const showExamples = messages.length === 0;
 
   return (
-    <div className="analyst-container">
-      <div className="analyst-header">
-        <h1>🤖 KI-Analyst</h1>
-        <p className="muted">
-          Stellen Sie Fragen über Kooperativen, Röstereien und Sourcing
-        </p>
-        {serviceStatus && serviceStatus.available && (
-          <div className="provider-badge">{getProviderBadge()}</div>
-        )}
-      </div>
+    <>
+      {/* Keyframe für Typing-Dots — einmalig im Head */}
+      <style>{`@keyframes typingDot { 0%,60%,100%{opacity:.3;transform:scale(.8)} 30%{opacity:1;transform:scale(1)} }`}</style>
 
-      {error && (
-        <div className="alert alert-error">
-          <strong>Fehler:</strong> {error}
+      <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - var(--topbar-height, 56px) - var(--space-10))", gap: "var(--space-4)" }}>
+
+        {/* Header */}
+        <div className="pageHeader" style={{ marginBottom: 0, flexShrink: 0 }}>
+          <div>
+            <div className="h1">KI-Analyst</div>
+            <div className="muted">
+              Stellen Sie Fragen über Kooperativen, Röstereien und Sourcing-Strategien
+            </div>
+          </div>
+          <div className="pageActions">
+            {serviceStatus?.available && (
+              <span className="badge badgeInfo" style={{ fontSize: "var(--font-size-xs)" }}>
+                {PROVIDER_LABELS[serviceStatus.provider] ?? serviceStatus.provider}
+                {" · "}{serviceStatus.model}
+              </span>
+            )}
+            {statusLoading && (
+              <span className="badge" style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>
+                Verbinde...
+              </span>
+            )}
+          </div>
         </div>
-      )}
 
-      <div className="analyst-chat">
-        {messages.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">💬</div>
-            <h2>Willkommen beim KI-Analysten!</h2>
-            <p className="muted">Stellen Sie eine Frage oder wählen Sie ein Beispiel:</p>
-            <div className="example-questions">
-              {EXAMPLE_QUESTIONS.map((q, i) => (
-                <button
-                  key={i}
-                  className="example-button"
-                  onClick={() => handleExampleClick(q)}
-                  disabled={loading || !serviceStatus?.available}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Error */}
+        {error && <ErrorPanel message={error} onRetry={checkStatus} compact style={{ flexShrink: 0 }} />}
 
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`message message-${msg.role}`}>
-            <div className="message-avatar">
-              {msg.role === "user" ? "User" : "KI"}
-            </div>
-            <div className="message-content">
-              <div className="message-text">{msg.content}</div>
-              {msg.sources && msg.sources.length > 0 && (
-                <div className="message-sources">
-                  <strong>Quellen:</strong>
-                  <ul>
-                    {msg.sources.map((source, i) => (
-                      <li key={i}>
-                        <Link href={getEntityLink(source)}>
-                          {source.name} (ID: {source.entity_id})
-                        </Link>{" "}
-                        <span className="similarity-score">
-                          {(source.similarity_score * 100).toFixed(0)}%
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+        {/* Chat-Bereich */}
+        <div className="panel" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: 0 }}>
+
+          {/* Nachrichtenliste */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "var(--space-5)" }}>
+            {showExamples && !error ? (
+              <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <EmptyState
+                  icon={
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  }
+                  title="Bereit für Ihre Fragen"
+                  text="Stellen Sie eine Frage über Kooperativen, Röstereien, Preise oder Sourcing — oder wählen Sie ein Beispiel."
+                />
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", maxWidth: 560, margin: "0 auto", width: "100%", paddingBottom: "var(--space-4)" }}>
+                  {EXAMPLE_QUESTIONS.map((q) => (
+                    <button
+                      key={q}
+                      className="btn"
+                      style={{ textAlign: "left", justifyContent: "flex-start", padding: "var(--space-3) var(--space-4)" }}
+                      onClick={() => sendMessage(q)}
+                      disabled={!isAvailable || loading}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: "var(--color-text-muted)" }}>
+                        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/>
+                      </svg>
+                      {q}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {loading && (
-          <div className="message message-assistant">
-            <div className="message-avatar">🤖</div>
-            <div className="message-content">
-              <div className="loading-spinner">
-                <div className="spinner"></div>
-                <span>Denke nach...</span>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+                {messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      gap: "var(--space-3)",
+                      flexDirection: msg.role === "user" ? "row-reverse" : "row",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    {/* Avatar */}
+                    <div style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "var(--radius-md)",
+                      background: msg.role === "user" ? "var(--color-primary)" : "var(--color-accent-subtle)",
+                      border: `1px solid ${msg.role === "user" ? "transparent" : "var(--color-border-strong)"}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      color: msg.role === "user" ? "var(--color-primary-text)" : "var(--color-accent)",
+                    }}>
+                      {msg.role === "user" ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* Bubble */}
+                    <div style={{
+                      maxWidth: "72%",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "var(--space-2)",
+                    }}>
+                      <div style={{
+                        padding: "var(--space-3) var(--space-4)",
+                        borderRadius: msg.role === "user"
+                          ? "var(--radius-lg) var(--radius-sm) var(--radius-lg) var(--radius-lg)"
+                          : "var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-lg)",
+                        background: msg.role === "user"
+                          ? "var(--color-primary)"
+                          : "var(--color-bg-subtle)",
+                        border: msg.role === "user"
+                          ? "none"
+                          : "1px solid var(--color-border)",
+                        color: msg.role === "user"
+                          ? "var(--color-primary-text)"
+                          : "var(--color-text)",
+                        fontSize: "var(--font-size-base)",
+                        lineHeight: "var(--line-height-relaxed)",
+                        whiteSpace: "pre-wrap",
+                      }}>
+                        {msg.content}
+                      </div>
+
+                      {/* Quellen */}
+                      {msg.sources.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", paddingLeft: "var(--space-1)" }}>
+                          <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", alignSelf: "center" }}>
+                            Quellen:
+                          </span>
+                          {msg.sources.map((s, i) => <SourceChip key={i} source={s} />)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Typing-Indikator */}
+                {loading && (
+                  <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "flex-start" }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: "var(--radius-md)",
+                      background: "var(--color-accent-subtle)",
+                      border: "1px solid var(--color-border-strong)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "var(--color-accent)", flexShrink: 0,
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z"/>
+                      </svg>
+                    </div>
+                    <div style={{
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-lg)",
+                      background: "var(--color-bg-subtle)",
+                      border: "1px solid var(--color-border)",
+                    }}>
+                      <TypingIndicator />
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            )}
           </div>
-        )}
 
-        <div ref={messagesEndRef} />
+          {/* Input-Leiste */}
+          <div style={{
+            borderTop: "1px solid var(--color-border)",
+            padding: "var(--space-3) var(--space-4)",
+            background: "var(--color-surface)",
+            flexShrink: 0,
+          }}>
+            <form
+              onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+              style={{ display: "flex", gap: "var(--space-2)", alignItems: "flex-end" }}
+            >
+              <div style={{ flex: 1, position: "relative" }}>
+                <input
+                  ref={inputRef}
+                  className="input"
+                  style={{ paddingRight: "var(--space-10)" }}
+                  placeholder={isAvailable ? "Frage stellen..." : "KI-Service nicht verfügbar"}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={loading || !isAvailable}
+                  maxLength={MAX_QUESTION_LENGTH}
+                />
+                {input.length > 0 && (
+                  <span style={{
+                    position: "absolute", right: "var(--space-3)", top: "50%",
+                    transform: "translateY(-50%)",
+                    fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}>
+                    {input.length}/{MAX_QUESTION_LENGTH}
+                  </span>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="btn btnPrimary"
+                disabled={!input.trim() || loading || !isAvailable}
+                style={{ flexShrink: 0 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+                Senden
+              </button>
+            </form>
+            {messages.length > 0 && (
+              <div style={{ marginTop: "var(--space-2)", display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  className="btn"
+                  style={{ fontSize: "var(--font-size-xs)", padding: "3px 10px", color: "var(--color-text-muted)" }}
+                  onClick={() => { setMessages([]); setError(null); }}
+                >
+                  Verlauf leeren
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      <form className="analyst-input-form" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          className="analyst-input"
-          placeholder="Stellen Sie eine Frage..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={loading || !serviceStatus?.available}
-          maxLength={MAX_QUESTION_LENGTH}
-        />
-        <button
-          type="submit"
-          className="analyst-send-button"
-          disabled={!input.trim() || loading || !serviceStatus?.available}
-        >
-          {loading ? "..." : "Senden"}
-        </button>
-      </form>
-
-      <style jsx>{`
-        .analyst-container {
-          max-width: 1000px;
-          margin: 0 auto;
-          padding: 2rem;
-          height: calc(100vh - 4rem);
-          display: flex;
-          flex-direction: column;
-        }
-
-        .analyst-header {
-          margin-bottom: 1.5rem;
-        }
-
-        .analyst-header h1 {
-          margin: 0 0 0.5rem 0;
-          color: var(--coffee-dark, #3e2723);
-        }
-
-        .provider-badge {
-          display: inline-block;
-          padding: 0.4rem 0.8rem;
-          background: var(--coffee-light, #efebe9);
-          border: 1px solid var(--coffee-medium, #8d6e63);
-          border-radius: 16px;
-          font-size: 0.85rem;
-          color: var(--coffee-dark, #5d4037);
-          margin-top: 0.5rem;
-        }
-
-        .alert {
-          padding: 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          background-color: #fee;
-          border: 1px solid #fcc;
-          color: #c33;
-        }
-
-        .analyst-chat {
-          flex: 1;
-          overflow-y: auto;
-          background: #fafafa;
-          border-radius: 12px;
-          padding: 1.5rem;
-          margin-bottom: 1rem;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 3rem 1rem;
-        }
-
-        .empty-icon {
-          font-size: 4rem;
-          margin-bottom: 1rem;
-        }
-
-        .empty-state h2 {
-          color: var(--coffee-dark, #3e2723);
-          margin-bottom: 0.5rem;
-        }
-
-        .example-questions {
-          margin-top: 2rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          max-width: 600px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .example-button {
-          padding: 1rem;
-          background: white;
-          border: 2px solid var(--coffee-medium, #8d6e63);
-          border-radius: 8px;
-          color: var(--coffee-dark, #3e2723);
-          font-size: 0.95rem;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-align: left;
-        }
-
-        .example-button:hover:not(:disabled) {
-          background: var(--coffee-light, #efebe9);
-          border-color: var(--coffee-dark, #5d4037);
-          transform: translateY(-2px);
-        }
-
-        .example-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .message {
-          display: flex;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .message-user {
-          flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-          font-size: 2rem;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .message-content {
-          max-width: 70%;
-          padding: 1rem;
-          border-radius: 12px;
-          background: white;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .message-user .message-content {
-          background: var(--coffee-light, #efebe9);
-        }
-
-        .message-text {
-          white-space: pre-wrap;
-          line-height: 1.6;
-          color: var(--coffee-dark, #3e2723);
-        }
-
-        .message-sources {
-          margin-top: 1rem;
-          padding-top: 1rem;
-          border-top: 1px solid #e0e0e0;
-          font-size: 0.9rem;
-        }
-
-        .message-sources strong {
-          color: var(--coffee-dark, #5d4037);
-        }
-
-        .message-sources ul {
-          margin: 0.5rem 0 0 0;
-          padding-left: 1.5rem;
-        }
-
-        .message-sources li {
-          margin-bottom: 0.25rem;
-        }
-
-        .message-sources a {
-          color: var(--coffee-medium, #8d6e63);
-          text-decoration: none;
-        }
-
-        .message-sources a:hover {
-          text-decoration: underline;
-        }
-
-        .similarity-score {
-          color: #666;
-          font-size: 0.85rem;
-        }
-
-        .loading-spinner {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          color: #666;
-        }
-
-        .spinner {
-          width: 20px;
-          height: 20px;
-          border: 3px solid #f3f3f3;
-          border-top: 3px solid var(--coffee-medium, #8d6e63);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-
-        .analyst-input-form {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .analyst-input {
-          flex: 1;
-          padding: 1rem;
-          border: 2px solid var(--coffee-medium, #8d6e63);
-          border-radius: 8px;
-          font-size: 1rem;
-        }
-
-        .analyst-input:focus {
-          outline: none;
-          border-color: var(--coffee-dark, #5d4037);
-        }
-
-        .analyst-input:disabled {
-          background: #f5f5f5;
-          cursor: not-allowed;
-        }
-
-        .analyst-send-button {
-          padding: 1rem 2rem;
-          background: var(--coffee-dark, #5d4037);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .analyst-send-button:hover:not(:disabled) {
-          background: var(--coffee-darker, #4e342e);
-        }
-
-        .analyst-send-button:disabled {
-          background: #ccc;
-          cursor: not-allowed;
-        }
-
-        .muted {
-          color: #666;
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
