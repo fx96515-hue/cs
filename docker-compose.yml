@@ -30,6 +30,7 @@ services:
       timeout: 3s
       retries: 20
   backend:
+    image: coffeestudio-backend:local
     build:
       context: ./apps/api
       dockerfile: Dockerfile
@@ -69,10 +70,13 @@ services:
     - sh
     - -c
     - alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
   worker:
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+    image: coffeestudio-backend:local
     profiles:
     - workers
     command:
@@ -100,10 +104,13 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
   beat:
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+    image: coffeestudio-backend:local
     profiles:
     - workers
     command:
@@ -131,7 +138,13 @@ services:
         condition: service_healthy
       backend:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
   frontend:
+    image: coffeestudio-frontend:local
     build:
       context: ./apps/web
       dockerfile: Dockerfile
@@ -148,5 +161,10 @@ services:
     - sh
     - -c
     - node server.js
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
 volumes:
   pgdata: null
