@@ -121,7 +121,7 @@ jobs:
           du -sh .next/ || true
       
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-build
           path: apps/web/.next/
