@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -67,7 +67,7 @@ def recompute_entity_flags(
     user: User | None = None,
     source_id: int | None = None,
 ) -> dict[str, int]:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     existing = (
         db.query(DataQualityFlag)
         .filter(
@@ -108,7 +108,7 @@ def resolve_entity_flags(
     entity_id: int,
     user: User | None = None,
 ) -> int:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     existing = (
         db.query(DataQualityFlag)
         .filter(

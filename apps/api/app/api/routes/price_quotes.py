@@ -1,3 +1,5 @@
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -8,15 +10,21 @@ from app.schemas.price_quote import PriceQuoteCreate, PriceQuoteOut, PriceQuoteU
 
 router = APIRouter()
 
+NOT_FOUND_DETAIL = "Not found"
+NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+
 
 @router.get("/", response_model=list[PriceQuoteOut])
 def list_price_quotes(
     lot_id: int | None = None,
     deal_id: int | None = None,
     source_id: int | None = None,
-    limit: int = Query(200, ge=1, le=500),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(PriceQuote)
     if lot_id is not None:
@@ -31,8 +39,8 @@ def list_price_quotes(
 @router.post("/", response_model=PriceQuoteOut)
 def create_price_quote(
     payload: PriceQuoteCreate,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     quote = PriceQuote(**payload.model_dump())
     db.add(quote)
@@ -41,28 +49,36 @@ def create_price_quote(
     return quote
 
 
-@router.get("/{quote_id}", response_model=PriceQuoteOut)
+@router.get(
+    "/{quote_id}",
+    response_model=PriceQuoteOut,
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_price_quote(
     quote_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     quote = db.query(PriceQuote).filter(PriceQuote.id == quote_id).first()
     if not quote:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return quote
 
 
-@router.patch("/{quote_id}", response_model=PriceQuoteOut)
+@router.patch(
+    "/{quote_id}",
+    response_model=PriceQuoteOut,
+    responses=NOT_FOUND_RESPONSE,
+)
 def update_price_quote(
     quote_id: int,
     payload: PriceQuoteUpdate,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     quote = db.query(PriceQuote).filter(PriceQuote.id == quote_id).first()
     if not quote:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(quote, k, v)
     db.commit()
@@ -70,15 +86,15 @@ def update_price_quote(
     return quote
 
 
-@router.delete("/{quote_id}")
+@router.delete("/{quote_id}", responses=NOT_FOUND_RESPONSE)
 def delete_price_quote(
     quote_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     quote = db.query(PriceQuote).filter(PriceQuote.id == quote_id).first()
     if not quote:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     db.delete(quote)
     db.commit()
     return {"status": "deleted"}

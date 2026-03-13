@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -62,7 +62,7 @@ def capture_entity_version(
         payload=payload,
         changed_by=user.email if user else None,
         change_reason=reason,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     db.add(record)
     db.commit()
