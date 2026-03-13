@@ -212,8 +212,8 @@ export default function CooperativeDetailsPage() {
         </div>
       </div>
 
-      {msg ? <div className="ok">{msg}</div> : null}
-      {err ? <div className="error">{err}</div> : null}
+      {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
+      {err ? <div className="alert bad"><div className="alertText">{err}</div></div> : null}
 
       {data?.deleted_at ? (
         <div className="alert bad">
