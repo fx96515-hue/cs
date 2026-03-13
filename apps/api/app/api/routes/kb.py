@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -15,8 +17,9 @@ router = APIRouter()
 def list_kb(
     category: str = "logistics",
     language: str = "de",
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(KnowledgeDoc).filter(
         KnowledgeDoc.category == category, KnowledgeDoc.language == language
@@ -25,5 +28,8 @@ def list_kb(
 
 
 @router.post("/seed", response_model=KBSeedResponse)
-def seed(db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst"))):
+def seed(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+):
     return seed_default_kb(db)

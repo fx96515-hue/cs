@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,17 @@ from app.schemas.knowledge_graph import (
 from app.services import knowledge_graph
 
 router = APIRouter()
+
+NOT_FOUND_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": "Entity not found"}
+}
+GRAPH_DISABLED_RESPONSES: dict[int | str, dict[str, Any]] = {
+    503: {"description": "Knowledge graph is disabled"}
+}
+GRAPH_COMMON_RESPONSES: dict[int | str, dict[str, Any]] = {
+    **NOT_FOUND_RESPONSES,
+    **GRAPH_DISABLED_RESPONSES,
+}
 
 
 def _require_graph_enabled() -> None:
@@ -42,27 +55,28 @@ def _parse_node_id(node_id: str) -> tuple[str, int | str]:
         return entity_type, raw_id
 
 
-@router.get("/network", response_model=NetworkData)
+@router.get("/network", responses=GRAPH_DISABLED_RESPONSES)
 def get_network(
     node_types: str = Query(
         "all",
         description="Filter by node types: cooperative, roaster, region, certification",
     ),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
-    __=Depends(_require_graph_enabled),
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> NetworkData:
     """Get the complete knowledge graph network data for visualization."""
     return knowledge_graph.get_network_data(db, node_types=node_types)
 
 
-@router.get("/analysis/{entity_type}/{entity_id}", response_model=EntityAnalysis)
+@router.get("/analysis/{entity_type}/{entity_id}", responses=GRAPH_COMMON_RESPONSES)
 def get_entity_analysis(
     entity_type: str,
     entity_id: str,  # Accept str to handle both numeric IDs and string-based IDs (regions, certs)
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
-    __=Depends(_require_graph_enabled),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> EntityAnalysis:
     """Get graph analysis for a specific entity."""
     try:
@@ -77,12 +91,12 @@ def get_entity_analysis(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/entity/{node_id}/connections", response_model=EntityAnalysis)
+@router.get("/entity/{node_id}/connections", responses=GRAPH_COMMON_RESPONSES)
 def get_entity_connections(
     node_id: str,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
-    __=Depends(_require_graph_enabled),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> EntityAnalysis:
     """Get connections for a specific entity by full node ID (e.g. cooperative_1, roaster_2)."""
     try:
@@ -92,38 +106,38 @@ def get_entity_connections(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/communities", response_model=list[Community])
+@router.get("/communities", responses=GRAPH_DISABLED_RESPONSES)
 def get_communities(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
-    __=Depends(_require_graph_enabled),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> list[Community]:
     """Detect and return communities in the knowledge graph."""
     return knowledge_graph.get_communities(db)
 
 
-@router.get("/cluster", response_model=list[Community])
+@router.get("/cluster", responses=GRAPH_DISABLED_RESPONSES)
 def get_clusters(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
-    __=Depends(_require_graph_enabled),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> list[Community]:
-    """Alias for /graph/communities – cluster detection in the knowledge graph."""
+    """Alias for /graph/communities - cluster detection in the knowledge graph."""
     return knowledge_graph.get_communities(db)
 
 
 @router.get(
     "/path/{source_type}/{source_id}/{target_type}/{target_id}",
-    response_model=PathResult,
+    responses=GRAPH_COMMON_RESPONSES,
 )
 def get_shortest_path(
     source_type: str,
     source_id: str,  # Accept str to handle both numeric IDs and string-based IDs
     target_type: str,
     target_id: str,  # Accept str to handle both numeric IDs and string-based IDs
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
-    __=Depends(_require_graph_enabled),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> PathResult:
     """Find shortest path between two entities in the knowledge graph."""
     try:
@@ -146,13 +160,13 @@ def get_shortest_path(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/path/{from_id}/{to_id}", response_model=PathResult)
+@router.get("/path/{from_id}/{to_id}", responses=GRAPH_COMMON_RESPONSES)
 def get_path_by_node_ids(
     from_id: str,
     to_id: str,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
-    __=Depends(_require_graph_enabled),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> PathResult:
     """Find shortest path between two entities using full node IDs (e.g. cooperative_1, roaster_2)."""
     try:
@@ -167,15 +181,16 @@ def get_path_by_node_ids(
 
 @router.get(
     "/hidden-connections/{entity_type}/{entity_id}",
-    response_model=list[HiddenConnection],
+    responses=GRAPH_COMMON_RESPONSES,
 )
 def get_hidden_connections(
     entity_type: str,
     entity_id: str,  # Accept str to handle both numeric IDs and string-based IDs
     max_hops: int = Query(3, ge=2, le=5, description="Maximum hops to search"),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
-    __=Depends(_require_graph_enabled),
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> list[HiddenConnection]:
     """Find hidden connections to entities 2-3 hops away."""
     try:
@@ -185,8 +200,6 @@ def get_hidden_connections(
             parsed_id = int(entity_id)
         except ValueError:
             parsed_id = entity_id
-        return knowledge_graph.get_hidden_connections(
-            db, entity_type, parsed_id, max_hops
-        )
+        return knowledge_graph.get_hidden_connections(db, entity_type, parsed_id, max_hops)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

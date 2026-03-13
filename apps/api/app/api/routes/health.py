@@ -1,4 +1,7 @@
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import redis as redis_lib
@@ -12,6 +15,9 @@ log = structlog.get_logger(__name__)
 _SERVICE_ERROR = "error"
 _DB_HEALTH_FAILURE = "Database health check failed"
 _REDIS_HEALTH_FAILURE = "Redis health check failed"
+SERVICE_UNAVAILABLE_RESPONSES: dict[int | str, dict[str, Any]] = {
+    503: {"description": "Service unavailable"}
+}
 
 
 @router.get("/health")
@@ -20,7 +26,9 @@ def health():
 
 
 @router.get("/ready")
-def ready(db: Session = Depends(get_db)):
+def ready(
+    db: Annotated[Session, Depends(get_db)],
+):
     """Readiness endpoint: checks optional dependencies but does not block startup.
 
     Returns 200 if core app is up and all dependency checks succeed within short timeouts,
@@ -50,13 +58,11 @@ def ready(db: Session = Depends(get_db)):
 
     # overall status
     overall_ok = all(v == "ok" for v in checks["services"].values())
-    from fastapi.responses import JSONResponse
-
     return JSONResponse(status_code=(200 if overall_ok else 503), content=checks)
 
 
-@router.get("/health/db")
-def health_db(db: Session = Depends(get_db)):
+@router.get("/health/db", responses=SERVICE_UNAVAILABLE_RESPONSES)
+def health_db(db: Annotated[Session, Depends(get_db)]):
     """Check database connectivity."""
     try:
         db.execute(text("SELECT 1")).scalar()
@@ -66,7 +72,7 @@ def health_db(db: Session = Depends(get_db)):
         raise HTTPException(status_code=503, detail=_DB_HEALTH_FAILURE) from None
 
 
-@router.get("/health/redis")
+@router.get("/health/redis", responses=SERVICE_UNAVAILABLE_RESPONSES)
 def health_redis():
     """Check Redis connectivity."""
     try:
