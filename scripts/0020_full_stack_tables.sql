@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS weather_agronomic_data (
     frost_risk FLOAT,
     drought_stress FLOAT,
     source VARCHAR(64) NOT NULL,
-    source_id INTEGER REFERENCES sources(id),
+    source_id INTEGER,
     raw_data JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -74,7 +74,7 @@ CREATE INDEX IF NOT EXISTS ix_social_sentiment_published ON social_sentiment_dat
 -- ============================================
 CREATE TABLE IF NOT EXISTS shipment_api_events (
     id SERIAL PRIMARY KEY,
-    shipment_id INTEGER REFERENCES shipments(id),
+    shipment_id INTEGER,
     vessel_imo VARCHAR(16),
     vessel_mmsi VARCHAR(16),
     vessel_name VARCHAR(128),
