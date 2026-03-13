@@ -686,9 +686,240 @@ Das Frontend ist vollständig enterprise-ready vorbereitet:
 - **UX:** Toast-System, Command-Palette, Breadcrumbs, Pagination, CSV-Export, Offline-Indikator, Skeleton-Loading, Empty States, Collapsible Sidebar
 - **Demo-Modus:** Alle Hooks und direkten `apiFetch`-Aufrufe haben `isDemoMode()`-Guard
 
+---
+
+## Schritt 8: KI-Analyst + Semantische Suche
+
+Diese beiden Seiten sind vollständig neu aufgebaut und benötigen folgende Backend-Endpunkte.
+
+### 8a. KI-Analyst (`/analyst`)
+
+**Frontend-Datei:** `apps/web/app/analyst/page.tsx`
+
+Der Analyst sendet eine Frage und erhält eine Antwort mit Quellen-Referenzen.
+
+```python
+# FastAPI — KI-Analyst Endpunkte
+
+from pydantic import BaseModel
+from typing import Optional
+from fastapi import APIRouter, Depends
+from .auth import get_current_user
+
+router = APIRouter(prefix="/analyst", tags=["analyst"])
+
+class AnalystQuestion(BaseModel):
+    question: str                   # Freitext, max 1000 Zeichen
+    conversation_history: list[dict] = []  # [{"role": "user"|"assistant", "content": "..."}]
+
+class AnalystSource(BaseModel):
+    entity_type: str                # "cooperative" | "roaster" | "lot"
+    entity_id: int
+    name: str
+    similarity_score: float         # 0.0 – 1.0
+
+class AnalystResponse(BaseModel):
+    answer: str                     # Antwort-Text (Markdown erlaubt)
+    sources: list[AnalystSource]    # Quellen aus der Vektordatenbank
+    tokens_used: Optional[int] = None
+
+class ServiceStatus(BaseModel):
+    available: bool
+    provider: str                   # "openai" | "anthropic" | "local"
+    model: str                      # z.B. "gpt-4o"
+    embedding_provider: str
+    embedding_model: str            # z.B. "text-embedding-3-small"
+
+@router.post("/ask", response_model=AnalystResponse)
+async def ask_analyst(
+    body: AnalystQuestion,
+    current_user=Depends(get_current_user),
+):
+    """
+    Führt eine RAG-Anfrage durch:
+    1. Frage in Embeddings umwandeln
+    2. Ähnliche Entitäten aus der Vektordatenbank suchen
+    3. Kontext + Frage an LLM senden
+    4. Antwort + Quellen zurückgeben
+    """
+    # Implementierung: OpenAI Embeddings + pgvector oder Pinecone
+    # Beispiel-Antwort:
+    return AnalystResponse(
+        answer="Basierend auf den Daten in der Datenbank...",
+        sources=[
+            AnalystSource(
+                entity_type="cooperative",
+                entity_id=42,
+                name="Cooperativa Junín",
+                similarity_score=0.92,
+            )
+        ],
+        tokens_used=412,
+    )
+
+@router.get("/status", response_model=ServiceStatus)
+async def get_analyst_status(current_user=Depends(get_current_user)):
+    """Gibt zurück ob der KI-Service verfügbar ist und welches Modell verwendet wird."""
+    return ServiceStatus(
+        available=True,
+        provider="openai",
+        model="gpt-4o",
+        embedding_provider="openai",
+        embedding_model="text-embedding-3-small",
+    )
+```
+
+**Empfohlene Umgebungsvariablen im Backend:**
+
+```env
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+VECTOR_DB_URL=postgresql://...   # pgvector oder eigene Vektordatenbank
+```
+
+**Empfohlene Prompting-Strategie:**
+
+```python
+SYSTEM_PROMPT = """
+Du bist ein spezialisierter Analyst für die CoffeeStudio B2B-Plattform.
+Du hast Zugriff auf Daten zu Kooperativen, Röstereien, Kaffee-Partien und Lieferketten in Peru.
+Antworte auf Deutsch, präzise und faktenbasiert.
+Zitiere immer die Quellen wenn du auf konkrete Datenbankeinträge verweist.
+Wenn du etwas nicht weißt, sage es klar — erfinde keine Daten.
+"""
+```
+
+---
+
+### 8b. Semantische Suche (`/search`)
+
+**Frontend-Datei:** `apps/web/app/search/page.tsx`
+
+```python
+# FastAPI — Semantische Suche Endpunkte
+
+class SearchRequest(BaseModel):
+    query: str                      # Suchbegriff (Freitext oder strukturiert)
+    entity_type: str = "cooperative" # "cooperative" | "roaster" | "lot"
+    limit: int = 20
+    min_score: float = 0.0
+
+class SearchResult(BaseModel):
+    entity_type: str
+    entity_id: int
+    name: str
+    similarity_score: float         # 0.0 – 1.0, semantische Ähnlichkeit
+    region: Optional[str] = None
+    city: Optional[str] = None
+    certifications: Optional[str] = None
+    total_score: Optional[float] = None  # Qualitätsbewertung 0-100
+
+class SearchResponse(BaseModel):
+    query: str
+    entity_type: str
+    results: list[SearchResult]
+    total: int
+
+class SimilarEntity(BaseModel):
+    entity_type: str
+    entity_id: int
+    name: str
+    similarity_score: float
+
+@router.post("/search", response_model=SearchResponse)
+async def semantic_search(
+    body: SearchRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Semantische Vektordatenbank-Suche.
+    Konvertiert Query zu Embeddings, sucht ähnliche Einträge via pgvector.
+    """
+    pass
+
+@router.get(
+    "/search/similar/{entity_type}/{entity_id}",
+    response_model=list[SimilarEntity],
+)
+async def find_similar(
+    entity_type: str,
+    entity_id: int,
+    limit: int = 5,
+    current_user=Depends(get_current_user),
+):
+    """Findet ähnliche Entitäten zu einem gegebenen Eintrag (z.B. ähnliche Kooperativen)."""
+    pass
+```
+
+**Vektordatenbank-Setup mit pgvector:**
+
+```sql
+-- PostgreSQL Extension aktivieren
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Embeddings-Tabelle
+CREATE TABLE entity_embeddings (
+    id          SERIAL PRIMARY KEY,
+    entity_type VARCHAR(50) NOT NULL,   -- 'cooperative', 'roaster', 'lot'
+    entity_id   INTEGER NOT NULL,
+    content     TEXT NOT NULL,          -- Volltext der Entität (für Embedding)
+    embedding   vector(1536),           -- OpenAI text-embedding-3-small = 1536 dim
+    updated_at  TIMESTAMP DEFAULT NOW(),
+    UNIQUE(entity_type, entity_id)
+);
+
+-- Index für schnelle Vektorsuche
+CREATE INDEX ON entity_embeddings
+USING ivfflat (embedding vector_cosine_ops)
+WITH (lists = 100);
+```
+
+**Embeddings befüllen (Background-Job):**
+
+```python
+async def embed_entity(entity_type: str, entity_id: int, content: str):
+    """
+    Generiert Embedding für eine Entität und speichert es in der DB.
+    Sollte nach jedem CREATE/UPDATE einer Entität aufgerufen werden.
+    """
+    import openai
+    response = await openai.embeddings.create(
+        model="text-embedding-3-small",
+        input=content,
+    )
+    embedding = response.data[0].embedding
+    # In DB speichern via pgvector
+    await db.execute(
+        """
+        INSERT INTO entity_embeddings (entity_type, entity_id, content, embedding)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (entity_type, entity_id)
+        DO UPDATE SET content=$3, embedding=$4, updated_at=NOW()
+        """,
+        entity_type, entity_id, content, embedding,
+    )
+
+# Content-Template pro Entität:
+def cooperative_content(coop) -> str:
+    return (
+        f"Kooperative: {coop.name}. "
+        f"Region: {coop.region}, {coop.country}. "
+        f"Zertifizierungen: {coop.certifications}. "
+        f"Qualitätsbewertung: {coop.total_score}. "
+        f"Beschreibung: {coop.description or ''}. "
+        f"Mitglieder: {coop.member_count or 'unbekannt'}."
+    )
+```
+
+---
+
 **Das Backend muss liefern:**
 1. `POST /auth/login` mit `httpOnly`-Cookie
 2. `POST /auth/refresh` Endpunkt
 3. Einheitliches Fehlerformat `{detail, code}`
 4. Alle Endpunkte aus Schritt 7 mit den beschriebenen Query-Parametern
+5. `POST /analyst/ask` + `GET /analyst/status` (Schritt 8a)
+6. `POST /search` + `GET /search/similar/{type}/{id}` (Schritt 8b)
+
 

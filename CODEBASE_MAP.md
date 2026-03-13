@@ -100,9 +100,18 @@ apps/web/app/
 ├── alerts/page.tsx                 ← System-Alerts
 ├── peru-sourcing/page.tsx          ← Peru Sourcing Map
 ├── german-sales/page.tsx           ← Deutsches Vertriebs-Dashboard
-├── analyst/page.tsx                ← KI-Analyst Assistent
-├── assistant/page.tsx              ← Chat-Interface
-├── search/page.tsx                 ← Globale Suche
+├── analyst/page.tsx                ← KI-Analyst Chat-Interface
+│                                     POST /analyst/ask → { answer, sources[] }
+│                                     GET  /analyst/status → { available, provider, model }
+│                                     Streaming via EventSource /analyst/stream (optional)
+│                                     Nachrichten-History im lokalen State (kein Backend-Storage)
+│                                     Sources als klickbare Links zu /roasters/[id] etc.
+├── assistant/page.tsx              ← Chat-Interface (generisch)
+├── search/page.tsx                 ← Globale semantische Suche
+│                                     POST /search → { query, entity_type, results[], total }
+│                                     GET  /search/similar/{entity_type}/{id} → SimilarEntity[]
+│                                     Unterstützte entity_type: cooperative, roaster, lot
+│                                     Result: { entity_id, name, similarity_score, region, city }
 └── login/page.tsx                  ← Auth (kein AppShell-Wrapper)
 ```
 
