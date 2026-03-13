@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -11,23 +12,32 @@ from app.schemas.margin import MarginCalcRequest, MarginCalcResult, MarginRunOut
 from app.services.margins import calc_margin
 
 router = APIRouter()
+DbSessionDep = Annotated[Session, Depends(get_db)]
+AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
+ViewerPermissionDep = Annotated[
+    object, Depends(require_role("admin", "analyst", "viewer"))
+]
 
 
 @router.post("/calc", response_model=MarginCalcResult)
-def calc(payload: MarginCalcRequest, _=Depends(require_role("admin", "analyst"))):
+def calc(payload: MarginCalcRequest, _: AnalystPermissionDep):
     inputs, outputs = calc_margin(payload)
     return MarginCalcResult(
         computed_at=datetime.now(timezone.utc), inputs=inputs, outputs=outputs
     )
 
 
-@router.post("/lots/{lot_id}/runs", response_model=MarginRunOut)
+@router.post(
+    "/lots/{lot_id}/runs",
+    response_model=MarginRunOut,
+    responses={404: {"description": "Lot not found"}},
+)
 def calc_and_store_for_lot(
     lot_id: int,
     payload: MarginCalcRequest,
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
     profile: str = "conservative",
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
 ):
     lot = db.query(Lot).filter(Lot.id == lot_id).first()
     if not lot:
@@ -47,9 +57,9 @@ def calc_and_store_for_lot(
 @router.get("/lots/{lot_id}/runs", response_model=list[MarginRunOut])
 def list_runs(
     lot_id: int,
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
     limit: int = Query(50, ge=1, le=500),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     return (
         db.query(MarginRun)
@@ -58,3 +68,4 @@ def list_runs(
         .limit(limit)
         .all()
     )
+

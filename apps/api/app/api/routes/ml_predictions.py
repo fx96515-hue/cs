@@ -38,6 +38,7 @@ from app.services.ml.data_collection import DataCollectionService
 from app.workers.celery_app import celery
 
 router = APIRouter()
+MODEL_NOT_FOUND_ERROR = "Model not found"
 
 
 @router.post("/predict-freight", response_model=FreightPrediction)
@@ -239,7 +240,15 @@ async def ml_task_status(
     )
 
 
-@router.get("/models/{model_id}/feature-importance", response_model=dict)
+@router.get(
+    "/models/{model_id}/feature-importance",
+    response_model=dict,
+    responses={
+        400: {"description": "Invalid model type, path, or request payload"},
+        404: {"description": "Model metadata or model file not found"},
+        500: {"description": "Feature importance computation failed"},
+    },
+)
 async def get_feature_importance(
     model_id: int,
     db: Annotated[Session, Depends(get_db)],
@@ -247,7 +256,7 @@ async def get_feature_importance(
 ):
     """Get feature importances for a specific trained model.
 
-    Returns a mapping of feature name to normalised importance score (0–1).
+    Returns a mapping of feature name to normalised importance score (0-1).
     Only available for models that support feature importance (XGBoost and
     Random Forest).
     """
@@ -265,7 +274,7 @@ async def get_feature_importance(
     model_meta = result.scalar_one_or_none()
 
     if not model_meta:
-        raise HTTPException(status_code=404, detail="Model not found")
+        raise HTTPException(status_code=404, detail=MODEL_NOT_FOUND_ERROR)
 
     if not model_meta.model_file_path or not os.path.exists(model_meta.model_file_path):
         raise HTTPException(
@@ -354,7 +363,11 @@ async def list_ml_models(
     return models
 
 
-@router.get("/models/{model_id}", response_model=dict)
+@router.get(
+    "/models/{model_id}",
+    response_model=dict,
+    responses={404: {"description": "Model not found"}},
+)
 async def get_model_details(
     model_id: int,
     db: Annotated[Session, Depends(get_db)],
@@ -365,12 +378,16 @@ async def get_model_details(
     model = await service.get_model_performance(model_id)
 
     if not model:
-        raise HTTPException(status_code=404, detail="Model not found")
+        raise HTTPException(status_code=404, detail=MODEL_NOT_FOUND_ERROR)
 
     return model
 
 
-@router.post("/models/{model_id}/retrain", response_model=dict)
+@router.post(
+    "/models/{model_id}/retrain",
+    response_model=dict,
+    responses={404: {"description": "Model not found"}},
+)
 async def retrain_model(
     model_id: int,
     db: Annotated[Session, Depends(get_db)],
@@ -382,13 +399,17 @@ async def retrain_model(
     # Get model to find its type
     model = await service.get_model_performance(model_id)
     if not model:
-        raise HTTPException(status_code=404, detail="Model not found")
+        raise HTTPException(status_code=404, detail=MODEL_NOT_FOUND_ERROR)
 
     result = await service.trigger_model_retraining(model["model_type"])
     return result
 
 
-@router.post("/data/import-freight", response_model=DataImportResponse)
+@router.post(
+    "/data/import-freight",
+    response_model=DataImportResponse,
+    responses={400: {"description": "Import failed"}},
+)
 async def import_freight_data(
     data: list[FreightDataImport],
     db: Annotated[Session, Depends(get_db)],
@@ -407,11 +428,15 @@ async def import_freight_data(
             records_imported=count,
             message=f"Successfully imported {count} freight records",
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Import failed: {exc}")
 
 
-@router.post("/data/import-prices", response_model=DataImportResponse)
+@router.post(
+    "/data/import-prices",
+    response_model=DataImportResponse,
+    responses={400: {"description": "Import failed"}},
+)
 async def import_price_data(
     data: list[PriceDataImport],
     db: Annotated[Session, Depends(get_db)],
@@ -430,5 +455,6 @@ async def import_price_data(
             records_imported=count,
             message=f"Successfully imported {count} price records",
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Import failed: {exc}")
+
