@@ -244,17 +244,17 @@ const navGroups: NavGroup[] = [
     icon: icons.sourcing,
     items: [
       { href: "/cooperatives", label: "Kooperativen", icon: subIcons.cooperatives },
-      { href: "/peru-sourcing", label: "Peru Sourcing", icon: subIcons.peru },
-      { href: "/lots", label: "Kaffee Lots", icon: subIcons.lots },
+      { href: "/peru-sourcing", label: "Peru Einkauf", icon: subIcons.peru },
+      { href: "/lots", label: "Kaffee-Partien", icon: subIcons.lots },
     ],
   },
   {
     label: "Vertrieb",
     icon: icons.sales,
     items: [
-      { href: "/roasters", label: "Roestereien", icon: subIcons.roasters },
+      { href: "/roasters", label: "Röstereien", icon: subIcons.roasters },
       { href: "/german-sales", label: "Deutschland", icon: subIcons.germany },
-      { href: "/deals", label: "Deals & Auftraege", icon: subIcons.deals },
+      { href: "/deals", label: "Aufträge & Abschlüsse", icon: subIcons.deals },
     ],
   },
   {
@@ -268,12 +268,12 @@ const navGroups: NavGroup[] = [
     label: "Analyse",
     icon: icons.analytics,
     items: [
-      { href: "/analytics", label: "Analytik", icon: subIcons.analytics },
-      { href: "/ml", label: "ML-Modelle", icon: subIcons.ml },
+      { href: "/analytics", label: "Analysen", icon: subIcons.analytics },
+      { href: "/ml", label: "KI-Modelle", icon: subIcons.ml },
       { href: "/reports", label: "Berichte", icon: subIcons.reports },
-      { href: "/news", label: "Marktnews", icon: subIcons.news },
-      { href: "/graph", label: "Knowledge Graph", icon: subIcons.graph },
-      { href: "/sentiment", label: "Sentiment", icon: subIcons.sentiment },
+      { href: "/news", label: "Marktnachrichten", icon: subIcons.news },
+      { href: "/graph", label: "Wissensgraph", icon: subIcons.graph },
+      { href: "/sentiment", label: "Stimmungsanalyse", icon: subIcons.sentiment },
     ],
   },
   {
@@ -282,7 +282,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/ops", label: "Systemstatus", icon: subIcons.system },
       { href: "/alerts", label: "Warnungen", icon: subIcons.alerts },
-      { href: "/dedup", label: "Duplikate", icon: subIcons.dedup },
+      { href: "/dedup", label: "Duplikatprüfung", icon: subIcons.dedup },
     ],
   },
   {
@@ -413,7 +413,7 @@ export default function Sidebar({ authed }: { authed: boolean }) {
         </div>
         <div className="sidebarBrandText">
           <div className="sidebarBrandTitle">CoffeeStudio</div>
-          <div className="sidebarBrandSub">Intelligence Platform</div>
+          <div className="sidebarBrandSub">Intelligente Plattform</div>
         </div>
       </div>
 
@@ -433,6 +433,38 @@ export default function Sidebar({ authed }: { authed: boolean }) {
         
         <div className="sidebarNavDivider">
           <span>Module</span>
+        </div>
+        
+        <div className="sidebarNavSection">
+          {navGroups.slice(1, 4).map((group) => (
+            <NavGroupItem 
+              key={group.label} 
+              group={group} 
+              pathname={authed ? pathname : "/login"}
+              expandedGroups={expandedGroups}
+              toggleGroup={toggleGroup}
+            />
+          ))}
+        </div>
+        
+        <div className="sidebarNavDivider">
+          <span>Analysen</span>
+        </div>
+        
+        <div className="sidebarNavSection">
+          {navGroups.slice(4, 6).map((group) => (
+            <NavGroupItem 
+              key={group.label} 
+              group={group} 
+              pathname={authed ? pathname : "/login"}
+              expandedGroups={expandedGroups}
+              toggleGroup={toggleGroup}
+            />
+          ))}
+        </div>
+        
+        <div className="sidebarNavDivider">
+          <span>Werkzeuge</span>
         </div>
         
         <div className="sidebarNavSection">

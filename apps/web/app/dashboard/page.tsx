@@ -111,12 +111,12 @@ export default function DashboardPage() {
       {/* Page Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
-          <h1 className="h1">Uebersicht</h1>
-          <p className="subtitle">Status, Kennzahlen und wichtige Signale auf einen Blick.</p>
+          <h1 className="h1">Dashboard Übersicht</h1>
+          <p className="subtitle">Systemstatus, Kennzahlen und wichtige Signale auf einen Blick.</p>
         </div>
         <div className="pageHeaderActions">
           <Link href="/ops" className="btn">
-            Ops & Jobs
+            Betrieb & Jobs
           </Link>
           <button className="btn" onClick={loadData} disabled={loading}>
             <RefreshIcon />
@@ -138,7 +138,7 @@ export default function DashboardPage() {
       {/* KPI Grid */}
       <section className="kpiGrid" aria-label="Kennzahlen">
         <KpiCard
-          label="System Status"
+          label="Systemstatus"
           value={
             <Badge tone={health?.status === "ok" ? "good" : "warn"}>
               {health?.status ?? (loading ? "..." : "unbekannt")}
@@ -149,15 +149,15 @@ export default function DashboardPage() {
         <KpiCard
           label="Kooperativen"
           value={coopsTotal ?? (loading ? "..." : "-")}
-          hint="Aktive Partner im Inventar"
+          hint="Aktive Lieferanten im System"
         />
         <KpiCard
-          label="Roestereien"
+          label="Röstereien"
           value={roastersTotal ?? (loading ? "..." : "-")}
-          hint="CRM-Pipeline gesamt"
+          hint="Kaufbereite Kunden gesamt"
         />
         <KpiCard
-          label="Datenqualitaet"
+          label="Datenqualität"
           value={
             <Link href="/ops?severity=critical">
               <Badge tone={criticalFlags > 0 ? "bad" : "good"}>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="empty">
-                <p className="emptyText">Noch keine News. In Ops den "News refresh" Job starten.</p>
+                <p className="emptyText">Noch keine Marktnews verfügbar. Starte in der Betriebsseite den "Marktnews aktualisieren" Job.</p>
               </div>
             )}
           </div>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
         {/* Reports */}
         <section className="panel" aria-labelledby="reports-title">
           <div className="panelHeader">
-            <h2 id="reports-title" className="panelTitle">Reports & Jobs</h2>
+            <h2 id="reports-title" className="panelTitle">Berichte & Jobs</h2>
             <Link href="/reports" className="link small">
               Alle anzeigen <ArrowRightIcon />
             </Link>
@@ -252,7 +252,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="empty">
-                <p className="emptyText">Noch keine Reports vorhanden.</p>
+                <p className="emptyText">Noch keine Berichte vorhanden.</p>
               </div>
             )}
           </div>
@@ -265,11 +265,11 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <section className="grid3" style={{ marginTop: "var(--space-6)" }}>
         <div className="card">
-          <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Naechste Schritte</h3>
+          <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Nächste Schritte</h3>
           <ol className="steps">
-            <li><b>Discovery Seed</b> ausfuehren - Kooperativen und Roester initial befuellen.</li>
-            <li><b>Enrichment</b> aktivieren - Webseiten analysieren, Scoring berechnen.</li>
-            <li><b>CRM nutzen</b> - Roasters pflegen, Outreach starten, Deals tracken.</li>
+            <li><b>Ersterfassung</b> durchführen - Kooperativen und Röstereien initial eintragen.</li>
+            <li><b>Datenabreichung</b> aktivieren - Webseiten analysieren, Bewertungen berechnen.</li>
+            <li><b>CRM nutzen</b> - Röstereien pflegen, Anfragen starten, Abschlüsse nachverfolgen.</li>
           </ol>
         </div>
 
@@ -277,7 +277,7 @@ export default function DashboardPage() {
           <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Schnellzugriff</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
             <Link className="btn btnFull" href="/cooperatives">Kooperativen</Link>
-            <Link className="btn btnFull" href="/roasters">Roestereien</Link>
+            <Link className="btn btnFull" href="/roasters">Röstereien</Link>
             <Link className="btn btnFull" href="/shipments">Sendungen</Link>
           </div>
         </div>
@@ -285,11 +285,11 @@ export default function DashboardPage() {
         <div className="card">
           <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Entwicklung</h3>
           <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
-            Direkter Zugriff auf die Dienste:
+            Direkter Zugriff auf die Systeme:
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-            <div className="code">UI: localhost:3000</div>
-            <div className="code">API: localhost:8000</div>
+            <div className="code">Benutzeroberfläche: localhost:3000</div>
+            <div className="code">Backend-API: localhost:8000</div>
           </div>
         </div>
       </section>

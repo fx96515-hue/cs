@@ -33,9 +33,9 @@ export default function LoginPage() {
       setToken(t.access_token);
       router.push("/dashboard");
     } catch (error: unknown) {
-      const msg = toErrorMessage(error) || "Login fehlgeschlagen";
+      const msg = toErrorMessage(error) || "Anmeldung fehlgeschlagen";
       if (msg.includes("fetch") || msg.includes("network")) {
-        setError("API nicht erreichbar. Aktiviere den Demo-Modus oder starte das Backend.");
+        setError("Backend nicht erreichbar. Nutze den Demo-Modus oder starte das Backend.");
       } else {
         setError(msg);
       }
@@ -60,7 +60,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="authPanelHeader">
             <h1 className="authPanelTitle">Willkommen</h1>
-            <p className="authPanelSub">Melde dich an, um fortzufahren</p>
+            <p className="authPanelSub">Melde dich mit deinen Zugangsdaten an</p>
           </div>
 
           {/* Form */}
@@ -101,7 +101,7 @@ export default function LoginPage() {
               />
               <div>
                 <span>Demo-Modus</span>
-                <small>Ohne Backend-Verbindung erkunden</small>
+                <small>App ohne Backend erkunden</small>
               </div>
             </label>
 
@@ -112,7 +112,7 @@ export default function LoginPage() {
               className="btn btnPrimary btnFull btnLg"
               disabled={loading}
             >
-              {loading ? "Wird geladen..." : demoMode ? "Demo starten" : "Anmelden"}
+              {loading ? "Wird verarbeitet..." : demoMode ? "Demo starten" : "Anmelden"}
             </button>
           </form>
 
