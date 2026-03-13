@@ -1,5 +1,5 @@
 from typing import Annotated, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
 from fastapi.responses import StreamingResponse
@@ -28,11 +28,15 @@ NOT_FOUND_RESPONSES: dict[int | str, dict[str, Any]] = {
 }
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 @router.get("/", response_model=list[CooperativeOut])
 def list_coops(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    include_deleted: bool = Query(False),
+    include_deleted: Annotated[bool, Query()] = False,
 ):
     q = db.query(Cooperative)
     if not include_deleted:
@@ -105,7 +109,7 @@ def get_coop(
     coop_id: int,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    include_deleted: bool = Query(False),
+    include_deleted: Annotated[bool, Query()] = False,
 ):
     q = db.query(Cooperative).filter(Cooperative.id == coop_id)
     if not include_deleted:
@@ -207,7 +211,7 @@ def delete_coop(
         "status": coop.status,
     }
 
-    coop.deleted_at = datetime.utcnow()
+    coop.deleted_at = _utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -299,7 +303,7 @@ def recompute_score(
 def export_cooperatives_csv(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    include_deleted: bool = Query(False),
+    include_deleted: Annotated[bool, Query()] = False,
 ):
     """Export all cooperatives to CSV format."""
     q = db.query(Cooperative)

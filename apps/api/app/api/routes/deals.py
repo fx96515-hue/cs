@@ -42,8 +42,8 @@ def list_deals(
     roaster_id: int | None = None,
     lot_id: int | None = None,
     status: str | None = None,
-    include_deleted: bool = Query(False),
-    limit: int = Query(200, ge=1, le=500),
+    include_deleted: Annotated[bool, Query()] = False,
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
     *,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
@@ -109,7 +109,7 @@ def create_deal(
 @router.get("/{deal_id}", response_model=DealOut, responses=NOT_FOUND_RESPONSE)
 def get_deal(
     deal_id: int,
-    include_deleted: bool = Query(False),
+    include_deleted: Annotated[bool, Query()] = False,
     *,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],

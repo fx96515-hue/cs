@@ -1,3 +1,5 @@
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -8,13 +10,19 @@ from app.schemas.transport_event import TransportEventCreate, TransportEventOut
 
 router = APIRouter()
 
+NOT_FOUND_DETAIL = "Not found"
+NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+
 
 @router.get("/", response_model=list[TransportEventOut])
 def list_transport_events(
     shipment_id: int | None = None,
-    limit: int = Query(500, ge=1, le=1000),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    limit: Annotated[int, Query(ge=1, le=1000)] = 500,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(TransportEvent)
     if shipment_id is not None:
@@ -25,8 +33,8 @@ def list_transport_events(
 @router.post("/", response_model=TransportEventOut)
 def create_transport_event(
     payload: TransportEventCreate,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
     event = TransportEvent(**payload.model_dump())
     db.add(event)
@@ -35,27 +43,31 @@ def create_transport_event(
     return event
 
 
-@router.get("/{event_id}", response_model=TransportEventOut)
+@router.get(
+    "/{event_id}",
+    response_model=TransportEventOut,
+    responses=NOT_FOUND_RESPONSE,
+)
 def get_transport_event(
     event_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     event = db.query(TransportEvent).filter(TransportEvent.id == event_id).first()
     if not event:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return event
 
 
-@router.delete("/{event_id}")
+@router.delete("/{event_id}", responses=NOT_FOUND_RESPONSE)
 def delete_transport_event(
     event_id: int,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     event = db.query(TransportEvent).filter(TransportEvent.id == event_id).first()
     if not event:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     db.delete(event)
     db.commit()
     return {"status": "deleted"}
