@@ -9,44 +9,22 @@ import MarketPriceWidget from "../components/MarketPriceWidget";
 import AnomalyFeedWidget from "../components/AnomalyFeedWidget";
 import { toErrorMessage } from "../utils/error";
 
+/* ============================================================
+   TYPES
+   ============================================================ */
+
 type ApiStatus = { status: string };
-
-type MarketPoint = {
-  value: number;
-  unit?: string | null;
-  currency?: string | null;
-  observed_at: string;
-};
-
+type MarketPoint = { value: number; unit?: string | null; currency?: string | null; observed_at: string };
 type MarketSnapshot = Record<string, MarketPoint | null>;
-
 type Paged<T> = { items: T[]; total: number };
-
 type InventoryRow = Record<string, unknown>;
+type NewsItem = { id: number; topic: string; title: string; source?: string | null; url?: string | null; published_at?: string | null };
+type Report = { id: number; name: string; kind: string; status: string; report_at: string };
+type OpsOverview = { data_quality?: { open_flags?: number; critical_flags?: number } };
 
-type NewsItem = {
-  id: number;
-  topic: string;
-  title: string;
-  source?: string | null;
-  url?: string | null;
-  published_at?: string | null;
-};
-
-type Report = {
-  id: number;
-  name: string;
-  kind: string;
-  status: string;
-  report_at: string;
-};
-
-type OpsOverview = {
-  data_quality?: {
-    open_flags?: number;
-    critical_flags?: number;
-  };
-};
+/* ============================================================
+   HELPERS
+   ============================================================ */
 
 function fmtDate(x?: string | null) {
   if (!x) return "-";
@@ -54,10 +32,36 @@ function fmtDate(x?: string | null) {
   return d.toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
 }
 
+/* ============================================================
+   ICONS
+   ============================================================ */
+
+const RefreshIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1.5 8a6.5 6.5 0 1 1 1.28 3.87" />
+    <path d="M1.5 12V8h4" />
+  </svg>
+);
+
+const ArrowRightIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 7h12M8 2l5 5-5 5" />
+  </svg>
+);
+
+const ExternalIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 3L3 9M9 3H5M9 3v4" />
+  </svg>
+);
+
+/* ============================================================
+   DASHBOARD COMPONENT
+   ============================================================ */
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-
   const [health, setHealth] = useState<ApiStatus | null>(null);
   const [market, setMarket] = useState<MarketSnapshot | null>(null);
   const [coopsTotal, setCoopsTotal] = useState<number | null>(null);
@@ -66,253 +70,229 @@ export default function DashboardPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
 
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setErr(null);
+
+      const [h, m, coops, roasters, n, r, ops] = await Promise.all([
+        apiFetch<ApiStatus>("/health", { skipAuth: true }),
+        apiFetch<MarketSnapshot>("/market/latest"),
+        apiFetch<Paged<InventoryRow> | InventoryRow[]>("/cooperatives?limit=1"),
+        apiFetch<Paged<InventoryRow> | InventoryRow[]>("/roasters?limit=1"),
+        apiFetch<NewsItem[]>("/news?limit=5"),
+        apiFetch<Report[]>("/reports?limit=5"),
+        apiFetch<OpsOverview>("/ops/overview"),
+      ]);
+
+      setHealth(h);
+      setMarket(m);
+      setCoopsTotal(Array.isArray(coops) ? coops.length : coops?.total ?? null);
+      setRoastersTotal(Array.isArray(roasters) ? roasters.length : roasters?.total ?? null);
+      setNews(Array.isArray(n) ? n : []);
+      setReports(Array.isArray(r) ? r : []);
+      setOpsOverview(ops);
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-
-        const [h, m, coops, roasters, n, r, ops] = await Promise.all([
-          apiFetch<ApiStatus>("/health", { skipAuth: true }),
-          apiFetch<MarketSnapshot>("/market/latest"),
-          apiFetch<Paged<InventoryRow> | InventoryRow[]>("/cooperatives?limit=1"),
-          apiFetch<Paged<InventoryRow> | InventoryRow[]>("/roasters?limit=1"),
-          apiFetch<NewsItem[]>("/news?limit=6"),
-          apiFetch<Report[]>("/reports?limit=6"),
-          apiFetch<OpsOverview>("/ops/overview"),
-        ]);
-
-        if (!alive) return;
-        setHealth(h);
-        setMarket(m);
-        setCoopsTotal(Array.isArray(coops) ? coops.length : coops?.total ?? null);
-        setRoastersTotal(Array.isArray(roasters) ? roasters.length : roasters?.total ?? null);
-        setNews(Array.isArray(n) ? n : []);
-        setReports(Array.isArray(r) ? r : []);
-        setOpsOverview(ops);
-      } catch (error: unknown) {
-        if (!alive) return;
-        setErr(toErrorMessage(error));
-      } finally {
-        if (!alive) return;
-        setLoading(false);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
+    loadData();
   }, []);
 
   const fx = market?.["FX:USD_EUR"] ?? null;
+  const criticalFlags = opsOverview?.data_quality?.critical_flags ?? 0;
 
   return (
-    <div className="page">
-      <div className="pageHeader">
-        <div>
-          <div className="h1">Uebersicht</div>
-          <div className="muted">Status, KPIs und die wichtigsten Signale auf einen Blick.</div>
+    <div className="content">
+      {/* Page Header */}
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <h1 className="h1">Dashboard Übersicht</h1>
+          <p className="subtitle">Systemstatus, Kennzahlen und wichtige Signale auf einen Blick.</p>
         </div>
-        <div className="actions">
-          <Link className="btn" href="/ops">
-            Ops & Jobs
+        <div className="pageHeaderActions">
+          <Link href="/ops" className="btn">
+            Betrieb & Jobs
           </Link>
-          <button className="btn" onClick={() => window.location.reload()}>
-            Reload
+          <button className="btn" onClick={loadData} disabled={loading}>
+            <RefreshIcon />
+            <span>Aktualisieren</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {err ? (
+      {/* Error State */}
+      {err && (
         <div className="alert bad">
-          <div className="alertTitle">Fehler beim Laden</div>
-          <div className="alertText">{err}</div>
+          <div>
+            <div className="alertTitle">Fehler beim Laden</div>
+            <div className="alertText">{err}</div>
+          </div>
         </div>
-      ) : null}
+      )}
 
-      <div className="gridKpi">
+      {/* KPI Grid */}
+      <section className="kpiGrid" aria-label="Kennzahlen">
         <KpiCard
-          label="Backend"
+          label="Systemstatus"
           value={
             <Badge tone={health?.status === "ok" ? "good" : "warn"}>
               {health?.status ?? (loading ? "..." : "unbekannt")}
             </Badge>
           }
-          hint="/health"
+          hint="Backend Health Check"
         />
         <KpiCard
           label="Kooperativen"
           value={coopsTotal ?? (loading ? "..." : "-")}
-          hint="Inventar im System"
+          hint="Aktive Lieferanten im System"
         />
         <KpiCard
-          label="Roestereien"
+          label="Röstereien"
           value={roastersTotal ?? (loading ? "..." : "-")}
-          hint="CRM-Pipeline"
+          hint="Kaufbereite Kunden gesamt"
         />
         <KpiCard
-          label="Data Quality"
+          label="Datenqualität"
           value={
-            <div className="row gap">
-              <Link className="link" href="/ops?severity=critical">
-                <Badge tone={opsOverview?.data_quality?.critical_flags ? "bad" : "good"}>
-                  Critical {opsOverview?.data_quality?.critical_flags ?? (loading ? "..." : "0")}
-                </Badge>
-              </Link>
-              <Link className="link" href="/ops?severity=all">
-                <Badge
-                  tone={
-                    opsOverview?.data_quality?.open_flags &&
-                    opsOverview.data_quality.open_flags > 0
-                      ? "warn"
-                      : "good"
-                  }
-                >
-                  Open {opsOverview?.data_quality?.open_flags ?? (loading ? "..." : "0")}
-                </Badge>
-              </Link>
-            </div>
+            <Link href="/ops?severity=critical">
+              <Badge tone={criticalFlags > 0 ? "bad" : "good"}>
+                {criticalFlags > 0 ? `${criticalFlags} kritisch` : "OK"}
+              </Badge>
+            </Link>
           }
-          hint="Filter in Ops"
+          hint="Offene Warnungen"
         />
         <MarketPriceWidget />
         <KpiCard
           label="USD/EUR"
           value={fx ? fx.value.toFixed(4) : loading ? "..." : "-"}
-          hint={fx ? `Stand: ${fmtDate(fx.observed_at)}` : "FX Feed"}
+          hint={fx ? `Stand: ${fmtDate(fx.observed_at)}` : "Wechselkurs"}
         />
-      </div>
+      </section>
 
+      {/* Main Content */}
       <div className="grid2">
-        <div className="panel">
+        {/* Market Radar */}
+        <section className="panel" aria-labelledby="news-title">
           <div className="panelHeader">
-            <div>
-              <div className="panelTitle">Marktradar</div>
-              <div className="muted">Neueste Headlines (Default: Peru Coffee)</div>
-            </div>
-            <Link className="link" href="/news">
-              oeffnen -
+            <h2 id="news-title" className="panelTitle">Marktradar</h2>
+            <Link href="/news" className="link small">
+              Alle anzeigen <ArrowRightIcon />
             </Link>
           </div>
-          <div className="list">
-            {(news ?? []).slice(0, 6).map((n) => (
-              <div key={n.id} className="listRow">
-                <div className="listMain">
-                  <div className="listTitle">
-                    {n.url ? (
-                      <a className="link" href={n.url} target="_blank" rel="noreferrer">
-                        {n.title}
-                      </a>
-                    ) : (
-                      n.title
-                    )}
+          <div className="panelBody">
+            {news.length > 0 ? (
+              <div className="list">
+                {news.slice(0, 5).map((n) => (
+                  <div key={n.id} className="listItem">
+                    <div className="listMain">
+                      {n.url ? (
+                        <a className="listTitle link" href={n.url} target="_blank" rel="noreferrer">
+                          {n.title}
+                          <ExternalIcon />
+                        </a>
+                      ) : (
+                        <div className="listTitle">{n.title}</div>
+                      )}
+                      <div className="listMeta">
+                        <span>{n.source ?? "-"}</span>
+                        <span className="dot">•</span>
+                        <span>{fmtDate(n.published_at)}</span>
+                      </div>
+                    </div>
+                    <Badge tone="neutral">{n.topic}</Badge>
                   </div>
-                  <div className="listMeta">
-                    <span>{n.source ?? "-"}</span>
-                    <span className="dot">|</span>
-                    <span>{fmtDate(n.published_at)}</span>
-                  </div>
-                </div>
-                <Badge tone="neutral">{n.topic}</Badge>
+                ))}
               </div>
-            ))}
-            {(!news || news.length === 0) && !loading ? (
+            ) : (
               <div className="empty">
-                Noch keine News. In Ops - &quot;News refresh&quot; starten.
+                <p className="emptyText">Noch keine Marktnews verfügbar. Starte in der Betriebsseite den &quot;Marktnews aktualisieren&quot; Job.</p>
               </div>
-            ) : null}
+            )}
           </div>
-        </div>
+        </section>
 
-        <div className="panel">
+        {/* Reports */}
+        <section className="panel" aria-labelledby="reports-title">
           <div className="panelHeader">
-            <div>
-              <div className="panelTitle">Reports & Runs</div>
-              <div className="muted">Letzte Ingest-/Job-Reports</div>
-            </div>
-            <Link className="link" href="/reports">
-              oeffnen -
+            <h2 id="reports-title" className="panelTitle">Berichte & Jobs</h2>
+            <Link href="/reports" className="link small">
+              Alle anzeigen <ArrowRightIcon />
             </Link>
           </div>
-          <div className="list">
-            {(reports ?? []).slice(0, 6).map((r) => (
-              <div key={r.id} className="listRow">
-                <div className="listMain">
-                  <div className="listTitle">{r.name}</div>
-                  <div className="listMeta">
-                    <span>{r.kind}</span>
-                    <span className="dot">|</span>
-                    <span>{fmtDate(r.report_at)}</span>
+          <div className="panelBody">
+            {reports.length > 0 ? (
+              <div className="list">
+                {reports.slice(0, 5).map((r) => (
+                  <div key={r.id} className="listItem">
+                    <div className="listMain">
+                      <div className="listTitle">{r.name}</div>
+                      <div className="listMeta">
+                        <span>{r.kind}</span>
+                        <span className="dot">•</span>
+                        <span>{fmtDate(r.report_at)}</span>
+                      </div>
+                    </div>
+                    <Badge
+                      tone={
+                        r.status === "ok" ? "good" :
+                        r.status === "skipped" ? "warn" :
+                        r.status === "error" ? "bad" : "neutral"
+                      }
+                    >
+                      {r.status}
+                    </Badge>
                   </div>
-                </div>
-                <Badge
-                  tone={
-                    r.status === "ok"
-                      ? "good"
-                      : r.status === "skipped"
-                        ? "warn"
-                        : r.status === "error"
-                          ? "bad"
-                          : "neutral"
-                  }
-                >
-                  {r.status}
-                </Badge>
+                ))}
               </div>
-            ))}
-            {(!reports || reports.length === 0) && !loading ? (
-              <div className="empty">Noch keine Reports.</div>
-            ) : null}
+            ) : (
+              <div className="empty">
+                <p className="emptyText">Noch keine Berichte vorhanden.</p>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
       </div>
 
-      <div className="grid2" style={{ marginTop: 14 }}>
-        <AnomalyFeedWidget />
-      </div>
+      {/* Anomaly Feed */}
+      <AnomalyFeedWidget />
 
-      <div className="grid3">
-        <div className="panel small">
-          <div className="panelTitle">Naechste Schritte</div>
+      {/* Quick Actions */}
+      <section className="grid3" style={{ marginTop: "var(--space-6)" }}>
+        <div className="card">
+          <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Nächste Schritte</h3>
           <ol className="steps">
-            <li>
-              <b>Discovery Seed</b> ausfuehren (Ops) - Kooperativen/Roester initial fuellen.
-            </li>
-            <li>
-              <b>Enrichment</b> aktivieren - Webseiten/Infos ziehen - Scoring.
-            </li>
-            <li>
-              <b>CRM</b> nutzen: Roasters - Outreach - Deals.
-            </li>
+            <li><b>Ersterfassung</b> durchführen - Kooperativen und Röstereien initial eintragen.</li>
+            <li><b>Datenabreichung</b> aktivieren - Webseiten analysieren, Bewertungen berechnen.</li>
+            <li><b>CRM nutzen</b> - Röstereien pflegen, Anfragen starten, Abschlüsse nachverfolgen.</li>
           </ol>
         </div>
-        <div className="panel small">
-          <div className="panelTitle">Quick Links</div>
-          <div className="chips">
-            <Link className="chip" href="/cooperatives">
-              Kooperativen
-            </Link>
-            <Link className="chip" href="/roasters">
-              Roestereien
-            </Link>
-            <Link className="chip" href="/ops">
-              Jobs / Ops
-            </Link>
-            <a className="chip" href="http://localhost:8000/docs" target="_blank" rel="noreferrer">
-              API Docs (direct)
-            </a>
+
+        <div className="card">
+          <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Schnellzugriff</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+            <Link className="btn btnFull" href="/cooperatives">Kooperativen</Link>
+            <Link className="btn btnFull" href="/roasters">Röstereien</Link>
+            <Link className="btn btnFull" href="/shipments">Sendungen</Link>
           </div>
         </div>
-        <div className="panel small">
-          <div className="panelTitle">Hinweis</div>
-          <div className="muted">
-            Wenn &quot;ui.localhost&quot;/&quot;api.localhost&quot; zicken: direkt
-            nutzen:
-            <div className="code">UI: http://localhost:3000 | API: http://localhost:8000/docs</div>
+
+        <div className="card">
+          <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Entwicklung</h3>
+          <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
+            Direkter Zugriff auf die Systeme:
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+            <div className="code">Benutzeroberfläche: localhost:3000</div>
+            <div className="code">Backend-API: localhost:8000</div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

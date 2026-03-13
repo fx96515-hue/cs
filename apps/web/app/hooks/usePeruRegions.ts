@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import {
   PeruRegion,
   Cooperative,
@@ -29,6 +29,18 @@ function normalizeCooperative(raw: RawCooperative): Cooperative {
   return {
     ...raw,
     certifications: normalizeCertifications(raw.certifications),
+  };
+}
+
+function toPagedCooperatives(
+  items: Cooperative[],
+  filters: Partial<CooperativeFilters> & { limit?: number; page?: number },
+): Paged<Cooperative> {
+  return {
+    items,
+    total: items.length,
+    page: Number(filters.page ?? 1),
+    limit: Number(filters.limit ?? 25),
   };
 }
 
@@ -75,21 +87,22 @@ export function useCooperatives(filters: Partial<CooperativeFilters> & { limit?:
   return useQuery({
     queryKey: ["cooperatives", filters],
     queryFn: async () => {
+      if (isDemoMode()) return toPagedCooperatives([], filters);
       const qs = params.toString();
       const response = await apiFetch<RawCooperative[] | Paged<RawCooperative>>(
         `/cooperatives${qs ? `?${qs}` : ""}`,
       );
-      // Backend returns flat list, but we need Paged format
-      // Check if response is already in Paged format
       if (Array.isArray(response)) {
         const items = response.map(normalizeCooperative);
-        return { items, total: items.length } as Paged<Cooperative>;
+        return toPagedCooperatives(items, filters);
       }
       return {
         ...response,
         items: (response.items || []).map(normalizeCooperative),
       };
     },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: { items: [], total: 0, page: 1, limit: 25 },
   });
 }
 

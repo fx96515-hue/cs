@@ -1,6 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import { Roaster, RoasterFilters, Paged } from "../types";
+
+function toPagedRoasters(
+  items: Roaster[],
+  filters: Partial<RoasterFilters> & { limit?: number; page?: number },
+): Paged<Roaster> {
+  return {
+    items,
+    total: items.length,
+    page: Number(filters.page ?? 1),
+    limit: Number(filters.limit ?? 25),
+  };
+}
 
 // Fetch Roasters with filters
 export function useRoasters(filters: Partial<RoasterFilters> & { limit?: number; page?: number }) {
@@ -20,17 +32,18 @@ export function useRoasters(filters: Partial<RoasterFilters> & { limit?: number;
   return useQuery({
     queryKey: ["roasters", filters],
     queryFn: async () => {
+      if (isDemoMode()) return toPagedRoasters([], filters);
       const qs = params.toString();
       const response = await apiFetch<Roaster[] | Paged<Roaster>>(
         `/roasters${qs ? `?${qs}` : ""}`,
       );
-      // Backend returns flat list, but we need Paged format
-      // Check if response is already in Paged format
       if (Array.isArray(response)) {
-        return { items: response, total: response.length } as Paged<Roaster>;
+        return toPagedRoasters(response, filters);
       }
       return response;
     },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: { items: [], total: 0, page: 1, limit: 25 },
   });
 }
 

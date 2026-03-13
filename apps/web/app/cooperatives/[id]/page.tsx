@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { Breadcrumb } from "../../components/Breadcrumb";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -34,7 +35,6 @@ export default function CooperativeDetailsPage() {
   const params = useParams();
   const id = Number(params?.id);
   const router = useRouter();
-
   const [data, setData] = useState<Cooperative | null>(null);
   const [form, setForm] = useState<CooperativeFormState>({
     name: "",
@@ -175,6 +175,11 @@ export default function CooperativeDetailsPage() {
 
   return (
     <div className="page">
+      <Breadcrumb items={[
+        { label: "Startseite", href: "/dashboard" },
+        { label: "Kooperativen", href: "/cooperatives" },
+        { label: data?.name ?? `#${id}` },
+      ]} />
       <div className="pageHeader">
         <div>
           <div className="h1">Kooperative #{id}</div>
@@ -206,8 +211,8 @@ export default function CooperativeDetailsPage() {
         </div>
       </div>
 
-      {msg ? <div className="ok">{msg}</div> : null}
-      {err ? <div className="error">{err}</div> : null}
+      {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
+      {err ? <div className="alert bad"><div className="alertText">{err}</div></div> : null}
 
       {data?.deleted_at ? (
         <div className="alert bad">
@@ -343,7 +348,7 @@ export default function CooperativeDetailsPage() {
         <div className="rowBetween" style={{ marginBottom: 10 }}>
           <div>
             <div className="panelTitle">Datenqualitaet</div>
-            <div className="muted">Offene Flags fuer diese Kooperative.</div>
+            <div className="muted">Offene Flags für diese Kooperative.</div>
           </div>
           <div className="row gap">
             <button className="btn" onClick={recomputeFlags} disabled={qualityBusy}>

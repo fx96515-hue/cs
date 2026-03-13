@@ -25,7 +25,7 @@ const DEFAULT_API_RESPONSES: Record<string, MockResponse> = {
   },
   "/cooperatives?limit=1": { body: { items: [{ id: 1 }], total: 17 } },
   "/roasters?limit=1": { body: { items: [{ id: 1 }], total: 8 } },
-  "/news?limit=6": {
+  "/news?limit=5": {
     body: [
       {
         id: 1,
@@ -37,7 +37,7 @@ const DEFAULT_API_RESPONSES: Record<string, MockResponse> = {
       },
     ],
   },
-  "/reports?limit=6": {
+  "/reports?limit=5": {
     body: [
       {
         id: 1,
@@ -107,15 +107,13 @@ test("dashboard renders key production widgets", async ({ page }) => {
 
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
-  await expect(page.locator(".pageHeader .h1")).toHaveText("Uebersicht");
-  await expect(page.locator(".gridKpi")).toContainText("Kooperativen");
-  await expect(page.locator(".gridKpi")).toContainText("Roestereien");
-  await expect(page.locator(".gridKpi")).toContainText(/Critical\s+1/, {
+  await expect(page.locator(".pageHeader .h1")).toHaveText("Dashboard Übersicht");
+  await expect(page.locator(".kpiGrid")).toContainText("Kooperativen");
+  await expect(page.locator(".kpiGrid")).toContainText("Röstereien");
+  await expect(page.locator(".kpiGrid")).toContainText("1 kritisch", {
     timeout: 15_000,
   });
-  await expect(page.locator(".gridKpi")).toContainText(/Open\s+2/, {
-    timeout: 15_000,
-  });
+  await expect(page.locator(".kpiGrid")).toContainText("Datenqualität");
   await expect(page.getByText("Peru harvest signal")).toBeVisible();
   await expect(page.getByText("Daily ingest")).toBeVisible();
   await expect(page.getByText("Anomalie-Feed")).toBeVisible();
@@ -132,5 +130,5 @@ test("dashboard shows sanitized load error when an API dependency fails", async 
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
   await expect(page.getByText("Fehler beim Laden")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(/API error: 500/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/Serverfehler \(500\)/)).toBeVisible({ timeout: 15_000 });
 });
