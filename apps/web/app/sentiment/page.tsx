@@ -42,7 +42,7 @@ export default function SentimentPage() {
     setErr(null);
     try {
       const res = await apiFetch<SentimentResponse>(`/sentiment/${encodeURIComponent(r)}`);
-      setData(res.data);
+      setData(Array.isArray(res?.data) ? res.data : []);
     } catch (error: unknown) {
       setErr(toErrorMessage(error));
       setData([]);
