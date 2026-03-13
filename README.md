@@ -1,203 +1,294 @@
-# CoffeeStudio Platform (Option D) — Web-App + API + DB
+# CoffeeStudio Platform
 
-Dieses Repository ist ein **produktreifes Foundation-Setup** für CoffeeStudio (Peru → Deutschland Specialty Coffee).
+B2B Intelligence Platform für Specialty Coffee — Peru Sourcing bis Deutschland Röstereien.
 
-[![Coverage](https://img.shields.io/badge/coverage-75%25-yellowgreen)](https://github.com/fx96515-hue/coffeestudio-platform/actions)
-[![Codecov](https://img.shields.io/badge/codecov-xml-blue)](https://codecov.io/gh/fx96515-hue/coffeestudio-platform)
-[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=fx96515-hue_coffeestudio-platform)
+[![CI](https://github.com/fx96515-hue/cs/workflows/CI/badge.svg)](https://github.com/fx96515-hue/cs/actions)
 
-Notes:
-- The Codecov and SonarCloud badges are placeholders — configure `CODECOV_TOKEN` and `SONAR_TOKEN` in GitHub repository secrets to enable uploads.
+---
 
-**Stack**
-- **Backend API:** FastAPI (Python)
-- **DB:** Postgres
-- **Cache/Broker:** Redis
-- **Worker/Scheduler:** Celery + Celery Beat
-- **Frontend:** Next.js (App Router) + TypeScript
+## Stack
 
-## Kernfunktionen (v0.2.1c)
-- CRUD für **Kooperativen** und **Röster**
-- CRUD für **Lots** (lot-/shipment-orientierte Stammdaten)
-- **Margen-Engine** (Calc + gespeicherte Runs je Lot)
-- **Auth (JWT)** + einfache **RBAC-Rollen** (admin/analyst/viewer)
-- **Quelle/Provenance**: jede Kennzahl kann mit Source + Timestamp gespeichert werden
-- **Scoring Engine (v0):** Qualität/Zuverlässigkeit/Wirtschaftlichkeit + Confidence
-- **Market Data (v0):** FX (ECB) Beispiel-Provider, Provider-Interface für Kaffee/Fracht
-- **Daily Report (v0):** Report-Entität + Generator (API + Worker)
+| Layer | Technologie |
+|---|---|
+| Frontend | Next.js 16 · TypeScript · React Query · CSS Design System |
+| Backend | FastAPI (Python) · Alembic · Pydantic |
+| Datenbank | PostgreSQL · pgvector (Vektor-Embeddings) |
+| Cache / Queue | Redis · Celery · Celery Beat |
+| Auth | JWT (access + refresh) · httpOnly Cookie (vorbereitet) |
+| Deployment | Docker Compose · GitHub Actions CI/CD |
 
-## UI (Next.js)
-- Listen/Details: Kooperativen, Röster
-- **Lots**: Liste + anlegen + Detail + Margen-Runs speichern
-- **Reports**: Liste + Detail (Markdown-Rendering)
+---
 
-## Quickstart (Dev)
+## Schnellstart lokal
 
-> **Windows 11 (PowerShell) empfohlen:** siehe `README_WINDOWS.md` oder direkt `run_windows.ps1` ausführen.
-
-### 1) Voraussetzungen
+### Voraussetzungen
 - Docker + Docker Compose
+- Node.js 20+ und pnpm
 
-### 2) Starten
+### 1. Repo klonen
+
 ```bash
-cp .env.example .env
-docker compose up --build
+git clone https://github.com/fx96515-hue/cs.git
+cd cs
+git checkout v0/fx96515-hue-57428183   # aktueller Entwicklungsbranch
 ```
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000/docs
+### 2. Umgebungsvariablen
 
-Hinweis: Standardmäßig startet der Dev-Stack nur Core-Services (Postgres, Redis, Backend, Frontend), um Ressourcen zu sparen.
-Für Worker + Beat explizit starten:
+```bash
+cp .env.example .env
+# .env öffnen und anpassen (DB-Passwort, SECRET_KEY, OpenAI-Key)
+```
+
+### 3. Backend + Datenbank starten
+
+```bash
+docker compose up --build
+# nur Core-Services: Postgres, Redis, Backend, Frontend
+```
+
+Für Worker + Celery Beat:
 
 ```bash
 docker compose --profile workers up --build
 ```
 
-### 3) Erster Admin-User
+### 4. Datenbankmigrationen
 
-1) Migration:
 ```bash
 docker compose exec backend alembic upgrade head
 ```
-2) Dev-Bootstrap (legt admin@coffeestudio.com / adminadmin an, wenn DB leer ist):
+
+### 5. Ersten Admin-User anlegen
+
 ```bash
 curl -X POST http://localhost:8000/auth/dev/bootstrap
+# legt admin@coffeestudio.com / adminadmin an
 ```
 
-## Perplexity Discovery Seed (Kooperativen + Röster)
-
-Wenn du `PERPLEXITY_API_KEY` setzt, kann CoffeeStudio ein **Start-Set** an Einträgen automatisch finden
-und als Tasks/Einträge in der DB anlegen (jeweils mit **Evidence-URLs** in `entity_evidence`).
-
-**Wichtig:** Das ist bewusst **konservativ** – wir füllen primär leere Felder und markieren `next_action = "In Recherche"`.
-
-### Variante A: per API (asynchron via Celery)
-
-1) `PERPLEXITY_API_KEY` in `.env` setzen
-2) Stack starten + migrieren
-3) Seed-Job anstoßen:
+### 6. Frontend (Entwicklungsmodus ohne Docker)
 
 ```bash
-curl -X POST http://localhost:8000/discovery/seed \
-  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+cd apps/web
+pnpm install
+pnpm dev
+# http://localhost:3000
+```
+
+**Demo-Modus:** Frontend startet ohne Backend automatisch im Demo-Modus mit Platzhalter-Daten.
+
+---
+
+## Verzeichnisstruktur
+
+```
+cs/
+├── apps/
+│   ├── api/                    # FastAPI Backend
+│   │   ├── app/
+│   │   │   ├── routers/        # API Endpunkte
+│   │   │   ├── models/         # SQLAlchemy Models
+│   │   │   ├── schemas/        # Pydantic Schemas
+│   │   │   ├── services/       # Business Logic
+│   │   │   └── main.py
+│   │   ├── alembic/            # DB Migrationen
+│   │   └── tests/
+│   └── web/                    # Next.js Frontend
+│       ├── app/
+│       │   ├── components/     # Shared UI-Komponenten
+│       │   ├── hooks/          # React Query Hooks
+│       │   ├── services/       # API Service-Layer
+│       │   ├── types/          # TypeScript Typen
+│       │   └── utils/
+│       ├── lib/
+│       │   └── api.ts          # apiFetch + ApiError + Auth
+│       └── middleware.ts       # Route-Guard (Cookie-Auth vorbereitet)
+├── worker/                     # Celery Worker
+├── infra/                      # Docker / Deploy Assets
+├── docs/                       # Technische Dokumentation
+├── CODEBASE_MAP.md             # Für KI-Assistenten: Architektur-Übersicht
+├── ENTERPRISE_ROADBOOK.md      # Backend-Implementierungsanleitung
+└── docker-compose.yml
+```
+
+---
+
+## Frontend-Architektur
+
+### Design System
+Alle Styles in `apps/web/app/globals.css` als CSS-Variablen. Keine Tailwind-Abhängigkeit.
+
+```css
+--color-accent: #8b7355       /* Warm Brown */
+--color-primary: #1a1a1a      /* Near Black */
+--color-bg: #faf9f7           /* Warm White */
+```
+
+### Komponenten-Muster
+
+```ts
+// Daten abrufen → immer über React Query Hooks
+import { useRoasters } from "../hooks/useRoasters";
+const { data, isLoading, error } = useRoasters({ region: "cajamarca" });
+
+// API-Aufrufe → immer über Service-Layer
+import { RoastersService } from "../services";
+await RoastersService.archive(id);
+
+// Fehler → immer über ApiError prüfen
+import { ApiError } from "../../lib/api";
+if (error instanceof ApiError && error.isUnauthorized) { ... }
+```
+
+### Seiten-Übersicht
+
+| Route | Beschreibung |
+|---|---|
+| `/dashboard` | KPI-Übersicht, Alerts, Marktpreise |
+| `/roasters` | Röstereien-Liste mit Filter, Suche, Export |
+| `/roasters/[id]` | Rösterei-Detail, Lots, Deals |
+| `/cooperatives` | Kooperativen-Liste mit Filter, Suche, Export |
+| `/cooperatives/[id]` | Kooperativen-Detail, Scoring |
+| `/lots` | Kaffee-Partien, Margen-Rechner |
+| `/lots/[id]` | Lot-Detail, Margen-Runs |
+| `/shipments` | Sendungen + Tracking |
+| `/deals` | Deal-Übersicht, Kalkulation |
+| `/analytics` | Preis- und Fracht-Vorhersagen |
+| `/reports` | Tages-/Wochenberichte |
+| `/sentiment` | Markt-Sentiment nach Region |
+| `/ml` | ML-Modell-Status + Training |
+| `/news` | Nachrichten-Feed |
+| `/graph` | Entitäts-Beziehungsgraph |
+| `/dedup` | Duplikat-Erkennung + Merge |
+| `/alerts` | System-Alerts |
+| `/search` | Semantische Volltextsuche |
+| `/analyst` | KI-Analyst Chat (RAG) |
+
+---
+
+## Backend API
+
+| Basis-URL | Beschreibung |
+|---|---|
+| `http://localhost:8000/docs` | Swagger UI (interaktiv) |
+| `http://localhost:8000/redoc` | ReDoc |
+
+### Authentifizierung
+
+```bash
+# Login
+curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"entity_type":"both","max_entities":50,"dry_run":false}'
+  -d '{"username": "admin@coffeestudio.com", "password": "adminadmin"}'
+
+# Response: { "access_token": "...", "token_type": "bearer" }
+
+# Authentifizierter Request
+curl http://localhost:8000/roasters \
+  -H "Authorization: Bearer <TOKEN>"
 ```
 
-Status abfragen:
+### Wichtige Endpunkte
 
-```bash
-curl http://localhost:8000/discovery/seed/<TASK_ID> \
-  -H "Authorization: Bearer <ADMIN_TOKEN>"
+```
+POST   /auth/login              Login → JWT Token
+POST   /auth/refresh            Token erneuern
+GET    /roasters                Liste (filter: region, min_score, search)
+POST   /roasters                Anlegen
+GET    /roasters/{id}           Detail
+PATCH  /roasters/{id}           Aktualisieren
+DELETE /roasters/{id}           Löschen
+GET    /cooperatives            Liste
+POST   /cooperatives            Anlegen
+GET    /cooperatives/{id}       Detail
+GET    /lots                    Liste
+POST   /lots                    Anlegen
+GET    /lots/{id}               Detail + Margen
+GET    /shipments               Sendungen
+GET    /deals                   Deals
+POST   /analyst/ask             KI-Analyse (RAG)
+GET    /analyst/status          KI-Service-Status
+POST   /search                  Semantische Suche
+GET    /search/similar/{t}/{id} Ähnliche Entitäten
 ```
 
-### Variante B: per Script (synchron)
+---
 
-```bash
-docker compose exec backend python scripts/seed_first_run.py --both --max 50
+## Fehlerformat
+
+Das Backend gibt **immer** dieses JSON-Format zurück:
+
+```json
+{
+  "detail": "Lesbarer Fehlertext auf Deutsch",
+  "code": "ROASTER_NOT_FOUND"
+}
 ```
 
-### Smoke-Test
+Das Frontend parst dieses Format automatisch über `ApiError` in `lib/api.ts`.
 
-```bash
-make smoke
-```
+---
 
-## Architektur
-- `apps/api/` FastAPI + DB + Domain-Services
-- `worker/` Celery Worker/Beat (nutzt denselben Python-Code wie backend)
-- `apps/web/` Next.js UI
-- `infra/` optionale Deploy-Assets
+## Für KI-Assistenten (OpenAI, Copilot, Cursor)
 
-## CI/CD Pipeline
+Lies zuerst:
 
-Production-ready CI/CD pipeline with GitHub Actions:
+1. **`CODEBASE_MAP.md`** — vollständige Architektur-Übersicht, alle Dateipfade, CSS-Klassen, Patterns
+2. **`ENTERPRISE_ROADBOOK.md`** — exakter FastAPI-Code für alle noch fehlenden Backend-Endpunkte
 
-✅ **Automated Testing** - Backend & frontend tests on every PR  
-✅ **Security Scans** - Bandit, Trivy, CodeQL, Semgrep  
-✅ **Docker Build** - Multi-platform images pushed to GHCR  
-✅ **Staging Deploy** - Auto-deploy on `develop` branch  
-✅ **Production Deploy** - Manual approval with auto-rollback  
-✅ **Monitoring** - Post-deployment health checks & alerts
+**Wichtigste Regeln:**
+- Typen immer aus `apps/web/app/types/index.ts`
+- Datenfetching immer über `apps/web/app/hooks/` (React Query)
+- API-Aufrufe immer über `apps/web/app/services/` (nie direkt `apiFetch` in Seiten)
+- CSS-Klassen aus `globals.css` — keine Inline-Styles außer für dynamische Werte
+- Demo-Modus-Guard in jeder `queryFn`: `if (isDemoMode()) return { items: [], total: 0 }`
 
-📚 **[Complete CI/CD Documentation](.github/workflows/README.md)**  
-🔐 **[Secrets Setup Guide](.github/workflows/SECRETS_SETUP.md)**
+---
 
-**Pipeline Status:**
-- [![CI Pipeline](https://github.com/fx96515-hue/coffeestudio-platform/workflows/CI%20Pipeline/badge.svg)](https://github.com/fx96515-hue/coffeestudio-platform/actions/workflows/ci.yml)
-- Execution Time: ~12-15 minutes (parallel)
-- Test Coverage: Backend 57%+, Frontend configured
+## Sicherheit
 
-## Sicherheit (Foundation)
-- JWT via `Authorization: Bearer ...`
-- Passwörter gehasht (`pbkdf2_sha256`)
-- CORS restriktiv konfigurierbar
+- JWT Bearer Token + geplanter httpOnly-Cookie-Umstieg (siehe `ENTERPRISE_ROADBOOK.md`)
+- Passwörter: `pbkdf2_sha256`
+- CORS restriktiv konfiguriert
 - Rate Limiting (SlowAPI)
-- Input validation (Pydantic)
-- **Security Headers Middleware** (X-Frame-Options, CSP, HSTS, etc.)
-- **Input Validation Middleware** (SQL Injection & XSS Detection)
-- **Standardized Error Handling** with consistent error format
+- Input Validation (Pydantic)
+- Security Headers Middleware
+- SQL-Injection-Schutz via Pydantic + SQLAlchemy ORM
 
-See [SECURITY.md](docs/security/SECURITY.md) and [SECURITY_BEST_PRACTICES.md](docs/security/SECURITY_BEST_PRACTICES.md) for comprehensive security documentation.
+Details: `docs/security/SECURITY.md`
 
-## API Documentation
+---
 
-📖 **See [API_USAGE_GUIDE.md](./docs/guides/API_USAGE_GUIDE.md)** for:
-- Complete API reference with examples
-- Authentication & authorization guide
-- Request/response formats
-- Error handling
-- Rate limiting details
-- Python & JavaScript SDK examples
+## CI/CD
 
-Interactive API docs available at:
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
-
-## Testing
-
-Comprehensive test suite with **45 passing tests** and **57% code coverage**.
-
-### Backend Tests
-
-```bash
-cd apps/api
-pip install -r requirements-dev.txt
-pytest tests/ -v
+```
+Push → GitHub Actions → Tests → Security Scans → Docker Build → Deploy
 ```
 
-**With coverage:**
-```bash
-pytest tests/ --cov=app --cov-report=html
-```
+- Backend-Tests: `pytest tests/ -v`
+- Frontend: `pnpm build`
+- Coverage: 57%+ Backend
 
-See [TESTING.md](docs/guides/TESTING.md) for complete testing documentation.
+Details: `.github/workflows/README.md`
 
-### Security
+---
 
-See [SECURITY.md](docs/security/SECURITY.md) and [SECURITY_BEST_PRACTICES.md](docs/security/SECURITY_BEST_PRACTICES.md) for comprehensive security documentation.
+## Umgebungsvariablen
 
-## Status & Roadmap
+Alle Variablen in `.env.example` dokumentiert. Kritische:
 
-📊 **Siehe [STATUS.md](./docs/operations/STATUS.md)** für:
-- Aktueller Status aller Features
-- Was kommt als Nächstes (4-Phasen-Roadmap)
-- Implementation Backlog
-- Vorschläge & Empfehlungen
-- Produktivsetzung (Production Readiness: 60%)
+| Variable | Beschreibung |
+|---|---|
+| `DATABASE_URL` | PostgreSQL Connection String |
+| `REDIS_URL` | Redis Connection String |
+| `SECRET_KEY` | JWT Signing Key (min. 32 Zeichen) |
+| `OPENAI_API_KEY` | Für KI-Analyst + Semantische Suche |
+| `OPENAI_MODEL` | Standard: `gpt-4o` |
+| `OPENAI_EMBEDDING_MODEL` | Standard: `text-embedding-3-small` |
+| `NEXT_PUBLIC_API_URL` | Backend-URL für Frontend |
 
-## 📚 Documentation
+---
 
-Complete documentation is organized in the [docs/](docs/) directory:
+## Lizenz
 
-- **[Architecture & Implementation](docs/architecture/)** - System design and technical summaries
-- **[Guides & Quick Starts](docs/guides/)** - Step-by-step guides and tutorials
-- **[Security](docs/security/)** - Security policies and best practices
-- **[Operations](docs/operations/)** - Runbooks and status reports
-
-## Nächste Schritte
-- Vollständige Provider (ICO/ICE/Fracht)
-- Multi-Tenant / Mandantenfähigkeit (optional)
-- Fine-grained Permissions + Audit Log
-- CI/CD + Container Registry + Deployment
+Proprietär · CoffeeStudio GmbH
