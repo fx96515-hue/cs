@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import LineChart from "../charts/LineChart";
 import Badge from "../components/Badge";
+import { EmptyState } from "../components/EmptyState";
+import { ErrorPanel } from "../components/AlertError";
 import { toErrorMessage } from "../utils/error";
 
 type SentimentPoint = {
@@ -38,11 +40,12 @@ export default function SentimentPage() {
   const [err, setErr] = useState<string | null>(null);
 
   async function load(r: string) {
+    if (isDemoMode()) { setLoading(false); return; }
     setLoading(true);
     setErr(null);
     try {
       const res = await apiFetch<SentimentResponse>(`/sentiment/${encodeURIComponent(r)}`);
-      setData(res.data);
+      setData(Array.isArray(res?.data) ? res.data : []);
     } catch (error: unknown) {
       setErr(toErrorMessage(error));
       setData([]);
@@ -55,7 +58,7 @@ export default function SentimentPage() {
     load(region);
   }, [region]);
 
-  const chartData = data.map((d) => ({
+  const chartData = (data ?? []).map((d) => ({
     date: d.scored_at ? new Date(d.scored_at).toLocaleDateString() : "-",
     score: d.score,
     articles: d.article_count,
@@ -64,7 +67,7 @@ export default function SentimentPage() {
   const latest = data.length > 0 ? data[data.length - 1] : null;
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">Sentiment-Analyse</div>
@@ -72,48 +75,77 @@ export default function SentimentPage() {
         </div>
       </div>
 
-      {err && <div className="error">{err}</div>}
+      {err && <ErrorPanel message={err} onRetry={() => load(region)} />}
 
-      <div className="panel" style={{ marginBottom: 14 }}>
-        <div className="panelTitle">Region</div>
-        <div className="row gap" style={{ flexWrap: "wrap" }}>
-          {REGIONS.map((r) => (
-            <button
-              key={r}
-              className={r === region ? "btn btnPrimary" : "btn"}
-              onClick={() => setRegion(r)}
-            >
-              {r}
-            </button>
-          ))}
+      {/* Region-Filter */}
+      <div className="panel" style={{ marginBottom: "var(--space-4)" }}>
+        <div className="panelHeader">
+          <div className="panelTitle">Region</div>
+        </div>
+        <div className="panelBody">
+          <div className="pageActions" style={{ flexWrap: "wrap" }}>
+            {REGIONS.map((r) => (
+              <button
+                key={r}
+                className={r === region ? "btn btnPrimary" : "btn"}
+                onClick={() => setRegion(r)}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* Aktuell */}
       {latest && (
-        <div className="panel" style={{ marginBottom: 14 }}>
-          <div className="panelTitle">Aktuell - {region}</div>
-          <div className="row gap">
-            <div>
-              <span className="label">Score</span>
-              <span style={{ fontSize: 24, fontWeight: 700, marginLeft: 8 }}>
-                {latest.score.toFixed(2)}
-              </span>
+        <div className="panel" style={{ marginBottom: "var(--space-4)" }}>
+          <div className="panelHeader">
+            <div className="panelTitle">Aktuell — {region}</div>
+          </div>
+          <div className="panelBody">
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+              <div>
+                <div className="fieldLabel">Score</div>
+                <div style={{ fontSize: "var(--font-size-2xl)", fontWeight: "var(--font-weight-bold)", fontFamily: "var(--font-mono)" }}>
+                  {latest.score.toFixed(2)}
+                </div>
+              </div>
+              <div>
+                <div className="fieldLabel">Label</div>
+                <Badge tone={labelTone(latest.label)}>{latest.label}</Badge>
+              </div>
+              <div>
+                <div className="fieldLabel">Artikel</div>
+                <div>{latest.article_count}</div>
+              </div>
             </div>
-            <Badge tone={labelTone(latest.label)}>{latest.label}</Badge>
-            <div className="muted">{latest.article_count} Artikel</div>
           </div>
         </div>
       )}
 
+      {/* Trend-Chart */}
       <div className="panel">
-        <div className="panelTitle">Sentiment-Trend</div>
-        {loading ? (
-          <div className="muted">Lade...</div>
-        ) : chartData.length === 0 ? (
-          <div className="muted">Keine Daten fuer diese Region.</div>
-        ) : (
-          <LineChart data={chartData} xKey="date" yKey="score" title="" color="#22c55e" />
-        )}
+        <div className="panelHeader">
+          <div className="panelTitle">Sentiment-Trend</div>
+        </div>
+        <div className="panelBody">
+          {loading ? (
+            <div className="muted">Lädt...</div>
+          ) : chartData.length === 0 ? (
+            <EmptyState
+              icon={
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              }
+              title="Keine Daten"
+              text={`Für die Region "${region}" sind keine Sentiment-Daten vorhanden.`}
+            />
+          ) : (
+            <LineChart data={chartData} xKey="date" yKey="score" title="" color="#22c55e" />
+          )}
+        </div>
       </div>
     </div>
   );

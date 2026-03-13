@@ -6,15 +6,25 @@ import { useRouter } from "next/navigation";
 import { toErrorMessage } from "../utils/error";
 
 export default function LoginPage() {
-  // Must be a valid email; avoid .local/.test (EmailStr rejects these).
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setLoading(true);
+
+    // Demo mode - bypass API and set mock token
+    if (demoMode) {
+      setToken("demo_token_for_preview");
+      router.push("/dashboard");
+      return;
+    }
+
     try {
       const t = await apiFetch<Token>("/auth/login", {
         method: "POST",
@@ -23,14 +33,22 @@ export default function LoginPage() {
       setToken(t.access_token);
       router.push("/dashboard");
     } catch (error: unknown) {
-      setError(toErrorMessage(error) || "Login failed");
+      const msg = toErrorMessage(error) || "Anmeldung fehlgeschlagen";
+      if (msg.includes("fetch") || msg.includes("network")) {
+        setError("Backend nicht erreichbar. Nutze den Demo-Modus oder starte das Backend.");
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <div className="authRoot">
       <div className="authShell">
-        <section className="authHero">
+        <div className="authPanel">
+          {/* Brand */}
           <div className="authBrand">
             <div className="authBadge">CS</div>
             <div>
@@ -38,70 +56,73 @@ export default function LoginPage() {
               <div className="authBrandSub">Intelligence Platform</div>
             </div>
           </div>
-          <h1 className="authTitle">Sourcing. Risk. Signal.</h1>
-          <p className="authLead">
-            Secure access to market intelligence, supplier quality, and
-            operational workflows. Built for fast, auditable decisions.
-          </p>
-          <div className="authHighlights">
-            <div className="authHighlight">
-              <div className="authHighlightValue">384</div>
-              <div className="authHighlightLabel">Embedding dims</div>
-            </div>
-            <div className="authHighlight">
-              <div className="authHighlightValue">17</div>
-              <div className="authHighlightLabel">Demo coops</div>
-            </div>
-            <div className="authHighlight">
-              <div className="authHighlightValue">8</div>
-              <div className="authHighlightLabel">Roasters</div>
-            </div>
-          </div>
-          <div className="authNote">
-            First run: call <code>POST /auth/dev/bootstrap</code> in the backend.
-          </div>
-        </section>
 
-        <section className="authPanel">
+          {/* Header */}
           <div className="authPanelHeader">
-            <div className="authPanelTitle">Sign in</div>
-            <div className="authPanelSub">Use your admin credentials</div>
+            <h1 className="authPanelTitle">Willkommen</h1>
+            <p className="authPanelSub">Melde dich mit deinen Zugangsdaten an</p>
           </div>
 
+          {/* Form */}
           <form onSubmit={onSubmit} className="authForm">
-            <label className="field">
-              <span className="fieldLabel">Email</span>
+            <div className="field">
+              <label className="fieldLabel" htmlFor="email">E-Mail-Adresse</label>
               <input
+                id="email"
                 className="input"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@coffeestudio.com"
                 autoComplete="email"
+                disabled={demoMode}
               />
-            </label>
-            <label className="field">
-              <span className="fieldLabel">Password</span>
+            </div>
+
+            <div className="field">
+              <label className="fieldLabel" htmlFor="password">Passwort</label>
               <input
+                id="password"
                 className="input"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Your secure password"
+                placeholder="Dein Passwort"
                 autoComplete="current-password"
+                disabled={demoMode}
               />
+            </div>
+
+            <label className="demoCheckbox">
+              <input
+                type="checkbox"
+                checked={demoMode}
+                onChange={(e) => setDemoMode(e.target.checked)}
+              />
+              <div>
+                <span>Demo-Modus</span>
+                <small>App ohne Backend erkunden</small>
+              </div>
             </label>
-            <button type="submit" className="btn btnPrimary btnFull">
-              Access dashboard
-            </button>
+
             {error && <div className="authError">{error}</div>}
+
+            <button 
+              type="submit" 
+              className="btn btnPrimary btnFull btnLg"
+              disabled={loading}
+            >
+              {loading ? "Wird verarbeitet..." : demoMode ? "Demo starten" : "Anmelden"}
+            </button>
           </form>
 
+          {/* Footer */}
           <div className="authFooter">
-            <div className="authFootItem">End-to-end audit trail</div>
-            <div className="authFootItem">Real-time price signals</div>
-            <div className="authFootItem">ML scoring workflows</div>
+            <div className="authFootItem">
+              End-to-End Audit Trail
+            </div>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );

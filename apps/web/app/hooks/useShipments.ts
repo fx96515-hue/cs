@@ -1,6 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import { Shipment, ShipmentFilters, Paged } from "../types";
+
+function toPagedShipments(
+  items: Shipment[],
+  filters: Partial<ShipmentFilters> & { limit?: number; page?: number },
+): Paged<Shipment> {
+  return {
+    items,
+    total: items.length,
+    page: Number(filters.page ?? 1),
+    limit: Number(filters.limit ?? 25),
+  };
+}
 
 // Fetch Shipments with filters
 export function useShipments(
@@ -22,13 +34,15 @@ export function useShipments(
   return useQuery({
     queryKey: ["shipments", filters],
     queryFn: async () => {
+      if (isDemoMode()) return toPagedShipments([], filters);
       const qs = params.toString();
-      const response = await apiFetch<Shipment[]>(`/shipments${qs ? `?${qs}` : ""}`);
-      // Backend returns flat list
+      const response = await apiFetch<Shipment[] | Paged<Shipment>>(
+        `/shipments${qs ? `?${qs}` : ""}`,
+      );
       if (Array.isArray(response)) {
-        return { items: response, total: response.length } as Paged<Shipment>;
+        return toPagedShipments(response, filters);
       }
-      return response as Paged<Shipment>;
+      return response;
     },
   });
 }

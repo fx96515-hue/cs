@@ -76,7 +76,7 @@ export default function MarketPriceWidget() {
           }
         };
       } catch {
-        setError("WebSocket nicht verfuegbar");
+        setError("WebSocket nicht verfügbar");
         setLoading(false);
       }
     };

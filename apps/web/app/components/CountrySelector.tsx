@@ -19,7 +19,7 @@ export default function CountrySelector({ value, onChange, className }: CountryS
       value={value}
       onChange={(e) => onChange(e.target.value as SupportedCountry)}
       className={className}
-      title="Herkunftsland waehlen"
+      title="Herkunftsland wählen"
       style={{
         background: "var(--surface, #1e293b)",
         color: "var(--text, #f1f5f9)",
