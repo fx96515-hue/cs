@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
@@ -14,6 +15,14 @@ from app.schemas.deal import DealCreate, DealOut, DealUpdate
 from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 
 router = APIRouter()
+NOT_FOUND_DETAIL = "Not found"
+NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def _apply_value_fallbacks(deal: Deal) -> None:
@@ -35,8 +44,9 @@ def list_deals(
     status: str | None = None,
     include_deleted: bool = Query(False),
     limit: int = Query(200, ge=1, le=500),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Deal)
     if not include_deleted:
@@ -57,12 +67,12 @@ def create_deal(
     payload: DealCreate,
     request: Request,
     response: Response,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     deal = Deal(**payload.model_dump())
     if deal.status == "closed" and deal.closed_at is None:
-        deal.closed_at = datetime.utcnow()
+        deal.closed_at = _utcnow()
     _apply_value_fallbacks(deal)
     db.add(deal)
     db.commit()
@@ -96,32 +106,33 @@ def create_deal(
     return deal
 
 
-@router.get("/{deal_id}", response_model=DealOut)
+@router.get("/{deal_id}", response_model=DealOut, responses=NOT_FOUND_RESPONSE)
 def get_deal(
     deal_id: int,
     include_deleted: bool = Query(False),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Deal).filter(Deal.id == deal_id)
     if not include_deleted:
         q = q.filter(Deal.deleted_at.is_(None))
     deal = q.first()
     if not deal:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return deal
 
 
-@router.patch("/{deal_id}", response_model=DealOut)
+@router.patch("/{deal_id}", response_model=DealOut, responses=NOT_FOUND_RESPONSE)
 def update_deal(
     deal_id: int,
     payload: DealUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     deal = db.query(Deal).filter(Deal.id == deal_id, Deal.deleted_at.is_(None)).first()
     if not deal:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     old_data = {
         k: getattr(deal, k) for k in payload.model_dump(exclude_unset=True).keys()
@@ -129,7 +140,7 @@ def update_deal(
 
     update_dict = payload.model_dump(exclude_unset=True)
     if "status" in update_dict and update_dict["status"] == "closed":
-        update_dict.setdefault("closed_at", datetime.utcnow())
+        update_dict.setdefault("closed_at", _utcnow())
     for k, v in update_dict.items():
         setattr(deal, k, v)
     _apply_value_fallbacks(deal)
@@ -164,15 +175,15 @@ def update_deal(
     return deal
 
 
-@router.delete("/{deal_id}")
+@router.delete("/{deal_id}", responses=NOT_FOUND_RESPONSE)
 def delete_deal(
     deal_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     deal = db.query(Deal).filter(Deal.id == deal_id).first()
     if not deal:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     entity_data = {
         "status": deal.status,
@@ -180,7 +191,7 @@ def delete_deal(
         "weight_kg": deal.weight_kg,
     }
 
-    deal.deleted_at = datetime.utcnow()
+    deal.deleted_at = _utcnow()
     db.commit()
 
     AuditLogger.log_delete(
@@ -208,15 +219,19 @@ def delete_deal(
     return {"status": "deleted"}
 
 
-@router.post("/{deal_id}/restore", response_model=DealOut)
+@router.post(
+    "/{deal_id}/restore",
+    response_model=DealOut,
+    responses=NOT_FOUND_RESPONSE,
+)
 def restore_deal(
     deal_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     deal = db.query(Deal).filter(Deal.id == deal_id).first()
     if not deal:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     deal.deleted_at = None
     db.commit()

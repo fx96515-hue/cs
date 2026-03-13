@@ -62,6 +62,12 @@ const INITIAL_CALC: CalcState = {
   fx_usd_to_eur: "",
 };
 
+function formatOutputValue(value: unknown, precision: number): string {
+  if (typeof value === "number") return value.toFixed(precision);
+  if (typeof value === "string") return value;
+  return "-";
+}
+
 export default function LotDetailPage() {
   const params = useParams();
   const id = useMemo(() => String(params?.id || ""), [params]);
@@ -285,19 +291,9 @@ export default function LotDetailPage() {
             <ul>
               {runs.map((r) => {
                 const grossMarginPerKg = r.outputs.gross_margin_per_kg;
-                const gmKg =
-                  typeof grossMarginPerKg === "number"
-                    ? grossMarginPerKg.toFixed(2)
-                    : typeof grossMarginPerKg === "string"
-                      ? grossMarginPerKg
-                      : "-";
+                const gmKg = formatOutputValue(grossMarginPerKg, 2);
                 const grossMarginPct = r.outputs.gross_margin_pct;
-                const gmPct =
-                  typeof grossMarginPct === "number"
-                    ? grossMarginPct.toFixed(1)
-                    : typeof grossMarginPct === "string"
-                      ? grossMarginPct
-                      : "-";
+                const gmPct = formatOutputValue(grossMarginPct, 1);
                 return (
                   <li key={r.id} style={{ marginBottom: 10 }}>
                     <div>

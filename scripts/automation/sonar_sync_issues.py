@@ -26,8 +26,10 @@ LABEL = (os.getenv("SONAR_LABEL") or "sonarcloud").strip()
 GH_TOKEN = (os.getenv("GITHUB_TOKEN") or "").strip()
 GH_REPO = (os.getenv("GITHUB_REPOSITORY") or "").strip()  # owner/repo
 
-# Marker used to map Sonar issue -> GitHub issue.
-ISSUE_KEY_RE = re.compile(r"(?im)^\s*Sonar Issue Key:\s*([\\w:-]+)\s*$")
+# Markers used to map Sonar issue -> GitHub issue.
+ISSUE_KEY_RE = re.compile(r"(?im)^\s*Sonar Issue Key:\s*([\w:-]+)\s*$")
+ISSUE_KEY_MD_RE = re.compile(r"(?im)^\s*-\s*\*\*Key:\*\*\s*`?([\w:-]+)`?\s*$")
+ISSUE_LINK_KEY_RE = re.compile(r"(?i)(?:[?&]|^)open=([\w:-]+)")
 
 
 @dataclass(frozen=True)
@@ -145,7 +147,12 @@ def _ensure_label(owner: str, repo: str, name: str) -> None:
 
 
 def _extract_key(body: str) -> Optional[str]:
-    m = ISSUE_KEY_RE.search(body or "")
+    text = body or ""
+    for pattern in (ISSUE_KEY_RE, ISSUE_KEY_MD_RE):
+        m = pattern.search(text)
+        if m:
+            return m.group(1)
+    m = ISSUE_LINK_KEY_RE.search(text)
     return m.group(1) if m else None
 
 
@@ -154,7 +161,7 @@ def _existing_mapping(owner: str, repo: str, label: str) -> Dict[str, GhIssueRef
     mapping: Dict[str, GhIssueRef] = {}
 
     # Deduplicate: keep the lowest issue number per sonar key.
-    dups: Dict[str, List[int]] = {}
+    dups: Dict[str, List[GhIssueRef]] = {}
 
     for it in items:
         if "pull_request" in it:
@@ -174,16 +181,33 @@ def _existing_mapping(owner: str, repo: str, label: str) -> Dict[str, GhIssueRef
         if key in mapping:
             keep = mapping[key]
             if ref.number < keep.number:
-                dups.setdefault(key, []).append(keep.number)
+                dups.setdefault(key, []).append(keep)
                 mapping[key] = ref
             else:
-                dups.setdefault(key, []).append(ref.number)
+                dups.setdefault(key, []).append(ref)
         else:
             mapping[key] = ref
 
+    dedup_closed = 0
     for key, nums in dups.items():
-        nums_sorted = sorted(nums)
-        print(f"[warn] Duplicate GitHub issues for Sonar key {key}: extra={nums_sorted}, kept={mapping[key].number}")
+        refs_sorted = sorted(nums, key=lambda ref: ref.number)
+        nums_sorted = [ref.number for ref in refs_sorted]
+        print(
+            f"[warn] Duplicate GitHub issues for Sonar key {key}: "
+            f"extra={nums_sorted}, kept={mapping[key].number}"
+        )
+        for dup_ref in refs_sorted:
+            if dup_ref.state != "open":
+                continue
+            _gh_request(
+                "PATCH",
+                f"/repos/{owner}/{repo}/issues/{dup_ref.number}",
+                {"state": "closed"},
+            )
+            dedup_closed += 1
+
+    if dedup_closed:
+        print(f"[info] Closed duplicate sonar GitHub issues: {dedup_closed}")
 
     return mapping
 

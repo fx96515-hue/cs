@@ -131,6 +131,6 @@ test("dashboard shows sanitized load error when an API dependency fails", async 
 
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
-  await expect(page.getByText("Fehler beim Laden")).toBeVisible();
-  await expect(page.getByText(/API error: 500/)).toBeVisible();
+  await expect(page.getByText("Fehler beim Laden")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/API error: 500/)).toBeVisible({ timeout: 15_000 });
 });

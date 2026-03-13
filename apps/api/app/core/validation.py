@@ -38,7 +38,7 @@ def validate_text_field(
     xss_patterns: Iterable[str] = DEFAULT_XSS_PATTERNS,
     invalid_message: str | None = None,
 ) -> str:
-    pass
+    ...
 
 
 @overload
@@ -51,7 +51,7 @@ def validate_text_field(
     xss_patterns: Iterable[str] = DEFAULT_XSS_PATTERNS,
     invalid_message: str | None = None,
 ) -> str | None:
-    pass
+    ...
 
 
 def validate_text_field(

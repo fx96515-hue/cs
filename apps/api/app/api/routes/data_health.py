@@ -4,7 +4,7 @@ Provides visibility into data freshness, circuit breaker status,
 and manual pipeline triggers.
 """
 
-from typing import Annotated
+from typing import Annotated, Any
 from time import perf_counter
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -19,6 +19,9 @@ from app.services.data_pipeline.freshness import DataFreshnessMonitor
 from app.services.data_pipeline.orchestrator import DataPipelineOrchestrator
 
 router = APIRouter()
+PIPELINE_FAILURE_RESPONSES: dict[int | str, dict[str, Any]] = {
+    500: {"description": "Pipeline refresh failed"}
+}
 
 
 def _get_redis() -> redis.Redis:
@@ -82,7 +85,7 @@ def list_data_sources(
 @router.post("/refresh-all")
 def trigger_full_refresh(
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(require_role("admin", "analyst"))],
+    _: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Trigger complete data pipeline refresh.
 
@@ -115,10 +118,10 @@ def trigger_full_refresh(
         redis_client.close()
 
 
-@router.post("/refresh-market")
+@router.post("/refresh-market", responses=PIPELINE_FAILURE_RESPONSES)
 def trigger_market_refresh(
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(require_role("admin", "analyst"))],
+    _: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Trigger market data refresh only (FX + coffee prices).
 
@@ -143,10 +146,10 @@ def trigger_market_refresh(
         redis_client.close()
 
 
-@router.post("/refresh-intelligence")
+@router.post("/refresh-intelligence", responses=PIPELINE_FAILURE_RESPONSES)
 def trigger_intelligence_refresh(
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(require_role("admin", "analyst"))],
+    _: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     """Trigger intelligence pipeline refresh (Peru weather + news).
 
@@ -177,7 +180,7 @@ def trigger_intelligence_refresh(
 def reset_circuit_breaker(
     provider: str,
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(require_role("admin"))],
+    _: Annotated[User, Depends(require_role("admin"))],
 ):
     """Reset a circuit breaker to closed state.
 

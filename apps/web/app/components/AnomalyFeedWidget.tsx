@@ -59,8 +59,11 @@ export default function AnomalyFeedWidget() {
 
   if (disabled) return null;
 
-  const severityTone = (s: string): "bad" | "warn" | "neutral" =>
-    s === "critical" ? "bad" : s === "warning" ? "warn" : "neutral";
+  const severityTone = (s: string): "bad" | "warn" | "neutral" => {
+    if (s === "critical") return "bad";
+    if (s === "warning") return "warn";
+    return "neutral";
+  };
 
   const fmtDate = (x: string) => new Date(x).toLocaleDateString("de-DE");
 

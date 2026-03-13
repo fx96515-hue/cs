@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,15 @@ from app.services.data_quality import recompute_entity_flags
 from app.models.user import User
 
 router = APIRouter()
+NOT_FOUND_DETAIL = "Not found"
+UNSUPPORTED_ENTITY_DETAIL = "Unsupported entity_type"
+RESOLVE_FLAG_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+RECOMPUTE_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {"description": UNSUPPORTED_ENTITY_DETAIL},
+    404: {"description": NOT_FOUND_DETAIL},
+}
 
 
 ENTITY_MODEL_MAP = {
@@ -32,8 +43,9 @@ def list_flags(
     severity: str | None = None,
     include_resolved: bool = Query(False),
     limit: int = Query(200, ge=1, le=1000),
-    db: Session = Depends(get_db),
-    _: User = Depends(require_role("admin", "analyst")),
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     q = db.query(DataQualityFlag)
     if entity_type:
@@ -47,38 +59,42 @@ def list_flags(
     return q.order_by(DataQualityFlag.detected_at.desc()).limit(limit).all()
 
 
-@router.post("/flags/{flag_id}/resolve", response_model=DataQualityFlagOut)
+@router.post(
+    "/flags/{flag_id}/resolve",
+    response_model=DataQualityFlagOut,
+    responses=RESOLVE_FLAG_RESPONSES,
+)
 def resolve_flag(
     flag_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     flag = db.query(DataQualityFlag).filter(DataQualityFlag.id == flag_id).first()
     if not flag:
-        raise HTTPException(status_code=404, detail="Not found")
-    flag.resolved_at = flag.resolved_at or datetime.utcnow()
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    flag.resolved_at = flag.resolved_at or datetime.now(timezone.utc)
     flag.resolved_by = user.email
     db.commit()
     db.refresh(flag)
     return flag
 
 
-@router.post("/recompute/{entity_type}/{entity_id}")
+@router.post("/recompute/{entity_type}/{entity_id}", responses=RECOMPUTE_RESPONSES)
 def recompute_flags(
     entity_type: str,
     entity_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     model = ENTITY_MODEL_MAP.get(entity_type)
     if not model:
-        raise HTTPException(status_code=400, detail="Unsupported entity_type")
+        raise HTTPException(status_code=400, detail=UNSUPPORTED_ENTITY_DETAIL)
     model_id_column = getattr(model, "id", None)
     if model_id_column is None:
-        raise HTTPException(status_code=400, detail="Unsupported entity_type")
+        raise HTTPException(status_code=400, detail=UNSUPPORTED_ENTITY_DETAIL)
     instance = db.query(model).filter(model_id_column == entity_id).first()
     if not instance:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     result = recompute_entity_flags(
         db=db,
         entity_type=entity_type,
