@@ -1,6 +1,6 @@
 """Audit logging for tracking all data modifications."""
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 from typing import Any, Dict, Optional
 from uuid import UUID
@@ -13,6 +13,14 @@ from app.models.user import User
 from app.models.audit_log import AuditLog
 
 logger = structlog.get_logger(__name__)
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utcnow_iso() -> str:
+    return _utcnow().isoformat()
 
 
 def _to_json_safe(value: Any) -> Any:
@@ -56,7 +64,7 @@ class AuditLogger:
                 entity_id=entity_id,
                 request_id=request_id,
                 payload=safe_payload,
-                created_at=datetime.utcnow(),
+                created_at=_utcnow(),
             )
             db.add(entry)
             db.commit()
@@ -82,7 +90,7 @@ class AuditLogger:
             entity_id=entity_id,
             entity_data=entity_data,
             request_id=request_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=_utcnow_iso(),
         )
         AuditLogger._persist(
             db=db,
@@ -121,7 +129,7 @@ class AuditLogger:
             entity_id=entity_id,
             changes=changes,
             request_id=request_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=_utcnow_iso(),
         )
         AuditLogger._persist(
             db=db,
@@ -152,7 +160,7 @@ class AuditLogger:
             entity_id=entity_id,
             entity_data=entity_data,
             request_id=request_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=_utcnow_iso(),
         )
         AuditLogger._persist(
             db=db,
@@ -183,7 +191,7 @@ class AuditLogger:
             entity_id=entity_id,
             action=action,
             request_id=request_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=_utcnow_iso(),
         )
         AuditLogger._persist(
             db=db,
@@ -215,7 +223,7 @@ class AuditLogger:
             success=success,
             reason=reason,
             request_id=request_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=_utcnow_iso(),
         )
 
     @staticmethod
@@ -238,5 +246,5 @@ class AuditLogger:
             resource_id=resource_id,
             required_role=required_role,
             request_id=request_id,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=_utcnow_iso(),
         )

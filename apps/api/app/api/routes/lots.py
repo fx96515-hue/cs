@@ -1,28 +1,38 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
 from app.api.response_utils import apply_create_status
+from app.core.audit import AuditLogger
+from app.core.versioning import capture_entity_version
 from app.db.session import get_db
 from app.models.lot import Lot
 from app.models.user import User
 from app.schemas.lot import LotCreate, LotOut, LotUpdate
-from app.core.audit import AuditLogger
-from app.core.versioning import capture_entity_version
 from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 
 router = APIRouter()
+NOT_FOUND_DETAIL = "Not found"
+NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @router.get("/", response_model=list[LotOut])
 def list_lots(
     cooperative_id: int | None = None,
-    include_deleted: bool = Query(False),
-    limit: int = Query(200, ge=1, le=500),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Lot)
     if not include_deleted:
@@ -37,8 +47,8 @@ def create_lot(
     payload: LotCreate,
     request: Request,
     response: Response,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     lot = Lot(**payload.model_dump())
     db.add(lot)
@@ -74,32 +84,33 @@ def create_lot(
     return lot
 
 
-@router.get("/{lot_id}", response_model=LotOut)
+@router.get("/{lot_id}", response_model=LotOut, responses=NOT_FOUND_RESPONSE)
 def get_lot(
     lot_id: int,
-    include_deleted: bool = Query(False),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    include_deleted: Annotated[bool, Query()] = False,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     q = db.query(Lot).filter(Lot.id == lot_id)
     if not include_deleted:
         q = q.filter(Lot.deleted_at.is_(None))
     lot = q.first()
     if not lot:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return lot
 
 
-@router.patch("/{lot_id}", response_model=LotOut)
+@router.patch("/{lot_id}", response_model=LotOut, responses=NOT_FOUND_RESPONSE)
 def update_lot(
     lot_id: int,
     payload: LotUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     lot = db.query(Lot).filter(Lot.id == lot_id, Lot.deleted_at.is_(None)).first()
     if not lot:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture old data for audit log
     old_data = {
@@ -139,15 +150,15 @@ def update_lot(
     return lot
 
 
-@router.delete("/{lot_id}")
+@router.delete("/{lot_id}", responses=NOT_FOUND_RESPONSE)
 def delete_lot(
     lot_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     lot = db.query(Lot).filter(Lot.id == lot_id).first()
     if not lot:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture data before deletion for audit log
     entity_data = {
@@ -156,7 +167,7 @@ def delete_lot(
         "weight_kg": lot.weight_kg,
     }
 
-    lot.deleted_at = datetime.utcnow()
+    lot.deleted_at = _utcnow()
     db.commit()
 
     # Log deletion for audit trail
@@ -181,15 +192,15 @@ def delete_lot(
     return {"status": "deleted"}
 
 
-@router.post("/{lot_id}/restore")
+@router.post("/{lot_id}/restore", responses=NOT_FOUND_RESPONSE)
 def restore_lot(
     lot_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin"))],
 ):
     lot = db.query(Lot).filter(Lot.id == lot_id).first()
     if not lot:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     lot.deleted_at = None
     db.commit()
