@@ -28,6 +28,7 @@ function parseEntityType(value: string): EntityType {
 }
 
 export default function DedupPage() {
+  const toast = useToast();
   const [entityType, setEntityType] = useState<EntityType>("cooperative");
   const [suggestions, setSuggestions] = useState<DedupPair[]>([]);
   const [history, setHistory] = useState<MergeHistory[]>([]);
@@ -70,12 +71,12 @@ export default function DedupPage() {
         method: "POST",
         body: JSON.stringify({ entity_type: entityType, keep_id: keepId, merge_id: mergeId }),
       });
-      alert("Erfolgreich zusammengeführt!");
+      toast.success("Erfolgreich zusammengeführt!");
       setSelectedPair(null);
       void fetchSuggestions();
       void fetchHistory();
     } catch (error: unknown) {
-      alert(`Fehler beim Zusammenführen: ${toErrorMessage(error)}`);
+      toast.error(`Fehler beim Zusammenführen: ${toErrorMessage(error)}`);
     }
   }
 

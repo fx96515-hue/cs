@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
-import { EmptyState } from "../components/EmptyState";
+import { EmptyState, SkeletonRows } from "../components/EmptyState";
+import { ErrorPanel } from "../components/ErrorPanel";
 import { Pagination, usePagination } from "../components/Pagination";
-import { SkeletonRows } from "../components/EmptyState";
 import { useToast } from "../components/ToastProvider";
+import { exportToCsv } from "../utils/export";
 import { DataQualityFlag } from "../types";
 import { toErrorMessage } from "../utils/error";
 
@@ -231,7 +232,7 @@ export default function RoastersPage() {
         </div>
       </div>
 
-      {err && <div className="alert bad" style={{ marginBottom: "var(--space-4)" }}><div className="alertText">{err}</div></div>}
+      {err && <ErrorPanel message={err} onRetry={fetchRoasters} />}
 
       {/* Table */}
       <section className="panel">

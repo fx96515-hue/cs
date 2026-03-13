@@ -62,12 +62,25 @@ const entries: CmdEntry[] = [
 /*  Komponente                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function CommandPalette() {
+export default function CommandPalette({
+  forceOpen,
+  onForceClose,
+}: {
+  forceOpen?: boolean;
+  onForceClose?: () => void;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isOpen = open || !!forceOpen;
+
+  const handleClose = () => {
+    setOpen(false);
+    onForceClose?.();
+  };
 
   // ⌘K / Ctrl+K öffnen
   useEffect(() => {
@@ -78,10 +91,11 @@ export default function CommandPalette() {
         setQuery("");
         setFocused(0);
       }
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Keyboard-Shortcuts G+X
@@ -106,8 +120,8 @@ export default function CommandPalette() {
   }, [router]);
 
   useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 50);
-  }, [open]);
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [isOpen]);
 
   const filtered = query.trim()
     ? entries.filter(
@@ -125,15 +139,16 @@ export default function CommandPalette() {
 
   const navigate = useCallback(
     (href: string) => {
-      setOpen(false);
+      handleClose();
       router.push(href);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [router]
   );
 
   // Tastatur-Navigation
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -150,12 +165,12 @@ export default function CommandPalette() {
     return () => window.removeEventListener("keydown", handler);
   }, [open, focused, allFiltered, navigate]);
 
-  if (!open) return null;
+  if (!isOpen) return null;
 
   let globalIdx = 0;
 
   return (
-    <div className="cmdOverlay" onClick={() => setOpen(false)}>
+    <div className="cmdOverlay" onClick={handleClose}>
       <div className="cmdPanel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Schnellnavigation">
         {/* Suchfeld */}
         <div className="cmdSearchRow">

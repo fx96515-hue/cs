@@ -44,6 +44,7 @@ type PriceForecast = {
 };
 
 export default function MLPage() {
+  const toast = useToast();
   const [models, setModels] = useState<MLModel[]>([]);
   const [purchaseTiming, setPurchaseTiming] = useState<PurchaseTiming | null>(null);
   const [forecast, setForecast] = useState<PriceForecast | null>(null);
@@ -80,10 +81,10 @@ export default function MLPage() {
     try {
       setTrainingModel(modelType);
       await apiFetch(`/ml/train/${modelType}`, { method: "POST" });
-      alert(`Modelltraining für ${modelType} gestartet!`);
+      toast.success(`Modelltraining für ${modelType} gestartet!`);
       fetchModels();
     } catch (error: unknown) {
-      alert(`Fehler beim Training: ${toErrorMessage(error)}`);
+      toast.error(`Fehler beim Training: ${toErrorMessage(error)}`);
     } finally {
       setTrainingModel(null);
     }

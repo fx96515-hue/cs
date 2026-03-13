@@ -81,6 +81,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isDemo, setIsDemo] = React.useState(false);
   const [offline, setOffline] = React.useState(false);
   const [cmdOpen, setCmdOpen] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     setAuthed(hasToken());
@@ -99,6 +100,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // ⌘K / Ctrl+K öffnen
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCmdOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Login-Seite ohne Chrome
   if (pathname === "/login") {
     return (
@@ -111,7 +124,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
       <div className="shell">
-        <Sidebar authed={authed} />
+        <Sidebar
+          authed={authed}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+        />
         <div className="main">
           <Topbar
             authed={authed}
@@ -127,8 +144,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <main className="page">{children}</main>
         </div>
       </div>
-      {/* Command-Palette global */}
-      <CommandPalette />
+      {/* Command-Palette global – hat eigenen ⌘K listener, kann aber auch von außen gesteuert werden */}
+      <CommandPalette forceOpen={cmdOpen} onForceClose={() => setCmdOpen(false)} />
     </ToastProvider>
   );
 }

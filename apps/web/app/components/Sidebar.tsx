@@ -362,7 +362,11 @@ function NavGroupItem({
 }
 
 /* Main Sidebar Component */
-export default function Sidebar({ authed }: { authed: boolean }) {
+export default function Sidebar({ authed, collapsed, onToggleCollapse }: { 
+  authed: boolean;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   
@@ -405,16 +409,35 @@ export default function Sidebar({ authed }: { authed: boolean }) {
   };
 
   return (
-    <aside className="sidebarContainer">
+    <aside
+      className="sidebarContainer"
+      style={collapsed ? { width: "60px", minWidth: "60px", overflow: "hidden" } : undefined}
+      aria-label="Hauptnavigation"
+    >
       {/* Brand Header */}
-      <div className="sidebarBrand">
+      <div className="sidebarBrand" style={{ justifyContent: collapsed ? "center" : undefined }}>
         <div className="sidebarLogo">
           <span>CS</span>
         </div>
-        <div className="sidebarBrandText">
-          <div className="sidebarBrandTitle">CoffeeStudio</div>
-          <div className="sidebarBrandSub">Intelligente Plattform</div>
-        </div>
+        {!collapsed && (
+          <div className="sidebarBrandText">
+            <div className="sidebarBrandTitle">CoffeeStudio</div>
+            <div className="sidebarBrandSub">Intelligente Plattform</div>
+          </div>
+        )}
+        {onToggleCollapse && (
+          <button
+            className="sidebarToggle"
+            onClick={onToggleCollapse}
+            title={collapsed ? "Seitenleiste ausklappen" : "Seitenleiste einklappen"}
+            style={{ marginLeft: collapsed ? 0 : "auto" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: collapsed ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}>
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
