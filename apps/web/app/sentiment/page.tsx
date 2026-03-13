@@ -55,7 +55,7 @@ export default function SentimentPage() {
     load(region);
   }, [region]);
 
-  const chartData = data.map((d) => ({
+  const chartData = (data ?? []).map((d) => ({
     date: d.scored_at ? new Date(d.scored_at).toLocaleDateString() : "-",
     score: d.score,
     articles: d.article_count,
