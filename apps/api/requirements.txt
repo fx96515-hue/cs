@@ -14,7 +14,7 @@ sqlalchemy==2.0.48
 psycopg[binary]==3.2.3
 alembic==1.18.4
 httpx==0.28.1
-redis==5.2.0
+redis==7.3.0
 celery==5.6.2
 tenacity==9.1.4
 python-dateutil==2.9.0.post0
