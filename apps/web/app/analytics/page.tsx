@@ -5,6 +5,7 @@ import { useFreightPrediction, usePricePrediction } from "../hooks/usePrediction
 import { useCooperatives } from "../hooks/usePeruRegions";
 import { useRoasters } from "../hooks/useRoasters";
 import MarketPriceWidget from "../components/MarketPriceWidget";
+import { ErrorPanel } from "../components/ErrorPanel";
 
 /* ============================================================
    ANALYTICS & ML PREDICTIONS - ENTERPRISE VIEW
@@ -183,9 +184,11 @@ export default function AnalyticsDashboard() {
               )}
 
               {freightMutation.isError && (
-                <div className="alert bad" style={{ marginTop: "var(--space-4)" }}>
-                  <span>Vorhersage fehlgeschlagen: {freightMutation.error instanceof Error ? freightMutation.error.message : "Unbekannter Fehler"}</span>
-                </div>
+                <ErrorPanel
+                  compact
+                  message={freightMutation.error instanceof Error ? freightMutation.error.message : "Unbekannter Fehler"}
+                  style={{ marginTop: "var(--space-4)" }}
+                />
               )}
             </div>
           </div>
@@ -307,9 +310,11 @@ export default function AnalyticsDashboard() {
               )}
 
               {priceMutation.isError && (
-                <div className="alert bad" style={{ marginTop: "var(--space-4)" }}>
-                  <span>Vorhersage fehlgeschlagen: {priceMutation.error instanceof Error ? priceMutation.error.message : "Unbekannter Fehler"}</span>
-                </div>
+                <ErrorPanel
+                  compact
+                  message={priceMutation.error instanceof Error ? priceMutation.error.message : "Unbekannter Fehler"}
+                  style={{ marginTop: "var(--space-4)" }}
+                />
               )}
             </div>
           </div>

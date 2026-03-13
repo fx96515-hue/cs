@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
+import { EmptyState } from "../components/EmptyState";
+import { ErrorPanel } from "../components/ErrorPanel";
 
 type GraphNode = {
   id: string;
@@ -59,21 +61,21 @@ type NodePosition = {
 };
 
 const NODE_COLORS: Record<string, string> = {
-  cooperative: "#2d7d46",
-  roaster: "#6b4423",
-  region: "#2563eb",
+  cooperative:   "#2d7d46",
+  roaster:       "#6b4423",
+  region:        "#2563eb",
   certification: "#d97706",
 };
 
 const NODE_LABELS: Record<string, string> = {
-  cooperative: "Kooperative",
-  roaster: "Rösterei",
-  region: "Region",
+  cooperative:   "Kooperative",
+  roaster:       "Rösterei",
+  region:        "Region",
   certification: "Zertifizierung",
 };
 
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+const CANVAS_W = 800;
+const CANVAS_H = 600;
 
 export default function GraphPage() {
   const [networkData, setNetworkData] = useState<NetworkData | null>(null);
@@ -87,15 +89,13 @@ export default function GraphPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodePositionsRef = useRef<Map<string, NodePosition>>(new Map());
   const [zoom, setZoom] = useState(1);
-  const [panX] = useState(0);
-  const [panY] = useState(0);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const animationRef = useRef<number | null>(null);
-  const [, forceUpdate] = useState({});  // Trigger re-renders for canvas updates
+  const [, forceUpdate] = useState({});
 
-  // Load network data
   useEffect(() => {
     const loadData = async () => {
+      if (isDemoMode()) { setLoading(false); return; }
       try {
         setLoading(true);
         setError(null);
@@ -103,8 +103,7 @@ export default function GraphPage() {
         setNetworkData(data);
         initializePositions(data.nodes);
       } catch (e: unknown) {
-        const errorMessage = e instanceof Error ? e.message : String(e);
-        setError(errorMessage);
+        setError(e instanceof Error ? e.message : String(e));
       } finally {
         setLoading(false);
       }
@@ -112,168 +111,119 @@ export default function GraphPage() {
 
     loadData();
     loadCommunities();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeFilter]);
 
   async function loadCommunities() {
     try {
       const data = await apiFetch<Community[]>("/graph/communities");
-      setCommunities(data);
-    } catch (e) {
-      console.error("Failed to load communities:", e);
-    }
+      setCommunities(Array.isArray(data) ? data : []);
+    } catch { /* silent */ }
   }
 
   async function loadEntityAnalysis(node: GraphNode) {
     try {
       const entityId = node.properties.id || node.id.split("_")[1];
-      const entityType = node.node_type;
       const analysis = await apiFetch<EntityAnalysis>(
-        `/graph/analysis/${entityType}/${entityId}`
+        `/graph/analysis/${node.node_type}/${entityId}`
       );
       setSelectedAnalysis(analysis);
-    } catch (e) {
-      console.error("Failed to load entity analysis:", e);
-    }
+    } catch { /* silent */ }
   }
 
   function initializePositions(nodes: GraphNode[]) {
     const positions = new Map<string, NodePosition>();
-
     nodes.forEach((node, idx) => {
       const angle = (idx / nodes.length) * 2 * Math.PI;
-      const radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) * 0.3;
+      const radius = Math.min(CANVAS_W, CANVAS_H) * 0.3;
       positions.set(node.id, {
-        x: CANVAS_WIDTH / 2 + Math.cos(angle) * radius,
-        y: CANVAS_HEIGHT / 2 + Math.sin(angle) * radius,
-        vx: 0,
-        vy: 0,
+        x: CANVAS_W / 2 + Math.cos(angle) * radius,
+        y: CANVAS_H / 2 + Math.sin(angle) * radius,
+        vx: 0, vy: 0,
       });
     });
-
     nodePositionsRef.current = positions;
-    forceUpdate({});  // Trigger re-render
+    forceUpdate({});
   }
 
-  // Simple force-directed layout simulation
+  // Force-directed layout (max 200 frames)
   useEffect(() => {
     if (!networkData || nodePositionsRef.current.size === 0) return;
-
-    let frameCount = 0;
-    const maxFrames = 200; // Limit simulation to prevent infinite loop
+    let frame = 0;
 
     const simulate = () => {
-      if (frameCount >= maxFrames) {
-        // Stop animation after max frames
-        return;
-      }
-      
+      if (frame >= 200) return;
       const positions = nodePositionsRef.current;
       const alpha = 0.1;
-      const repulsionStrength = 5000;
-      const attractionStrength = 0.01;
-      const centerStrength = 0.01;
 
-      // Apply forces
       networkData.nodes.forEach((node) => {
         const pos = positions.get(node.id);
         if (!pos) return;
+        pos.vx += (CANVAS_W / 2 - pos.x) * 0.01;
+        pos.vy += (CANVAS_H / 2 - pos.y) * 0.01;
 
-        // Center force
-        pos.vx += (CANVAS_WIDTH / 2 - pos.x) * centerStrength;
-        pos.vy += (CANVAS_HEIGHT / 2 - pos.y) * centerStrength;
-
-        // Repulsion between all nodes
         networkData.nodes.forEach((other) => {
           if (node.id === other.id) return;
-          const otherPos = positions.get(other.id);
-          if (!otherPos) return;
-
-          const dx = pos.x - otherPos.x;
-          const dy = pos.y - otherPos.y;
+          const op = positions.get(other.id);
+          if (!op) return;
+          const dx = pos.x - op.x, dy = pos.y - op.y;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const force = repulsionStrength / (dist * dist);
-
-          pos.vx += (dx / dist) * force;
-          pos.vy += (dy / dist) * force;
+          const f = 5000 / (dist * dist);
+          pos.vx += (dx / dist) * f;
+          pos.vy += (dy / dist) * f;
         });
       });
 
-      // Attraction along edges
       networkData.edges.forEach((edge) => {
-        const sourcePos = positions.get(edge.source);
-        const targetPos = positions.get(edge.target);
-        if (!sourcePos || !targetPos) return;
-
-        const dx = targetPos.x - sourcePos.x;
-        const dy = targetPos.y - sourcePos.y;
-        const force = attractionStrength;
-
-        sourcePos.vx += dx * force;
-        sourcePos.vy += dy * force;
-        targetPos.vx -= dx * force;
-        targetPos.vy -= dy * force;
+        const sp = positions.get(edge.source), tp = positions.get(edge.target);
+        if (!sp || !tp) return;
+        const dx = tp.x - sp.x, dy = tp.y - sp.y;
+        sp.vx += dx * 0.01; sp.vy += dy * 0.01;
+        tp.vx -= dx * 0.01; tp.vy -= dy * 0.01;
       });
 
-      // Update positions
       networkData.nodes.forEach((node) => {
         const pos = positions.get(node.id);
         if (!pos) return;
-
-        pos.x += pos.vx * alpha;
-        pos.y += pos.vy * alpha;
-        pos.vx *= 0.8; // Damping
-        pos.vy *= 0.8;
+        pos.x += pos.vx * alpha; pos.y += pos.vy * alpha;
+        pos.vx *= 0.8; pos.vy *= 0.8;
       });
 
-      forceUpdate({});  // Trigger re-render
-      frameCount++;
+      forceUpdate({});
+      frame++;
       animationRef.current = requestAnimationFrame(simulate);
     };
 
     animationRef.current = requestAnimationFrame(simulate);
+    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+  }, [networkData]);
 
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
-  }, [networkData]); // Only re-run when network data changes
-
-  // Draw canvas
+  // Canvas draw
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !networkData) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const positions = nodePositionsRef.current;
-
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-
-    // Apply zoom and pan
-    ctx.translate(panX, panY);
     ctx.scale(zoom, zoom);
 
-    // Draw edges
     ctx.strokeStyle = "#d1d5db";
     ctx.lineWidth = 1;
     networkData.edges.forEach((edge) => {
-      const sourcePos = positions.get(edge.source);
-      const targetPos = positions.get(edge.target);
-      if (!sourcePos || !targetPos) return;
-
+      const sp = nodePositionsRef.current.get(edge.source);
+      const tp = nodePositionsRef.current.get(edge.target);
+      if (!sp || !tp) return;
       ctx.beginPath();
-      ctx.moveTo(sourcePos.x, sourcePos.y);
-      ctx.lineTo(targetPos.x, targetPos.y);
+      ctx.moveTo(sp.x, sp.y);
+      ctx.lineTo(tp.x, tp.y);
       ctx.stroke();
     });
 
-    // Draw nodes
     networkData.nodes.forEach((node) => {
-      const pos = positions.get(node.id);
+      const pos = nodePositionsRef.current.get(node.id);
       if (!pos) return;
-
       const isHovered = hoveredNode === node.id;
       const isSelected = selectedNode?.id === node.id;
       const radius = isHovered || isSelected ? 8 : 6;
@@ -287,10 +237,6 @@ export default function GraphPage() {
         ctx.strokeStyle = "#fff";
         ctx.lineWidth = 2;
         ctx.stroke();
-      }
-
-      // Draw label on hover
-      if (isHovered || isSelected) {
         ctx.fillStyle = "#1f2937";
         ctx.font = "12px sans-serif";
         ctx.fillText(node.label, pos.x + 10, pos.y - 10);
@@ -298,95 +244,39 @@ export default function GraphPage() {
     });
 
     ctx.restore();
-  }, [networkData, zoom, panX, panY, hoveredNode, selectedNode]);
+  }, [networkData, zoom, hoveredNode, selectedNode]);
 
-  // Handle canvas click
-  function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
-    if (!networkData) return;
-
+  function getNodeAt(e: React.MouseEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
+    if (!canvas || !networkData) return null;
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - panX) / zoom;
-    const y = (e.clientY - rect.top - panY) / zoom;
-
-    const positions = nodePositionsRef.current;
-
-    // Find clicked node
+    const x = (e.clientX - rect.left) / zoom;
+    const y = (e.clientY - rect.top) / zoom;
     for (const node of networkData.nodes) {
-      const pos = positions.get(node.id);
+      const pos = nodePositionsRef.current.get(node.id);
       if (!pos) continue;
-
-      const dx = x - pos.x;
-      const dy = y - pos.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 10) {
-        setSelectedNode(node);
-        loadEntityAnalysis(node);
-        return;
-      }
+      const dx = x - pos.x, dy = y - pos.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 10) return node;
     }
-
-    // Click on empty space - deselect
-    setSelectedNode(null);
-    setSelectedAnalysis(null);
+    return null;
   }
 
-  // Handle canvas mouse move for hover
+  function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
+    const node = getNodeAt(e);
+    if (node) { setSelectedNode(node); loadEntityAnalysis(node); }
+    else { setSelectedNode(null); setSelectedAnalysis(null); }
+  }
+
   function handleCanvasMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
-    if (!networkData) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - panX) / zoom;
-    const y = (e.clientY - rect.top - panY) / zoom;
-
-    const positions = nodePositionsRef.current;
-
-    // Find hovered node
-    for (const node of networkData.nodes) {
-      const pos = positions.get(node.id);
-      if (!pos) continue;
-
-      const dx = x - pos.x;
-      const dy = y - pos.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 10) {
-        setHoveredNode(node.id);
-        return;
-      }
-    }
-
-    setHoveredNode(null);
+    const node = getNodeAt(e);
+    setHoveredNode(node?.id ?? null);
   }
 
   if (loading) {
     return (
       <div className="page">
-        <div className="pageHeader">
-          <div className="h1">🕸️ Knowledge Graph</div>
-        </div>
-        <div className="panel">
-          <div className="panelBody">Lädt Netzwerk-Daten...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="page">
-        <div className="pageHeader">
-          <div className="h1">🕸️ Knowledge Graph</div>
-        </div>
-        <div className="panel">
-          <div className="error">{error}</div>
-        </div>
+        <div className="pageHeader"><div><div className="h1">Knowledge Graph</div></div></div>
+        <div className="panel"><div className="panelBody"><div className="muted">Lädt Netzwerk-Daten...</div></div></div>
       </div>
     );
   }
@@ -395,205 +285,192 @@ export default function GraphPage() {
     <div className="page">
       <div className="pageHeader">
         <div>
-          <div className="h1">🕸️ Knowledge Graph</div>
+          <div className="h1">Knowledge Graph</div>
           <div className="muted">
             Beziehungen zwischen Kooperativen, Röstereien, Regionen und Zertifizierungen
           </div>
         </div>
+        <div className="pageActions">
+          <button className="btn" onClick={() => setZoom((z) => z * 1.2)} title="Zoom in">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+          <button className="btn" onClick={() => setZoom((z) => z / 1.2)} title="Zoom out">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+          <select
+            className="input"
+            value={nodeFilter}
+            onChange={(e) => setNodeFilter(e.target.value)}
+            style={{ width: "auto" }}
+          >
+            <option value="all">Alle Knoten</option>
+            <option value="cooperative">Nur Kooperativen</option>
+            <option value="roaster">Nur Röstereien</option>
+            <option value="region">Nur Regionen</option>
+            <option value="certification">Nur Zertifizierungen</option>
+            <option value="cooperative,region">Kooperativen + Regionen</option>
+          </select>
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: "1rem" }}>
-        {/* Main Graph Canvas */}
-        <div className="panel">
-          <div className="panelTitle">
-            Netzwerk-Visualisierung
-            <div className="row gap" style={{ marginLeft: "auto" }}>
-              <select
-                className="input"
-                value={nodeFilter}
-                onChange={(e) => setNodeFilter(e.target.value)}
-              >
-                <option value="all">Alle Knoten</option>
-                <option value="cooperative">Nur Kooperativen</option>
-                <option value="roaster">Nur Röstereien</option>
-                <option value="region">Nur Regionen</option>
-                <option value="certification">Nur Zertifizierungen</option>
-                <option value="cooperative,region">Kooperativen + Regionen</option>
-              </select>
-              <button className="btn btn-sm" onClick={() => setZoom(zoom * 1.2)}>
-                +
-              </button>
-              <button className="btn btn-sm" onClick={() => setZoom(zoom / 1.2)}>
-                −
-              </button>
+      {error && <ErrorPanel message={error} onRetry={() => setNodeFilter((f) => f)} />}
+
+      {!error && !networkData && !loading && (
+        <EmptyState
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          }
+          title="Kein Graph"
+          text="Backend nicht erreichbar oder noch keine Daten im Graph vorhanden."
+        />
+      )}
+
+      {networkData && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "var(--space-4)" }}>
+          {/* Canvas */}
+          <div className="panel">
+            <div className="panelHeader">
+              <div className="panelTitle">Netzwerk-Visualisierung</div>
+              <span className="badge">{networkData.stats.total_nodes} Knoten · {networkData.stats.total_edges} Kanten</span>
             </div>
-          </div>
-          <div className="panelBody" style={{ padding: 0 }}>
-            <canvas
-              ref={canvasRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              onClick={handleCanvasClick}
-              onMouseMove={handleCanvasMouseMove}
-              style={{ cursor: "pointer", display: "block" }}
-            />
-          </div>
-          <div className="panelFooter">
-            <div className="row gap">
+            <div style={{ padding: 0 }}>
+              <canvas
+                ref={canvasRef}
+                width={CANVAS_W}
+                height={CANVAS_H}
+                onClick={handleCanvasClick}
+                onMouseMove={handleCanvasMouseMove}
+                style={{ cursor: "pointer", display: "block", width: "100%", maxWidth: CANVAS_W }}
+              />
+            </div>
+            <div style={{ padding: "var(--space-3) var(--space-4)", borderTop: "1px solid var(--color-border)", display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
               {Object.entries(NODE_COLORS).map(([type, color]) => (
-                <div key={type} className="row gap" style={{ alignItems: "center" }}>
-                  <div
-                    style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      backgroundColor: color,
-                    }}
-                  />
-                  <span className="small">{NODE_LABELS[type]}</span>
+                <div key={type} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>{NODE_LABELS[type]}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Sidebar */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {/* Graph Stats */}
-          {networkData && (
+          {/* Sidebar */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            {/* Statistiken */}
             <div className="panel">
-              <div className="panelTitle">Graph-Statistiken</div>
+              <div className="panelHeader">
+                <div className="panelTitle">Graph-Statistiken</div>
+              </div>
               <div className="panelBody">
-                <table className="table">
-                  <tbody>
-                    <tr>
-                      <td>Knoten</td>
-                      <td className="text-right">{networkData.stats.total_nodes}</td>
-                    </tr>
-                    <tr>
-                      <td>Kanten</td>
-                      <td className="text-right">{networkData.stats.total_edges}</td>
-                    </tr>
-                    <tr>
-                      <td>Dichte</td>
-                      <td className="text-right">{networkData.stats.density.toFixed(3)}</td>
-                    </tr>
-                    <tr>
-                      <td>Ø Grad</td>
-                      <td className="text-right">{networkData.stats.avg_degree.toFixed(2)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div style={{ marginTop: "1rem" }}>
-                  <div className="small muted">Knoten-Typen:</div>
+                <div className="table">
+                  <table>
+                    <tbody>
+                      <tr><td>Knoten</td><td style={{ textAlign: "right" }}>{networkData.stats.total_nodes}</td></tr>
+                      <tr><td>Kanten</td><td style={{ textAlign: "right" }}>{networkData.stats.total_edges}</td></tr>
+                      <tr><td>Dichte</td><td style={{ textAlign: "right" }}>{networkData.stats.density.toFixed(3)}</td></tr>
+                      <tr><td>Ø Grad</td><td style={{ textAlign: "right" }}>{networkData.stats.avg_degree.toFixed(2)}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div style={{ marginTop: "var(--space-4)" }}>
+                  <div className="fieldLabel">Knoten-Typen</div>
                   {Object.entries(networkData.stats.node_types).map(([type, count]) => (
-                    <div key={type} className="row" style={{ justifyContent: "space-between" }}>
-                      <span className="small">{NODE_LABELS[type] || type}</span>
-                      <span className="small">{count}</span>
+                    <div key={type} style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-1)" }}>
+                      <span style={{ fontSize: "var(--font-size-sm)" }}>{NODE_LABELS[type] || type}</span>
+                      <span style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{count}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Selected Node Analysis */}
-          {selectedNode && selectedAnalysis && (
-            <div className="panel">
-              <div className="panelTitle">
-                {selectedNode.label}
-                <button
-                  className="btn btn-sm"
-                  onClick={() => {
-                    setSelectedNode(null);
-                    setSelectedAnalysis(null);
-                  }}
-                  style={{ marginLeft: "auto" }}
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="panelBody">
-                <div className="small muted">{NODE_LABELS[selectedNode.node_type]}</div>
-
-                <div style={{ marginTop: "1rem" }}>
-                  <div className="small muted">Graph-Metriken:</div>
-                  <table className="table table-sm">
-                    <tbody>
-                      <tr>
-                        <td>Grad</td>
-                        <td className="text-right">{selectedAnalysis.degree}</td>
-                      </tr>
-                      <tr>
-                        <td>Degree Centrality</td>
-                        <td className="text-right">
-                          {selectedAnalysis.degree_centrality.toFixed(3)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Betweenness</td>
-                        <td className="text-right">
-                          {selectedAnalysis.betweenness_centrality.toFixed(3)}
-                        </td>
-                      </tr>
-                      {selectedAnalysis.community_id !== null && (
-                        <tr>
-                          <td>Community</td>
-                          <td className="text-right">#{selectedAnalysis.community_id}</td>
-                        </tr>
+            {/* Selektierter Knoten */}
+            {selectedNode && selectedAnalysis && (
+              <div className="panel">
+                <div className="panelHeader">
+                  <div className="panelTitle">{selectedNode.label}</div>
+                  <button
+                    className="btn"
+                    onClick={() => { setSelectedNode(null); setSelectedAnalysis(null); }}
+                    style={{ padding: "2px 8px", fontSize: "var(--font-size-xs)" }}
+                  >
+                    Schliessen
+                  </button>
+                </div>
+                <div className="panelBody">
+                  <div className="muted" style={{ marginBottom: "var(--space-3)" }}>
+                    {NODE_LABELS[selectedNode.node_type]}
+                  </div>
+                  <div className="table">
+                    <table>
+                      <tbody>
+                        <tr><td>Grad</td><td style={{ textAlign: "right" }}>{selectedAnalysis.degree}</td></tr>
+                        <tr><td>Degree Centrality</td><td style={{ textAlign: "right" }}>{selectedAnalysis.degree_centrality.toFixed(3)}</td></tr>
+                        <tr><td>Betweenness</td><td style={{ textAlign: "right" }}>{selectedAnalysis.betweenness_centrality.toFixed(3)}</td></tr>
+                        {selectedAnalysis.community_id !== null && (
+                          <tr><td>Community</td><td style={{ textAlign: "right" }}>#{selectedAnalysis.community_id}</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: "var(--space-3)" }}>
+                    <div className="fieldLabel">Nachbarn ({selectedAnalysis.neighbors.length})</div>
+                    <div style={{ maxHeight: 150, overflowY: "auto", marginTop: "var(--space-2)" }}>
+                      {selectedAnalysis.neighbors.slice(0, 10).map((n) => (
+                        <div key={n.id} style={{ fontSize: "var(--font-size-sm)", padding: "2px 0" }}>
+                          {n.label}
+                          <span className="muted"> ({NODE_LABELS[n.node_type]})</span>
+                        </div>
+                      ))}
+                      {selectedAnalysis.neighbors.length > 10 && (
+                        <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>
+                          ... und {selectedAnalysis.neighbors.length - 10} weitere
+                        </div>
                       )}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div style={{ marginTop: "1rem" }}>
-                  <div className="small muted">
-                    Nachbarn ({selectedAnalysis.neighbors.length}):
-                  </div>
-                  <div style={{ maxHeight: 150, overflowY: "auto" }}>
-                    {selectedAnalysis.neighbors.slice(0, 10).map((neighbor) => (
-                      <div key={neighbor.id} className="small">
-                        {neighbor.label}
-                        <span className="muted"> ({NODE_LABELS[neighbor.node_type]})</span>
-                      </div>
-                    ))}
-                    {selectedAnalysis.neighbors.length > 10 && (
-                      <div className="small muted">
-                        ... und {selectedAnalysis.neighbors.length - 10} weitere
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Communities */}
-          {communities.length > 0 && (
-            <div className="panel">
-              <div className="panelTitle">Communities ({communities.length})</div>
-              <div className="panelBody" style={{ maxHeight: 300, overflowY: "auto" }}>
-                {communities.slice(0, 5).map((community) => (
-                  <div key={community.community_id} style={{ marginBottom: "1rem" }}>
-                    <div className="small">
-                      <strong>Community #{community.community_id}</strong>
-                      <span className="muted"> ({community.size} Mitglieder)</span>
-                    </div>
-                    <div className="small muted">
-                      Typ: {NODE_LABELS[community.dominant_type] || community.dominant_type}
-                    </div>
-                    {community.common_attributes.length > 0 && (
-                      <div className="small muted">
-                        Attribute: {community.common_attributes.slice(0, 3).join(", ")}
+            {/* Communities */}
+            {communities.length > 0 && (
+              <div className="panel">
+                <div className="panelHeader">
+                  <div className="panelTitle">Communities</div>
+                  <span className="badge">{communities.length}</span>
+                </div>
+                <div className="panelBody" style={{ maxHeight: 280, overflowY: "auto" }}>
+                  {communities.slice(0, 5).map((community) => (
+                    <div key={community.community_id} style={{ marginBottom: "var(--space-4)" }}>
+                      <div style={{ fontWeight: "var(--font-weight-semibold)", fontSize: "var(--font-size-sm)" }}>
+                        Community #{community.community_id}
+                        <span className="muted"> ({community.size} Mitglieder)</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <div className="muted" style={{ fontSize: "var(--font-size-xs)", marginTop: 2 }}>
+                        Typ: {NODE_LABELS[community.dominant_type] || community.dominant_type}
+                      </div>
+                      {community.common_attributes.length > 0 && (
+                        <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>
+                          Attribute: {community.common_attributes.slice(0, 3).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -9,9 +9,40 @@ import React from "react";
 interface ErrorPanelProps {
   message: string;
   onRetry?: () => void;
+  style?: React.CSSProperties;
+  compact?: boolean;
 }
 
-export function ErrorPanel({ message, onRetry }: ErrorPanelProps) {
+export function ErrorPanel({ message, onRetry, style, compact }: ErrorPanelProps) {
+  if (compact) {
+    return (
+      <div className="alert bad" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", ...style }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span style={{ flex: 1 }}>{message}</span>
+        {onRetry && (
+          <button className="btn btnSm" onClick={onRetry} type="button">Erneut versuchen</button>
+        )}
+      </div>
+    );
+  }
+
+export function ErrorPanel({ message, onRetry, style, compact }: ErrorPanelProps) {
+  if (compact) {
+    return (
+      <div className="alert bad" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", ...style }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span style={{ flex: 1 }}>{message}</span>
+        {onRetry && (
+          <button className="btn btnSm" onClick={onRetry} type="button">Erneut versuchen</button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{
       display: "flex",
@@ -21,6 +52,7 @@ export function ErrorPanel({ message, onRetry }: ErrorPanelProps) {
       gap: "var(--space-4)",
       padding: "var(--space-12) var(--space-6)",
       textAlign: "center",
+      ...style,
     }}>
       <div style={{
         width: 48,
