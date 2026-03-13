@@ -40,6 +40,7 @@ Dieses Dokument beschreibt exakt was im Frontend bereits vorbereitet ist, was da
 | Pagination | `app/components/Pagination.tsx` | Aktiv |
 | CSV-Export | `app/utils/export.ts` | Aktiv |
 | Strukturierter Fehler-Handler | `app/utils/error.ts` | Aktiv |
+| Fehler-Panel Komponente | `app/components/AlertError.tsx` | Aktiv (importiert als `ErrorPanel`) |
 
 ### Was noch localStorage verwendet (temporär)
 

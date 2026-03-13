@@ -129,7 +129,9 @@ apps/web/app/components/
 ├── Breadcrumb.tsx                  ← Breadcrumb-Navigation für Detailseiten
 ├── Badge.tsx                       ← Status-Badges (variant="success"|"warning"|"danger"|"info")
 ├── EmptyState.tsx                  ← Leere Zustände + SkeletonRows für Ladeanimation
-├── ErrorPanel.tsx                  ← Fehleranzeige. Props: message, onRetry, compact, style
+├── AlertError.tsx                  ← Fehleranzeige. DATEINAME: AlertError.tsx (nicht ErrorPanel.tsx!)
+│                                     import { ErrorPanel } from "../components/AlertError"
+│                                     Props: message, onRetry?, compact?, style?
 ├── Pagination.tsx                  ← Tabellen-Pagination. usePagination() Hook exportiert.
 └── MarketPriceWidget.tsx           ← Marktpreis-Anzeige
 ```
@@ -195,7 +197,7 @@ table.table     ← Standard-Tabelle
 6. **CSS:** Keine Inline-Styles außer für dynamische Werte. Neue Klassen in `globals.css` definieren.
 7. **Seiten-Struktur:** `<div className="page">` → `<div className="pageHeader">` → `<div className="panel">`. Kein doppeltes Wrapping.
 8. **Empty States:** Wenn Daten leer sind, `<EmptyState>` aus `app/components/EmptyState.tsx` verwenden.
-9. **Fehler-Anzeige:** `<ErrorPanel>` für Fehler mit Retry-Button. `compact`-Prop für Inline-Einsatz.
+9. **Fehler-Anzeige:** `<ErrorPanel>` aus `../components/AlertError` (Datei heisst AlertError.tsx). `compact`-Prop für Inline-Einsatz in Panels. Immer `onRetry` übergeben wenn ein Retry sinnvoll ist.
 10. **Sprache:** Alle UI-Texte auf Deutsch. Variablennamen, Kommentare und Code auf Englisch.
 
 ---

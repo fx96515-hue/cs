@@ -5,7 +5,7 @@ import { useFreightPrediction, usePricePrediction } from "../hooks/usePrediction
 import { useCooperatives } from "../hooks/usePeruRegions";
 import { useRoasters } from "../hooks/useRoasters";
 import MarketPriceWidget from "../components/MarketPriceWidget";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 
 /* ============================================================
    ANALYTICS & ML PREDICTIONS - ENTERPRISE VIEW

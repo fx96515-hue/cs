@@ -5,7 +5,7 @@ import { apiFetch, isDemoMode } from "../../lib/api";
 import LineChart from "../charts/LineChart";
 import Badge from "../components/Badge";
 import { EmptyState } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 import { toErrorMessage } from "../utils/error";
 
 type SentimentPoint = {

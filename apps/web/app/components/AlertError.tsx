@@ -1,15 +1,14 @@
-// v2 - CoffeeStudio ErrorPanel
 "use client";
 import React from "react";
 
-interface ErrorPanelProps {
+interface AlertErrorProps {
   message: string;
   onRetry?: () => void;
   style?: React.CSSProperties;
   compact?: boolean;
 }
 
-export function ErrorPanel({ message, onRetry, style, compact }: ErrorPanelProps) {
+export function AlertError({ message, onRetry, style, compact }: AlertErrorProps) {
   if (compact) {
     return (
       <div
@@ -82,3 +81,6 @@ export function ErrorPanel({ message, onRetry, style, compact }: ErrorPanelProps
     </div>
   );
 }
+
+/** Alias fur Rueckwaertskompatibilitaet */
+export { AlertError as ErrorPanel };

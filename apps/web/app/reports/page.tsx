@@ -6,7 +6,7 @@ import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
 import DataQualityMini from "../components/DataQualityMini";
 import { EmptyState, SkeletonRows } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 import { toErrorMessage } from "../utils/error";
 
 type Report = {

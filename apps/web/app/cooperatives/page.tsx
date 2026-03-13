@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "../components/Badge";
 import { EmptyState, SkeletonRows } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 import { Pagination, usePagination } from "../components/Pagination";
 import { useToast } from "../components/ToastProvider";
 import { exportToCsv } from "../utils/export";

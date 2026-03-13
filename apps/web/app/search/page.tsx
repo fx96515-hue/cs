@@ -5,7 +5,7 @@ import { useState } from "react";
 import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
 import { EmptyState } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 import { useToast } from "../components/ToastProvider";
 
 type SearchResult = {

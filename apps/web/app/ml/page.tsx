@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
 import { EmptyState, SkeletonRows } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 import { useToast } from "../components/ToastProvider";
 import { toErrorMessage } from "../utils/error";
 

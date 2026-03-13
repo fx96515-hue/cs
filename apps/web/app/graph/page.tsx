@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { apiFetch, isDemoMode } from "../../lib/api";
 import { EmptyState } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 
 type GraphNode = {
   id: string;

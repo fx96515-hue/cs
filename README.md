@@ -242,6 +242,7 @@ Lies zuerst:
 - API-Aufrufe immer über `apps/web/app/services/` (nie direkt `apiFetch` in Seiten)
 - CSS-Klassen aus `globals.css` — keine Inline-Styles außer für dynamische Werte
 - Demo-Modus-Guard in jeder `queryFn`: `if (isDemoMode()) return { items: [], total: 0 }`
+- **Fehler-Panel:** `<ErrorPanel>` aus `../components/AlertError` (Datei heisst `AlertError.tsx`)
 
 ---
 

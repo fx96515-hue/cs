@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiFetch, getToken, isDemoMode } from "../../lib/api";
 import { EmptyState } from "../components/EmptyState";
-import { ErrorPanel } from "../components/ErrorPanel";
+import { ErrorPanel } from "../components/AlertError";
 
 const MAX_QUESTION_LENGTH = 1000;
 
