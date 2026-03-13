@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import { Shipment, ShipmentFilters, Paged } from "../types";
 
 // Fetch Shipments with filters
@@ -22,6 +22,7 @@ export function useShipments(
   return useQuery({
     queryKey: ["shipments", filters],
     queryFn: async () => {
+      if (isDemoMode()) return { items: [], total: 0 } as Paged<Shipment>;
       const qs = params.toString();
       const response = await apiFetch<Shipment[]>(`/shipments${qs ? `?${qs}` : ""}`);
       // Backend returns flat list

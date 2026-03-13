@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import {
   FreightPredictionRequest,
   FreightPredictionResponse,

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import { 
   DealFilters, 
   MarginCalcRequest, 
@@ -29,6 +29,7 @@ export function useDeals(filters: DealFilters & { limit?: number; page?: number 
   return useQuery({
     queryKey: ["deals", filters],
     queryFn: async () => {
+      if (isDemoMode()) return { items: [], total: 0 } as Paged<Deal>;
       const qs = params.toString();
       const response = await apiFetch<Deal[] | Paged<Deal>>(`/deals${qs ? `?${qs}` : ""}`);
       // Backend may return flat list, but we need Paged format

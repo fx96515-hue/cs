@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import {
   PeruRegion,
   Cooperative,
@@ -75,12 +75,11 @@ export function useCooperatives(filters: Partial<CooperativeFilters> & { limit?:
   return useQuery({
     queryKey: ["cooperatives", filters],
     queryFn: async () => {
+      if (isDemoMode()) return { items: [], total: 0 } as Paged<Cooperative>;
       const qs = params.toString();
       const response = await apiFetch<RawCooperative[] | Paged<RawCooperative>>(
         `/cooperatives${qs ? `?${qs}` : ""}`,
       );
-      // Backend returns flat list, but we need Paged format
-      // Check if response is already in Paged format
       if (Array.isArray(response)) {
         const items = response.map(normalizeCooperative);
         return { items, total: items.length } as Paged<Cooperative>;
@@ -90,6 +89,8 @@ export function useCooperatives(filters: Partial<CooperativeFilters> & { limit?:
         items: (response.items || []).map(normalizeCooperative),
       };
     },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: { items: [], total: 0, page: 1, limit: 25 },
   });
 }
 
