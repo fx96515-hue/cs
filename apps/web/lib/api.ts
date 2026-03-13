@@ -1,4 +1,4 @@
-﻿export type Token = {
+export type Token = {
   access_token: string;
   token_type?: string;
   expires_in?: number;
@@ -52,10 +52,22 @@ export function apiBaseUrl(): string {
   return "http://localhost:8000";
 }
 
+export const DEMO_TOKEN = "demo_token_for_preview";
+
+export function isDemoMode(): boolean {
+  return getToken() === DEMO_TOKEN;
+}
+
 export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   const { skipAuth, ...req } = options;
 
   const token = !skipAuth ? getToken() : null;
+
+  // Im Demo-Modus keine echten API-Aufrufe durchführen - leere Standardwerte zurückgeben
+  if (token === DEMO_TOKEN) {
+    const empty = (Array.isArray([] as unknown as T) ? [] : {}) as T;
+    return empty;
+  }
 
   const headers: Record<string, string> = {
     ...(req.headers as Record<string, string>),
