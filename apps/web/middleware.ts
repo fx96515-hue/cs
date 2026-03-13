@@ -1,51 +1,19 @@
 /**
  * middleware.ts
- * Next.js Route-Guard: schützt alle Seiten außer /login.
+ * Route-Guard: vorbereitet für httpOnly-Cookie-Auth (Roadbook Schritt 2).
  *
- * Wichtig: middleware läuft auf dem Edge-Runtime (kein Zugriff auf localStorage).
- * Der Token wird daher als Cookie "token" erwartet. Das Login-Flow muss
- * diesen Cookie beim Anmelden setzen (siehe /api/auth/login route).
+ * AKTUELL DEAKTIVIERT — Auth läuft noch über localStorage (AppShell-Guard).
+ * Aktivieren sobald das Backend /api/auth/login einen httpOnly-Cookie setzt.
  *
- * Solange nur localStorage verwendet wird (aktueller Stand), greift dieser
- * Guard nicht — er ist vorbereitet für den httpOnly-Cookie-Umstieg (Roadbook Schritt 2).
- * Ohne Cookie läuft der Request durch; AppShell übernimmt dann den Client-Guard.
+ * Zum Aktivieren: Kommentar um den Guard-Block entfernen.
  */
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/api/auth"];
-
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  // Öffentliche Pfade immer durchlassen
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  // Statische Dateien und Next.js-Internals durchlassen
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
-
-  // Token aus Cookie lesen (httpOnly-Cookie-Phase)
-  const token = req.cookies.get("token")?.value;
-
-  // Kein Token → auf Login umleiten
-  if (!token) {
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+export function middleware(_req: NextRequest) {
+  // Guard deaktiviert – AppShell übernimmt Client-seitigen Schutz
   return NextResponse.next();
 }
 
 export const config = {
-  // Middleware auf alle Seiten außer statischen Dateien anwenden
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
