@@ -27,6 +27,21 @@ function parseDqFilter(value: string): DqFilter {
   return DQ_FILTER_VALUES.includes(value as DqFilter) ? (value as DqFilter) : "all";
 }
 
+function severityToTone(severity: string): FlagSummary["tone"] {
+  if (severity === "critical") return "bad";
+  if (severity === "warning") return "warn";
+  return "neutral";
+}
+
+function matchesDqFilter(dqFilter: DqFilter, summary?: FlagSummary): boolean {
+  if (dqFilter === "all") return true;
+  if (dqFilter === "any") return Boolean(summary);
+  if (dqFilter === "none") return !summary;
+  if (dqFilter === "critical") return summary?.tone === "bad";
+  if (dqFilter === "warning") return summary?.tone === "warn";
+  return summary?.tone === "neutral";
+}
+
 export default function RoastersPage() {
   const [data, setData] = useState<RoasterList | null>(null);
   const [flagSummary, setFlagSummary] = useState<Record<number, FlagSummary>>({});
@@ -51,12 +66,7 @@ export default function RoastersPage() {
       }
       const summary: Record<number, FlagSummary> = {};
       for (const flag of flags) {
-        const tone =
-          flag.severity === "critical"
-            ? "bad"
-            : flag.severity === "warning"
-              ? "warn"
-              : "neutral";
+        const tone = severityToTone(flag.severity);
         const entry = summary[flag.entity_id];
         if (!entry) {
           summary[flag.entity_id] = { count: 1, tone };
@@ -73,7 +83,7 @@ export default function RoastersPage() {
   }, [showArchived]);
 
   useEffect(() => {
-    void load();
+    load().catch((error: unknown) => setErr(toErrorMessage(error)));
   }, [load]);
 
   async function archiveRoaster(id: number) {
@@ -111,19 +121,7 @@ export default function RoastersPage() {
         .includes(qq);
 
       const summary = flagSummary[r.id];
-      const tone = summary?.tone ?? null;
-      const passesDq =
-        dqFilter === "all"
-          ? true
-          : dqFilter === "any"
-            ? !!summary
-            : dqFilter === "none"
-              ? !summary
-              : dqFilter === "critical"
-                ? tone === "bad"
-                : dqFilter === "warning"
-                  ? tone === "warn"
-                  : tone === "neutral";
+      const passesDq = matchesDqFilter(dqFilter, summary);
 
       return (!qq || hay) && passesDq;
     });

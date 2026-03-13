@@ -36,11 +36,14 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
   }, [entityType, includeResolved, limit, severity]);
 
   useEffect(() => {
-    void load();
+    load().catch((error: unknown) => setErr(toErrorMessage(error)));
   }, [load]);
 
-  const severityTone = (s: string) =>
-    s === "critical" ? "bad" : s === "warning" ? "warn" : "neutral";
+  const severityTone = (s: string) => {
+    if (s === "critical") return "bad";
+    if (s === "warning") return "warn";
+    return "neutral";
+  };
 
   return (
     <div className="panel">
@@ -49,7 +52,13 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
           <div className="panelTitle">{title}</div>
           <div className="muted">Offene Data-Quality-Flags</div>
         </div>
-        <button className="btn" onClick={() => void load()} disabled={loading}>
+        <button
+          className="btn"
+          onClick={() => {
+            load().catch((error: unknown) => setErr(toErrorMessage(error)));
+          }}
+          disabled={loading}
+        >
           Refresh
         </button>
       </div>

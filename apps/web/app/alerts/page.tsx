@@ -30,6 +30,12 @@ type AlertSummary = {
   };
 };
 
+function severityToTone(severity: string): "bad" | "warn" | "neutral" {
+  if (severity === "critical") return "bad";
+  if (severity === "warning") return "warn";
+  return "neutral";
+}
+
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<QualityAlert[]>([]);
   const [summary, setSummary] = useState<AlertSummary | null>(null);
@@ -73,8 +79,7 @@ export default function AlertsPage() {
         method: "POST",
         body: JSON.stringify({ acknowledged_by: "user" }),
       });
-      void fetchAlerts();
-      void fetchSummary();
+      await Promise.all([fetchAlerts(), fetchSummary()]);
     } catch (e) {
       console.error("Failed to acknowledge alert:", e);
     }
@@ -83,20 +88,20 @@ export default function AlertsPage() {
   async function checkNow() {
     try {
       await apiFetch("/alerts/check-now", { method: "POST" });
-      void fetchAlerts();
-      void fetchSummary();
+      await Promise.all([fetchAlerts(), fetchSummary()]);
     } catch (e) {
       console.error("Failed to check alerts:", e);
     }
   }
 
   useEffect(() => {
-    void fetchAlerts();
-    void fetchSummary();
+    Promise.all([fetchAlerts(), fetchSummary()]).catch((error: unknown) => {
+      console.error("Failed to initialize alerts page:", error);
+    });
   }, [fetchAlerts, fetchSummary]);
 
   const severityBadge = (severity: string) => {
-    const tone = severity === "critical" ? "bad" : severity === "warning" ? "warn" : "neutral";
+    const tone = severityToTone(severity);
     return <Badge tone={tone}>{severity}</Badge>;
   };
 
