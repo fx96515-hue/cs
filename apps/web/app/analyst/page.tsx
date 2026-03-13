@@ -1,3 +1,4 @@
+// KI-Analyst — Chat-Interface v2 (neu gestaltet, nur CSS-Klassen aus globals.css)
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";

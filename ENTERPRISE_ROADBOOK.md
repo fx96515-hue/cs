@@ -1,6 +1,6 @@
 # CoffeeStudio – Enterprise Roadbook
 
-**Version:** 1.0 | **Stand:** 2026-03 | **Ziel:** Production-Ready Enterprise-Stack
+**Version:** 1.3 | **Stand:** 2026-03 | **Ziel:** Production-Ready Enterprise-Stack
 
 Dieses Dokument beschreibt exakt was im Frontend bereits vorbereitet ist, was das Backend liefern muss, und in welcher Reihenfolge Frontend und Backend zusammengebracht werden. Jeder Schritt ist unabhängig testbar.
 
@@ -32,19 +32,36 @@ Dieses Dokument beschreibt exakt was im Frontend bereits vorbereitet ist, was da
 | 401 Auto-Refresh-Logik | `lib/api.ts` | Bereit, wartet auf Backend-Endpunkt |
 | Service-Layer | `app/services/*.service.ts` | Bereit |
 | React Query Hooks | `app/hooks/use*.ts` | Bereit, `staleTime: 5min` |
-| Route-Guard Middleware | `middleware.ts` | Bereit, wartet auf httpOnly-Cookie |
+| Route-Guard Middleware | `middleware.ts` | Passthrough — aktivieren nach Schritt 1 |
 | Toast-System | `app/components/ToastProvider.tsx` | Aktiv |
 | Demo-Modus-Guard | `lib/api.ts → isDemoMode()` | Aktiv |
 | Breadcrumbs | `app/components/Breadcrumb.tsx` | Aktiv |
-| Command-Palette | `app/components/CommandPalette.tsx` | Aktiv |
+| Command-Palette | `app/components/CommandPalette.tsx` | Aktiv (⌘K) |
 | Pagination | `app/components/Pagination.tsx` | Aktiv |
 | CSV-Export | `app/utils/export.ts` | Aktiv |
 | Strukturierter Fehler-Handler | `app/utils/error.ts` | Aktiv |
 | Fehler-Panel Komponente | `app/components/AlertError.tsx` | Aktiv (importiert als `ErrorPanel`) |
+| Anomalie-Feed Widget | `app/components/AnomalyFeedWidget.tsx` | Aktiv (Dashboard) |
+| KI-Analyst Chat | `app/analyst/page.tsx` | Aktiv — POST `/analyst/ask`, GET `/analyst/status` |
+| KPI-Karte | `app/components/KpiCard.tsx` | Aktiv |
+| Marktpreis-Widget | `app/components/MarketPriceWidget.tsx` | Aktiv |
+| Data-Quality-Mini | `app/components/DataQualityMini.tsx` | Aktiv |
+| Chat CSS-System | `app/globals.css → .chatLayout/.chatPanel/...` | Aktiv (20+ Klassen) |
+| Turbopack resolveAlias | `next.config.mjs` | Aktiv (ErrorPanel → AlertError) |
 
 ### Was noch localStorage verwendet (temporär)
 
 Der Token liegt aktuell in `localStorage`. Das ist für die Preview-Umgebung funktional, aber nicht produktionstauglich. Die Umstellung auf `httpOnly`-Cookie ist in Schritt 1 beschrieben. Das Frontend ist bereits vollständig darauf vorbereitet.
+
+### KI-Analyst Endpunkte (Frontend erwartet)
+
+| Methode | Pfad | Request | Response |
+|---|---|---|---|
+| `GET` | `/analyst/status` | — | `{ available: bool, provider: string, model: string }` |
+| `POST` | `/analyst/ask` | `{ question: string, conversation_history: [{role, content}[]] }` | `{ answer: string, sources: [{entity_type, entity_id, name, similarity_score}[]] }` |
+| `GET` | `/anomalies` | `?acknowledged=false&limit=5` | `AnomalyAlert[]` |
+
+**Hinweis:** Der `/anomalies`-Endpunkt gibt bei 503/404 kein Fehler-Banner aus — Widget versteckt sich automatisch (`disabled=true`).
 
 ---
 
