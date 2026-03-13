@@ -232,7 +232,7 @@ export default function RoastersPage() {
         </div>
       </div>
 
-      {err && <ErrorPanel message={err} onRetry={fetchRoasters} />}
+      {err && <ErrorPanel message={err} onRetry={load} />}
 
       {/* Table */}
       <section className="panel">

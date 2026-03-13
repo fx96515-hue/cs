@@ -60,7 +60,7 @@ export default function AnalyticsDashboard() {
         </div>
       </header>
 
-        {/* KPI Grid with Market Widget */}
+      {/* KPI Grid with Market Widget */}
         <div className="kpiGrid">
           <MarketPriceWidget />
           <div className="kpiCard">
@@ -334,6 +334,5 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
