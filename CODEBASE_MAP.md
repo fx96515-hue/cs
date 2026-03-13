@@ -1,10 +1,27 @@
 
 # CoffeeStudio — Codebase Map
 
-**Stand: 2026-03 | Version: 1.3**
+**Stand: 2026-03 | Version: 2.0 (Full Stack Data Platform)**
 
 Dieses Dokument ist der primäre Einstiegspunkt für KI-Assistenten (OpenAI, Copilot, Cursor etc.).
 Lies es bevor du irgendetwas änderst. Es beschreibt wo was liegt und wie alles zusammenhängt.
+
+---
+
+## Quick Reference fuer KI-Assistenten
+
+### Wenn du Code aendern sollst:
+1. **IMMER** zuerst dieses Dokument lesen
+2. **IMMER** bestehende Patterns pruefen bevor du neue erstellst
+3. **IMMER** Typen aus `app/types/index.ts` importieren
+4. **IMMER** Services/Hooks verwenden, nie direktes `apiFetch`
+5. **IMMER** `isDemoMode()` Guard bei neuen API-Calls
+
+### Projekt-Status (Maerz 2026):
+- Phase 1: Database (13 Tabellen) - COMPLETE
+- Phase 2: Data Integration (17 APIs, 9 Provider) - COMPLETE
+- Phase 3: ML Features (50+) - COMPLETE
+- Phase 4: Scheduling + Monitoring - COMPLETE
 
 ---
 
@@ -620,3 +637,473 @@ uvicorn main:app --reload      # http://localhost:8000
 # E-Mail: demo@coffeestudio.de
 # Passwort: demo
 ```
+
+---
+
+## BACKEND: Vollstaendige Referenz (Phase 1-4)
+
+### Backend-Verzeichnisstruktur
+
+```
+apps/api/
+├── app/
+│   ├── main.py                     ← FastAPI Entry Point
+│   ├── core/
+│   │   ├── config.py               ← Settings (Pydantic BaseSettings)
+│   │   └── security.py             ← JWT-Logik, Password-Hashing
+│   ├── db/
+│   │   ├── session.py              ← AsyncSession, Engine
+│   │   └── base.py                 ← SQLAlchemy Base
+│   ├── models/                     ← SQLAlchemy ORM Models (33 Dateien)
+│   │   ├── __init__.py             ← Alle Exports
+│   │   ├── freight_history.py      ← ML Training: Frachtkosten
+│   │   ├── coffee_price_history.py ← ML Training: Kaffeepreise
+│   │   ├── market.py               ← Marktdaten (FX, Futures)
+│   │   ├── weather_agronomic.py    ← Wetter + Bodendaten (NEU)
+│   │   └── ...
+│   ├── schemas/                    ← Pydantic Request/Response Schemas
+│   ├── routes/                     ← API Endpoints (39 Dateien)
+│   │   ├── auth_routes.py          ← /api/v1/auth/*
+│   │   ├── data_pipeline_routes.py ← /api/v1/pipeline/* (NEU)
+│   │   ├── feature_engineering_routes.py ← /api/v1/features/* (NEU)
+│   │   ├── monitoring_routes.py    ← /api/v1/ops/* (NEU)
+│   │   └── ...
+│   ├── providers/                  ← Externe API-Integrationen (13 Dateien)
+│   │   ├── coffee_prices.py        ← Yahoo Finance (CC=F)
+│   │   ├── fx_rates.py             ← ECB + OANDA
+│   │   ├── weather.py              ← OpenMeteo, RAIN4PE, NASA GPM, SENAMHI
+│   │   ├── shipping_data.py        ← AIS Stream, MarineTraffic
+│   │   ├── news_market.py          ← NewsAPI, Coffee Blogs
+│   │   └── peru_macro.py           ← INEI, BCRP, World Bank
+│   └── services/
+│       ├── ml/
+│       │   ├── advanced_features.py    ← 50+ ML Features (NEU)
+│       │   ├── bulk_importer.py        ← CSV Import (NEU)
+│       │   ├── data_quality.py         ← Anomalie-Erkennung (NEU)
+│       │   └── training_pipeline.py    ← Model Training
+│       ├── data_pipeline/
+│       │   ├── orchestrator.py         ← Basis-Orchestrator
+│       │   └── phase2_orchestrator.py  ← 17 APIs (NEU)
+│       └── orchestration/
+│           └── phase4_scheduler.py     ← Celery Beat Schedules (NEU)
+├── alembic/
+│   └── versions/                   ← 20 Migrationen
+│       ├── 0001_initial.py
+│       ├── ...
+│       └── 0020_full_stack_data_models.py  ← Phase 1 Tabellen (NEU)
+└── tests/
+    ├── conftest.py                 ← Fixtures (db, client, auth)
+    ├── test_routes/
+    ├── test_services/
+    └── test_providers/
+```
+
+---
+
+## Datenbank: 13 Tabellen
+
+### Geschaeftsentitaeten
+```sql
+cooperatives         -- Peru Kaffee-Kooperativen
+roasters             -- Deutsche Roestereien (Kaeufer)
+lots                 -- Kaffee-Partien (Produkte)
+deals                -- Handelsgeschaefte
+shipments            -- Physische Sendungen
+```
+
+### ML & Analytics
+```sql
+freight_history      -- ML Training: Versandkosten
+coffee_price_history -- ML Training: Preisdaten
+market_observations  -- Echtzeit-Marktdaten (FX, Futures)
+ml_features_cache    -- Berechnete ML Features (50+)
+```
+
+### Datensammlung (Phase 1-4 NEU)
+```sql
+weather_agronomic_data   -- Peru Wetter + Bodenfeuchtigkeit
+social_sentiment_data    -- Twitter/Reddit Sentiment
+shipment_api_events      -- AIS Schiffs-Tracking
+source_health_metrics    -- API Health Monitoring
+data_lineage_log         -- Audit Trail
+```
+
+### Intelligence
+```sql
+knowledge_docs       -- News + Research (mit pgvector)
+sentiment_scores     -- Berechnete Sentiment-Werte
+news_items           -- Gesammelte News-Artikel
+```
+
+---
+
+## Provider-Module: 17 Datenquellen
+
+### Datei: `apps/api/app/providers/coffee_prices.py`
+```python
+class CoffeePricesProvider:
+    """Yahoo Finance - Coffee C Futures (CC=F)"""
+    async def fetch_current_price(self) -> dict
+    async def fetch_historical(self, days: int = 365) -> list[dict]
+```
+
+### Datei: `apps/api/app/providers/fx_rates.py`
+```python
+class FXRatesProvider:
+    """ECB + OANDA - Wechselkurse"""
+    async def fetch_ecb_rates(self) -> dict  # EUR/USD, EUR/GBP
+    async def fetch_oanda_rates(self) -> dict  # EUR/PEN, EUR/BRL
+```
+
+### Datei: `apps/api/app/providers/weather.py`
+```python
+class WeatherProvider:
+    """OpenMeteo + RAIN4PE + NASA GPM + SENAMHI"""
+    async def fetch_openmeteo(self, lat, lon) -> dict
+    async def fetch_rain4pe(self, region) -> dict
+    async def fetch_nasa_gpm(self, lat, lon) -> dict
+    async def fetch_senamhi(self, station) -> dict
+```
+
+### Datei: `apps/api/app/providers/shipping_data.py`
+```python
+class ShippingDataProvider:
+    """AIS Stream + MarineTraffic"""
+    async def fetch_vessel_position(self, imo: str) -> dict
+    async def fetch_port_congestion(self, port_code: str) -> dict
+```
+
+### Datei: `apps/api/app/providers/news_market.py`
+```python
+class NewsMarketProvider:
+    """NewsAPI + Coffee Blogs + Social Media"""
+    async def fetch_newsapi(self, query: str) -> list[dict]
+    async def scrape_coffee_blogs(self) -> list[dict]
+    async def fetch_twitter_sentiment(self, query: str) -> dict
+    async def fetch_reddit_sentiment(self, subreddit: str) -> dict
+```
+
+### Datei: `apps/api/app/providers/peru_macro.py`
+```python
+class PeruMacroProvider:
+    """INEI + BCRP + World Bank"""
+    async def fetch_inei_stats(self) -> dict
+    async def fetch_bcrp_rates(self) -> dict
+    async def fetch_worldbank_trade(self) -> dict
+```
+
+---
+
+## API Endpoints (59 Gesamt)
+
+### Data Pipeline (`/api/v1/pipeline/`)
+```
+POST /trigger/{source}           ← Einzelne Quelle triggern
+POST /trigger-all                ← Alle 17 Quellen
+GET  /status                     ← Pipeline-Status
+GET  /sources                    ← Liste aller 17 Quellen
+GET  /source/{name}/health       ← Health einer Quelle
+```
+
+### Feature Engineering (`/api/v1/features/`)
+```
+POST /compute/{entity_type}/{id} ← Features berechnen
+GET  /cached/{entity_type}/{id}  ← Gecachte Features abrufen
+POST /bulk-import                ← CSV Upload
+GET  /importance                 ← Feature Importance Ranking
+GET  /quality-report             ← Qualitaetsbericht
+```
+
+### Monitoring (`/api/v1/ops/`)
+```
+GET  /health                     ← System Health
+GET  /sources/status             ← 17 API Health
+GET  /data-quality/summary       ← Qualitaets-Metriken
+GET  /ml-performance             ← Model Performance
+GET  /alerts                     ← Aktive Alerts
+POST /alerts/{id}/acknowledge    ← Alert bestaetigen
+```
+
+---
+
+## ML Features: 50+ Features
+
+### Freight Features (15)
+```python
+fuel_price_index            # Treibstoffpreis-Index
+port_congestion_score       # Hafen-Auslastung
+seasonal_demand_index       # Saisonale Nachfrage
+carrier_reliability_score   # Spediteur-Zuverlaessigkeit
+route_complexity            # Routen-Komplexitaet
+container_availability      # Container-Verfuegbarkeit
+exchange_rate_volatility    # Wechselkurs-Volatilitaet
+weather_delay_probability   # Wetter-Verzoegerungs-Wahrscheinlichkeit
+customs_risk_index          # Zoll-Risiko
+vessel_age                  # Schiffs-Alter
+recent_price_volatility     # Preis-Volatilitaet
+supply_disruption_risk      # Lieferketten-Risiko
+competitor_pricing_pressure # Wettbewerbs-Druck
+geopolitical_risk           # Geopolitisches Risiko
+arrival_ETA_confidence      # Ankunfts-Konfidenz
+```
+
+### Price Features (20)
+```python
+market_sentiment_score      # Markt-Sentiment
+competing_suppliers_count   # Anzahl Wettbewerber
+quality_cupping_trend       # Cupping-Score Trend
+exchange_rate_impact_eur_usd
+exchange_rate_impact_eur_pen
+ice_futures_correlation     # ICE Futures Korrelation
+global_coffee_stock_level   # Globale Lagerbestaende
+peru_production_forecast    # Peru Produktions-Prognose
+frost_risk_index            # Frost-Risiko
+drought_stress_index        # Duerrestress
+pest_outbreak_probability   # Schaedlings-Risiko
+harvest_timing_indicator    # Ernte-Timing
+certifications_premium      # Zertifizierungs-Premium
+processing_method_marketability
+altitude_quality_index      # Hoehen-Qualitaet
+origin_reputation_score     # Herkunfts-Reputation
+news_buzz_index             # News-Buzz
+shortage_signal_index       # Knappheits-Signal
+buyer_demand_index          # Kaeufer-Nachfrage
+price_elasticity_factor     # Preis-Elastizitaet
+```
+
+### Cross Features (15+)
+```python
+freight_to_price_ratio      # Fracht-zu-Preis Verhaeltnis
+total_landed_cost_estimate  # Gesamtkosten-Schaetzung
+deal_profitability_forecast # Profitabilitaets-Prognose
+temporal_seasonality        # Saisonalitaet
+region_reputation_score     # Regions-Reputation
+```
+
+---
+
+## KI-Handlungsanweisungen (fuer OpenAI/Copilot)
+
+### REGEL 1: Vor jeder Aenderung
+```
+1. Lies CODEBASE_MAP.md vollstaendig
+2. Pruefe ob eine aehnliche Implementierung bereits existiert
+3. Verwende bestehende Patterns und Konventionen
+```
+
+### REGEL 2: Neue API-Endpoints
+```python
+# 1. Route in apps/api/app/routes/{resource}_routes.py
+@router.post("/neue-aktion")
+async def neue_aktion(request: NeueAktionRequest, db: AsyncSession = Depends(get_db)):
+    service = NeueService(db)
+    return await service.execute(request)
+
+# 2. Schema in apps/api/app/schemas/{resource}.py
+class NeueAktionRequest(BaseModel):
+    field: str
+
+# 3. Service in apps/api/app/services/{resource}_service.py
+class NeueService:
+    async def execute(self, request: NeueAktionRequest) -> dict:
+        pass
+
+# 4. Test in apps/api/tests/test_routes/test_{resource}.py
+@pytest.mark.asyncio
+async def test_neue_aktion(client, auth_headers):
+    response = await client.post("/api/v1/resource/neue-aktion", headers=auth_headers)
+    assert response.status_code == 200
+```
+
+### REGEL 3: Neue Provider (Externe API)
+```python
+# apps/api/app/providers/{source}.py
+class NeueQuellProvider:
+    """Beschreibung der Datenquelle"""
+    
+    def __init__(self):
+        self.base_url = "https://api.example.com"
+        self.timeout = 30
+    
+    async def fetch_data(self) -> dict:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.get(f"{self.base_url}/endpoint")
+            response.raise_for_status()
+            return response.json()
+```
+
+### REGEL 4: Neue ML Features
+```python
+# apps/api/app/services/ml/advanced_features.py
+class AdvancedFeatureEngineering:
+    
+    async def compute_neues_feature(self, entity_id: int) -> float:
+        """
+        Berechnet: [Beschreibung]
+        Range: 0.0 - 1.0
+        Abhaengigkeiten: [andere Features/Daten]
+        """
+        # Implementation
+        return value
+```
+
+### REGEL 5: Neue Datenbank-Tabelle
+```bash
+# 1. Model erstellen
+# apps/api/app/models/neue_tabelle.py
+
+# 2. In __init__.py importieren
+# apps/api/app/models/__init__.py
+
+# 3. Migration generieren
+cd apps/api
+alembic revision --autogenerate -m "add neue_tabelle"
+
+# 4. Migration ausfuehren
+alembic upgrade head
+```
+
+### REGEL 6: Frontend-Integration
+```typescript
+// 1. Service erstellen
+// apps/web/app/services/neue.service.ts
+export const neueService = {
+  async list(): Promise<NeueEntity[]> {
+    if (isDemoMode()) return [];
+    return apiFetch<NeueEntity[]>("/api/v1/neue");
+  }
+};
+
+// 2. Hook erstellen
+// apps/web/app/hooks/useNeue.ts
+export function useNeue() {
+  return useQuery({
+    queryKey: queryKeys.neue.list(),
+    queryFn: () => neueService.list(),
+    enabled: !isDemoMode(),
+  });
+}
+
+// 3. In Seite verwenden
+// apps/web/app/neue/page.tsx
+const { data, isLoading, error } = useNeue();
+```
+
+---
+
+## Testing-Strategie
+
+### Unit Tests
+```bash
+cd apps/api
+pytest tests/test_services/ -v
+```
+
+### Integration Tests
+```bash
+pytest tests/test_routes/ -v
+```
+
+### Provider Tests (mit Mocks)
+```bash
+pytest tests/test_providers/ -v
+```
+
+### Coverage Report
+```bash
+pytest --cov=app --cov-report=html tests/
+```
+
+---
+
+## Deployment Checklist
+
+### Pre-Deployment
+- [ ] Alle Tests bestanden (`pytest tests/ -v`)
+- [ ] Type Check OK (`mypy app/`)
+- [ ] Lint OK (`ruff check app/`)
+- [ ] Migrationen aktuell (`alembic upgrade head`)
+
+### Environment Variables (Produktion)
+```bash
+DATABASE_URL=postgresql+asyncpg://...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+UPSTASH_REDIS_URL=redis://...
+JWT_SECRET_KEY=<secure-random-key>
+NEWSAPI_KEY=<optional>
+```
+
+### Health Check
+```bash
+curl http://api.domain.com/api/v1/ops/health
+# Erwartete Antwort: {"status": "healthy", "version": "1.0.0", ...}
+```
+
+---
+
+## Haeufige Fehler (fuer KI-Assistenten)
+
+### FEHLER: Import direkt aus Provider in Route
+```python
+# FALSCH:
+from app.providers.coffee_prices import CoffeePricesProvider
+
+@router.get("/prices")
+async def get_prices():
+    provider = CoffeePricesProvider()
+    return await provider.fetch()
+
+# RICHTIG: Ueber Service-Layer
+from app.services.data_pipeline.orchestrator import DataPipelineOrchestrator
+
+@router.get("/prices")
+async def get_prices(db: AsyncSession = Depends(get_db)):
+    orchestrator = DataPipelineOrchestrator(db)
+    return await orchestrator.get_coffee_prices()
+```
+
+### FEHLER: Typen inline definieren
+```typescript
+// FALSCH:
+interface Roaster { id: number; name: string; }
+
+// RICHTIG:
+import { Roaster } from "../types";
+```
+
+### FEHLER: Kein Demo-Mode Guard
+```typescript
+// FALSCH:
+const data = await apiFetch<Data[]>("/api/v1/data");
+
+// RICHTIG:
+if (isDemoMode()) return [];
+const data = await apiFetch<Data[]>("/api/v1/data");
+```
+
+---
+
+## Kontaktpunkte im Code
+
+### Backend Entry
+- `apps/api/app/main.py` - FastAPI App
+- `apps/api/app/core/config.py` - Konfiguration
+
+### Frontend Entry
+- `apps/web/app/layout.tsx` - Root Layout
+- `apps/web/lib/api.ts` - HTTP Client
+
+### Datenbank
+- `apps/api/app/db/session.py` - Session Factory
+- `apps/api/alembic/` - Migrationen
+
+### Authentication
+- `apps/api/app/core/security.py` - JWT Logik
+- `apps/api/app/routes/auth_routes.py` - Auth Endpoints
+
+---
+
+*Letzte Aktualisierung: Maerz 2026*
+*Version: 2.0 (Full Stack Data Platform)*
+*Status: Production Ready*

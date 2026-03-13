@@ -24,26 +24,25 @@ B2B Intelligence Platform für Specialty Coffee — Peru Sourcing bis Deutschlan
 
 ---
 
-## 📖 Documentation (Complete)
+## Dokumentation
 
-### Getting Started (5 minutes)
-- **[QUICK_START.md](QUICK_START.md)** — Immediate deployment guide
+### Fuer KI-Assistenten (VS Code + OpenAI/Copilot)
+- **[AI_INSTRUCTIONS.md](AI_INSTRUCTIONS.md)** - Kurzanleitung (Copy-Paste ready)
+- **[CODEBASE_MAP.md](CODEBASE_MAP.md)** - Vollstaendige Architektur-Referenz
 
-### Status & Completion
-- **[COMPLETION_STATUS.md](COMPLETION_STATUS.md)** — Full audit & verification
-- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** — Overall system overview
+### Architektur & Implementation
+- **[ENTERPRISE_ROADBOOK.md](ENTERPRISE_ROADBOOK.md)** - Frontend/Backend Integration
+- **[QUICK_START.md](QUICK_START.md)** - Schnellstart-Anleitung
 
-### Architecture & Implementation
-- **[ENTERPRISE_ROADBOOK.md](ENTERPRISE_ROADBOOK.md)** — Frontend/Backend integration guide
-- **[PHASE1_DATABASE_SETUP.md](PHASE1_DATABASE_SETUP.md)** — Database configuration
-- **[PHASE2_COMPLETE.md](PHASE2_COMPLETE.md)** — Data integrations (17 APIs)
-- **[PHASE3_COMPLETE.md](PHASE3_COMPLETE.md)** — Feature engineering (50+ features)
-- **[PHASE4_COMPLETE.md](PHASE4_COMPLETE.md)** — Monitoring & scheduling
+### Phase-Dokumentation (Data Platform)
+- **[PHASE1_DATABASE_SETUP.md](PHASE1_DATABASE_SETUP.md)** - Datenbank (13 Tabellen)
+- **[PHASE2_COMPLETE.md](PHASE2_COMPLETE.md)** - Data Integration (17 APIs)
+- **[PHASE3_COMPLETE.md](PHASE3_COMPLETE.md)** - ML Features (50+)
+- **[PHASE4_COMPLETE.md](PHASE4_COMPLETE.md)** - Scheduling & Monitoring
 
-### Operations & Deployment
-- **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** — QA framework (unit, integration, load, security)
-- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** — Production go-live procedures
-- **[CODEBASE_MAP.md](CODEBASE_MAP.md)** — Architecture reference for AI assistants
+### Operations
+- **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - QA Framework
+- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Production Deployment
 
 ---
 
