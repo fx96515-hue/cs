@@ -281,6 +281,8 @@ const navGroups: NavGroup[] = [
     icon: icons.operations,
     items: [
       { href: "/ops", label: "Systemstatus", icon: subIcons.system },
+      { href: "/pipeline", label: "Data Pipeline", icon: subIcons.graph, badge: "17 APIs" },
+      { href: "/features", label: "ML Features", icon: subIcons.ml, badge: "50+" },
       { href: "/alerts", label: "Warnungen", icon: subIcons.alerts },
       { href: "/dedup", label: "Duplikatprüfung", icon: subIcons.dedup },
     ],

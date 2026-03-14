@@ -6,12 +6,32 @@ import { DefaultChatTransport } from 'ai'
 import Link from 'next/link'
 
 const EXAMPLE_QUESTIONS = [
-  'Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung?',
-  'Finde Roestereien in Berlin mit Peru-Fokus',
-  'Wie sind die aktuellen Specialty Coffee Preise?',
-  'Wetterbedingungen in Cajamarca fuer die Ernte?',
-  'Aktuelle News zu Kaffee-Exporten aus Peru',
+  { text: 'Welche Kooperativen in Cajamarca haben Fair Trade?', icon: 'search', category: 'Suche' },
+  { text: 'Berechne Landed Cost fuer 500kg Specialty nach Hamburg', icon: 'calc', category: 'Kalkulation' },
+  { text: 'Wie sind die aktuellen Markttrends fuer Q1?', icon: 'chart', category: 'Analyse' },
+  { text: 'ML-Prognose fuer Frachtkosten Callao-Hamburg', icon: 'brain', category: 'ML' },
+  { text: 'Wetterbedingungen in Cajamarca fuer die Ernte?', icon: 'cloud', category: 'Wetter' },
+  { text: 'Status der Data Pipeline und Datenquellen', icon: 'database', category: 'System' },
 ]
+
+const QUICK_ACTIONS = [
+  { label: 'Kooperativen durchsuchen', prompt: 'Zeige mir alle Kooperativen mit Bio-Zertifizierung', color: '#16a34a' },
+  { label: 'Preis-Prognose', prompt: 'Erstelle eine ML-Prognose fuer Specialty-Preise aus Cajamarca', color: '#2563eb' },
+  { label: 'Kostenrechner', prompt: 'Berechne die Landed Cost fuer 1000kg Premium-Kaffee von San Martin nach Berlin', color: '#ca8a04' },
+  { label: 'Marktanalyse', prompt: 'Analysiere die Markttrends der letzten 3 Monate mit Fokus auf Preise', color: '#7c3aed' },
+]
+
+function getIcon(type: string) {
+  switch (type) {
+    case 'search': return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    case 'calc': return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+    case 'chart': return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    case 'brain': return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+    case 'cloud': return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+    case 'database': return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    default: return null
+  }
+}
 
 function getUIMessageText(parts: Array<{ type: string; text?: string }>): string {
   return parts
@@ -129,49 +149,106 @@ export default function KIPage() {
                 </p>
               </div>
 
+              {/* Quick Actions */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 'var(--space-3)',
+                width: '100%',
+                maxWidth: 600,
+                marginBottom: 'var(--space-6)'
+              }}>
+                {QUICK_ACTIONS.map((action, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleExample(action.prompt)}
+                    disabled={isLoading}
+                    style={{
+                      padding: 'var(--space-4)',
+                      background: `${action.color}10`,
+                      border: `1px solid ${action.color}30`,
+                      borderRadius: 'var(--radius-lg)',
+                      textAlign: 'center',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading ? 0.5 : 1,
+                      transition: 'all 0.15s ease',
+                      fontSize: 'var(--font-size-sm)',
+                      fontWeight: 500,
+                      color: action.color,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isLoading) {
+                        e.currentTarget.style.background = `${action.color}20`
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = `${action.color}10`
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+
               {/* Example Questions */}
               <div style={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
                 gap: 'var(--space-2)',
                 width: '100%',
-                maxWidth: 500
+                maxWidth: 600
               }}>
                 <span className="muted" style={{ fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Beispielfragen
+                  Oder stelle eine Frage
                 </span>
-                {EXAMPLE_QUESTIONS.map((q, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleExample(q)}
-                    disabled={isLoading}
-                    style={{
-                      padding: 'var(--space-3) var(--space-4)',
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-lg)',
-                      textAlign: 'left',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      opacity: isLoading ? 0.5 : 1,
-                      transition: 'all 0.15s ease',
-                      fontSize: 'var(--font-size-sm)',
-                      color: 'var(--color-text)'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isLoading) {
-                        e.currentTarget.style.borderColor = 'var(--color-primary)'
-                        e.currentTarget.style.background = 'var(--color-bg-muted)'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--color-border)'
-                      e.currentTarget.style.background = 'var(--color-surface)'
-                    }}
-                  >
-                    <span style={{ color: 'var(--color-primary)', marginRight: 'var(--space-2)' }}>?</span>
-                    {q}
-                  </button>
-                ))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-2)' }}>
+                  {EXAMPLE_QUESTIONS.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleExample(q.text)}
+                      disabled={isLoading}
+                      style={{
+                        padding: 'var(--space-3) var(--space-4)',
+                        background: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-lg)',
+                        textAlign: 'left',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        opacity: isLoading ? 0.5 : 1,
+                        transition: 'all 0.15s ease',
+                        fontSize: 'var(--font-size-sm)',
+                        color: 'var(--color-text)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-2)',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isLoading) {
+                          e.currentTarget.style.borderColor = 'var(--color-primary)'
+                          e.currentTarget.style.background = 'var(--color-bg-muted)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-border)'
+                        e.currentTarget.style.background = 'var(--color-surface)'
+                      }}
+                    >
+                      <span style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}>{getIcon(q.icon)}</span>
+                      <span style={{ flex: 1 }}>{q.text}</span>
+                      <span style={{ 
+                        fontSize: 'var(--font-size-xs)', 
+                        color: 'var(--color-text-muted)',
+                        background: 'var(--color-bg-muted)',
+                        padding: '2px 6px',
+                        borderRadius: 'var(--radius-sm)',
+                      }}>
+                        {q.category}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
@@ -250,13 +327,19 @@ export default function KIPage() {
                       {toolParts.length > 0 && (
                         <div style={{
                           padding: 'var(--space-3)',
-                          background: 'var(--color-bg-muted)',
+                          background: 'linear-gradient(135deg, var(--color-info-subtle) 0%, var(--color-success-subtle) 100%)',
                           borderRadius: 'var(--radius-md)',
-                          border: '1px solid var(--color-border)',
-                          fontSize: 'var(--font-size-xs)'
+                          border: '1px solid var(--color-info-border)',
+                          fontSize: 'var(--font-size-xs)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--space-2)',
                         }}>
-                          <span className="muted" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Datenabfrage durchgefuehrt
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-info)" strokeWidth="2">
+                            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                          </svg>
+                          <span style={{ color: 'var(--color-info)', fontWeight: 500 }}>
+                            {toolParts.length} Tool{toolParts.length > 1 ? 's' : ''} ausgefuehrt
                           </span>
                         </div>
                       )}
@@ -375,16 +458,54 @@ export default function KIPage() {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <span className="muted" style={{ fontSize: 'var(--font-size-xs)' }}>
-              Powered by GPT-5 Mini via Vercel AI Gateway
-            </span>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-              <Link href="/search" className="muted" style={{ fontSize: 'var(--font-size-xs)', textDecoration: 'none' }}>
-                Semantische Suche
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <span style={{ 
+                width: 6, 
+                height: 6, 
+                borderRadius: '50%', 
+                background: 'var(--color-success)',
+                animation: 'pulse 2s infinite'
+              }} />
+              <span className="muted" style={{ fontSize: 'var(--font-size-xs)' }}>
+                Powered by OpenAI GPT-5 Mini via Vercel AI Gateway
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+              <Link href="/search" className="muted" style={{ 
+                fontSize: 'var(--font-size-xs)', 
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-1)',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                Suche
               </Link>
-              <span className="muted" style={{ fontSize: 'var(--font-size-xs)' }}>|</span>
-              <Link href="/analyst" className="muted" style={{ fontSize: 'var(--font-size-xs)', textDecoration: 'none' }}>
-                Legacy Analyst
+              <Link href="/analytics" className="muted" style={{ 
+                fontSize: 'var(--font-size-xs)', 
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-1)',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Analytics
+              </Link>
+              <Link href="/ml" className="muted" style={{ 
+                fontSize: 'var(--font-size-xs)', 
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-1)',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                </svg>
+                ML Models
               </Link>
             </div>
           </div>

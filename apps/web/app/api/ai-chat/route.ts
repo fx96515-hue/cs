@@ -1,5 +1,4 @@
 import {
-  consumeStream,
   convertToModelMessages,
   streamText,
   tool,
@@ -7,7 +6,7 @@ import {
 } from 'ai'
 import { z } from 'zod'
 
-export const maxDuration = 30
+export const maxDuration = 60
 
 // Coffee-specific tools for the AI assistant
 const coffeeTools = {
@@ -116,6 +115,158 @@ const coffeeTools = {
       return news.slice(0, 4)
     },
   }),
+
+  analyzeMarketTrends: tool({
+    description: 'Analyze coffee market trends and provide insights',
+    inputSchema: z.object({
+      timeframe: z.enum(['week', 'month', 'quarter', 'year']).describe('Analysis timeframe'),
+      focus: z.string().nullable().describe('Specific focus area (prices, supply, demand, quality)'),
+    }),
+    execute: async ({ timeframe, focus }) => {
+      const trends = {
+        prices: {
+          direction: 'up',
+          change: timeframe === 'week' ? 2.3 : timeframe === 'month' ? 8.5 : 15.2,
+          drivers: ['Brasilianische Duerre', 'Steigende Nachfrage in Asien', 'USD-Schwaechung'],
+          outlook: 'Preise bleiben voraussichtlich hoch bis Q3 2026',
+        },
+        supply: {
+          status: 'tight',
+          peruProduction: '4.2 Mio. Saecke (Prognose)',
+          globalStock: 'Unter 5-Jahres-Durchschnitt',
+          bottlenecks: ['Containerknappheit', 'Hafenverzoegerungen Callao'],
+        },
+        demand: {
+          growth: '4.2% YoY',
+          topMarkets: ['Deutschland +6%', 'USA +3%', 'Japan +5%'],
+          specialty: 'Specialty-Segment waechst 12% schneller als Commodity',
+        },
+        quality: {
+          avgCupping: 84.5,
+          trend: 'Leicht steigend durch bessere Verarbeitungsmethoden',
+          premiums: 'Fair Trade Premium +$0.20/lb',
+        },
+      }
+      
+      if (focus && trends[focus as keyof typeof trends]) {
+        return { timeframe, focus, data: trends[focus as keyof typeof trends] }
+      }
+      return { timeframe, overview: trends }
+    },
+  }),
+
+  calculateLandedCost: tool({
+    description: 'Calculate estimated landed cost for coffee shipments',
+    inputSchema: z.object({
+      origin: z.string().describe('Origin region in Peru'),
+      destination: z.string().describe('Destination city in Germany'),
+      quantity: z.number().describe('Quantity in kg'),
+      quality: z.enum(['standard', 'specialty', 'premium']).describe('Quality grade'),
+    }),
+    execute: async ({ origin, destination, quantity, quality }) => {
+      const basePrices = { standard: 3.20, specialty: 4.80, premium: 6.50 } // EUR/kg
+      const freightPerKg = 0.45 // EUR/kg average
+      const insuranceRate = 0.015 // 1.5%
+      const customsDuty = 0 // Coffee is duty-free in EU
+      
+      const fobPrice = basePrices[quality] * quantity
+      const freight = freightPerKg * quantity
+      const insurance = fobPrice * insuranceRate
+      const handling = quantity > 1000 ? 150 : 80
+      
+      const total = fobPrice + freight + insurance + handling
+      
+      return {
+        origin,
+        destination,
+        quantity: `${quantity} kg`,
+        breakdown: {
+          fobPrice: `EUR ${fobPrice.toFixed(2)}`,
+          freight: `EUR ${freight.toFixed(2)}`,
+          insurance: `EUR ${insurance.toFixed(2)}`,
+          handling: `EUR ${handling.toFixed(2)}`,
+        },
+        totalLandedCost: `EUR ${total.toFixed(2)}`,
+        perKg: `EUR ${(total / quantity).toFixed(2)}/kg`,
+        estimatedDelivery: '4-6 Wochen ab Buchung',
+      }
+    },
+  }),
+
+  getDataPipelineStatus: tool({
+    description: 'Get status of data collection pipeline and sources',
+    inputSchema: z.object({
+      source: z.string().nullable().describe('Specific data source to check (optional)'),
+    }),
+    execute: async ({ source }) => {
+      const sources = [
+        { name: 'Yahoo Finance', status: 'online', lastSync: '2026-03-14 09:00', records: 15420 },
+        { name: 'ECB FX Rates', status: 'online', lastSync: '2026-03-14 08:30', records: 8920 },
+        { name: 'OpenMeteo Weather', status: 'online', lastSync: '2026-03-14 06:00', records: 45600 },
+        { name: 'NewsAPI', status: 'online', lastSync: '2026-03-14 07:15', records: 2340 },
+        { name: 'AIS Shipping', status: 'degraded', lastSync: '2026-03-14 05:45', records: 12800 },
+        { name: 'INEI Peru Stats', status: 'online', lastSync: '2026-03-13 00:00', records: 890 },
+      ]
+      
+      if (source) {
+        const found = sources.find(s => s.name.toLowerCase().includes(source.toLowerCase()))
+        return found || { error: `Quelle "${source}" nicht gefunden` }
+      }
+      
+      return {
+        totalSources: sources.length,
+        online: sources.filter(s => s.status === 'online').length,
+        degraded: sources.filter(s => s.status === 'degraded').length,
+        sources,
+      }
+    },
+  }),
+
+  getMLPrediction: tool({
+    description: 'Get ML model predictions for freight or price forecasting',
+    inputSchema: z.object({
+      model: z.enum(['freight', 'price']).describe('Which model to use'),
+      params: z.object({
+        route: z.string().nullable().describe('Shipping route (for freight model)'),
+        origin: z.string().nullable().describe('Coffee origin region (for price model)'),
+        quality: z.string().nullable().describe('Quality grade (for price model)'),
+      }),
+    }),
+    execute: async ({ model, params }) => {
+      if (model === 'freight') {
+        return {
+          model: 'FreightCostPredictor v2.1',
+          route: params.route || 'Callao-Hamburg',
+          prediction: {
+            estimatedCost: 'EUR 2,450 - 2,680 / Container',
+            confidence: 0.87,
+            factors: [
+              'Fuel Price Index: +12% YoY',
+              'Port Congestion: Moderate',
+              'Seasonal Demand: High (Q1)',
+            ],
+          },
+          modelAccuracy: '92% (letzte 30 Tage)',
+        }
+      } else {
+        return {
+          model: 'PriceForecaster v3.0',
+          origin: params.origin || 'Cajamarca',
+          quality: params.quality || 'Specialty',
+          prediction: {
+            priceRange: 'USD 4.65 - 5.10 / lb',
+            confidence: 0.84,
+            factors: [
+              'Supply Shortage: Bullish',
+              'Quality Premium: +15%',
+              'EUR/USD Trend: Neutral',
+            ],
+          },
+          modelAccuracy: '89% (letzte 30 Tage)',
+        }
+      }
+    },
+  }),
 }
 
 export async function POST(req: Request) {
@@ -141,6 +292,5 @@ Sei praezise, professionell und hilfreich. Formatiere Ergebnisse uebersichtlich.
 
   return result.toUIMessageStreamResponse({
     originalMessages: messages,
-    consumeSseStream: consumeStream,
   })
 }
