@@ -1,0 +1,6 @@
+-- Intentionally left conservative.
+-- The raw PR721 seed script was not adopted because it assumed columns and
+-- data contracts that are not guaranteed on current main-based schema.
+--
+-- If future training-data seeding is required, implement it through reviewed,
+-- idempotent app-level jobs or a dedicated Alembic/data migration plan.
