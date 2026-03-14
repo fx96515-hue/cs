@@ -7,9 +7,16 @@ import Badge from "../components/Badge";
 import { DataQualityFlag } from "../types";
 import { toErrorMessage } from "../utils/error";
 
-type JobResponse = { status: string; task_id: string; report_id: number; message: string };
+type JobResponse = { status: string; task_id: string; report_id?: number; message?: string };
 type EntityType = "cooperative" | "roaster" | "both";
 type NewsRefreshResponse = { status: string; created?: number; updated?: number; errors?: unknown[] };
+type AsyncTaskStatus = {
+  task_id: string;
+  state?: string;
+  ready?: boolean;
+  result?: unknown;
+  error?: string;
+};
 
 function parseEntityType(value: string): EntityType {
   if (value === "cooperative" || value === "roaster" || value === "both") return value;
@@ -41,8 +48,10 @@ function OpsPageContent() {
   const [isDemo, setIsDemo] = useState(false);
 
   const push = useCallback((line: string) => {
-    setLog((prev) => [`${new Date().toLocaleTimeString()}  ${line}`, ...prev].slice(0, 120));
+    setLog((prev) => [`${new Date().toLocaleTimeString()}  ${line}`, ...prev].slice(0, 150));
   }, []);
+
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const ping = useCallback(async () => {
     if (isDemoMode()) {
@@ -76,7 +85,7 @@ function OpsPageContent() {
       setOverview(o);
       setFlags(Array.isArray(f) ? f.slice(0, 12) : []);
     } catch (error: unknown) {
-      push(`Datenqualität: FEHLER ${toErrorMessage(error)}`);
+      push(`Datenqualitaet: FEHLER ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
@@ -103,13 +112,40 @@ function OpsPageContent() {
     loadQuality();
   }, [loadQuality]);
 
-  async function run(name: string, fn: () => Promise<unknown>) {
-    if (isDemoMode()) { push(`${name}: Demo-Modus – kein Aufruf`); return; }
+  async function pollTaskStatus(name: string, taskId: string, statusPath: string) {
+    const maxPolls = 90;
+    for (let attempt = 1; attempt <= maxPolls; attempt++) {
+      await wait(2000);
+      const status = await apiFetch<AsyncTaskStatus>(`${statusPath}/${taskId}`);
+      const state = status.state || (status.ready ? "SUCCESS" : "PENDING");
+      if (attempt === 1 || attempt % 5 === 0 || state !== "PENDING") {
+        push(`${name}: Status ${state}`);
+      }
+      if (state === "SUCCESS" || state === "FAILURE" || state === "REVOKED") {
+        if (status.result) push(`${name}: Ergebnis ${JSON.stringify(status.result)}`);
+        if (status.error) push(`${name}: Fehler ${status.error}`);
+        return status;
+      }
+    }
+    push(`${name}: Timeout bei Task-Pruefung`);
+    return null;
+  }
+
+  async function run(name: string, fn: () => Promise<unknown>, taskStatusPath?: string) {
+    if (isDemoMode()) {
+      push(`${name}: Demo-Modus - kein Aufruf`);
+      return;
+    }
     setBusy(true);
     try {
       push(`${name} wird gestartet...`);
       const r = await fn();
       push(`${name}: OK ${JSON.stringify(r)}`);
+      const taskId = (r as { task_id?: string } | null | undefined)?.task_id;
+      if (taskId && taskStatusPath) {
+        push(`${name}: Task ${taskId} in Bearbeitung`);
+        await pollTaskStatus(name, taskId, taskStatusPath);
+      }
     } catch (error: unknown) {
       push(`${name}: FEHLER ${toErrorMessage(error)}`);
     } finally {
@@ -124,7 +160,7 @@ function OpsPageContent() {
       await apiFetch(`/data-quality/flags/${id}/resolve`, { method: "POST" });
       await loadQuality();
     } catch (error: unknown) {
-      push(`Flag auflösen: FEHLER ${toErrorMessage(error)}`);
+      push(`Flag aufloesen: FEHLER ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
@@ -145,27 +181,24 @@ function OpsPageContent() {
 
   const criticalFlags = overview?.data_quality?.critical_flags ?? 0;
   const openFlags = overview?.data_quality?.open_flags ?? 0;
-
   const healthTone = health === "ok" ? "good" : health === "demo" ? "warn" : health === "" ? "neutral" : "bad";
-  const healthLabel = health === "ok" ? "Online" : health === "demo" ? "Demo" : health === "" ? "Prüfe..." : "Offline";
+  const healthLabel = health === "ok" ? "Online" : health === "demo" ? "Demo" : health === "" ? "Pruefe..." : "Offline";
 
   return (
     <>
-      {/* Seitenheader */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
           <h1 className="h1">Betrieb</h1>
-          <p className="subtitle">Systemverwaltung, Workflows und Datenqualität</p>
+          <p className="subtitle">Systemverwaltung, Workflows und Datenqualitaet</p>
         </div>
         <div className="pageHeaderActions">
           <Badge tone={healthTone}>API: {healthLabel}</Badge>
           <button className="btn" onClick={ping} disabled={busy}>
-            Verbindung prüfen
+            Verbindung pruefen
           </button>
         </div>
       </header>
 
-      {/* Kennzahlen */}
       <div className="kpiGrid">
         <div className="kpiCard">
           <span className="cardLabel">API-Status</span>
@@ -174,23 +207,21 @@ function OpsPageContent() {
         <div className="kpiCard">
           <span className="cardLabel">Kritische Markierungen</span>
           <span className="cardValue" style={{ color: criticalFlags > 0 ? "var(--color-danger)" : undefined }}>
-            {isDemo ? "–" : criticalFlags}
+            {isDemo ? "-" : criticalFlags}
           </span>
           {criticalFlags > 0 && <span className="cardHint">Aktion erforderlich</span>}
         </div>
         <div className="kpiCard">
           <span className="cardLabel">Offene Markierungen</span>
-          <span className="cardValue">{isDemo ? "–" : openFlags}</span>
+          <span className="cardValue">{isDemo ? "-" : openFlags}</span>
         </div>
         <div className="kpiCard">
-          <span className="cardLabel">Datenaktualität</span>
-          <span className="cardValue">{isDemo ? "–" : (overview?.data_quality?.freshness_status || "–")}</span>
+          <span className="cardLabel">Datenaktualitaet</span>
+          <span className="cardValue">{isDemo ? "-" : (overview?.data_quality?.freshness_status || "-")}</span>
         </div>
       </div>
 
-      {/* Aktionen */}
       <div className="grid2col">
-        {/* Aktualisierung */}
         <section className="panel" aria-labelledby="refresh-title">
           <div className="panelHeader">
             <h2 id="refresh-title" className="panelTitle">Aktualisierung</h2>
@@ -213,16 +244,25 @@ function OpsPageContent() {
               <button
                 className="btn btnPrimary"
                 disabled={busy || isDemo}
-                onClick={() => run("Marktaktualisierung", () => apiFetch<JobResponse>("/market/refresh", { method: "POST" }))}
+                onClick={() =>
+                  run(
+                    "Marktaktualisierung",
+                    () => apiFetch<JobResponse>("/market/refresh", { method: "POST" }),
+                    "/market/tasks",
+                  )
+                }
               >
                 Marktdaten aktualisieren
               </button>
               <button
                 className="btn"
                 disabled={busy || isDemo}
-                onClick={() => run("Nachrichtenaktualisierung", () =>
-                  apiFetch<NewsRefreshResponse>(`/news/refresh?topic=${encodeURIComponent(topic)}`, { method: "POST" })
-                )}
+                onClick={() =>
+                  run(
+                    "Nachrichtenaktualisierung",
+                    () => apiFetch<NewsRefreshResponse>(`/news/refresh?topic=${encodeURIComponent(topic)}`, { method: "POST" }),
+                  )
+                }
               >
                 Nachrichten aktualisieren
               </button>
@@ -230,18 +270,17 @@ function OpsPageContent() {
           </div>
         </section>
 
-        {/* Ersterfassung */}
         <section className="panel" aria-labelledby="discovery-title">
           <div className="panelHeader">
             <h2 id="discovery-title" className="panelTitle">Ersterfassung</h2>
           </div>
           <div className="panelBody">
             <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
-              Kooperativen und Röstereien über Web-Suche erstmalig erfassen.
+              Kooperativen und Roestereien ueber Web-Suche erstmalig erfassen.
             </p>
             <div className="fieldGrid2">
               <div className="field">
-                <label className="fieldLabel" htmlFor="entity-type-select">Entitätstyp</label>
+                <label className="fieldLabel" htmlFor="entity-type-select">Entitaetstyp</label>
                 <select
                   id="entity-type-select"
                   className="input"
@@ -250,11 +289,11 @@ function OpsPageContent() {
                 >
                   <option value="both">Beide</option>
                   <option value="cooperative">Kooperative</option>
-                  <option value="roaster">Rösterei</option>
+                  <option value="roaster">Roesterei</option>
                 </select>
               </div>
               <div className="field">
-                <label className="fieldLabel" htmlFor="max-input">Max. Einträge</label>
+                <label className="fieldLabel" htmlFor="max-input">Max. Eintraege</label>
                 <input
                   id="max-input"
                   className="input"
@@ -270,24 +309,39 @@ function OpsPageContent() {
               <button
                 className="btn btnPrimary"
                 disabled={busy || isDemo}
-                onClick={() => run("Ersterfassung", () =>
-                  apiFetch<JobResponse>("/discovery/seed", {
-                    method: "POST",
-                    body: JSON.stringify({ entity_type: entityType, max_entities: max, dry_run: false }),
-                  })
-                )}
+                onClick={() =>
+                  run(
+                    "Ersterfassung",
+                    () =>
+                      apiFetch<JobResponse>("/discovery/seed", {
+                        method: "POST",
+                        body: JSON.stringify({ entity_type: entityType, max_entities: max, dry_run: false }),
+                      }),
+                    "/discovery/seed",
+                  )
+                }
               >
                 Ersterfassung starten
+              </button>
+              <button
+                className="btn"
+                disabled={busy || isDemo}
+                onClick={() =>
+                  run("Koop-Datenluecken", () =>
+                    apiFetch(`/cooperatives/backfill-missing?limit=${max}`, { method: "POST" }),
+                  )
+                }
+              >
+                Fehlende Kooperativen-Daten suchen
               </button>
             </div>
           </div>
         </section>
       </div>
 
-      {/* Datenqualität */}
       <section className="panel" aria-labelledby="dq-title">
         <div className="panelHeader">
-          <h2 id="dq-title" className="panelTitle">Datenqualität</h2>
+          <h2 id="dq-title" className="panelTitle">Datenqualitaet</h2>
           <div className="panelActions">
             {!isDemo && (
               <>
@@ -301,49 +355,31 @@ function OpsPageContent() {
           </div>
         </div>
 
-        {/* Filter */}
         <div className="panelFilters">
-          <select
-            className="input"
-            value={dqSeverity}
-            onChange={(e) => setDqSeverity(e.target.value)}
-            style={{ width: 160 }}
-            aria-label="Schweregrad filtern"
-          >
+          <select className="input" value={dqSeverity} onChange={(e) => setDqSeverity(e.target.value)} style={{ width: 160 }}>
             <option value="all">Schweregrad: Alle</option>
             <option value="critical">Kritisch</option>
             <option value="warning">Warnung</option>
             <option value="info">Info</option>
           </select>
-          <select
-            className="input"
-            value={dqEntityType}
-            onChange={(e) => setDqEntityType(e.target.value)}
-            style={{ width: 180 }}
-            aria-label="Entitätstyp filtern"
-          >
-            <option value="all">Entitätstyp: Alle</option>
+          <select className="input" value={dqEntityType} onChange={(e) => setDqEntityType(e.target.value)} style={{ width: 180 }}>
+            <option value="all">Entitaetstyp: Alle</option>
             <option value="cooperative">Kooperative</option>
-            <option value="roaster">Rösterei</option>
+            <option value="roaster">Roesterei</option>
             <option value="lot">Partie</option>
             <option value="shipment">Sendung</option>
           </select>
           <label className="checkboxLabel">
-            <input
-              type="checkbox"
-              checked={dqIncludeResolved}
-              onChange={(e) => setDqIncludeResolved(e.target.checked)}
-            />
+            <input type="checkbox" checked={dqIncludeResolved} onChange={(e) => setDqIncludeResolved(e.target.checked)} />
             <span>Erledigte einblenden</span>
           </label>
         </div>
 
-        {/* Tabelle */}
         <div className="tableWrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Entität</th>
+                <th>Entitaet</th>
                 <th>Feld</th>
                 <th>Problem</th>
                 <th>Schweregrad</th>
@@ -353,14 +389,14 @@ function OpsPageContent() {
             </thead>
             <tbody>
               {isDemo ? (
-                <tr><td colSpan={6} className="tableEmpty">Demo-Modus – keine Daten verfügbar.</td></tr>
+                <tr><td colSpan={6} className="tableEmpty">Demo-Modus - keine Daten verfuegbar.</td></tr>
               ) : qualityBusy ? (
-                <tr><td colSpan={6} className="tableEmpty">Lädt...</td></tr>
+                <tr><td colSpan={6} className="tableEmpty">Laedt...</td></tr>
               ) : flags.length > 0 ? (
                 flags.map((flag) => (
                   <tr key={flag.id}>
                     <td><span className="mono">{flag.entity_type} #{flag.entity_id}</span></td>
-                    <td>{flag.field_name || "–"}</td>
+                    <td>{flag.field_name || "-"}</td>
                     <td>{flag.message || flag.issue_type}</td>
                     <td>
                       <Badge tone={flag.severity === "critical" ? "bad" : flag.severity === "warning" ? "warn" : "neutral"}>
@@ -392,17 +428,16 @@ function OpsPageContent() {
         </div>
       </section>
 
-      {/* Ausführungsprotokoll */}
       <section className="panel" aria-labelledby="log-title">
         <div className="panelHeader">
-          <h2 id="log-title" className="panelTitle">Ausführungsprotokoll</h2>
+          <h2 id="log-title" className="panelTitle">Ausfuehrungsprotokoll</h2>
         </div>
         <div className="panelBody">
           <div className="codeBox">
             {log.length > 0 ? (
               log.map((l, idx) => <div key={idx}>{l}</div>)
             ) : (
-              <span className="muted">Noch keine Aktionen ausgeführt.</span>
+              <span className="muted">Noch keine Aktionen ausgefuehrt.</span>
             )}
           </div>
         </div>
@@ -419,7 +454,7 @@ export default function OpsPage() {
           <header className="pageHeader">
             <div className="pageHeaderContent">
               <h1 className="h1">Betrieb</h1>
-              <p className="subtitle">Lädt...</p>
+              <p className="subtitle">Laedt...</p>
             </div>
           </header>
           <div className="panel">

@@ -1069,6 +1069,23 @@ textarea.input {
   overflow-y: auto;
 }
 
+.markdownBody {
+  line-height: 1.65;
+}
+
+.markdownBody h1,
+.markdownBody h2,
+.markdownBody h3 {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.markdownBody p,
+.markdownBody ul,
+.markdownBody ol {
+  margin: var(--space-2) 0;
+}
+
 .grid3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2481,4 +2498,3 @@ textarea.input {
   color: var(--color-danger);
   animation: fadeIn 300ms ease;
 }
-

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getToken, apiBaseUrl } from "../../lib/api";
+import { apiBaseUrl, authHeaders, hasAuthSession } from "../../lib/api";
 
 const MAX_MESSAGE_LENGTH = 1000;
 
@@ -47,13 +47,13 @@ export default function AssistantPage() {
 
   const checkStatus = useCallback(async () => {
     try {
-      const token = getToken();
-      if (!token) {
+      if (!hasAuthSession()) {
         router.push("/login");
         return;
       }
       const res = await fetch(`${apiBaseUrl()}/assistant/status`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: authHeaders(),
       });
       if (res.status === 401) {
         router.push("/login");
@@ -125,8 +125,7 @@ export default function AssistantPage() {
 
     setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
 
-    const token = getToken();
-    if (!token) {
+    if (!hasAuthSession()) {
       router.push("/login");
       return;
     }
@@ -137,8 +136,9 @@ export default function AssistantPage() {
     try {
       const res = await fetch(`${apiBaseUrl()}/assistant/chat`, {
         method: "POST",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...authHeaders(),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ message: question, session_id: sessionId }),

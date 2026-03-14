@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { setToken } from "../../lib/api";
+import { logoutSession } from "../../lib/api";
 
 /* ============================================================
    ENTERPRISE SIDEBAR - PROFESSIONAL NAVIGATION
@@ -404,9 +404,9 @@ export default function Sidebar({ authed, collapsed, onToggleCollapse }: {
   };
 
   const handleLogout = () => {
-    setToken("");
-    window.localStorage.removeItem("token");
-    router.push("/login");
+    void logoutSession().finally(() => {
+      router.push("/login");
+    });
   };
 
   return (

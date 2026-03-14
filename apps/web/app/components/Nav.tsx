@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { getToken, setToken } from "../../lib/api";
+import { hasAuthSession, logoutSession } from "../../lib/api";
 import { usePathname, useRouter } from "next/navigation";
 
 function NavLink({ href, label }: { href: string; label: string }) {
@@ -26,7 +26,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
 }
 
 export default function Nav() {
-  const [hasToken] = useState(() => !!getToken());
+  const [hasToken] = useState(() => hasAuthSession());
   const router = useRouter();
 
   if (!hasToken) return null;
@@ -44,9 +44,9 @@ export default function Nav() {
 
       <button
         onClick={() => {
-          setToken("");
-          window.localStorage.removeItem("token");
-          router.push("/login");
+          void logoutSession().finally(() => {
+            router.push("/login");
+          });
         }}
         style={{
           padding: "6px 10px",
