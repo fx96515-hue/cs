@@ -268,6 +268,8 @@ const navGroups: NavGroup[] = [
     label: "Analyse",
     icon: icons.analytics,
     items: [
+      { href: "/markt", label: "Marktdaten Live", icon: subIcons.analytics, badge: "Live" },
+      { href: "/kaffee", label: "Kaffee-Lexikon", icon: subIcons.reports, badge: "50+" },
       { href: "/analytics", label: "Analysen", icon: subIcons.analytics },
       { href: "/ml", label: "KI-Modelle", icon: subIcons.ml },
       { href: "/reports", label: "Berichte", icon: subIcons.reports },
@@ -281,6 +283,9 @@ const navGroups: NavGroup[] = [
     icon: icons.operations,
     items: [
       { href: "/ops", label: "Systemstatus", icon: subIcons.system },
+      { href: "/pipeline", label: "Data Pipeline", icon: subIcons.graph, badge: "17 APIs" },
+      { href: "/features", label: "ML Features", icon: subIcons.ml, badge: "50+" },
+      { href: "/scheduler", label: "Scheduler", icon: subIcons.alerts, badge: "Jobs" },
       { href: "/alerts", label: "Warnungen", icon: subIcons.alerts },
       { href: "/dedup", label: "Duplikatprüfung", icon: subIcons.dedup },
     ],
@@ -289,9 +294,8 @@ const navGroups: NavGroup[] = [
     label: "Suche & KI",
     icon: icons.ai,
     items: [
-      { href: "/search", label: "Volltextsuche", icon: subIcons.search },
-      { href: "/analyst", label: "KI-Analyst", icon: subIcons.analyst },
-      { href: "/assistant", label: "KI-Assistent", icon: subIcons.assistant },
+      { href: "/ki", label: "KI-Assistent", icon: subIcons.assistant, badge: "Neu" },
+      { href: "/search", label: "Semantische Suche", icon: subIcons.search },
     ],
   },
 ];
