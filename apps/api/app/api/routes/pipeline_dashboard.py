@@ -215,17 +215,23 @@ def trigger_single_source(
         orchestrator = DataPipelineOrchestrator(db, redis_client)
         if normalized in {"fx rates", "coffee prices", "freight rates"}:
             result = orchestrator.run_market_pipeline()
+            errors = result.get("errors") or []
             return {
-                "status": result["status"],
+                "status": result.get("status", "failed"),
                 "scope": "market",
-                "result": _redact_error_payload(result),
+                "duration_seconds": result.get("duration_seconds"),
+                "error_count": len(errors),
+                "result_keys": sorted((result.get("results") or {}).keys()),
             }
         if normalized in {"peru weather", "market news"}:
             result = orchestrator.run_intelligence_pipeline()
+            errors = result.get("errors") or []
             return {
-                "status": result["status"],
+                "status": result.get("status", "failed"),
                 "scope": "intelligence",
-                "result": _redact_error_payload(result),
+                "duration_seconds": result.get("duration_seconds"),
+                "error_count": len(errors),
+                "result_keys": sorted((result.get("results") or {}).keys()),
             }
     finally:
         redis_client.close()
