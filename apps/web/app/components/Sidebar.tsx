@@ -286,8 +286,9 @@ const navGroups: NavGroup[] = [
       { href: "/pipeline", label: "Data Pipeline", icon: subIcons.graph, badge: "17 APIs" },
       { href: "/features", label: "ML Features", icon: subIcons.ml, badge: "50+" },
       { href: "/scheduler", label: "Scheduler", icon: subIcons.alerts, badge: "Jobs" },
+      { href: "/api-docs", label: "API Dokumentation", icon: subIcons.graph, badge: "100%" },
       { href: "/alerts", label: "Warnungen", icon: subIcons.alerts },
-      { href: "/dedup", label: "Duplikatprüfung", icon: subIcons.dedup },
+      { href: "/dedup", label: "Duplikatpruefung", icon: subIcons.dedup },
     ],
   },
   {
