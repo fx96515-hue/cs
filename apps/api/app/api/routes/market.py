@@ -156,7 +156,11 @@ def latest_snapshot(
         obs = (
             db.query(MarketObservation)
             .filter(MarketObservation.key == k)
-            .order_by(MarketObservation.observed_at.desc())
+            .order_by(
+                MarketObservation.source_id.is_(None),
+                MarketObservation.observed_at.desc(),
+                MarketObservation.id.desc(),
+            )
             .first()
         )
         out[k] = (
@@ -304,4 +308,3 @@ async def websocket_price(
         log.info("ws_price_disconnect")
     except Exception as exc:
         log.warning("ws_price_error", error=str(exc))
-
