@@ -1,6 +1,6 @@
 // Creates ErrorPanel.tsx as a stub that re-exports from AlertError.tsx
 // This is needed because Turbopack has a stale cache entry for ErrorPanel.tsx
-import { writeFileSync, existsSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 

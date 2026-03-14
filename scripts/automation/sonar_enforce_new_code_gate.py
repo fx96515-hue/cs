@@ -6,9 +6,8 @@ from __future__ import annotations
 import json
 import os
 import time
-import urllib.error
+from http.client import HTTPConnection, HTTPSConnection
 import urllib.parse
-import urllib.request
 from typing import Any
 
 
@@ -73,24 +72,45 @@ def _headers() -> dict[str, str]:
 
 def _http_json(url: str, *, retries: int = 4, timeout: int = 45) -> Any:
     last_error: Exception | None = None
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise RuntimeError(f"Invalid Sonar API URL: {url}")
+
+    path = parsed.path or "/"
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+
     for attempt in range(1, retries + 1):
-        req = urllib.request.Request(url=url, headers=_headers(), method="GET")
+        connection_cls = HTTPSConnection if parsed.scheme == "https" else HTTPConnection
+        conn = connection_cls(parsed.netloc, timeout=timeout)
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            payload = exc.read().decode("utf-8", "replace")
-            is_retryable = exc.code in {408, 409, 425, 429, 500, 502, 503, 504}
-            if attempt < retries and is_retryable:
-                time.sleep(min(2**attempt, 8))
-                continue
-            raise RuntimeError(f"HTTP {exc.code} for {url}: {payload}") from exc
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            conn.request("GET", path, headers=_headers())
+            response = conn.getresponse()
+            payload = response.read().decode("utf-8", "replace")
+            if response.status >= 400:
+                is_retryable = response.status in {
+                    408,
+                    409,
+                    425,
+                    429,
+                    500,
+                    502,
+                    503,
+                    504,
+                }
+                if attempt < retries and is_retryable:
+                    time.sleep(min(2**attempt, 8))
+                    continue
+                raise RuntimeError(f"HTTP {response.status} for {url}: {payload}")
+            return json.loads(payload)
+        except (OSError, TimeoutError, json.JSONDecodeError) as exc:
             last_error = exc
             if attempt < retries:
                 time.sleep(min(2**attempt, 8))
                 continue
             break
+        finally:
+            conn.close()
     raise RuntimeError(f"Failed to query Sonar API: {last_error}")
 
 
