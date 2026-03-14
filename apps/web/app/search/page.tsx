@@ -1,56 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { apiFetch, isDemoMode } from "../../lib/api";
+import { useState, useMemo } from "react";
 import Badge from "../components/Badge";
 import { EmptyState } from "../components/EmptyState";
-import { ErrorPanel } from "../components/AlertError";
-import { useToast } from "../components/ToastProvider";
 
-type SearchResult = {
-  entity_type: string;
-  entity_id: number;
-  name: string;
-  similarity_score: number;
-  region: string | null;
-  city: string | null;
-  certifications: string | null;
-  total_score: number | null;
-};
-
-type SearchResponse = {
-  query: string;
-  entity_type: string;
-  results: SearchResult[];
-  total: number;
-};
-
-type SimilarEntity = {
-  entity_id: number;
-  name: string;
-  similarity_score: number;
-  region: string | null;
-  city: string | null;
-};
-
-type SimilarResponse = {
-  entity_type: string;
-  entity_id: number;
-  entity_name: string;
-  similar_entities: SimilarEntity[];
-  total: number;
-};
-
-const SEARCH_EXAMPLES = [
-  "Bio-Kaffee aus Cajamarca mit Fair Trade",
-  "Specialty Röstereien in Hamburg",
-  "Kooperativen mit Arabica über 85 Punkte",
-  "Nachhaltige Sourcing Partner in Peru",
+// Demo data for cooperatives and roasters
+const COOPERATIVES = [
+  { id: 1, name: "Sol y Cafe", type: "cooperative", region: "Cajamarca", city: null, certifications: "Fair Trade, UTZ", score: 89 },
+  { id: 2, name: "Cenfrocafe", type: "cooperative", region: "San Martin", city: null, certifications: "Organic, Rainforest Alliance", score: 85 },
+  { id: 3, name: "Cooperativa Pangoa", type: "cooperative", region: "Junin", city: null, certifications: "Fair Trade", score: 86 },
+  { id: 4, name: "Coopchebi", type: "cooperative", region: "San Martin", city: null, certifications: "Organic", score: 84 },
+  { id: 5, name: "Cooperativa La Florida", type: "cooperative", region: "Amazonas", city: null, certifications: "Fair Trade, Organic", score: 88 },
+  { id: 6, name: "CAC Alto Mayo", type: "cooperative", region: "San Martin", city: null, certifications: "UTZ, Rainforest Alliance", score: 82 },
+  { id: 7, name: "Cooperativa Naranjillo", type: "cooperative", region: "Huanuco", city: null, certifications: "Organic", score: 83 },
+  { id: 8, name: "CAC Satipo", type: "cooperative", region: "Junin", city: null, certifications: "Fair Trade", score: 81 },
 ];
 
-function ScoreBar({ value }: { value: number }) {
-  const pct = Math.round(value * 100);
+const ROASTERS = [
+  { id: 1, name: "Elbgold", type: "roaster", region: null, city: "Hamburg", certifications: "Single Origin, Direct Trade", score: 4.8 },
+  { id: 2, name: "The Barn", type: "roaster", region: null, city: "Berlin", certifications: "Single Origin, Peru", score: 4.7 },
+  { id: 3, name: "Bonanza Coffee", type: "roaster", region: null, city: "Berlin", certifications: "Peru, Direct Trade", score: 4.6 },
+  { id: 4, name: "Man vs Machine", type: "roaster", region: null, city: "Munich", certifications: "Single Origin", score: 4.5 },
+  { id: 5, name: "Coffee Circle", type: "roaster", region: null, city: "Berlin", certifications: "Direct Trade, Organic", score: 4.4 },
+  { id: 6, name: "Public Coffee Roasters", type: "roaster", region: null, city: "Hamburg", certifications: "Specialty, Peru", score: 4.3 },
+  { id: 7, name: "Flying Roasters", type: "roaster", region: null, city: "Berlin", certifications: "Single Origin", score: 4.2 },
+  { id: 8, name: "Kaffeekommune", type: "roaster", region: null, city: "Cologne", certifications: "Fair Trade", score: 4.1 },
+];
+
+const ALL_ENTITIES = [...COOPERATIVES, ...ROASTERS];
+
+const SEARCH_EXAMPLES = [
+  "Bio Kaffee Cajamarca",
+  "Roestereien Hamburg",
+  "Fair Trade Peru",
+  "Single Origin Berlin",
+];
+
+function ScoreBar({ value, isRating = false }: { value: number; isRating?: boolean }) {
+  const pct = isRating ? Math.round((value / 5) * 100) : value;
   const tone = pct >= 80 ? "good" : pct >= 60 ? "warn" : "neutral";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
@@ -73,63 +61,57 @@ function ScoreBar({ value }: { value: number }) {
         }} />
       </div>
       <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", fontVariantNumeric: "tabular-nums" }}>
-        {pct}%
+        {isRating ? value.toFixed(1) : `${pct}%`}
       </span>
     </div>
   );
 }
 
+function searchEntities(query: string, entityType: string) {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  
+  let entities = ALL_ENTITIES;
+  if (entityType === "cooperative") entities = COOPERATIVES;
+  if (entityType === "roaster") entities = ROASTERS;
+  
+  return entities
+    .map(entity => {
+      let score = 0;
+      const searchText = `${entity.name} ${entity.region || ''} ${entity.city || ''} ${entity.certifications || ''}`.toLowerCase();
+      
+      // Exact match in name gets highest score
+      if (entity.name.toLowerCase().includes(q)) score += 50;
+      // Region/city match
+      if ((entity.region || '').toLowerCase().includes(q)) score += 30;
+      if ((entity.city || '').toLowerCase().includes(q)) score += 30;
+      // Certification match
+      if ((entity.certifications || '').toLowerCase().includes(q)) score += 20;
+      // Partial word match
+      q.split(' ').forEach(word => {
+        if (word.length > 2 && searchText.includes(word)) score += 10;
+      });
+      
+      return { ...entity, relevanceScore: score };
+    })
+    .filter(e => e.relevanceScore > 0)
+    .sort((a, b) => b.relevanceScore - a.relevanceScore);
+}
+
 export default function SearchPage() {
-  const toast = useToast();
   const [query, setQuery] = useState("");
   const [entityType, setEntityType] = useState<"all" | "cooperative" | "roaster">("all");
-  const [results, setResults] = useState<SearchResult[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [similarMap, setSimilarMap] = useState<Record<string, SimilarEntity[]>>({});
-  const [loadingSimilar, setLoadingSimilar] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  async function handleSearch(q = query) {
-    if (!q.trim()) { toast.warning("Bitte Suchbegriff eingeben"); return; }
-    if (isDemoMode()) { toast.info("Semantische Suche ist im Demo-Modus nicht verfügbar."); return; }
+  const results = useMemo(() => {
+    if (!hasSearched || !query.trim()) return [];
+    return searchEntities(query, entityType);
+  }, [query, entityType, hasSearched]);
 
-    setLoading(true);
-    setError(null);
-    setResults(null);
-    setSimilarMap({});
-
-    try {
-      const res = await apiFetch<SearchResponse>(
-        `/search/semantic?q=${encodeURIComponent(q)}&entity_type=${entityType}&limit=20`,
-      );
-      setResults(Array.isArray(res.results) ? res.results : []);
-      setQuery(q);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const friendly = msg.includes("503")
-        ? "Semantische Suche nicht verfügbar — OpenAI API-Schlüssel fehlt im Backend."
-        : msg;
-      setError(friendly);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleFindSimilar(result: SearchResult) {
-    const key = `${result.entity_type}-${result.entity_id}`;
-    if (similarMap[key]) return;
-
-    setLoadingSimilar(key);
-    try {
-      const res = await apiFetch<SimilarResponse>(
-        `/search/entity/${result.entity_type}/${result.entity_id}/similar?limit=5`,
-      );
-      setSimilarMap((prev) => ({ ...prev, [key]: res.similar_entities ?? [] }));
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Fehler beim Laden ähnlicher Entitäten");
-    } finally {
-      setLoadingSimilar(null);
-    }
+  function handleSearch(q = query) {
+    if (!q.trim()) return;
+    setQuery(q);
+    setHasSearched(true);
   }
 
   function getEntityUrl(type: string, id: number) {
@@ -138,8 +120,7 @@ export default function SearchPage() {
     return "#";
   }
 
-  const hasResults = results !== null;
-  const empty = hasResults && results.length === 0;
+  const empty = hasSearched && results.length === 0;
 
   return (
     <div className="page">
@@ -147,14 +128,14 @@ export default function SearchPage() {
       {/* Header */}
       <div className="pageHeader">
         <div>
-          <div className="h1">Semantische Suche</div>
+          <div className="h1">Suche</div>
           <div className="muted">
-            KI-gestützte Vektorsuche über Kooperativen und Röstereien
+            Durchsuchen Sie Kooperativen und Roestereien
           </div>
         </div>
         <div className="pageActions">
-          <span className="badge badgeInfo" style={{ fontSize: "var(--font-size-xs)", letterSpacing: "0.04em" }}>
-            Embedding-Vektoren
+          <span className="badge badgeSuccess" style={{ fontSize: "var(--font-size-xs)" }}>
+            Client-Side Suche
           </span>
         </div>
       </div>
@@ -179,7 +160,7 @@ export default function SearchPage() {
                 <input
                   className="input"
                   style={{ paddingLeft: "var(--space-8)" }}
-                  placeholder="z.B. Bio-Kaffee aus Peru mit Fair Trade Zertifizierung..."
+                  placeholder="z.B. Bio-Kaffee aus Peru, Roesterei Hamburg..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -187,15 +168,15 @@ export default function SearchPage() {
               </div>
             </div>
             <div className="fieldGroup">
-              <label className="fieldLabel">Entitätstyp</label>
+              <label className="fieldLabel">Entitaetstyp</label>
               <select
                 className="input"
                 value={entityType}
                 onChange={(e) => setEntityType(e.target.value as typeof entityType)}
               >
-                <option value="all">Alle Entitäten</option>
+                <option value="all">Alle Entitaeten</option>
                 <option value="cooperative">Nur Kooperativen</option>
-                <option value="roaster">Nur Röstereien</option>
+                <option value="roaster">Nur Roestereien</option>
               </select>
             </div>
             <div className="fieldGroup" style={{ display: "flex", alignItems: "flex-end" }}>
@@ -203,31 +184,18 @@ export default function SearchPage() {
                 className="btn btnPrimary"
                 style={{ width: "100%" }}
                 onClick={() => handleSearch()}
-                disabled={loading || !query.trim()}
+                disabled={!query.trim()}
               >
-                {loading ? (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                      strokeLinecap="round" strokeLinejoin="round"
-                      style={{ animation: "spin 1s linear infinite" }}>
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                    </svg>
-                    Suche...
-                  </>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    Suchen
-                  </>
-                )}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                Suchen
               </button>
             </div>
           </div>
 
           {/* Beispiel-Queries */}
-          {!hasResults && (
+          {!hasSearched && (
             <div style={{ marginTop: "var(--space-4)", display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
               <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", alignSelf: "center", marginRight: "var(--space-1)" }}>
                 Beispiele:
@@ -238,7 +206,6 @@ export default function SearchPage() {
                   className="btn"
                   style={{ fontSize: "var(--font-size-xs)", padding: "4px 10px" }}
                   onClick={() => { setQuery(ex); handleSearch(ex); }}
-                  disabled={loading}
                 >
                   {ex}
                 </button>
@@ -248,11 +215,8 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Fehler */}
-      {error && <ErrorPanel message={error} onRetry={() => handleSearch()} compact style={{ marginBottom: "var(--space-5)" }} />}
-
       {/* Leerzustand vor Suche */}
-      {!hasResults && !error && !loading && (
+      {!hasSearched && (
         <div className="panel">
           <EmptyState
             icon={
@@ -260,8 +224,8 @@ export default function SearchPage() {
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
             }
-            title="Semantische Suche"
-            text="Geben Sie einen Suchbegriff ein oder wählen Sie ein Beispiel. Die KI findet semantisch ähnliche Treffer — auch ohne exakte Schlüsselwörter."
+            title="Suche starten"
+            text="Geben Sie einen Suchbegriff ein oder waehlen Sie ein Beispiel. Die Suche findet passende Kooperativen und Roestereien."
           />
         </div>
       )}
@@ -276,19 +240,19 @@ export default function SearchPage() {
               </svg>
             }
             title="Keine Treffer"
-            text={`Keine Ergebnisse für "${query}". Versuchen Sie andere Begriffe oder wählen Sie einen anderen Entitätstyp.`}
+            text={`Keine Ergebnisse fuer "${query}". Versuchen Sie andere Begriffe oder waehlen Sie einen anderen Entitaetstyp.`}
           />
         </div>
       )}
 
       {/* Ergebnistabelle */}
-      {hasResults && results.length > 0 && (
+      {hasSearched && results.length > 0 && (
         <div className="panel">
           <div className="panelHeader">
             <div className="panelTitle">
               {results.length} Ergebnis{results.length !== 1 ? "se" : ""}
               <span className="muted" style={{ fontWeight: "var(--font-weight-normal)", marginLeft: "var(--space-2)" }}>
-                für &ldquo;{query}&rdquo;
+                fuer &ldquo;{query}&rdquo;
               </span>
             </div>
           </div>
@@ -298,103 +262,59 @@ export default function SearchPage() {
                 <tr>
                   <th>Name</th>
                   <th>Typ</th>
-                  <th>Region</th>
+                  <th>Region / Stadt</th>
                   <th>Zertifizierungen</th>
                   <th>Score</th>
-                  <th>Relevanz</th>
-                  <th style={{ width: 140 }}></th>
                 </tr>
               </thead>
               <tbody>
-                {results.map((r) => {
-                  const key = `${r.entity_type}-${r.entity_id}`;
-                  const similar = similarMap[key];
-                  const isSimilarLoading = loadingSimilar === key;
-
-                  return (
-                    <>
-                      <tr key={key}>
-                        <td>
-                          <Link className="link" href={getEntityUrl(r.entity_type, r.entity_id)}>
-                            <strong>{r.name}</strong>
-                          </Link>
-                        </td>
-                        <td>
-                          <Badge tone={r.entity_type === "cooperative" ? "good" : "neutral"}>
-                            {r.entity_type === "cooperative" ? "Kooperative" : "Rösterei"}
-                          </Badge>
-                        </td>
-                        <td className="muted">{r.region || r.city || "—"}</td>
-                        <td className="muted" style={{ fontSize: "var(--font-size-xs)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {r.certifications || "—"}
-                        </td>
-                        <td>
-                          {r.total_score != null
-                            ? <Badge tone="neutral">{r.total_score.toFixed(1)}</Badge>
-                            : <span className="muted">—</span>
-                          }
-                        </td>
-                        <td>
-                          <ScoreBar value={r.similarity_score} />
-                        </td>
-                        <td>
-                          {similar ? (
-                            <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>
-                              {similar.length} ähnliche
-                            </span>
-                          ) : (
-                            <button
-                              className="btn"
-                              style={{ fontSize: "var(--font-size-xs)", padding: "4px 10px" }}
-                              onClick={() => handleFindSimilar(r)}
-                              disabled={isSimilarLoading}
-                            >
-                              {isSimilarLoading ? "Lädt..." : "Ähnliche"}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-
-                      {/* Ähnliche Entitäten Inline-Zeile */}
-                      {similar && similar.length > 0 && (
-                        <tr key={`${key}-similar`} style={{ background: "var(--color-bg-subtle)" }}>
-                          <td colSpan={7} style={{ padding: "var(--space-3) var(--space-5)" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-                              <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)", fontWeight: "var(--font-weight-semibold)", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                                Ähnlich zu {r.name}
-                              </span>
-                              {similar.map((s) => (
-                                <Link
-                                  key={s.entity_id}
-                                  href={getEntityUrl(r.entity_type, s.entity_id)}
-                                  className="link"
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "var(--space-2)",
-                                    padding: "4px 10px",
-                                    background: "var(--color-surface)",
-                                    borderRadius: "var(--radius-full)",
-                                    border: "1px solid var(--color-border-strong)",
-                                    fontSize: "var(--font-size-xs)",
-                                  }}
-                                >
-                                  {s.name}
-                                  <span style={{ color: "var(--color-text-muted)" }}>
-                                    {Math.round(s.similarity_score * 100)}%
-                                  </span>
-                                </Link>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })}
+                {results.map((r) => (
+                  <tr key={`${r.type}-${r.id}`}>
+                    <td>
+                      <Link className="link" href={getEntityUrl(r.type, r.id)}>
+                        <strong>{r.name}</strong>
+                      </Link>
+                    </td>
+                    <td>
+                      <Badge tone={r.type === "cooperative" ? "good" : "neutral"}>
+                        {r.type === "cooperative" ? "Kooperative" : "Roesterei"}
+                      </Badge>
+                    </td>
+                    <td className="muted">{r.region || r.city || "—"}</td>
+                    <td className="muted" style={{ fontSize: "var(--font-size-xs)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.certifications || "—"}
+                    </td>
+                    <td>
+                      <ScoreBar value={r.score} isRating={r.type === "roaster"} />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Link zum KI-Assistenten */}
+      {hasSearched && (
+        <div style={{ 
+          marginTop: "var(--space-4)", 
+          padding: "var(--space-4)", 
+          background: "var(--color-bg-subtle)", 
+          borderRadius: "var(--radius-lg)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between"
+        }}>
+          <div>
+            <strong style={{ color: "var(--color-text)" }}>Komplexere Fragen?</strong>
+            <span className="muted" style={{ marginLeft: "var(--space-2)" }}>
+              Nutzen Sie den KI-Assistenten fuer natuerlichsprachige Anfragen.
+            </span>
+          </div>
+          <Link href="/ki" className="btn btnPrimary">
+            KI-Assistent oeffnen
+          </Link>
         </div>
       )}
     </div>
