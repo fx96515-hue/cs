@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { apiFetch, setToken, Token } from "../../lib/api";
+import { apiFetch, clearAuthState, setAuthSession, setToken, Token } from "../../lib/api";
 import { useRouter } from "next/navigation";
 import { toErrorMessage } from "../utils/error";
 
@@ -20,17 +20,19 @@ export default function LoginPage() {
 
     // Demo mode - bypass API and set mock token
     if (demoMode) {
+      clearAuthState();
       setToken("demo_token_for_preview");
       router.push("/dashboard");
       return;
     }
 
     try {
-      const t = await apiFetch<Token>("/auth/login", {
+      await apiFetch<Token>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      setToken(t.access_token);
+      clearAuthState();
+      setAuthSession(true);
       router.push("/dashboard");
     } catch (error: unknown) {
       const msg = toErrorMessage(error) || "Anmeldung fehlgeschlagen";

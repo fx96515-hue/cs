@@ -2,10 +2,6 @@
 
 import React from "react";
 
-/* ------------------------------------------------------------------ */
-/*  Empty State                                                         */
-/* ------------------------------------------------------------------ */
-
 interface EmptyStateProps {
   icon?: React.ReactNode;
   title: string;
@@ -22,6 +18,7 @@ export function EmptyState({ icon, title, description, text, action }: EmptyStat
       <path d="M9 21V9" />
     </svg>
   );
+
   const copy = description ?? text;
 
   return (
@@ -36,9 +33,7 @@ export function EmptyState({ icon, title, description, text, action }: EmptyStat
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Demo-Modus Empty State                                              */
-/* ------------------------------------------------------------------ */
+export default EmptyState;
 
 export function DemoEmptyState({ entity = "Daten" }: { entity?: string }) {
   return (
@@ -56,16 +51,13 @@ export function DemoEmptyState({ entity = "Daten" }: { entity?: string }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Skeleton-Komponenten                                                */
-/* ------------------------------------------------------------------ */
-
 export function SkeletonText({ width = "wide" }: { width?: "wide" | "mid" | "short" }) {
   return <div className={`skeleton skeletonText ${width}`} />;
 }
 
 export function SkeletonRows(props: { count?: number; rows?: number; cols?: number }) {
   const rowCount = props.rows ?? props.count ?? 5;
+
   return (
     <>
       {Array.from({ length: rowCount }).map((_, i) => (

@@ -2,7 +2,17 @@
  * services/auth.service.ts
  * Authentifizierungs-Service: Login, Logout, Token-Refresh.
  */
-import { apiFetch, setToken, getToken, DEMO_TOKEN, Token } from "../../lib/api";
+import {
+  apiFetch,
+  clearAuthState,
+  DEMO_TOKEN,
+  getToken,
+  hasAuthSession,
+  logoutSession,
+  setAuthSession,
+  setToken,
+  Token,
+} from "../../lib/api";
 
 export interface LoginCredentials {
   email: string;
@@ -24,7 +34,8 @@ export const AuthService = {
       body: JSON.stringify(credentials),
       skipAuth: true,
     });
-    setToken(token.access_token);
+    clearAuthState();
+    setAuthSession(true);
     return token;
   },
 
@@ -32,6 +43,7 @@ export const AuthService = {
    * Demo-Login ohne Backend.
    */
   loginDemo(): void {
+    clearAuthState();
     setToken(DEMO_TOKEN);
   },
 
@@ -43,15 +55,15 @@ export const AuthService = {
     const res = await apiFetch<RefreshResponse>("/auth/refresh", {
       method: "POST",
     });
-    setToken(res.access_token);
+    setAuthSession(true);
     return res.access_token;
   },
 
   /**
    * Abmelden: Token lokal löschen.
    */
-  logout(): void {
-    setToken(null);
+  async logout(): Promise<void> {
+    await logoutSession();
   },
 
   /**
@@ -59,6 +71,6 @@ export const AuthService = {
    */
   isAuthenticated(): boolean {
     const t = getToken();
-    return !!t && t !== DEMO_TOKEN;
+    return (hasAuthSession() || (!!t && t !== DEMO_TOKEN)) && t !== DEMO_TOKEN;
   },
 };

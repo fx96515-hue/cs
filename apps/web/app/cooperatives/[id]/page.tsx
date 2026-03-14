@@ -51,6 +51,7 @@ export default function CooperativeDetailsPage() {
   const [regions, setRegions] = useState<{ id: number; name: string; country: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [backfillBusy, setBackfillBusy] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -136,6 +137,37 @@ export default function CooperativeDetailsPage() {
       setErr(toErrorMessage(error));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function backfillMissingData() {
+    setErr(null);
+    setMsg(null);
+    setBackfillBusy(true);
+    try {
+      const result = await apiFetch<{ updated?: number; skipped?: number; errors?: string[] }>(
+        `/cooperatives/${id}/backfill-missing`,
+        { method: "POST" },
+      );
+      const refreshed = await apiFetch<Cooperative>(`/cooperatives/${id}?include_deleted=true`);
+      setData(refreshed);
+      setForm({
+        name: refreshed.name,
+        country: refreshed.country ?? "",
+        region: refreshed.region ?? "",
+        region_id: refreshed.region_id ?? "",
+        website: refreshed.website ?? "",
+        sca_score: refreshed.sca_score ?? "",
+        notes: refreshed.notes ?? "",
+      });
+      const updated = result.updated ?? 0;
+      const skipped = result.skipped ?? 0;
+      const errorCount = result.errors?.length ?? 0;
+      setMsg(`Datenluecken-Pruefung fertig: aktualisiert ${updated}, uebersprungen ${skipped}, Fehler ${errorCount}.`);
+    } catch (error: unknown) {
+      setErr(toErrorMessage(error));
+    } finally {
+      setBackfillBusy(false);
     }
   }
 
@@ -310,6 +342,9 @@ export default function CooperativeDetailsPage() {
             <div className="row gap">
               <button className="btn primary" onClick={save} disabled={saving}>
                 {saving ? "Speichere..." : "Speichern"}
+              </button>
+              <button className="btn" onClick={backfillMissingData} disabled={backfillBusy}>
+                {backfillBusy ? "Suche..." : "Fehlende Daten suchen"}
               </button>
               <Link className="btn" href="/ops">
                 Enrichment anstossen

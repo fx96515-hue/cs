@@ -31,7 +31,7 @@ def enqueue_seed(
 ):
     """Enqueue a discovery seed job.
 
-    Requires PERPLEXITY_API_KEY configured.
+    Requires PERPLEXITY_API_KEY or TAVILY_API_KEY configured.
     """
     task = celery.send_task(
         "app.workers.tasks.seed_discovery",

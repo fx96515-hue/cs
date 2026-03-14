@@ -35,21 +35,97 @@ type ApiFetchOptions = RequestInit & {
 };
 
 const TOKEN_KEY = "token";
+const AUTH_SESSION_KEY = "auth_session_active";
+
+function getSessionStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const v = window.localStorage.getItem(TOKEN_KEY);
-  return v && v.trim() ? v : null;
+  const session = getSessionStorage();
+  const local = getLocalStorage();
+
+  const sessionValue = session?.getItem(TOKEN_KEY) ?? null;
+  if (sessionValue?.trim()) {
+    return sessionValue.trim();
+  }
+
+  const legacyValue = local?.getItem(TOKEN_KEY) ?? null;
+  if (legacyValue?.trim()) {
+    // Migrate legacy persistent tokens to the less persistent session store.
+    if (session) {
+      session.setItem(TOKEN_KEY, legacyValue.trim());
+    }
+    local?.removeItem(TOKEN_KEY);
+    return legacyValue.trim();
+  }
+
+  return null;
 }
 
 export function setToken(token?: string | null) {
-  if (typeof window === "undefined") return;
+  const session = getSessionStorage();
+  const local = getLocalStorage();
   const t = (token || "").trim();
   if (!t) {
-    window.localStorage.removeItem(TOKEN_KEY);
+    session?.removeItem(TOKEN_KEY);
+    local?.removeItem(TOKEN_KEY);
     return;
   }
-  window.localStorage.setItem(TOKEN_KEY, t);
+
+  if (session) {
+    session.setItem(TOKEN_KEY, t);
+    local?.removeItem(TOKEN_KEY);
+    return;
+  }
+
+  local?.setItem(TOKEN_KEY, t);
+}
+
+export function setAuthSession(active = true) {
+  const session = getSessionStorage();
+  const local = getLocalStorage();
+
+  if (!active) {
+    session?.removeItem(AUTH_SESSION_KEY);
+    local?.removeItem(AUTH_SESSION_KEY);
+    return;
+  }
+
+  if (session) {
+    session.setItem(AUTH_SESSION_KEY, "1");
+    local?.removeItem(AUTH_SESSION_KEY);
+    return;
+  }
+
+  local?.setItem(AUTH_SESSION_KEY, "1");
+}
+
+export function hasAuthSession(): boolean {
+  const session = getSessionStorage();
+  const local = getLocalStorage();
+  const authMarker =
+    session?.getItem(AUTH_SESSION_KEY) ?? local?.getItem(AUTH_SESSION_KEY) ?? "";
+  return authMarker === "1" || Boolean(getToken());
+}
+
+export function clearAuthState() {
+  setAuthSession(false);
+  setToken(null);
 }
 
 export function apiBaseUrl(): string {
@@ -83,6 +159,26 @@ export function isDemoMode(): boolean {
   return getToken() === DEMO_TOKEN;
 }
 
+export function authHeaders(): Record<string, string> {
+  const token = getToken();
+  if (!token || token === DEMO_TOKEN) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+export async function logoutSession(): Promise<void> {
+  try {
+    await apiFetch("/auth/logout", {
+      method: "POST",
+      skipAuth: true,
+      _isRetry: true,
+    });
+  } catch {
+    // Backend cleanup is best-effort; local state still gets cleared.
+  } finally {
+    clearAuthState();
+  }
+}
+
 export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   const { skipAuth, _isRetry, ...req } = options;
 
@@ -90,7 +186,7 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
 
   const headers: Record<string, string> = {
     ...(req.headers as Record<string, string>),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(!skipAuth ? authHeaders() : {}),
   };
 
   // auto JSON content-type when body is string and not set
@@ -102,7 +198,11 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
   const url = `${base}${path}`;
 
   const tryFetch = async (u: string) => {
-    const res = await fetch(u, { ...req, headers });
+    const res = await fetch(u, {
+      ...req,
+      credentials: req.credentials ?? "include",
+      headers,
+    });
     if (!res.ok) {
       // Versuche strukturierten Fehler vom Backend zu lesen
       let errorBody: { detail?: string; code?: string; message?: string } = {};
@@ -129,20 +229,20 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
       e.isUnauthorized &&
       !_isRetry &&
       !skipAuth &&
-      token &&
+      hasAuthSession() &&
       token !== DEMO_TOKEN
     ) {
       try {
-        const refreshed = await apiFetch<Token>("/auth/refresh", {
+        await apiFetch<Token>("/auth/refresh", {
           method: "POST",
           _isRetry: true,
         });
-        setToken(refreshed.access_token);
+        setAuthSession(true);
         // Original-Request mit neuem Token wiederholen
         return apiFetch<T>(path, { ...options, _isRetry: true });
       } catch {
         // Refresh fehlgeschlagen → Token löschen und Fehler weitergeben
-        setToken(null);
+        clearAuthState();
         throw e;
       }
     }

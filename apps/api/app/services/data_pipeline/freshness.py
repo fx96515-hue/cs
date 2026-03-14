@@ -25,15 +25,6 @@ class DataFreshnessMonitor:
         """
         self.db = db
 
-    @staticmethod
-    def _as_utc(value: datetime | None) -> datetime | None:
-        """Normalize timestamps from DB backends to UTC-aware datetimes."""
-        if value is None:
-            return None
-        if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc)
-
     def _get_latest_observation(self, key: str) -> Optional[dict]:
         """Get latest observation for a key.
 
@@ -60,10 +51,9 @@ class DataFreshnessMonitor:
             return None
 
         now = datetime.now(timezone.utc)
-        observed_at = self._as_utc(obs.observed_at)
-        if observed_at is None:
-            return None
-
+        observed_at = obs.observed_at
+        if observed_at.tzinfo is None:
+            observed_at = observed_at.replace(tzinfo=timezone.utc)
         age_delta = now - observed_at
         age_hours = age_delta.total_seconds() / 3600
 
@@ -131,9 +121,10 @@ class DataFreshnessMonitor:
             self.db.query(NewsItem).order_by(NewsItem.published_at.desc()).first()
         )
 
-        published_at = self._as_utc(latest_news.published_at) if latest_news else None
-
-        if latest_news and published_at:
+        if latest_news:
+            published_at = latest_news.published_at
+            if published_at.tzinfo is None:
+                published_at = published_at.replace(tzinfo=timezone.utc)
             age_delta = now - published_at
             age_hours = age_delta.total_seconds() / 3600
             news_data = {

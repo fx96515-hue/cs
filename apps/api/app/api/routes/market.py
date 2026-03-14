@@ -308,3 +308,4 @@ async def websocket_price(
         log.info("ws_price_disconnect")
     except Exception as exc:
         log.warning("ws_price_error", error=str(exc))
+

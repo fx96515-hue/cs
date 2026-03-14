@@ -239,12 +239,7 @@ class DataPipelineOrchestrator:
             return {"success": False, "regions": [], "errors": errors}
 
     def _refresh_freight_reference(self) -> dict:
-        """Refresh a freight reference rate from local historical data.
-
-        Until a live carrier or port-data provider is wired in, we derive a
-        transparent benchmark from existing freight history so the API keeps
-        returning a usable market reference instead of null.
-        """
+        """Refresh a freight reference rate from local historical data."""
         rows = (
             self.db.query(FreightHistory)
             .filter(

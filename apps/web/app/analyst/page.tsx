@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch, getToken, isDemoMode } from "../../lib/api";
+import { apiFetch, hasAuthSession, isDemoMode } from "../../lib/api";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorPanel } from "../components/AlertError";
 
@@ -117,8 +117,7 @@ export default function AnalystPage() {
 
   const checkStatus = useCallback(async () => {
     if (isDemoMode()) { setStatusLoading(false); return; }
-    const token = getToken();
-    if (!token) { router.push("/login"); return; }
+    if (!hasAuthSession()) { router.push("/login"); return; }
     try {
       const data = await apiFetch<ServiceStatus>("/analyst/status");
       setStatus(data);
@@ -141,7 +140,7 @@ export default function AnalystPage() {
       setError("KI-Analyse ist im Demo-Modus nicht verfügbar.");
       return;
     }
-    if (!getToken()) { router.push("/login"); return; }
+    if (!hasAuthSession()) { router.push("/login"); return; }
 
     setError(null);
     setLoading(true);

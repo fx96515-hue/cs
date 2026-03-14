@@ -25,14 +25,6 @@ type QualityReport = {
   avgImportance: number;
   missingDataPoints: number;
   lastUpdate: string;
-  qualityLabel?: string;
-  anomaliesDetected?: number;
-};
-
-type ImportTemplate = {
-  dataType: string;
-  columns: string[];
-  description: string;
 };
 
 // Demo data
@@ -87,7 +79,6 @@ const DEMO_QUALITY: QualityReport = {
 export default function FeaturesPage() {
   const [categories, setCategories] = useState<FeatureCategory[]>([]);
   const [quality, setQuality] = useState<QualityReport | null>(null);
-  const [templates, setTemplates] = useState<Record<string, ImportTemplate>>({});
   const [isDemo, setIsDemo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -108,19 +99,12 @@ export default function FeaturesPage() {
     }
     setBusy(true);
     try {
-      const [featuresRes, catalogRes, qualityRes, priceTemplate, freightTemplate] = await Promise.all([
+      const [featuresRes, qualityRes] = await Promise.all([
         apiFetch<FeatureCategory[]>("/features/importance"),
-        apiFetch<FeatureCategory[]>("/features/catalog"),
         apiFetch<QualityReport>("/features/quality-report"),
-        apiFetch<ImportTemplate>("/features/import-template/price"),
-        apiFetch<ImportTemplate>("/features/import-template/freight"),
       ]);
-      setCategories(featuresRes.length > 0 ? featuresRes : catalogRes);
+      setCategories(featuresRes);
       setQuality(qualityRes);
-      setTemplates({
-        price: priceTemplate,
-        freight: freightTemplate,
-      });
       push("Feature-Daten geladen");
     } catch (error: unknown) {
       push(`Fehler: ${toErrorMessage(error)}`);
@@ -242,12 +226,6 @@ export default function FeaturesPage() {
             {quality?.missingDataPoints?.toLocaleString("de-DE") ?? "–"}
           </span>
         </div>
-        <div className="kpiCard">
-          <span className="cardLabel">Anomalien</span>
-          <span className="cardValue" style={{ color: (quality?.anomaliesDetected ?? 0) > 0 ? "var(--color-warning)" : undefined }}>
-            {quality?.anomaliesDetected?.toLocaleString("de-DE") ?? "–"}
-          </span>
-        </div>
       </div>
 
       {/* Bulk Import */}
@@ -288,24 +266,6 @@ export default function FeaturesPage() {
           <p className="muted small" style={{ marginTop: "var(--space-3)" }}>
             Format: date, origin, destination, weight_kg, cost_eur, carrier (fuer Frachtdaten)
           </p>
-          {!isDemo && Object.values(templates).length > 0 && (
-            <div style={{ marginTop: "var(--space-4)", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "var(--space-3)" }}>
-              {Object.values(templates).map((template) => (
-                <div key={template.dataType} style={{ padding: "var(--space-3)", background: "var(--color-bg-subtle)", borderRadius: "var(--radius-lg)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
-                    <strong>{template.dataType === "price" ? "Preis-Template" : "Fracht-Template"}</strong>
-                    <Badge tone="info">{template.columns.length} Spalten</Badge>
-                  </div>
-                  <div className="muted small" style={{ marginBottom: "var(--space-2)" }}>
-                    {template.description}
-                  </div>
-                  <div className="codeBox" style={{ maxHeight: 72, overflowY: "auto" }}>
-                    {template.columns.join(", ")}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 

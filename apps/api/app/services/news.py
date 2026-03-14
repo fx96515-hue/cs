@@ -7,8 +7,8 @@ from urllib.parse import quote_plus
 from xml.etree import ElementTree as ET
 
 import httpx
-from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.news_item import NewsItem
@@ -75,7 +75,11 @@ def _upsert_news_items(
         stmt = select(NewsItem).where(NewsItem.url == url)
         item = db.scalar(stmt)
         if not item:
-            item = NewsItem(topic=topic, title=_coerce_result_field(result, "title") or url, url=url)
+            item = NewsItem(
+                topic=topic,
+                title=_coerce_result_field(result, "title") or url,
+                url=url,
+            )
             db.add(item)
             created += 1
         else:
@@ -86,10 +90,7 @@ def _upsert_news_items(
         item.country = country
         item.published_at = _parse_datetime(_coerce_result_field(result, "published_at"))
         item.retrieved_at = now
-        item.meta = {
-            "provider": provider,
-            "query": query,
-        }
+        item.meta = {"provider": provider, "query": query}
         processed += 1
 
     if processed:
@@ -187,9 +188,7 @@ def refresh_news(
                             "title": _coerce_result_field(item, "title"),
                             "url": _coerce_result_field(item, "url"),
                             "snippet": _coerce_result_field(item, "snippet"),
-                            "published_at": _coerce_result_field(
-                                item, "published_date"
-                            ),
+                            "published_at": _coerce_result_field(item, "published_date"),
                         }
                         for item in raw_results
                         if not _already_seen(_coerce_result_field(item, "url"))

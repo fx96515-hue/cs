@@ -484,12 +484,7 @@ class GroqProvider(BaseLLMProvider):
 
 
 class DeterministicFallbackProvider(BaseLLMProvider):
-    """Local fallback provider that produces deterministic summaries.
-
-    This keeps analyst and assistant APIs operational when no external or
-    local LLM runtime is configured. The response is intentionally simple and
-    transparent about being a fallback.
-    """
+    """Local fallback provider that produces deterministic summaries."""
 
     def _build_fallback_response(self, messages: list[dict]) -> str:
         user_message = ""
@@ -521,17 +516,17 @@ class DeterministicFallbackProvider(BaseLLMProvider):
 
         if context_lines:
             answer_lines.append("")
-            answer_lines.append("Verfügbare Hinweise:")
+            answer_lines.append("Verfuegbare Hinweise:")
             answer_lines.extend(context_lines)
         else:
             answer_lines.append("")
             answer_lines.append(
-                "Es sind aktuell keine strukturierten Kontextdaten verfügbar."
+                "Es sind aktuell keine strukturierten Kontextdaten verfuegbar."
             )
 
         answer_lines.append("")
         answer_lines.append(
-            "Für eine frei formulierte KI-Antwort kann später wieder ein echter LLM-Provider aktiviert werden."
+            "Fuer eine frei formulierte KI-Antwort kann spaeter wieder ein echter LLM-Provider aktiviert werden."
         )
         return "\n".join(answer_lines)
 

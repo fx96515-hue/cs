@@ -7,16 +7,14 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import CommandPalette from "./CommandPalette";
 import { ToastProvider } from "./ToastProvider";
-import { DEMO_TOKEN } from "../../lib/api";
+import { DEMO_TOKEN, getToken, hasAuthSession, logoutSession } from "../../lib/api";
 
 function hasToken(): boolean {
-  if (typeof window === "undefined") return false;
-  return Boolean(localStorage.getItem("token"));
+  return hasAuthSession();
 }
 
 function isDemoToken(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem("token") === DEMO_TOKEN;
+  return getToken() === DEMO_TOKEN;
 }
 
 /* ------------------------------------------------------------------ */
@@ -133,9 +131,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Topbar
             authed={authed}
             onLogout={() => {
-              localStorage.removeItem("token");
-              setAuthed(false);
-              router.push("/login");
+              void logoutSession().finally(() => {
+                setAuthed(false);
+                router.push("/login");
+              });
             }}
             onOpenCmd={() => setCmdOpen(true)}
           />

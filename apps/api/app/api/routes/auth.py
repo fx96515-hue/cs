@@ -4,7 +4,7 @@ from typing import Annotated
 
 import structlog
 from email_validator import EmailNotValidError, validate_email
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -30,10 +30,33 @@ limiter = Limiter(key_func=get_remote_address)
 INVALID_CREDENTIALS_DETAIL = "Invalid credentials"
 
 
+def _set_auth_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key=settings.AUTH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=settings.auth_cookie_secure(),
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
+
+def _clear_auth_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.AUTH_COOKIE_NAME,
+        httponly=True,
+        secure=settings.auth_cookie_secure(),
+        samesite="lax",
+        path="/",
+    )
+
+
 @router.post("/login")
 @limiter.limit("5/minute")  # Max 5 login attempts per minute
 def login(
     request: Request,
+    response: Response,
     payload: LoginRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
@@ -94,7 +117,12 @@ def login(
         success=True,
     )
 
-    token = create_access_token(sub=user.email, role=user.role)
+    token = create_access_token(
+        sub=user.email,
+        role=user.role,
+        expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
+    _set_auth_cookie(response, token)
     return TokenResponse(access_token=token)
 
 
@@ -110,12 +138,42 @@ def get_csrf_token(user: Annotated[User, Depends(get_current_user)]) -> dict:
     return {"csrf_token": token}
 
 
+@router.post("/refresh")
+def refresh_access_token(
+    request: Request,
+    response: Response,
+    user: Annotated[User, Depends(get_current_user)],
+) -> TokenResponse:
+    ip_address = request.client.host if request.client else "unknown"
+    logger.info("auth.refresh_success", email=user.email, ip=ip_address)
+    token = create_access_token(
+        sub=user.email,
+        role=user.role,
+        expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
+    _set_auth_cookie(response, token)
+    return TokenResponse(access_token=token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response) -> Response:
+    _clear_auth_cookie(response)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
 @router.post("/dev/bootstrap")
 @limiter.limit("10/hour")
 def dev_bootstrap(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
+    if settings.APP_ENV not in {"dev", "test"}:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not found",
+        )
+
     if not settings.BOOTSTRAP_ADMIN_PASSWORD:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

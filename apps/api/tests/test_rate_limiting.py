@@ -1,6 +1,7 @@
 """Tests for rate limiting functionality."""
 
 from fastapi.testclient import TestClient
+from app.core.config import settings
 
 
 def test_global_rate_limit_exists(client: TestClient, auth_headers):
@@ -82,6 +83,13 @@ def test_bootstrap_rate_limit(client: TestClient):
     # Should hit rate limit before 15 attempts (limit is 10/hour)
     rate_limited = [r for r in responses if r.status_code == 429]
     assert len(rate_limited) > 0, "Bootstrap rate limit not enforced"
+
+
+def test_bootstrap_disabled_outside_dev(client: TestClient, monkeypatch):
+    """The dev bootstrap endpoint must not be reachable outside dev/test."""
+    monkeypatch.setattr(settings, "APP_ENV", "prod")
+    response = client.post("/auth/dev/bootstrap")
+    assert response.status_code == 404
 
 
 def test_rate_limit_headers_present():
