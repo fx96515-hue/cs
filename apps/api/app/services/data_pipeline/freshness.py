@@ -51,11 +51,14 @@ class DataFreshnessMonitor:
             return None
 
         now = datetime.now(timezone.utc)
-        age_delta = now - obs.observed_at
+        observed_at = obs.observed_at
+        if observed_at.tzinfo is None:
+            observed_at = observed_at.replace(tzinfo=timezone.utc)
+        age_delta = now - observed_at
         age_hours = age_delta.total_seconds() / 3600
 
         return {
-            "last_updated": obs.observed_at.isoformat(),
+            "last_updated": observed_at.isoformat(),
             "age_hours": round(age_hours, 2),
             "value": obs.value,
             "source": None,  # TODO: Add relationship or query separately
@@ -97,7 +100,7 @@ class DataFreshnessMonitor:
         Returns:
             Dictionary with freshness status for all data sources
         """
-        from app.models.news import NewsItem
+        from app.models.news_item import NewsItem
 
         now = datetime.now(timezone.utc)
 
@@ -119,10 +122,13 @@ class DataFreshnessMonitor:
         )
 
         if latest_news:
-            age_delta = now - latest_news.published_at
+            published_at = latest_news.published_at
+            if published_at.tzinfo is None:
+                published_at = published_at.replace(tzinfo=timezone.utc)
+            age_delta = now - published_at
             age_hours = age_delta.total_seconds() / 3600
             news_data = {
-                "last_updated": latest_news.published_at.isoformat(),
+                "last_updated": published_at.isoformat(),
                 "age_hours": round(age_hours, 2),
                 "title": latest_news.title[:100] if latest_news.title else None,
             }
