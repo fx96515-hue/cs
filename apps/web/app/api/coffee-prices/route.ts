@@ -67,7 +67,7 @@ export async function GET() {
         }
       }
     } catch (error) {
-      console.error(`Failed to fetch ${symbol}:`, error)
+      console.error("Coffee price fetch failed", { symbol, error })
     }
   }
 

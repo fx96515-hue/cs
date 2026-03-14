@@ -1018,9 +1018,6 @@ def backfill_missing_cooperative_data(
     discovery_provider: str | None = None
     p_client: PerplexityClient | None = None
     t_client: TavilyClient | None = None
-    source_name = "Discovery Backfill"
-    source_url: str | None = None
-
     perplexity_key = os.getenv("PERPLEXITY_API_KEY")
     tavily_key = os.getenv("TAVILY_API_KEY")
 

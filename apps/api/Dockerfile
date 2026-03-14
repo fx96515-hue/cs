@@ -3,7 +3,7 @@
 # =============================================================================
 # Build stage: Install dependencies
 # =============================================================================
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     libpq-dev \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies in a virtual environment for easy copying
@@ -40,7 +41,7 @@ RUN pip install --no-cache-dir \
 # =============================================================================
 # Runtime stage: Minimal production image (MUST be slim, NOT alpine)
 # =============================================================================
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -53,6 +54,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq5 \
     libgomp1 \
+    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
