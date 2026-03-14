@@ -6,14 +6,28 @@ from app.models.news_item import NewsItem
 
 
 def test_refresh_news_without_api_key(db):
-    """Test news refresh when API key is not set."""
-    with patch("app.services.news.settings") as mock_settings:
+    """Test news refresh falls back when the primary provider is unavailable."""
+    fallback_results = [
+        {
+            "title": "Coffee fallback headline",
+            "url": "https://example.com/fallback-news",
+            "snippet": "Fallback snippet",
+            "published_at": "Mon, 01 Jan 2024 12:00:00 GMT",
+        }
+    ]
+
+    with (
+        patch("app.services.news.settings") as mock_settings,
+        patch("app.services.news._fetch_google_news_rss") as mock_rss,
+    ):
         mock_settings.PERPLEXITY_API_KEY = None
+        mock_rss.return_value = fallback_results
 
         result = refresh_news(db)
 
-        assert result["status"] == "skipped"
-        assert "PERPLEXITY_API_KEY not set" in result["reason"]
+        assert result["status"] == "ok"
+        assert result["provider_used"] == "google_news_rss"
+        assert result["created"] == 1
 
 
 def test_refresh_news_with_results(db):
@@ -44,7 +58,8 @@ def test_refresh_news_with_results(db):
 
         result = refresh_news(db, topic="coffee", max_items=25)
 
-        assert result.get("status") in ["success", "ok", None]
+        assert result["status"] == "ok"
+        assert result["provider_used"] == "perplexity"
         # Verify search was called
         assert mock_client.search.called
 
@@ -102,13 +117,23 @@ def test_refresh_news_handles_errors(db):
     with (
         patch("app.services.news.settings") as mock_settings,
         patch("app.services.news.PerplexityClient") as mock_client_class,
+        patch("app.services.news._fetch_google_news_rss") as mock_rss,
     ):
         mock_settings.PERPLEXITY_API_KEY = "test_key"
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
         mock_client.search.side_effect = Exception("API Error")
+        mock_rss.return_value = [
+            {
+                "title": "Fallback item",
+                "url": "https://example.com/rss-item",
+                "snippet": "Fallback snippet",
+                "published_at": "Mon, 01 Jan 2024 12:00:00 GMT",
+            }
+        ]
 
         result = refresh_news(db, topic="coffee")
 
-        # Should handle error gracefully
-        assert result is not None
+        assert result["status"] == "ok"
+        assert result["provider_used"] == "google_news_rss"
+        assert result["errors"]

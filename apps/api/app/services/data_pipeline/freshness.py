@@ -48,7 +48,11 @@ class DataFreshnessMonitor:
         obs = (
             self.db.query(MarketObservation)
             .filter(MarketObservation.key == key)
-            .order_by(MarketObservation.observed_at.desc())
+            .order_by(
+                MarketObservation.source_id.is_(None),
+                MarketObservation.observed_at.desc(),
+                MarketObservation.id.desc(),
+            )
             .first()
         )
 

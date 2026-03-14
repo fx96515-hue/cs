@@ -10,6 +10,14 @@ import { toErrorMessage } from "../utils/error";
 type JobResponse = { status: string; task_id: string; report_id: number; message: string };
 type EntityType = "cooperative" | "roaster" | "both";
 type NewsRefreshResponse = { status: string; created?: number; updated?: number; errors?: unknown[] };
+type DiscoverySeedResponse = { task_id: string; status?: string; state?: string };
+type DiscoveryTaskStatus = {
+  task_id: string;
+  state: "PENDING" | "STARTED" | "SUCCESS" | "FAILURE" | string;
+  result?: unknown;
+  error?: string;
+  info?: unknown;
+};
 
 function parseEntityType(value: string): EntityType {
   if (value === "cooperative" || value === "roaster" || value === "both") return value;
@@ -115,6 +123,26 @@ function OpsPageContent() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function waitForDiscoveryTask(taskId: string) {
+    const maxAttempts = 45;
+    const delayMs = 2000;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const status = await apiFetch<DiscoveryTaskStatus>(`/discovery/tasks/${taskId}`);
+      const state = status.state || "PENDING";
+      push(`Ersterfassung Status: ${state}`);
+      if (state === "SUCCESS") {
+        push(`Ersterfassung abgeschlossen: ${JSON.stringify(status.result ?? {})}`);
+        return;
+      }
+      if (state === "FAILURE") {
+        push(`Ersterfassung fehlgeschlagen: ${status.error || JSON.stringify(status.info ?? {})}`);
+        return;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+    }
+    push("Ersterfassung: Timeout beim Statusabruf");
   }
 
   async function resolveFlag(id: number) {
@@ -270,12 +298,16 @@ function OpsPageContent() {
               <button
                 className="btn btnPrimary"
                 disabled={busy || isDemo}
-                onClick={() => run("Ersterfassung", () =>
-                  apiFetch<JobResponse>("/discovery/seed", {
+                onClick={() => run("Ersterfassung", async () => {
+                  const response = await apiFetch<DiscoverySeedResponse>("/discovery/seed", {
                     method: "POST",
                     body: JSON.stringify({ entity_type: entityType, max_entities: max, dry_run: false }),
-                  })
-                )}
+                  });
+                  if (response.task_id) {
+                    await waitForDiscoveryTask(response.task_id);
+                  }
+                  return response;
+                })}
               >
                 Ersterfassung starten
               </button>

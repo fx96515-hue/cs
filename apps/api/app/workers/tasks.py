@@ -55,7 +55,7 @@ def refresh_market():
 
         # Use orchestrator for market data pipeline
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        pipeline_result = orchestrator.run_market_pipeline()
+        pipeline_result = orchestrator.run_market_pipeline(force_probe=True)
 
         log.info(
             "market_refresh",
@@ -98,7 +98,7 @@ def refresh_news():
     redis_client = _redis()
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        result = orchestrator.run_intelligence_pipeline()
+        result = orchestrator.run_intelligence_pipeline(force_probe=True)
         log.info("news_refresh", **result)
 
         # Run sentiment analysis after news refresh when enabled
@@ -135,7 +135,7 @@ def refresh_intelligence():
     redis_client = _redis()
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        result = orchestrator.run_intelligence_pipeline()
+        result = orchestrator.run_intelligence_pipeline(force_probe=True)
         log.info("intelligence_refresh", **result)
 
         # Run sentiment analysis after intelligence refresh when enabled

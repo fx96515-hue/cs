@@ -4,6 +4,7 @@ Provides visibility into data freshness, circuit breaker status,
 and manual pipeline triggers.
 """
 
+import inspect
 from typing import Annotated, Any
 from time import perf_counter
 
@@ -34,6 +35,18 @@ def _sanitize_errors(errors: list[str] | None) -> list[str]:
     if not errors:
         return []
     return ["Pipeline operation failed"] * len(errors)
+
+
+def _call_pipeline_with_force_probe(method: Any) -> Any:
+    """Call orchestrator methods with force_probe when supported."""
+    try:
+        signature = inspect.signature(method)
+    except (TypeError, ValueError):
+        signature = None
+
+    if signature and "force_probe" in signature.parameters:
+        return method(force_probe=True)
+    return method()
 
 
 @router.get("/status")
@@ -131,7 +144,7 @@ def trigger_market_refresh(
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
         started = perf_counter()
-        orchestrator.run_market_pipeline()
+        _call_pipeline_with_force_probe(orchestrator.run_market_pipeline)
         duration = round(perf_counter() - started, 3)
 
         return {
@@ -159,7 +172,7 @@ def trigger_intelligence_refresh(
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
         started = perf_counter()
-        orchestrator.run_intelligence_pipeline()
+        _call_pipeline_with_force_probe(orchestrator.run_intelligence_pipeline)
         duration = round(perf_counter() - started, 3)
 
         return {

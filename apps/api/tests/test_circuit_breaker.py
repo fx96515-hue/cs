@@ -164,3 +164,14 @@ def test_circuit_breaker_reset():
 
     # Should delete all keys
     assert mock_redis.delete.call_count >= 3
+
+
+def test_circuit_breaker_force_probe_reopens_open_circuit():
+    """Manual refreshes may force a single recovery probe."""
+    mock_redis = MagicMock()
+    mock_redis.get.side_effect = [b"open", b"open"]
+
+    breaker = CircuitBreaker(mock_redis, "test_provider")
+
+    assert breaker.can_attempt(force_probe=True) is True
+    mock_redis.set.assert_called()

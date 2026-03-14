@@ -116,6 +116,7 @@ async def semantic_search(
 
 
 @router.get("/entity/{entity_type}/{entity_id}/similar")
+@router.get("/similar/{entity_type}/{entity_id}")
 async def find_similar_entities(
     entity_type: str,
     entity_id: int,

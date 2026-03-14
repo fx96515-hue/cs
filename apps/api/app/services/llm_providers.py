@@ -483,6 +483,71 @@ class GroqProvider(BaseLLMProvider):
         return "groq"
 
 
+class DeterministicFallbackProvider(BaseLLMProvider):
+    """Local fallback provider that produces deterministic summaries.
+
+    This keeps analyst and assistant APIs operational when no external or
+    local LLM runtime is configured. The response is intentionally simple and
+    transparent about being a fallback.
+    """
+
+    def _build_fallback_response(self, messages: list[dict]) -> str:
+        user_message = ""
+        system_prompt = ""
+
+        for message in messages:
+            role = message.get("role")
+            if role == "system" and not system_prompt:
+                system_prompt = str(message.get("content") or "")
+            if role == "user":
+                user_message = str(message.get("content") or "")
+
+        context_lines: list[str] = []
+        for raw_line in system_prompt.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("**") or line.startswith("- ") or line.startswith("## "):
+                context_lines.append(line)
+            if len(context_lines) >= 10:
+                break
+
+        answer_lines = [
+            "Der konfigurierte KI-Provider ist derzeit nicht erreichbar.",
+            "Ich liefere deshalb eine lokale, deterministische Zusammenfassung aus den vorhandenen Daten.",
+        ]
+        if user_message:
+            answer_lines.append(f"Frage: {user_message}")
+
+        if context_lines:
+            answer_lines.append("")
+            answer_lines.append("Verfügbare Hinweise:")
+            answer_lines.extend(context_lines)
+        else:
+            answer_lines.append("")
+            answer_lines.append(
+                "Es sind aktuell keine strukturierten Kontextdaten verfügbar."
+            )
+
+        answer_lines.append("")
+        answer_lines.append(
+            "Für eine frei formulierte KI-Antwort kann später wieder ein echter LLM-Provider aktiviert werden."
+        )
+        return "\n".join(answer_lines)
+
+    async def chat_completion(
+        self, messages: list[dict], temperature: float, model: str
+    ) -> dict:
+        content = self._build_fallback_response(messages)
+        return {"content": content, "tokens_used": None}
+
+    def is_available(self) -> bool:
+        return True
+
+    def provider_name(self) -> str:
+        return "deterministic_fallback"
+
+
 def get_llm_provider() -> BaseLLMProvider:
     """Factory function to get configured LLM provider.
 
@@ -495,10 +560,19 @@ def get_llm_provider() -> BaseLLMProvider:
     provider = settings.RAG_PROVIDER.lower()
 
     if provider == "ollama":
-        return OllamaProvider()
+        selected: BaseLLMProvider = OllamaProvider()
     elif provider == "openai":
-        return OpenAIProvider()
+        selected = OpenAIProvider()
     elif provider == "groq":
-        return GroqProvider()
+        selected = GroqProvider()
     else:
         raise ValueError(f"Unknown RAG provider: {provider}")
+
+    if selected.is_available():
+        return selected
+
+    log.warning(
+        "llm_provider_fallback_enabled",
+        configured_provider=provider,
+    )
+    return DeterministicFallbackProvider()
