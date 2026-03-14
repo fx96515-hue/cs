@@ -9,6 +9,12 @@ from app.api.routes import data_health, quality_alerts, auto_outreach, ops_dashb
 from app.api.routes import ml_routes, semantic_search, rag_analyst, knowledge_graph
 from app.api.routes import assistant, data_quality
 from app.api.routes import sentiment
+from app.api.routes import (
+    pipeline_dashboard,
+    features_dashboard,
+    scheduler_dashboard,
+    monitoring_dashboard,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
@@ -64,4 +70,16 @@ api_router.include_router(assistant.router, prefix="/assistant", tags=["assistan
 api_router.include_router(sentiment.router, prefix="/sentiment", tags=["sentiment"])
 api_router.include_router(
     data_quality.router, prefix="/data-quality", tags=["data-quality"]
+)
+api_router.include_router(
+    pipeline_dashboard.router, prefix="/pipeline", tags=["pipeline-dashboard"]
+)
+api_router.include_router(
+    features_dashboard.router, prefix="/features", tags=["features-dashboard"]
+)
+api_router.include_router(
+    scheduler_dashboard.router, prefix="/scheduler", tags=["scheduler-dashboard"]
+)
+api_router.include_router(
+    monitoring_dashboard.router, prefix="/monitoring", tags=["monitoring-dashboard"]
 )

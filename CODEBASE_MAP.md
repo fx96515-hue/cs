@@ -620,3 +620,19 @@ uvicorn main:app --reload      # http://localhost:8000
 # E-Mail: demo@coffeestudio.de
 # Passwort: demo
 ```
+---
+
+## Backend-Ergaenzung fuer PR721 Enterprise Integration
+
+- Aktive API-Routen liegen unter `apps/api/app/api/routes/`
+- `apps/api/app/routes/` enthaelt nur Kompatibilitaetswrapper fuer alte PR721-Pfade
+- Additive PR721-Provider liegen unter:
+  - `apps/api/app/providers/weather.py`
+  - `apps/api/app/providers/shipping_data.py`
+  - `apps/api/app/providers/news_market.py`
+  - `apps/api/app/providers/peru_macro.py`
+- Additive PR721-Fassaden liegen unter:
+  - `apps/api/app/services/data_pipeline/phase2_orchestrator.py`
+  - `apps/api/app/services/orchestration/phase4_scheduler.py`
+- Sichere additive Migration:
+  - `apps/api/alembic/versions/0020_full_stack_data_models.py`
