@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Annotated
+from typing import Annotated, Any, TypedDict
 
 import redis
 from fastapi import APIRouter, Depends, HTTPException
@@ -15,6 +15,14 @@ from app.services.data_pipeline.orchestrator import DataPipelineOrchestrator
 from app.services.data_pipeline.phase2_orchestrator import Phase2DataPipelineFacade
 
 router = APIRouter()
+
+
+class PipelineSourceDef(TypedDict):
+    name: str
+    provider: str
+    breaker: str | None
+    category: str
+    item: str
 
 
 def _get_redis() -> redis.Redis:
@@ -54,7 +62,7 @@ def _build_pipeline_sources(db: Session) -> list[dict]:
     def latest(category: str, item: str) -> dict:
         return freshness.get("categories", {}).get(category, {}).get(item, {})
 
-    source_defs = [
+    source_defs: list[PipelineSourceDef] = [
         {
             "name": "FX Rates",
             "provider": "ECB / OANDA",
@@ -106,7 +114,7 @@ def _build_pipeline_sources(db: Session) -> list[dict]:
         },
     ]
 
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
     for definition in source_defs:
         current_breaker = breaker(definition["breaker"])
         current_latest = latest(definition["category"], definition["item"])
