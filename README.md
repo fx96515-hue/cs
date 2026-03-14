@@ -1,295 +1,150 @@
 # CoffeeStudio Platform
 
-B2B Intelligence Platform für Specialty Coffee — Peru Sourcing bis Deutschland Röstereien.
+CoffeeStudio is a data and operations platform for specialty coffee workflows, with
+Peru sourcing intelligence, market monitoring, entity management, reporting, and
+AI-assisted analysis.
 
-[![CI](https://github.com/fx96515-hue/cs/workflows/CI/badge.svg)](https://github.com/fx96515-hue/cs/actions)
-
----
+This branch includes the enterprise integration work for PR721. The new UI areas
+for `pipeline`, `features`, `search`, `ki`, `markt`, and `scheduler` are wired to
+real backend adapters instead of demo-only placeholders. Additional provider and
+monitoring modules from PR721 were integrated as safe, additive capabilities.
 
 ## Stack
 
-| Layer | Technologie |
-|---|---|
-| Frontend | Next.js 16 · TypeScript · React Query · CSS Design System |
-| Backend | FastAPI (Python) · Alembic · Pydantic |
-| Datenbank | PostgreSQL · pgvector (Vektor-Embeddings) |
-| Cache / Queue | Redis · Celery · Celery Beat |
-| Auth | JWT (access + refresh) · httpOnly Cookie (vorbereitet) |
-| Deployment | Docker Compose · GitHub Actions CI/CD |
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js 16, TypeScript, React Query |
+| Backend | FastAPI, SQLAlchemy, Alembic, Pydantic |
+| Database | PostgreSQL |
+| Cache / Queue | Redis, Celery, Celery Beat |
+| Auth | JWT bearer auth, cookie migration path prepared |
+| Runtime | Docker Compose |
 
----
+## Current Product Areas
 
-## Schnellstart lokal
+Main routes currently available in the integrated frontend:
 
-### Voraussetzungen
-- Docker + Docker Compose
-- Node.js 20+ und pnpm
+- `/dashboard`
+- `/cooperatives`
+- `/roasters`
+- `/lots`
+- `/shipments`
+- `/deals`
+- `/reports`
+- `/news`
+- `/search`
+- `/ki`
+- `/markt`
+- `/pipeline`
+- `/features`
+- `/scheduler`
 
-### 1. Repo klonen
+## PR721 Integration Status
 
-```bash
-git clone https://github.com/fx96515-hue/cs.git
-cd cs
-git checkout v0/fx96515-hue-57428183   # aktueller Entwicklungsbranch
-```
+Enterprise-reviewed and integrated from PR721:
 
-### 2. Umgebungsvariablen
+- `pipeline` dashboard backed by real pipeline freshness and circuit-breaker data
+- `features` dashboard backed by feature catalog, import validation, and quality reporting
+- `search` connected to the existing semantic search API
+- `ki` page converted into a real AI workspace with live backend status
+- `markt` page connected to real market, news, and cooperative endpoints
+- `scheduler` page connected to actual Celery beat jobs and task status
+- additive provider catalog for weather, shipping, news, and macro sources
+- additive models and safe Alembic `0020` migration for monitoring, sentiment, lineage, and feature cache tables
 
-```bash
-cp .env.example .env
-# .env öffnen und anpassen (DB-Passwort, SECRET_KEY, OpenAI-Key)
-```
+Not claimed in this README:
 
-### 3. Backend + Datenbank starten
+- no blanket "production ready" claim
+- no fake coverage or endpoint counts
+- no default credentials
+
+## Local Start
+
+### Prerequisites
+
+- Docker Desktop
+- Node.js 20+
+- Python 3.11+ for local backend test runs
+
+### Environment
+
+Create a local `.env` from `.env.example` and set at least:
+
+- `DATABASE_URL`
+- `REDIS_URL`
+- `JWT_SECRET`
+- optional provider keys such as `PERPLEXITY_API_KEY` or `TAVILY_API_KEY`
+
+For local dev admin bootstrap, `BOOTSTRAP_ADMIN_PASSWORD` must be set. The
+bootstrap route is restricted to `dev` and `test`.
+
+### Start with Docker
 
 ```bash
 docker compose up --build
-# nur Core-Services: Postgres, Redis, Backend, Frontend
 ```
 
-Für Worker + Celery Beat:
+For workers and beat:
 
 ```bash
 docker compose --profile workers up --build
 ```
 
-### 4. Datenbankmigrationen
+Apply migrations:
 
 ```bash
 docker compose exec backend alembic upgrade head
 ```
 
-### 5. Ersten Admin-User anlegen
+### Windows
+
+For Windows-first local development, prefer:
+
+- `run_windows.ps1`
+- `README_WINDOWS.md`
+- `docs/operations/windows.md`
+
+## Verification Gates
+
+Backend:
 
 ```bash
-curl -X POST http://localhost:8000/auth/dev/bootstrap
-# legt admin@coffeestudio.com / adminadmin an
+pytest apps/api/tests/test_auth.py \
+  apps/api/tests/test_rate_limiting.py \
+  apps/api/tests/test_pr721_dashboard_routes.py \
+  apps/api/tests/test_semantic_search.py \
+  apps/api/tests/test_scheduler_dashboard_routes.py \
+  apps/api/tests/test_market_dashboard_routes.py \
+  apps/api/tests/test_monitoring_dashboard_routes.py -q
 ```
 
-### 6. Frontend (Entwicklungsmodus ohne Docker)
+Frontend:
 
 ```bash
 cd apps/web
-pnpm install
-pnpm dev
-# http://localhost:3000
+npm run build
 ```
 
-**Demo-Modus:** Frontend startet ohne Backend automatisch im Demo-Modus mit Platzhalter-Daten.
+## Architecture Notes
 
----
+- API routes live in `apps/api/app/api/routes/`
+- provider modules live in `apps/api/app/providers/`
+- business logic lives in `apps/api/app/services/`
+- PR721 compatibility facades were added under:
+  - `apps/api/app/services/data_pipeline/phase2_orchestrator.py`
+  - `apps/api/app/services/orchestration/phase4_scheduler.py`
 
-## Verzeichnisstruktur
+## Key Docs
 
-```
-cs/
-├── apps/
-│   ├── api/                    # FastAPI Backend
-│   │   ├── app/
-│   │   │   ├── routers/        # API Endpunkte
-│   │   │   ├── models/         # SQLAlchemy Models
-│   │   │   ├── schemas/        # Pydantic Schemas
-│   │   │   ├── services/       # Business Logic
-│   │   │   └── main.py
-│   │   ├── alembic/            # DB Migrationen
-│   │   └── tests/
-│   └── web/                    # Next.js Frontend
-│       ├── app/
-│       │   ├── components/     # Shared UI-Komponenten
-│       │   ├── hooks/          # React Query Hooks
-│       │   ├── services/       # API Service-Layer
-│       │   ├── types/          # TypeScript Typen
-│       │   └── utils/
-│       ├── lib/
-│       │   └── api.ts          # apiFetch + ApiError + Auth
-│       └── proxy.ts       # Route-Guard (Cookie-Auth vorbereitet)
-├── worker/                     # Celery Worker
-├── infra/                      # Docker / Deploy Assets
-├── docs/                       # Technische Dokumentation
-├── CODEBASE_MAP.md             # Für KI-Assistenten: Architektur-Übersicht
-├── ENTERPRISE_ROADBOOK.md      # Backend-Implementierungsanleitung
-└── docker-compose.yml
-```
+- `CODEBASE_MAP.md`
+- `ENTERPRISE_ROADBOOK.md`
+- `docs/operations/V0_SAFE_DELIVERY.md`
+- `docs/operations/OPERATIONS_RUNBOOK.md`
+- `docs/security/SECURITY.md`
 
----
+## Security Notes
 
-## Frontend-Architektur
-
-### Design System
-Alle Styles in `apps/web/app/globals.css` als CSS-Variablen. Keine Tailwind-Abhängigkeit.
-
-```css
---color-accent: #8b7355       /* Warm Brown */
---color-primary: #1a1a1a      /* Near Black */
---color-bg: #faf9f7           /* Warm White */
-```
-
-### Komponenten-Muster
-
-```ts
-// Daten abrufen → immer über React Query Hooks
-import { useRoasters } from "../hooks/useRoasters";
-const { data, isLoading, error } = useRoasters({ region: "cajamarca" });
-
-// API-Aufrufe → immer über Service-Layer
-import { RoastersService } from "../services";
-await RoastersService.archive(id);
-
-// Fehler → immer über ApiError prüfen
-import { ApiError } from "../../lib/api";
-if (error instanceof ApiError && error.isUnauthorized) { ... }
-```
-
-### Seiten-Übersicht
-
-| Route | Beschreibung |
-|---|---|
-| `/dashboard` | KPI-Übersicht, Alerts, Marktpreise |
-| `/roasters` | Röstereien-Liste mit Filter, Suche, Export |
-| `/roasters/[id]` | Rösterei-Detail, Lots, Deals |
-| `/cooperatives` | Kooperativen-Liste mit Filter, Suche, Export |
-| `/cooperatives/[id]` | Kooperativen-Detail, Scoring |
-| `/lots` | Kaffee-Partien, Margen-Rechner |
-| `/lots/[id]` | Lot-Detail, Margen-Runs |
-| `/shipments` | Sendungen + Tracking |
-| `/deals` | Deal-Übersicht, Kalkulation |
-| `/analytics` | Preis- und Fracht-Vorhersagen |
-| `/reports` | Tages-/Wochenberichte |
-| `/sentiment` | Markt-Sentiment nach Region |
-| `/ml` | ML-Modell-Status + Training |
-| `/news` | Nachrichten-Feed |
-| `/graph` | Entitäts-Beziehungsgraph |
-| `/dedup` | Duplikat-Erkennung + Merge |
-| `/alerts` | System-Alerts |
-| `/search` | Semantische Volltextsuche |
-| `/analyst` | KI-Analyst Chat (RAG) |
-
----
-
-## Backend API
-
-| Basis-URL | Beschreibung |
-|---|---|
-| `http://localhost:8000/docs` | Swagger UI (interaktiv) |
-| `http://localhost:8000/redoc` | ReDoc |
-
-### Authentifizierung
-
-```bash
-# Login
-curl -X POST http://localhost:8000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin@coffeestudio.com", "password": "adminadmin"}'
-
-# Response: { "access_token": "...", "token_type": "bearer" }
-
-# Authentifizierter Request
-curl http://localhost:8000/roasters \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-### Wichtige Endpunkte
-
-```
-POST   /auth/login              Login → JWT Token
-POST   /auth/refresh            Token erneuern
-GET    /roasters                Liste (filter: region, min_score, search)
-POST   /roasters                Anlegen
-GET    /roasters/{id}           Detail
-PATCH  /roasters/{id}           Aktualisieren
-DELETE /roasters/{id}           Löschen
-GET    /cooperatives            Liste
-POST   /cooperatives            Anlegen
-GET    /cooperatives/{id}       Detail
-GET    /lots                    Liste
-POST   /lots                    Anlegen
-GET    /lots/{id}               Detail + Margen
-GET    /shipments               Sendungen
-GET    /deals                   Deals
-POST   /analyst/ask             KI-Analyse (RAG)
-GET    /analyst/status          KI-Service-Status
-POST   /search                  Semantische Suche
-GET    /search/similar/{t}/{id} Ähnliche Entitäten
-```
-
----
-
-## Fehlerformat
-
-Das Backend gibt **immer** dieses JSON-Format zurück:
-
-```json
-{
-  "detail": "Lesbarer Fehlertext auf Deutsch",
-  "code": "ROASTER_NOT_FOUND"
-}
-```
-
-Das Frontend parst dieses Format automatisch über `ApiError` in `lib/api.ts`.
-
----
-
-## Für KI-Assistenten (OpenAI, Copilot, Cursor)
-
-Lies zuerst:
-
-1. **`CODEBASE_MAP.md`** — vollständige Architektur-Übersicht, alle Dateipfade, CSS-Klassen, Patterns
-2. **`ENTERPRISE_ROADBOOK.md`** — exakter FastAPI-Code für alle noch fehlenden Backend-Endpunkte
-
-**Wichtigste Regeln:**
-- Typen immer aus `apps/web/app/types/index.ts`
-- Datenfetching immer über `apps/web/app/hooks/` (React Query)
-- API-Aufrufe immer über `apps/web/app/services/` (nie direkt `apiFetch` in Seiten)
-- CSS-Klassen aus `globals.css` — keine Inline-Styles außer für dynamische Werte
-- Demo-Modus-Guard in jeder `queryFn`: `if (isDemoMode()) return { items: [], total: 0 }`
-- **Fehler-Panel:** `<ErrorPanel>` aus `../components/AlertError` (Datei heisst `AlertError.tsx`)
-
----
-
-## Sicherheit
-
-- JWT Bearer Token + geplanter httpOnly-Cookie-Umstieg (siehe `ENTERPRISE_ROADBOOK.md`)
-- Passwörter: `pbkdf2_sha256`
-- CORS restriktiv konfiguriert
-- Rate Limiting (SlowAPI)
-- Input Validation (Pydantic)
-- Security Headers Middleware
-- SQL-Injection-Schutz via Pydantic + SQLAlchemy ORM
-
-Details: `docs/security/SECURITY.md`
-
----
-
-## CI/CD
-
-```
-Push → GitHub Actions → Tests → Security Scans → Docker Build → Deploy
-```
-
-- Backend-Tests: `pytest tests/ -v`
-- Frontend: `pnpm build`
-- Coverage: 57%+ Backend
-
-Details: `.github/workflows/README.md`
-
----
-
-## Umgebungsvariablen
-
-Alle Variablen in `.env.example` dokumentiert. Kritische:
-
-| Variable | Beschreibung |
-|---|---|
-| `DATABASE_URL` | PostgreSQL Connection String |
-| `REDIS_URL` | Redis Connection String |
-| `SECRET_KEY` | JWT Signing Key (min. 32 Zeichen) |
-| `OPENAI_API_KEY` | Für KI-Analyst + Semantische Suche |
-| `OPENAI_MODEL` | Standard: `gpt-4o` |
-| `OPENAI_EMBEDDING_MODEL` | Standard: `text-embedding-3-small` |
-| `NEXT_PUBLIC_API_URL` | Backend-URL für Frontend |
-
----
-
-## Lizenz
-
-Proprietär · CoffeeStudio GmbH
+- Do not commit real `.env` values
+- Dev bootstrap is disabled outside `dev` and `test`
+- local secrets must be rotated per environment
+- browser token handling has been hardened, but cookie auth is still the target end state
