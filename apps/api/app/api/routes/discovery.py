@@ -31,16 +31,17 @@ def enqueue_seed(
 ):
     """Enqueue a discovery seed job.
 
-    Requires PERPLEXITY_API_KEY configured.
+    Requires PERPLEXITY_API_KEY or TAVILY_API_KEY configured.
     """
     task = celery.send_task(
         "app.workers.tasks.seed_discovery",
         kwargs=payload.model_dump(),
     )
-    return {"task_id": task.id, "state": "PENDING"}
+    return {"task_id": task.id, "status": "queued", "state": "PENDING"}
 
 
 @router.get("/seed/{task_id}")
+@router.get("/tasks/{task_id}")
 def get_seed_status(
     task_id: str,
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
