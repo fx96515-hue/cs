@@ -33,6 +33,14 @@ from app.models.shipment_lot import ShipmentLot  # noqa: F401
 from app.models.deal import Deal  # noqa: F401
 from app.models.price_quote import PriceQuote  # noqa: F401
 from app.models.transport_event import TransportEvent  # noqa: F401
+from app.models.weather_agronomic import (  # noqa: F401
+    DataLineageLog,
+    MLFeaturesCache,
+    ShipmentApiEvent,
+    SocialSentimentData,
+    SourceHealthMetrics,
+    WeatherAgronomicData,
+)
 
 MODEL_IMPORTS = (
     User,
@@ -62,6 +70,12 @@ MODEL_IMPORTS = (
     Deal,
     PriceQuote,
     TransportEvent,
+    WeatherAgronomicData,
+    SocialSentimentData,
+    ShipmentApiEvent,
+    MLFeaturesCache,
+    DataLineageLog,
+    SourceHealthMetrics,
 )
 
 config = context.config
