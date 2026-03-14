@@ -12,7 +12,7 @@ from app.models.report import Report
 from app.models.cooperative import Cooperative
 from app.models.roaster import Roaster
 from app.services.reports import generate_daily_report
-from app.services.discovery import seed_discovery
+from app.services.discovery import seed_discovery, backfill_missing_cooperative_data
 from app.services.enrichment import enrich_entity
 from app.services.data_pipeline.orchestrator import DataPipelineOrchestrator
 from app.services.data_pipeline.freshness import DataFreshnessMonitor
@@ -55,7 +55,7 @@ def refresh_market():
 
         # Use orchestrator for market data pipeline
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        pipeline_result = orchestrator.run_market_pipeline()
+        pipeline_result = orchestrator.run_market_pipeline(force_probe=True)
 
         log.info(
             "market_refresh",
@@ -98,7 +98,7 @@ def refresh_news():
     redis_client = _redis()
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        result = orchestrator.run_intelligence_pipeline()
+        result = orchestrator.run_intelligence_pipeline(force_probe=True)
         log.info("news_refresh", **result)
 
         # Run sentiment analysis after news refresh when enabled
@@ -135,7 +135,7 @@ def refresh_intelligence():
     redis_client = _redis()
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        result = orchestrator.run_intelligence_pipeline()
+        result = orchestrator.run_intelligence_pipeline(force_probe=True)
         log.info("intelligence_refresh", **result)
 
         # Run sentiment analysis after intelligence refresh when enabled
@@ -151,6 +151,15 @@ def refresh_intelligence():
                 log.info("sentiment_after_intel_refresh", **sentiment_result)
             except Exception as e:
                 log.warning("sentiment_after_intel_error", error=str(e))
+
+        # Lightweight cooperative data-gap backfill from search results.
+        # Safe fallback: only fills missing fields, does not overwrite non-empty values.
+        try:
+            backfill_result = backfill_missing_cooperative_data(db, limit=15, dry_run=False)
+            result["cooperative_backfill"] = backfill_result
+            log.info("cooperative_backfill_after_intel_refresh", **backfill_result)
+        except Exception as e:
+            log.warning("cooperative_backfill_after_intel_error", error=str(e))
 
         return result
     finally:

@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
+import unicodedata
 
 import redis
 import structlog
@@ -18,12 +19,19 @@ from app.core.config import settings
 from app.providers.coffee_prices import fetch_coffee_price
 from app.providers.fx_rates import fetch_fx_rate
 from app.providers.peru_intel import fetch_openmeteo_weather
+from app.models.freight_history import FreightHistory
 from app.services.data_pipeline.circuit_breaker import CircuitBreaker
 from app.services.market_ingest import upsert_market_observation
 from app.services.news import refresh_news as refresh_news_service
 from app.services.peru_regions import seed_default_regions
 
 log = structlog.get_logger()
+
+
+def _normalize_market_key_fragment(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
+    return ascii_value.upper().replace(" ", "_")
 
 
 @dataclass
@@ -88,10 +96,10 @@ class DataPipelineOrchestrator:
             ),
         }
 
-    def _fetch_fx_with_breaker(self) -> Optional[dict]:
+    def _fetch_fx_with_breaker(self, *, force_probe: bool = False) -> Optional[dict]:
         """Fetch FX rates with circuit breaker protection."""
         breaker = self.breakers["fx_rates"]
-        if not breaker.can_attempt():
+        if not breaker.can_attempt(force_probe=force_probe):
             return None
 
         try:
@@ -125,10 +133,12 @@ class DataPipelineOrchestrator:
             log.error("fx_rate_fetch_error", error=str(e), exc_info=True)
             return None
 
-    def _fetch_coffee_with_breaker(self) -> Optional[dict]:
+    def _fetch_coffee_with_breaker(
+        self, *, force_probe: bool = False
+    ) -> Optional[dict]:
         """Fetch coffee prices with circuit breaker protection."""
         breaker = self.breakers["coffee_prices"]
-        if not breaker.can_attempt():
+        if not breaker.can_attempt(force_probe=force_probe):
             return None
 
         try:
@@ -162,10 +172,10 @@ class DataPipelineOrchestrator:
             log.error("coffee_price_fetch_error", error=str(e), exc_info=True)
             return None
 
-    def _fetch_peru_weather_with_breaker(self) -> dict:
+    def _fetch_peru_weather_with_breaker(self, *, force_probe: bool = False) -> dict:
         """Fetch Peru weather data with circuit breaker protection."""
         breaker = self.breakers["peru_weather"]
-        if not breaker.can_attempt():
+        if not breaker.can_attempt(force_probe=force_probe):
             return {"success": False, "regions": []}
 
         regions = [
@@ -183,7 +193,7 @@ class DataPipelineOrchestrator:
             try:
                 weather = fetch_openmeteo_weather(region)
                 if weather:
-                    key = f"WEATHER:PERU_{region.upper().replace(' ', '_')}"
+                    key = f"WEATHER:PERU_{_normalize_market_key_fragment(region)}"
                     upsert_market_observation(
                         self.db,
                         key=key,
@@ -228,7 +238,74 @@ class DataPipelineOrchestrator:
             breaker.record_failure()
             return {"success": False, "regions": [], "errors": errors}
 
-    def run_market_pipeline(self) -> dict:
+    def _refresh_freight_reference(self) -> dict:
+        """Refresh a freight reference rate from local historical data."""
+        rows = (
+            self.db.query(FreightHistory)
+            .filter(
+                FreightHistory.origin_port.ilike("%callao%"),
+                FreightHistory.destination_port.ilike("%hamburg%"),
+            )
+            .order_by(FreightHistory.departure_date.desc(), FreightHistory.id.desc())
+            .limit(12)
+            .all()
+        )
+
+        now = datetime.now(timezone.utc)
+        if rows:
+            value = round(
+                sum(row.freight_cost_usd for row in rows) / len(rows),
+                2,
+            )
+            source_name = "Freight History Benchmark"
+            meta = {
+                "derived": True,
+                "fallback": True,
+                "route": "Callao->Hamburg",
+                "samples": len(rows),
+                "container_type": "40ft",
+            }
+        else:
+            value = 3200.0
+            source_name = "Static Freight Benchmark"
+            meta = {
+                "derived": True,
+                "fallback": True,
+                "route": "Callao->Hamburg",
+                "samples": 0,
+                "container_type": "40ft",
+            }
+
+        for key in ("FREIGHT:USD_PER_40FT", "FREIGHT:CALLAO_HAMBURG"):
+            upsert_market_observation(
+                self.db,
+                key=key,
+                value=value,
+                unit="40ft",
+                currency="USD",
+                observed_at=now,
+                source_name=source_name,
+                source_url=None,
+                raw_text=None,
+                meta=meta,
+            )
+
+        log.info(
+            "freight_reference_ingested",
+            key="FREIGHT:USD_PER_40FT",
+            value=value,
+            source=source_name,
+            samples=meta["samples"],
+        )
+        return {
+            "success": True,
+            "source": source_name,
+            "value": value,
+            "fallback": True,
+            "samples": meta["samples"],
+        }
+
+    def run_market_pipeline(self, *, force_probe: bool = False) -> dict:
         """Run market data pipeline (FX + coffee prices).
 
         Returns:
@@ -237,27 +314,37 @@ class DataPipelineOrchestrator:
         log.info("market_pipeline_start")
         started_at = datetime.now(timezone.utc)
 
-        results: dict[str, dict | None] = {"fx_rates": None, "coffee_prices": None}
+        results: dict[str, dict | None] = {
+            "fx_rates": None,
+            "coffee_prices": None,
+            "freight_rates": None,
+        }
         errors = []
 
         # FX rates (needed for price conversions)
-        fx_result = self._fetch_fx_with_breaker()
+        fx_result = self._fetch_fx_with_breaker(force_probe=force_probe)
         results["fx_rates"] = fx_result
         if not fx_result:
             errors.append("FX rates fetch failed or circuit open")
 
         # Coffee prices
-        coffee_result = self._fetch_coffee_with_breaker()
+        coffee_result = self._fetch_coffee_with_breaker(force_probe=force_probe)
         results["coffee_prices"] = coffee_result
         if not coffee_result:
             errors.append("Coffee prices fetch failed or circuit open")
+
+        try:
+            results["freight_rates"] = self._refresh_freight_reference()
+        except Exception as e:
+            errors.append(f"Freight reference refresh failed: {str(e)}")
+            log.error("freight_reference_refresh_error", error=str(e), exc_info=True)
 
         completed_at = datetime.now(timezone.utc)
         duration = (completed_at - started_at).total_seconds()
 
         status = (
             "success"
-            if results["fx_rates"] and results["coffee_prices"]
+            if results["fx_rates"] and results["coffee_prices"] and results["freight_rates"]
             else "partial"
             if any(results.values())
             else "failed"
@@ -277,7 +364,7 @@ class DataPipelineOrchestrator:
             "errors": errors,
         }
 
-    def run_intelligence_pipeline(self) -> dict:
+    def run_intelligence_pipeline(self, *, force_probe: bool = False) -> dict:
         """Run intelligence pipeline (Peru weather + news).
 
         Returns:
@@ -296,21 +383,25 @@ class DataPipelineOrchestrator:
             log.warning("regions_seed_error", error=str(e))
 
         # Peru weather data
-        weather_result = self._fetch_peru_weather_with_breaker()
+        weather_result = self._fetch_peru_weather_with_breaker(force_probe=force_probe)
         results["peru_weather"] = weather_result
         if not weather_result.get("success"):
             errors.append("Peru weather fetch failed or circuit open")
 
         # News refresh
         breaker = self.breakers["news"]
-        if breaker.can_attempt():
+        if breaker.can_attempt(force_probe=force_probe):
             try:
                 news_result = refresh_news_service(
                     self.db, topic="peru coffee", country="PE", max_items=25
                 )
                 results["news"] = news_result
-                breaker.record_success()
-                log.info("news_refresh_complete", **news_result)
+                if news_result.get("status") in {"ok", "success"}:
+                    breaker.record_success()
+                    log.info("news_refresh_complete", **news_result)
+                else:
+                    breaker.record_failure()
+                    errors.extend(news_result.get("errors") or ["News refresh failed"])
             except Exception as e:
                 breaker.record_failure()
                 errors.append(f"News refresh failed: {str(e)}")
@@ -321,13 +412,9 @@ class DataPipelineOrchestrator:
         completed_at = datetime.now(timezone.utc)
         duration = (completed_at - started_at).total_seconds()
 
-        status = (
-            "success"
-            if results["peru_weather"] and results["news"]
-            else "partial"
-            if any(results.values())
-            else "failed"
-        )
+        weather_ok = bool(results["peru_weather"] and results["peru_weather"].get("success"))
+        news_ok = bool(results["news"] and results["news"].get("status") in {"ok", "success"})
+        status = "success" if weather_ok and news_ok else "partial" if weather_ok or news_ok else "failed"
 
         log.info(
             "intelligence_pipeline_complete",

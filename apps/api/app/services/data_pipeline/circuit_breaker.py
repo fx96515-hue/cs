@@ -106,13 +106,20 @@ class CircuitBreaker:
             new_state=state.value,
         )
 
-    def can_attempt(self) -> bool:
+    def can_attempt(self, *, force_probe: bool = False) -> bool:
         """Check if request should be attempted.
 
         Returns:
             True if request should be attempted, False if circuit is open
         """
         state = self.get_state()
+        if force_probe and state == CircuitState.OPEN:
+            self._set_state(CircuitState.HALF_OPEN)
+            log.info(
+                "circuit_breaker_forced_probe",
+                provider=self.provider_name,
+            )
+            return True
         if state == CircuitState.OPEN:
             log.warning(
                 "circuit_breaker_blocked",

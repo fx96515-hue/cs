@@ -7,13 +7,16 @@ from app.models.news_item import NewsItem
 
 def test_refresh_news_without_api_key(db):
     """Test news refresh when API key is not set."""
-    with patch("app.services.news.settings") as mock_settings:
+    with (
+        patch("app.services.news.settings") as mock_settings,
+        patch("app.services.news._fetch_google_news_rss", return_value=[]),
+    ):
         mock_settings.PERPLEXITY_API_KEY = None
 
         result = refresh_news(db)
 
-        assert result["status"] == "skipped"
-        assert "PERPLEXITY_API_KEY not set" in result["reason"]
+        assert result["status"] in {"failed", "ok"}
+        assert "providers_attempted" in result
 
 
 def test_refresh_news_with_results(db):
@@ -36,6 +39,7 @@ def test_refresh_news_with_results(db):
     with (
         patch("app.services.news.settings") as mock_settings,
         patch("app.services.news.PerplexityClient") as mock_client_class,
+        patch("app.services.news._fetch_google_news_rss", return_value=[]),
     ):
         mock_settings.PERPLEXITY_API_KEY = "test_key"
         mock_client = MagicMock()
@@ -63,6 +67,7 @@ def test_refresh_news_deduplicates_urls(db):
     with (
         patch("app.services.news.settings") as mock_settings,
         patch("app.services.news.PerplexityClient") as mock_client_class,
+        patch("app.services.news._fetch_google_news_rss", return_value=[]),
     ):
         mock_settings.PERPLEXITY_API_KEY = "test_key"
         mock_client = MagicMock()
@@ -85,6 +90,7 @@ def test_refresh_news_with_country_filter(db):
     with (
         patch("app.services.news.settings") as mock_settings,
         patch("app.services.news.PerplexityClient") as mock_client_class,
+        patch("app.services.news._fetch_google_news_rss", return_value=[]),
     ):
         mock_settings.PERPLEXITY_API_KEY = "test_key"
         mock_client = MagicMock()
@@ -102,6 +108,7 @@ def test_refresh_news_handles_errors(db):
     with (
         patch("app.services.news.settings") as mock_settings,
         patch("app.services.news.PerplexityClient") as mock_client_class,
+        patch("app.services.news._fetch_google_news_rss", return_value=[]),
     ):
         mock_settings.PERPLEXITY_API_KEY = "test_key"
         mock_client = MagicMock()

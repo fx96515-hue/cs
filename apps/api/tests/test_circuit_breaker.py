@@ -37,6 +37,16 @@ def test_circuit_breaker_blocks_requests_when_open():
     assert breaker.can_attempt() is False
 
 
+def test_circuit_breaker_force_probe_from_open():
+    """Test force probe allows one request when circuit is OPEN."""
+    mock_redis = MagicMock()
+    mock_redis.get.return_value = b"open"
+
+    breaker = CircuitBreaker(mock_redis, "test_provider")
+
+    assert breaker.can_attempt(force_probe=True) is True
+
+
 def test_circuit_breaker_opens_after_threshold_failures():
     """Test circuit breaker opens after reaching failure threshold."""
     mock_redis = MagicMock()
