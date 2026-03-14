@@ -38,82 +38,45 @@ interface NewsItem {
   sentiment: "positive" | "neutral" | "negative";
 }
 
-// Fetch coffee prices from Yahoo Finance (public API)
+// Fetch coffee prices from our server-side API route (avoids CORS)
 async function fetchCoffeePrices(): Promise<CoffeePrice[]> {
-  const symbols = [
-    { symbol: "KC=F", name: "ICE Coffee C Arabica Futures" },
-    { symbol: "KT=F", name: "ICE Robusta Coffee Futures" },
-  ];
-
-  const results: CoffeePrice[] = [];
-
-  for (const { symbol, name } of symbols) {
-    try {
-      // Yahoo Finance public API
-      const response = await fetch(
-        `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`,
-        {
-          headers: { "User-Agent": "CoffeeStudio/1.0" },
-          cache: "no-store",
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const result = data?.chart?.result?.[0];
-        const meta = result?.meta;
-        const quotes = result?.indicators?.quote?.[0];
-
-        if (meta && quotes) {
-          const currentPrice = meta.regularMarketPrice || quotes.close?.[quotes.close.length - 1];
-          const previousClose = meta.previousClose || quotes.close?.[quotes.close.length - 2];
-          const change = currentPrice - previousClose;
-          const changePercent = (change / previousClose) * 100;
-
-          results.push({
-            symbol,
-            name,
-            price: currentPrice,
-            change,
-            changePercent,
-            currency: meta.currency || "USD",
-            source: "Yahoo Finance",
-            lastUpdate: new Date(meta.regularMarketTime * 1000).toLocaleString("de-DE"),
-          });
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to fetch ${symbol}:`, error);
+  try {
+    const response = await fetch("/api/coffee-prices", { cache: "no-store" });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data.prices.map((p: CoffeePrice & { lastUpdate: string }) => ({
+        ...p,
+        lastUpdate: new Date(p.lastUpdate).toLocaleString("de-DE"),
+      }));
     }
+  } catch (error) {
+    console.error("Failed to fetch coffee prices:", error);
   }
 
-  // Add fallback demo data if no real data
-  if (results.length === 0) {
-    results.push(
-      {
-        symbol: "KC=F",
-        name: "ICE Coffee C Arabica Futures",
-        price: 245.30,
-        change: 3.45,
-        changePercent: 1.43,
-        currency: "USD",
-        source: "Demo",
-        lastUpdate: new Date().toLocaleString("de-DE"),
-      },
-      {
-        symbol: "KT=F",
-        name: "ICE Robusta Coffee Futures",
-        price: 4125.00,
-        change: -28.00,
-        changePercent: -0.67,
-        currency: "USD",
-        source: "Demo",
-        lastUpdate: new Date().toLocaleString("de-DE"),
-      }
-    );
-  }
-
-  return results;
+  // Fallback demo data
+  return [
+    {
+      symbol: "KC=F",
+      name: "ICE Coffee C Arabica Futures",
+      price: 245.30,
+      change: 3.45,
+      changePercent: 1.43,
+      currency: "USD",
+      source: "Demo",
+      lastUpdate: new Date().toLocaleString("de-DE"),
+    },
+    {
+      symbol: "KT=F",
+      name: "ICE Robusta Coffee Futures",
+      price: 4125.00,
+      change: -28.00,
+      changePercent: -0.67,
+      currency: "USD",
+      source: "Demo",
+      lastUpdate: new Date().toLocaleString("de-DE"),
+    },
+  ];
 }
 
 // Fetch FX rates from ECB (public API)
