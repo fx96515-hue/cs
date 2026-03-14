@@ -5,6 +5,8 @@ from typing import Any
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.config import settings
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all responses."""
@@ -28,16 +30,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Content Security Policy (stricter for production)
         # Note: In development, we allow 'unsafe-inline' and 'unsafe-eval' for debugging.
         # For production, remove these and use nonces or hashes for inline scripts.
-        csp_policy = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
-            "connect-src 'self'"
-        )
-        # TODO: For production, use stricter CSP:
-        # csp_policy = "default-src 'self'; script-src 'self'; style-src 'self'; ..."
+        if settings.APP_ENV in {"dev", "test"}:
+            csp_policy = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' data:; "
+                "connect-src 'self'"
+            )
+        else:
+            csp_policy = (
+                "default-src 'none'; "
+                "base-uri 'none'; "
+                "frame-ancestors 'none'; "
+                "form-action 'none'; "
+                "object-src 'none'"
+            )
         response.headers["Content-Security-Policy"] = csp_policy
 
         # Strict Transport Security (for HTTPS)

@@ -117,9 +117,16 @@ async def startup_seed_data():
                 reason="regions table not found",
             )
 
-        # Seed demo data (cooperatives, roasters, market observations)
-        demo_result = seed_all_demo_data(db)
-        log.info("startup_seed_demo", result=demo_result)
+        # Seed demo data only for local/test environments.
+        if settings.APP_ENV in {"dev", "test"}:
+            demo_result = seed_all_demo_data(db)
+            log.info("startup_seed_demo", result=demo_result)
+        else:
+            log.info(
+                "startup_seed_demo",
+                status="skipped",
+                reason=f"APP_ENV={settings.APP_ENV}",
+            )
 
         log.info("startup_seed", status="completed")
     except Exception as e:

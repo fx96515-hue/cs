@@ -4,9 +4,10 @@ import json
 import os
 import re
 from datetime import datetime
+from urllib.parse import urlparse
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.cooperative import Cooperative
@@ -289,6 +290,63 @@ def _extract_entities_heuristic(
         if len(out) >= 20:
             break
     return out
+
+
+def _extract_first_email(text: str) -> str | None:
+    m = re.search(r"([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})", text or "", re.I)
+    return m.group(1).lower() if m else None
+
+
+def _is_candidate_website(url: str) -> bool:
+    try:
+        host = (urlparse(url).hostname or "").lower()
+    except Exception:
+        return False
+    if not host:
+        return False
+    blocked = (
+        "linkedin.com",
+        "facebook.com",
+        "instagram.com",
+        "youtube.com",
+        "wikipedia.org",
+        "reddit.com",
+        "twitter.com",
+        "x.com",
+    )
+    return not any(host.endswith(b) for b in blocked)
+
+
+def _infer_region_from_text(text: str) -> str | None:
+    hay = (text or "").lower()
+    hints = [
+        ("cajamarca", "Cajamarca"),
+        ("junin", "Junin"),
+        ("junín", "Junin"),
+        ("san martin", "San Martin"),
+        ("san martín", "San Martin"),
+        ("cusco", "Cusco"),
+        ("amazonas", "Amazonas"),
+        ("puno", "Puno"),
+    ]
+    for needle, region in hints:
+        if needle in hay:
+            return region
+    return None
+
+
+def _infer_certifications_from_text(text: str) -> str | None:
+    hay = (text or "").lower()
+    certs: list[str] = []
+    if "fair trade" in hay or "fairtrade" in hay:
+        certs.append("Fairtrade")
+    if "organic" in hay or "bio" in hay:
+        certs.append("Organic")
+    if "rainforest" in hay:
+        certs.append("Rainforest Alliance")
+    if "utz" in hay:
+        certs.append("UTZ")
+    return ", ".join(certs) if certs else None
 
 
 def _get_or_create_source(
@@ -942,4 +1000,185 @@ def seed_discovery(
         "skipped": skipped,
         "errors": errors,
         "provider": discovery_provider,
+    }
+
+
+def backfill_missing_cooperative_data(
+    db: Session,
+    *,
+    limit: int = 20,
+    dry_run: bool = False,
+    cooperative_id: int | None = None,
+) -> dict[str, Any]:
+    errors: list[str] = []
+    updated = 0
+    skipped = 0
+    processed = 0
+
+    discovery_provider: str | None = None
+    p_client: PerplexityClient | None = None
+    t_client: TavilyClient | None = None
+    source_name = "Discovery Backfill"
+    source_url: str | None = None
+
+    perplexity_key = os.getenv("PERPLEXITY_API_KEY")
+    tavily_key = os.getenv("TAVILY_API_KEY")
+
+    if perplexity_key:
+        discovery_provider = "perplexity"
+        p_client = PerplexityClient(api_key=perplexity_key)
+        source_name = "Perplexity Discovery Backfill"
+        source_url = "https://docs.perplexity.ai/"
+    elif tavily_key:
+        discovery_provider = "tavily"
+        t_client = TavilyClient(api_key=tavily_key)
+        source_name = "Tavily Discovery Backfill"
+        source_url = "https://docs.tavily.com/"
+    else:
+        return {
+            "status": "failed",
+            "provider": None,
+            "processed": 0,
+            "updated": 0,
+            "skipped": 0,
+            "errors": [
+                "No discovery provider configured. Set PERPLEXITY_API_KEY or TAVILY_API_KEY."
+            ],
+        }
+
+    src = _get_or_create_source(
+        db,
+        name=source_name,
+        url=source_url,
+        kind="api",
+        reliability=0.55,
+    )
+
+    q = db.query(Cooperative).filter(Cooperative.deleted_at.is_(None))
+    if cooperative_id is not None:
+        q = q.filter(Cooperative.id == cooperative_id)
+    else:
+        q = q.filter(
+            or_(
+                Cooperative.website.is_(None),
+                Cooperative.contact_email.is_(None),
+                Cooperative.region.is_(None),
+                Cooperative.certifications.is_(None),
+            )
+        )
+    candidates = q.order_by(Cooperative.id.asc()).limit(max(1, min(limit, 200))).all()
+    now = datetime.utcnow()
+
+    try:
+        for coop in candidates:
+            processed += 1
+            query = (
+                f"{coop.name} Peru coffee cooperative website contact email certifications region"
+            )
+            try:
+                if p_client is not None:
+                    results = p_client.search(
+                        query,
+                        max_results=8,
+                        country="PE",
+                        max_tokens_per_page=256,
+                    )
+                elif t_client is not None:
+                    results = t_client.search(query, max_results=8, country="PE")
+                else:
+                    results = []
+            except Exception as exc:
+                errors.append(f"search failed for coop #{coop.id}: {exc}")
+                skipped += 1
+                continue
+
+            if not results:
+                skipped += 1
+                continue
+
+            text_blob = " ".join(
+                f"{r.title} {r.snippet or ''} {r.url}" for r in results[:8]
+            )
+            changed = False
+
+            if not coop.website:
+                for r in results:
+                    if _is_candidate_website(r.url):
+                        coop.website = r.url[:500]
+                        changed = True
+                        break
+
+            if not coop.contact_email:
+                email = _extract_first_email(text_blob)
+                if email:
+                    coop.contact_email = email[:320]
+                    changed = True
+
+            if not coop.region:
+                region = _infer_region_from_text(text_blob)
+                if region:
+                    coop.region = region[:255]
+                    changed = True
+
+            if not coop.certifications:
+                certs = _infer_certifications_from_text(text_blob)
+                if certs:
+                    coop.certifications = certs[:255]
+                    changed = True
+
+            if results and (coop.notes or ""):
+                pass
+            elif results:
+                first_snippet = (results[0].snippet or "").strip()
+                if first_snippet:
+                    coop.notes = first_snippet[:1500]
+                    changed = True
+
+            if changed:
+                coop.meta = coop.meta or {}
+                coop.meta.setdefault("discovery_backfill", {})
+                coop.meta["discovery_backfill"].update(
+                    {
+                        "provider": discovery_provider,
+                        "last_run": now.isoformat(),
+                        "query": query,
+                    }
+                )
+
+                if not dry_run:
+                    db.commit()
+                    db.refresh(coop)
+                    for r in results[:3]:
+                        try:
+                            ev = EntityEvidence(
+                                entity_type="cooperative",
+                                entity_id=coop.id,
+                                source_id=src.id,
+                                evidence_url=r.url,
+                                extracted_at=now,
+                                meta={"provider": discovery_provider, "mode": "backfill"},
+                            )
+                            db.add(ev)
+                            db.commit()
+                        except Exception:
+                            db.rollback()
+                updated += 1
+            else:
+                skipped += 1
+
+        if dry_run:
+            db.rollback()
+    finally:
+        if p_client is not None:
+            p_client.close()
+        if t_client is not None:
+            t_client.close()
+
+    return {
+        "status": "ok",
+        "provider": discovery_provider,
+        "processed": processed,
+        "updated": updated,
+        "skipped": skipped,
+        "errors": errors,
     }

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str = Field(default="", min_length=32)
     JWT_ISSUER: str = "coffeestudio"
     JWT_AUDIENCE: str = "coffeestudio-web"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 240
+    AUTH_COOKIE_NAME: str = "coffeestudio_access_token"
     CORS_ORIGINS: str = "http://localhost:3000"
     TZ: str = "Europe/Berlin"
 
@@ -149,6 +151,9 @@ class Settings(BaseSettings):
             hh, mm = part.split(":")
             out.append((int(hh), int(mm)))
         return out
+
+    def auth_cookie_secure(self) -> bool:
+        return self.APP_ENV not in {"dev", "test"}
 
 
 settings = Settings()

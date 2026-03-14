@@ -6,20 +6,38 @@ import structlog
 
 from app.core.security import decode_token
 from app.core.audit import AuditLogger
+from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User
 
 logger = structlog.get_logger(__name__)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+
+
+def _extract_access_token(request: Request, bearer_token: str | None) -> str:
+    if bearer_token:
+        return bearer_token
+
+    cookie_token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+    if cookie_token:
+        return cookie_token
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentifizierung fehlgeschlagen",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def get_current_user(
-    request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str | None = Depends(oauth2_scheme),
 ) -> User:
     """Get current authenticated user with detailed error handling and logging."""
     try:
-        payload = decode_token(token)
+        payload = decode_token(_extract_access_token(request, token))
     except ExpiredSignatureError:
         logger.warning(
             "auth.token_expired",
@@ -42,6 +60,8 @@ def get_current_user(
             detail="Authentifizierung fehlgeschlagen",  # Generic message to prevent info disclosure
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("auth.unexpected_error", error=str(e), exc_info=True)
         raise HTTPException(

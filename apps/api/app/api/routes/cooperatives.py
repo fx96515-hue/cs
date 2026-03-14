@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.cooperative import Cooperative
 from app.models.user import User
 from app.schemas.cooperative import CooperativeCreate, CooperativeOut, CooperativeUpdate
+from app.services.discovery import backfill_missing_cooperative_data
 from app.services.scoring import recompute_and_persist_cooperative
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
@@ -311,3 +312,39 @@ def export_cooperatives_csv(
         q = q.filter(Cooperative.deleted_at.is_(None))
     cooperatives = q.order_by(Cooperative.name.asc()).all()
     return DataExporter.cooperatives_to_csv(cooperatives)
+
+
+@router.post("/backfill-missing")
+def backfill_missing_cooperatives(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    limit: Annotated[int, Query(ge=1, le=200)] = 20,
+    dry_run: bool = False,
+):
+    """Search and fill missing cooperative fields from discovery provider results."""
+    return backfill_missing_cooperative_data(
+        db,
+        limit=limit,
+        dry_run=dry_run,
+    )
+
+
+@router.post(
+    "/{coop_id}/backfill-missing",
+    responses=NOT_FOUND_RESPONSES,
+)
+def backfill_single_cooperative(
+    coop_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    dry_run: bool = False,
+):
+    coop = db.query(Cooperative).filter(Cooperative.id == coop_id).first()
+    if not coop:
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    return backfill_missing_cooperative_data(
+        db,
+        limit=1,
+        dry_run=dry_run,
+        cooperative_id=coop_id,
+    )

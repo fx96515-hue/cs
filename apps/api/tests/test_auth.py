@@ -13,6 +13,18 @@ def test_login_success(client, test_user):
     assert data["token_type"] == "bearer"
 
 
+def test_login_sets_http_only_auth_cookie(client, test_user):
+    """Successful logins must establish an HttpOnly cookie-backed session."""
+    response = client.post(
+        "/auth/login", json={"email": "test@example.com", "password": "TestP@ss123!"}
+    )
+    assert response.status_code == 200
+    set_cookie = response.headers.get("set-cookie", "")
+    assert "coffeestudio_access_token=" in set_cookie
+    assert "HttpOnly" in set_cookie
+    assert "SameSite=lax" in set_cookie
+
+
 def test_login_invalid_password(client, test_user):
     """Test login with invalid password."""
     response = client.post(
@@ -62,6 +74,51 @@ def test_get_current_user(client, auth_headers, test_user):
     assert data["email"] == test_user.email
     assert data["role"] == test_user.role
     assert data["is_active"] is True
+
+
+def test_get_current_user_with_cookie_auth(client, test_user):
+    """Protected routes must also work with the secure auth cookie."""
+    login_response = client.post(
+        "/auth/login", json={"email": "test@example.com", "password": "TestP@ss123!"}
+    )
+    assert login_response.status_code == 200
+
+    response = client.get("/auth/me")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == test_user.email
+
+
+def test_logout_clears_auth_cookie(client, test_user):
+    """Logout should explicitly clear the auth cookie."""
+    login_response = client.post(
+        "/auth/login", json={"email": "test@example.com", "password": "TestP@ss123!"}
+    )
+    assert login_response.status_code == 200
+
+    logout_response = client.post("/auth/logout")
+    assert logout_response.status_code == 204
+
+    cleared_cookie = logout_response.headers.get("set-cookie", "")
+    assert "coffeestudio_access_token=" in cleared_cookie
+    assert "Max-Age=0" in cleared_cookie or "expires=" in cleared_cookie.lower()
+
+    me_response = client.get("/auth/me")
+    assert me_response.status_code == 401
+
+
+def test_refresh_renews_auth_cookie(client, test_user):
+    """Refresh should continue the cookie-backed session without exposing persistence in JS."""
+    login_response = client.post(
+        "/auth/login", json={"email": "test@example.com", "password": "TestP@ss123!"}
+    )
+    assert login_response.status_code == 200
+
+    refresh_response = client.post("/auth/refresh")
+    assert refresh_response.status_code == 200
+    refresh_cookie = refresh_response.headers.get("set-cookie", "")
+    assert "coffeestudio_access_token=" in refresh_cookie
+    assert "HttpOnly" in refresh_cookie
 
 
 def test_protected_route_without_token(client):
