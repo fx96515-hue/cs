@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
 import DataQualityMini from "../components/DataQualityMini";
+import { EmptyState, SkeletonRows } from "../components/EmptyState";
+import { ErrorPanel } from "../components/AlertError";
+import { useToast } from "../components/ToastProvider";
 import { toErrorMessage } from "../utils/error";
 
 type NewsItem = {
@@ -17,22 +20,23 @@ type NewsItem = {
 };
 
 export default function NewsPage() {
+  const toast = useToast();
   const [topic, setTopic] = useState("peru coffee");
   const [days, setDays] = useState(2);
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (isDemoMode()) { setLoading(false); return; }
     setLoading(true);
     setErr(null);
     try {
       const d = await apiFetch<NewsItem[]>(
         `/news?topic=${encodeURIComponent(topic)}&days=${days}&limit=60`,
       );
-      setItems(d);
+      setItems(Array.isArray(d) ? d : []);
     } catch (error: unknown) {
       setErr(toErrorMessage(error));
     } finally {
@@ -52,7 +56,6 @@ export default function NewsPage() {
 
   async function refreshNow() {
     setRefreshing(true);
-    setMsg(null);
     setErr(null);
     try {
       const r = await apiFetch<{
@@ -67,23 +70,23 @@ export default function NewsPage() {
       const parts = [`Refresh: ${r.status}`];
       if (typeof r.created === "number") parts.push(`neu ${r.created}`);
       if (typeof r.updated === "number") parts.push(`aktualisiert ${r.updated}`);
-      setMsg(parts.join(" | "));
+      toast.success(parts.join(" | "));
       await load();
     } catch (error: unknown) {
-      setErr(toErrorMessage(error));
+      toast.error(toErrorMessage(error));
     } finally {
       setRefreshing(false);
     }
   }
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">Marktradar</div>
-          <div className="muted">News, Quellen, Themen - ein Ort.</div>
+          <div className="muted">News, Quellen, Themen — ein Ort.</div>
         </div>
-        <div className="row gap">
+        <div className="pageActions">
           <button className="btn" onClick={load} disabled={loading || refreshing}>
             Neu laden
           </button>
@@ -93,51 +96,65 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {msg ? <div className="success">{msg}</div> : null}
-      {err ? <div className="error">{err}</div> : null}
+      {err && <ErrorPanel message={err} onRetry={load} />}
 
-      <div className="panel" style={{ marginBottom: 14 }}>
-        <div className="panelTitle">Filter</div>
-        <div className="row gap" style={{ flexWrap: "wrap" }}>
-          <div>
-            <div className="label">Topic</div>
-            <input
-              className="input"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              style={{ width: 320 }}
-            />
-          </div>
-          <div>
-            <div className="label">Tage</div>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              max={30}
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value || 2))}
-              style={{ width: 110 }}
-            />
-          </div>
-          <div style={{ alignSelf: "end" }}>
+      {/* Filter */}
+      <div className="panel" style={{ marginBottom: "var(--space-4)" }}>
+        <div className="panelHeader">
+          <div className="panelTitle">Filter</div>
+        </div>
+        <div className="panelBody">
+          <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div className="field">
+              <label className="fieldLabel">Topic</label>
+              <input
+                className="input"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                style={{ width: 320 }}
+              />
+            </div>
+            <div className="field">
+              <label className="fieldLabel">Tage</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                max={30}
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value || 2))}
+                style={{ width: 110 }}
+              />
+            </div>
             <button className="btn" onClick={load} disabled={loading || refreshing}>
               Anwenden
             </button>
           </div>
-        </div>
-        <div className="muted" style={{ marginTop: 10 }}>
-          Tipp: Fuer Peru z.B. &quot;peru specialty coffee&quot;,
-          &quot;cajamarca coffee cooperative&quot;, &quot;peru arabica export&quot;.
+          <div className="muted" style={{ marginTop: "var(--space-3)" }}>
+            Tipp: Für Peru z.B. &quot;peru specialty coffee&quot;,
+            &quot;cajamarca coffee cooperative&quot;, &quot;peru arabica export&quot;.
+          </div>
         </div>
       </div>
 
+      {/* Ergebnisse */}
       <div className="panel">
-        <div className="panelTitle">Ergebnisse ({sorted.length})</div>
+        <div className="panelHeader">
+          <div className="panelTitle">Ergebnisse</div>
+          <span className="badge">{sorted.length} Artikel</span>
+        </div>
         {loading ? (
-          <div className="muted">Lade...</div>
+          <SkeletonRows rows={6} cols={3} />
         ) : sorted.length === 0 ? (
-          <div className="muted">Keine Treffer.</div>
+          <EmptyState
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            }
+            title="Keine Treffer"
+            text={`Für das Thema "${topic}" wurden keine Artikel in den letzten ${days} Tagen gefunden.`}
+          />
         ) : (
           <div className="list">
             {sorted.map((n) => (
@@ -145,23 +162,22 @@ export default function NewsPage() {
                 <div className="listMain">
                   <div className="listTitle">{n.title}</div>
                   <div className="listMeta">
-                    <span className="muted">{n.source ?? "(Quelle unbekannt)"}</span>
-                    <span className="dot">|</span>
-                    <span className="muted">
-                      {n.published_at ? new Date(n.published_at).toLocaleString() : "-"}
+                    <span>{n.source ?? "(Quelle unbekannt)"}</span>
+                    <span className="dot">·</span>
+                    <span>
+                      {n.published_at ? new Date(n.published_at).toLocaleString("de-DE") : "-"}
                     </span>
-                    <span className="dot">|</span>
+                    <span className="dot">·</span>
                     <Badge tone="neutral">{n.topic ?? topic}</Badge>
                   </div>
                 </div>
-                <div className="listRight">-</div>
               </a>
             ))}
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: "var(--space-5)" }}>
         <DataQualityMini title="Data Quality (News Kontext)" limit={10} />
       </div>
     </div>

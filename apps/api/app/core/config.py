@@ -7,6 +7,8 @@ import logging
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    APP_ENV: str = "dev"
+
     # Required settings that must come from environment
     DATABASE_URL: str = Field(default="", min_length=1)
     REDIS_URL: str = Field(default="", min_length=1)

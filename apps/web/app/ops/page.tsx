@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
 import { DataQualityFlag } from "../types";
 import { toErrorMessage } from "../utils/error";
@@ -12,9 +12,7 @@ type EntityType = "cooperative" | "roaster" | "both";
 type NewsRefreshResponse = { status: string; created?: number; updated?: number; errors?: unknown[] };
 
 function parseEntityType(value: string): EntityType {
-  if (value === "cooperative" || value === "roaster" || value === "both") {
-    return value;
-  }
+  if (value === "cooperative" || value === "roaster" || value === "both") return value;
   return "both";
 }
 
@@ -40,23 +38,30 @@ function OpsPageContent() {
   const [dqSeverity, setDqSeverity] = useState<string>("all");
   const [dqEntityType, setDqEntityType] = useState<string>("all");
   const [dqIncludeResolved, setDqIncludeResolved] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
 
   const push = useCallback((line: string) => {
     setLog((prev) => [`${new Date().toLocaleTimeString()}  ${line}`, ...prev].slice(0, 120));
   }, []);
 
   const ping = useCallback(async () => {
+    if (isDemoMode()) {
+      setIsDemo(true);
+      setHealth("demo");
+      return;
+    }
     try {
       const d = await apiFetch<{ status: string }>("/health");
       setHealth(d.status);
       push(`health: ${d.status}`);
     } catch (error: unknown) {
       setHealth("down");
-      push(`health: ERROR ${toErrorMessage(error)}`);
+      push(`health: FEHLER ${toErrorMessage(error)}`);
     }
   }, [push]);
 
   const loadQuality = useCallback(async () => {
+    if (isDemoMode()) return;
     setQualityBusy(true);
     try {
       const qs = new URLSearchParams();
@@ -69,15 +74,16 @@ function OpsPageContent() {
         apiFetch<DataQualityFlag[]>(`/data-quality/flags?${qs.toString()}`),
       ]);
       setOverview(o);
-      setFlags(f.slice(0, 12));
+      setFlags(Array.isArray(f) ? f.slice(0, 12) : []);
     } catch (error: unknown) {
-      push(`data-quality: ERROR ${toErrorMessage(error)}`);
+      push(`Datenqualität: FEHLER ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
   }, [dqEntityType, dqIncludeResolved, dqSeverity, push]);
 
   useEffect(() => {
+    setIsDemo(isDemoMode());
     ping();
   }, [ping]);
 
@@ -98,39 +104,40 @@ function OpsPageContent() {
   }, [loadQuality]);
 
   async function run(name: string, fn: () => Promise<unknown>) {
+    if (isDemoMode()) { push(`${name}: Demo-Modus – kein Aufruf`); return; }
     setBusy(true);
     try {
-      push(`${name}...`);
+      push(`${name} wird gestartet...`);
       const r = await fn();
       push(`${name}: OK ${JSON.stringify(r)}`);
     } catch (error: unknown) {
-      push(`${name}: ERROR ${toErrorMessage(error)}`);
+      push(`${name}: FEHLER ${toErrorMessage(error)}`);
     } finally {
       setBusy(false);
     }
   }
 
   async function resolveFlag(id: number) {
+    if (isDemoMode()) return;
     setQualityBusy(true);
     try {
       await apiFetch(`/data-quality/flags/${id}/resolve`, { method: "POST" });
       await loadQuality();
     } catch (error: unknown) {
-      push(`resolve-flag: ERROR ${toErrorMessage(error)}`);
+      push(`Flag auflösen: FEHLER ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
   }
 
   async function recomputeForFlag(flag: DataQualityFlag) {
+    if (isDemoMode()) return;
     setQualityBusy(true);
     try {
-      await apiFetch(`/data-quality/recompute/${flag.entity_type}/${flag.entity_id}`, {
-        method: "POST",
-      });
+      await apiFetch(`/data-quality/recompute/${flag.entity_type}/${flag.entity_id}`, { method: "POST" });
       await loadQuality();
     } catch (error: unknown) {
-      push(`recompute: ERROR ${toErrorMessage(error)}`);
+      push(`Neu berechnen: FEHLER ${toErrorMessage(error)}`);
     } finally {
       setQualityBusy(false);
     }
@@ -139,219 +146,238 @@ function OpsPageContent() {
   const criticalFlags = overview?.data_quality?.critical_flags ?? 0;
   const openFlags = overview?.data_quality?.open_flags ?? 0;
 
+  const healthTone = health === "ok" ? "good" : health === "demo" ? "warn" : health === "" ? "neutral" : "bad";
+  const healthLabel = health === "ok" ? "Online" : health === "demo" ? "Demo" : health === "" ? "Prüfe..." : "Offline";
+
   return (
-    <div className="page">
-      <div className="pageHeader">
-        <div>
-          <div className="h1">Betrieb</div>
-          <div className="muted">One-Click Workflows: Refresh + Discovery + Smoke.</div>
+    <>
+      {/* Seitenheader */}
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <h1 className="h1">Betrieb</h1>
+          <p className="subtitle">Systemverwaltung, Workflows und Datenqualität</p>
         </div>
-        <div className="row gap" style={{ alignItems: "center" }}>
-          <Badge tone={health === "ok" ? "good" : health === "" ? "neutral" : "bad"}>
-            API: {health}
-          </Badge>
+        <div className="pageHeaderActions">
+          <Badge tone={healthTone}>API: {healthLabel}</Badge>
           <button className="btn" onClick={ping} disabled={busy}>
-            Ping
+            Verbindung prüfen
           </button>
+        </div>
+      </header>
+
+      {/* Kennzahlen */}
+      <div className="kpiGrid">
+        <div className="kpiCard">
+          <span className="cardLabel">API-Status</span>
+          <span className="cardValue">{healthLabel}</span>
+        </div>
+        <div className="kpiCard">
+          <span className="cardLabel">Kritische Markierungen</span>
+          <span className="cardValue" style={{ color: criticalFlags > 0 ? "var(--color-danger)" : undefined }}>
+            {isDemo ? "–" : criticalFlags}
+          </span>
+          {criticalFlags > 0 && <span className="cardHint">Aktion erforderlich</span>}
+        </div>
+        <div className="kpiCard">
+          <span className="cardLabel">Offene Markierungen</span>
+          <span className="cardValue">{isDemo ? "–" : openFlags}</span>
+        </div>
+        <div className="kpiCard">
+          <span className="cardLabel">Datenaktualität</span>
+          <span className="cardValue">{isDemo ? "–" : (overview?.data_quality?.freshness_status || "–")}</span>
         </div>
       </div>
 
-      <div className="grid2">
-        <div className="panel">
-          <div className="panelTitle">Aktualisieren</div>
-          <div className="muted" style={{ marginBottom: 10 }}>
-            Market-FX & Coffee-Price + News-Radar.
+      {/* Aktionen */}
+      <div className="grid2col">
+        {/* Aktualisierung */}
+        <section className="panel" aria-labelledby="refresh-title">
+          <div className="panelHeader">
+            <h2 id="refresh-title" className="panelTitle">Aktualisierung</h2>
           </div>
-
-          <div className="row gap" style={{ flexWrap: "wrap" }}>
-            <button
-              className="btn btnPrimary"
-              disabled={busy}
-              onClick={() =>
-                run("Market refresh", async () => {
-                  return apiFetch<JobResponse>("/market/refresh", { method: "POST" });
-                })
-              }
-            >
-              Market-Aktualisierung
-            </button>
-
-            <button
-              className="btn"
-              disabled={busy}
-              onClick={() =>
-                run("News refresh", async () => {
-                  return apiFetch<NewsRefreshResponse>(`/news/refresh?topic=${encodeURIComponent(topic)}`, {
-                    method: "POST",
-                  });
-                })
-              }
-            >
-              News-Aktualisierung
-            </button>
-          </div>
-
-          <div style={{ marginTop: 14 }}>
-            <div className="label">Topic (News)</div>
-            <input className="input" value={topic} onChange={(e) => setTopic(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panelTitle">Discovery</div>
-          <div className="muted" style={{ marginBottom: 10 }}>
-            Seeds fuer Kooperativen/Roestereien (Web-Discovery). Laeuft async ueber Celery.
-          </div>
-
-          <div className="row gap" style={{ flexWrap: "wrap" }}>
-            <div>
-              <div className="label">Entitaetstyp</div>
-              <select
-                className="input"
-                value={entityType}
-                onChange={(e) => setEntityType(parseEntityType(e.target.value))}
-                style={{ width: 220 }}
-              >
-                <option value="both">beide</option>
-                <option value="cooperative">Kooperative</option>
-                <option value="roaster">Roesterei</option>
-              </select>
-            </div>
-            <div>
-              <div className="label">Max. Entitaeten</div>
+          <div className="panelBody">
+            <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
+              Marktdaten, Kaffeepreise und Nachrichtenradar aktualisieren.
+            </p>
+            <div className="field" style={{ marginBottom: "var(--space-4)" }}>
+              <label className="fieldLabel" htmlFor="topic-input">Thema (Nachrichten)</label>
               <input
+                id="topic-input"
                 className="input"
-                type="number"
-                min={1}
-                max={500}
-                value={max}
-                onChange={(e) => setMax(Number(e.target.value || 50))}
-                style={{ width: 160 }}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="z.B. peru coffee"
               />
             </div>
-            <div style={{ alignSelf: "end" }}>
+            <div className="btnGroup">
               <button
                 className="btn btnPrimary"
-                disabled={busy}
-                onClick={() =>
-                  run("Seed discovery", async () => {
-                    return apiFetch<JobResponse>("/discovery/seed", {
-                      method: "POST",
-                      body: JSON.stringify({
-                        entity_type: entityType,
-                        max_entities: max,
-                        dry_run: false,
-                      }),
-                    });
-                  })
-                }
+                disabled={busy || isDemo}
+                onClick={() => run("Marktaktualisierung", () => apiFetch<JobResponse>("/market/refresh", { method: "POST" }))}
               >
-                Seed
+                Marktdaten aktualisieren
+              </button>
+              <button
+                className="btn"
+                disabled={busy || isDemo}
+                onClick={() => run("Nachrichtenaktualisierung", () =>
+                  apiFetch<NewsRefreshResponse>(`/news/refresh?topic=${encodeURIComponent(topic)}`, { method: "POST" })
+                )}
+              >
+                Nachrichten aktualisieren
               </button>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Ersterfassung */}
+        <section className="panel" aria-labelledby="discovery-title">
+          <div className="panelHeader">
+            <h2 id="discovery-title" className="panelTitle">Ersterfassung</h2>
+          </div>
+          <div className="panelBody">
+            <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
+              Kooperativen und Röstereien über Web-Suche erstmalig erfassen.
+            </p>
+            <div className="fieldGrid2">
+              <div className="field">
+                <label className="fieldLabel" htmlFor="entity-type-select">Entitätstyp</label>
+                <select
+                  id="entity-type-select"
+                  className="input"
+                  value={entityType}
+                  onChange={(e) => setEntityType(parseEntityType(e.target.value))}
+                >
+                  <option value="both">Beide</option>
+                  <option value="cooperative">Kooperative</option>
+                  <option value="roaster">Rösterei</option>
+                </select>
+              </div>
+              <div className="field">
+                <label className="fieldLabel" htmlFor="max-input">Max. Einträge</label>
+                <input
+                  id="max-input"
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={max}
+                  onChange={(e) => setMax(Number(e.target.value || 50))}
+                />
+              </div>
+            </div>
+            <div className="btnGroup">
+              <button
+                className="btn btnPrimary"
+                disabled={busy || isDemo}
+                onClick={() => run("Ersterfassung", () =>
+                  apiFetch<JobResponse>("/discovery/seed", {
+                    method: "POST",
+                    body: JSON.stringify({ entity_type: entityType, max_entities: max, dry_run: false }),
+                  })
+                )}
+              >
+                Ersterfassung starten
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div className="panel" style={{ marginTop: 14 }}>
-        <div className="panelTitle">Datenqualitaet</div>
-        <div className="rowBetween" style={{ marginBottom: 10 }}>
-          <div className="muted">Offene Flags und schnelle Korrekturen.</div>
-          <div className="row gap">
-            <Badge tone={criticalFlags > 0 ? "bad" : "good"}>Critical: {criticalFlags}</Badge>
-            <Badge tone="warn">Open: {openFlags}</Badge>
-            <button className="btn" onClick={loadQuality} disabled={qualityBusy}>
-              Refresh
+      {/* Datenqualität */}
+      <section className="panel" aria-labelledby="dq-title">
+        <div className="panelHeader">
+          <h2 id="dq-title" className="panelTitle">Datenqualität</h2>
+          <div className="panelActions">
+            {!isDemo && (
+              <>
+                <Badge tone={criticalFlags > 0 ? "bad" : "good"}>Kritisch: {criticalFlags}</Badge>
+                <Badge tone={openFlags > 0 ? "warn" : "neutral"}>Offen: {openFlags}</Badge>
+              </>
+            )}
+            <button className="btn btnSm" onClick={loadQuality} disabled={qualityBusy || isDemo}>
+              Aktualisieren
             </button>
           </div>
         </div>
-        <div className="row gap" style={{ marginBottom: 10, flexWrap: "wrap" }}>
+
+        {/* Filter */}
+        <div className="panelFilters">
           <select
             className="input"
             value={dqSeverity}
             onChange={(e) => setDqSeverity(e.target.value)}
             style={{ width: 160 }}
+            aria-label="Schweregrad filtern"
           >
-            <option value="all">Severity: alle</option>
-            <option value="critical">critical</option>
-            <option value="warning">warning</option>
-            <option value="info">info</option>
+            <option value="all">Schweregrad: Alle</option>
+            <option value="critical">Kritisch</option>
+            <option value="warning">Warnung</option>
+            <option value="info">Info</option>
           </select>
           <select
             className="input"
             value={dqEntityType}
             onChange={(e) => setDqEntityType(e.target.value)}
             style={{ width: 180 }}
+            aria-label="Entitätstyp filtern"
           >
-            <option value="all">Entity: alle</option>
-            <option value="cooperative">cooperative</option>
-            <option value="roaster">roaster</option>
-            <option value="lot">lot</option>
-            <option value="shipment">shipment</option>
+            <option value="all">Entitätstyp: Alle</option>
+            <option value="cooperative">Kooperative</option>
+            <option value="roaster">Rösterei</option>
+            <option value="lot">Partie</option>
+            <option value="shipment">Sendung</option>
           </select>
-          <label className="row" style={{ gap: 6 }}>
+          <label className="checkboxLabel">
             <input
               type="checkbox"
               checked={dqIncludeResolved}
               onChange={(e) => setDqIncludeResolved(e.target.checked)}
             />
-            <span className="small muted">Resolved anzeigen</span>
+            <span>Erledigte einblenden</span>
           </label>
         </div>
 
-        <div className="tableWrap" style={{ overflowX: "auto" }}>
+        {/* Tabelle */}
+        <div className="tableWrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Entity</th>
+                <th>Entität</th>
                 <th>Feld</th>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Erkannt</th>
+                <th>Problem</th>
+                <th>Schweregrad</th>
+                <th>Erkannt am</th>
                 <th>Aktionen</th>
               </tr>
             </thead>
             <tbody>
-              {flags.length ? (
+              {isDemo ? (
+                <tr><td colSpan={6} className="tableEmpty">Demo-Modus – keine Daten verfügbar.</td></tr>
+              ) : qualityBusy ? (
+                <tr><td colSpan={6} className="tableEmpty">Lädt...</td></tr>
+              ) : flags.length > 0 ? (
                 flags.map((flag) => (
                   <tr key={flag.id}>
-                    <td className="mono">
-                      {flag.entity_type} #{flag.entity_id}
-                    </td>
-                    <td>{flag.field_name || "-"}</td>
+                    <td><span className="mono">{flag.entity_type} #{flag.entity_id}</span></td>
+                    <td>{flag.field_name || "–"}</td>
                     <td>{flag.message || flag.issue_type}</td>
                     <td>
-                      <Badge
-                        tone={
-                          flag.severity === "critical"
-                            ? "bad"
-                            : flag.severity === "warning"
-                              ? "warn"
-                              : "neutral"
-                        }
-                      >
-                        {flag.severity}
+                      <Badge tone={flag.severity === "critical" ? "bad" : flag.severity === "warning" ? "warn" : "neutral"}>
+                        {flag.severity === "critical" ? "Kritisch" : flag.severity === "warning" ? "Warnung" : "Info"}
                       </Badge>
                     </td>
-                    <td>{new Date(flag.detected_at).toLocaleDateString()}</td>
+                    <td>{new Date(flag.detected_at).toLocaleDateString("de-DE")}</td>
                     <td>
-                      <div className="row" style={{ gap: 8 }}>
-                        <button
-                          className="btn"
-                          onClick={() => recomputeForFlag(flag)}
-                          disabled={qualityBusy}
-                        >
+                      <div className="tableActions">
+                        <button className="btn btnSm" onClick={() => recomputeForFlag(flag)} disabled={qualityBusy}>
                           Neu berechnen
                         </button>
                         {flag.resolved_at ? (
-                          <span className="muted">Resolved</span>
+                          <Badge tone="good">Erledigt</Badge>
                         ) : (
-                          <button
-                            className="btn"
-                            onClick={() => resolveFlag(flag.id)}
-                            disabled={qualityBusy}
-                          >
-                            Resolve
+                          <button className="btn btnSm" onClick={() => resolveFlag(flag.id)} disabled={qualityBusy}>
+                            Erledigen
                           </button>
                         )}
                       </div>
@@ -359,24 +385,29 @@ function OpsPageContent() {
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={6} className="muted">
-                    Keine offenen Flags.
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="tableEmpty">Keine offenen Markierungen vorhanden.</td></tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <div className="panel" style={{ marginTop: 14 }}>
-        <div className="panelTitle">Ausfuehrungsprotokoll</div>
-        <div className="codeBox">
-          {log.length ? log.map((l, idx) => <div key={idx}>{l}</div>) : <div className="muted">Noch keine Aktionen.</div>}
+      {/* Ausführungsprotokoll */}
+      <section className="panel" aria-labelledby="log-title">
+        <div className="panelHeader">
+          <h2 id="log-title" className="panelTitle">Ausführungsprotokoll</h2>
         </div>
-      </div>
-    </div>
+        <div className="panelBody">
+          <div className="codeBox">
+            {log.length > 0 ? (
+              log.map((l, idx) => <div key={idx}>{l}</div>)
+            ) : (
+              <span className="muted">Noch keine Aktionen ausgeführt.</span>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -384,17 +415,19 @@ export default function OpsPage() {
   return (
     <Suspense
       fallback={
-        <div className="page">
-          <div className="pageHeader">
-            <div>
-              <div className="h1">Betrieb</div>
-              <div className="muted">Lade Ansicht...</div>
+        <>
+          <header className="pageHeader">
+            <div className="pageHeaderContent">
+              <h1 className="h1">Betrieb</h1>
+              <p className="subtitle">Lädt...</p>
+            </div>
+          </header>
+          <div className="panel">
+            <div className="panelBody">
+              <span className="muted">Parameter werden initialisiert...</span>
             </div>
           </div>
-          <div className="panel" style={{ padding: 20 }}>
-            <div className="muted">Initialisiere Parameter...</div>
-          </div>
-        </div>
+        </>
       }
     >
       <OpsPageContent />

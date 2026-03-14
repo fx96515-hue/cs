@@ -1,123 +1,99 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import React from "react";
 import CountrySelector from "./CountrySelector";
 import { useCountry } from "../hooks/useCountry";
 
-// Page title mapping for breadcrumb context
-const pageTitles: Record<string, string> = {
-  "/dashboard": "Uebersicht",
-  "/search": "Suche",
-  "/analyst": "KI-Analyst",
-  "/graph": "Knowledge Graph",
-  "/peru-sourcing": "Peru Einkauf",
-  "/german-sales": "Vertrieb Deutschland",
-  "/shipments": "Sendungen",
-  "/deals": "Deals & Margen",
-  "/analytics": "Analytik & ML",
-  "/cooperatives": "Kooperativen",
-  "/roasters": "Roestereien",
-  "/news": "Marktradar",
-  "/reports": "Berichte",
-  "/ops": "Betrieb",
-  "/alerts": "Warnungen",
-  "/dedup": "Duplikate",
-  "/ml": "ML-Modelle",
-  "/lots": "Lots",
-  "/assistant": "Assistent",
-  "/sentiment": "Sentiment",
-};
-
-function getPageTitle(pathname: string): string {
-  // Direct match
-  if (pageTitles[pathname]) return pageTitles[pathname];
-
-  // Check for dynamic routes like /cooperatives/[id]
-  const basePath = "/" + pathname.split("/")[1];
-  if (pageTitles[basePath]) {
-    const segments = pathname.split("/").filter(Boolean);
-    if (segments.length > 1) {
-      return `${pageTitles[basePath]} - Detail`;
-    }
-    return pageTitles[basePath];
-  }
-
-  return "CoffeeStudio";
-}
-
 interface TopbarProps {
   authed: boolean;
   onLogout: () => void;
-  onMobileMenuClick?: () => void;
+  onOpenCmd?: () => void;
 }
 
-export default function Topbar({ authed, onLogout, onMobileMenuClick }: TopbarProps) {
-  const pathname = usePathname();
+export default function Topbar({ authed, onLogout, onOpenCmd }: TopbarProps) {
   const { selectedCountry, setSelectedCountry, countryConfig } = useCountry();
-  const pageTitle = getPageTitle(pathname);
+  const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
+  const shortcut = isMac ? "⌘K" : "Ctrl+K";
 
   return (
-    <div className="topbar">
+    <header className="topbar">
       <div className="topbarLeft">
-        {/* Mobile menu button */}
+        {/* Suchleiste / Command-Palette Trigger */}
         <button
-          className="mobileMenuBtn"
-          onClick={onMobileMenuClick}
-          aria-label="Menu oeffnen"
+          className="topbarSearch"
+          onClick={onOpenCmd}
+          type="button"
+          aria-label="Schnellsuche öffnen"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
+          <span>Suchen...</span>
+          <kbd className="topbarKbd">{shortcut}</kbd>
         </button>
-
-        <div>
-          <div className="topbarTitle">{pageTitle}</div>
-          <div className="topbarBreadcrumb">
-            <Link href="/dashboard" className="link">
-              Home
-            </Link>
-            <span>/</span>
-            <span style={{ color: "var(--text)", opacity: 0.9 }}>{pageTitle}</span>
-          </div>
-        </div>
       </div>
 
       <div className="topbarRight">
         <CountrySelector value={selectedCountry} onChange={setSelectedCountry} />
-        <span
-          className="muted small"
-          title={countryConfig.data_source.description}
-          style={{ display: "none" }}
-        >
+        <span className="topbarSource" title={countryConfig.data_source.description}>
           {countryConfig.data_source.name}
         </span>
-
         {authed ? (
-          <div className="row" style={{ gap: 8 }}>
-            <span className="topbarBadge">Online</span>
-            <button className="btn" onClick={onLogout}>
-              Abmelden
-            </button>
-          </div>
+          <button className="btn btnGhost btnSm" onClick={onLogout} type="button">
+            Abmelden
+          </button>
         ) : (
-          <Link className="btn btnPrimary" href="/login">
+          <Link className="btn btnPrimary btnSm" href="/login">
             Anmelden
           </Link>
         )}
       </div>
-    </div>
+
+      <style jsx>{`
+        .topbarSearch {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          height: 36px;
+          padding: 0 14px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--color-border-strong);
+          background: var(--color-bg-subtle);
+          color: var(--color-text-muted);
+          cursor: pointer;
+          font-size: var(--font-size-sm);
+          font-family: var(--font-family);
+          transition: all var(--transition-fast);
+          min-width: 220px;
+        }
+        .topbarSearch span {
+          flex: 1;
+          text-align: left;
+        }
+        .topbarSearch:hover {
+          border-color: var(--color-border-strong);
+          background: var(--color-bg-muted);
+          color: var(--color-text-secondary);
+        }
+        .topbarKbd {
+          font-size: 11px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border-strong);
+          color: var(--color-text-muted);
+          font-family: var(--font-mono);
+          flex-shrink: 0;
+        }
+        .topbarSource {
+          font-size: 12px;
+          color: var(--color-text-muted);
+          padding: 4px 10px;
+          background: var(--color-bg-subtle);
+          border-radius: var(--radius-sm);
+        }
+      `}</style>
+    </header>
   );
 }

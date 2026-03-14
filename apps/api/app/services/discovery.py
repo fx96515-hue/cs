@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime
 from typing import Any
@@ -13,6 +14,7 @@ from app.models.evidence import EntityEvidence
 from app.models.roaster import Roaster
 from app.models.source import Source
 from app.providers.perplexity import PerplexityClient, PerplexityError, safe_json_loads
+from app.providers.tavily_search import TavilyClient, TavilyError
 from app.services.country_config import get_country_config
 
 
@@ -230,6 +232,65 @@ def _norm_name(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", name.strip().lower())
 
 
+def _title_to_candidate_name(title: str) -> str:
+    raw = re.split(r"[|:\-–—]", title or "", maxsplit=1)[0].strip()
+    cleaned = re.sub(
+        r"\b(gmbh|ag|ug|kg|ltd|llc|inc|cooperative|co-op|roastery|roasters|coffee)\b",
+        "",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ,")
+    return cleaned or raw
+
+
+def _extract_entities_heuristic(
+    *,
+    entity_type: str,
+    search_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    blocked = {
+        "wikipedia",
+        "linkedin",
+        "instagram",
+        "facebook",
+        "youtube",
+        "tripadvisor",
+        "reddit",
+    }
+    for r in search_results:
+        title = str(r.get("title") or "").strip()
+        url = str(r.get("url") or "").strip()
+        if not title or not url:
+            continue
+        low = f"{title} {url}".lower()
+        if any(b in low for b in blocked):
+            continue
+        name = _title_to_candidate_name(title)
+        if len(name) < 3:
+            continue
+        key = _norm_name(name)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        ent: dict[str, Any] = {
+            "name": name,
+            "website": url,
+            "notes": (r.get("snippet") or "")[:600] or None,
+            "evidence_urls": [url],
+        }
+        if entity_type == "cooperative":
+            ent["country"] = "PE"
+        else:
+            ent["country"] = "DE"
+        out.append(ent)
+        if len(out) >= 20:
+            break
+    return out
+
+
 def _get_or_create_source(
     db: Session,
     name: str,
@@ -360,14 +421,6 @@ def seed_discovery(
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
 
-    src = _get_or_create_source(
-        db,
-        name="Perplexity Discovery",
-        url="https://docs.perplexity.ai/",
-        kind="api",
-        reliability=0.6,
-    )
-
     default_country = "PE" if entity_type == "cooperative" else "DE"
     country = country_filter or default_country
     country_cfg = get_country_config(country)
@@ -384,7 +437,47 @@ def seed_discovery(
     skipped = 0
     errors: list[str] = []
 
-    client = PerplexityClient()
+    discovery_provider: str | None = None
+    source_name = "Discovery Seed"
+    source_url: str | None = None
+    p_client: PerplexityClient | None = None
+    t_client: TavilyClient | None = None
+
+    perplexity_key = os.getenv("PERPLEXITY_API_KEY")
+    tavily_key = os.getenv("TAVILY_API_KEY")
+
+    if perplexity_key:
+        discovery_provider = "perplexity"
+        source_name = "Perplexity Discovery"
+        source_url = "https://docs.perplexity.ai/"
+        p_client = PerplexityClient(api_key=perplexity_key)
+    elif tavily_key:
+        discovery_provider = "tavily"
+        source_name = "Tavily Discovery"
+        source_url = "https://docs.tavily.com/"
+        t_client = TavilyClient(api_key=tavily_key)
+    else:
+        return {
+            "entity_type": entity_type,
+            "country": country,
+            "dry_run": dry_run,
+            "created": 0,
+            "updated": 0,
+            "skipped": 0,
+            "errors": [
+                "No discovery provider configured. Set PERPLEXITY_API_KEY or TAVILY_API_KEY."
+            ],
+            "provider": None,
+        }
+
+    src = _get_or_create_source(
+        db,
+        name=source_name,
+        url=source_url,
+        kind="api",
+        reliability=0.6,
+    )
+
     try:
         aggregated: list[dict[str, Any]] = []
         seen_urls: set[str] = set()
@@ -393,9 +486,14 @@ def seed_discovery(
             if len(aggregated) >= 120:
                 break
             try:
-                results = client.search(
-                    q, max_results=20, country=country, max_tokens_per_page=512
-                )
+                if p_client is not None:
+                    results = p_client.search(
+                        q, max_results=20, country=country, max_tokens_per_page=512
+                    )
+                elif t_client is not None:
+                    results = t_client.search(q, max_results=20, country=country)
+                else:
+                    results = []
                 for r in results:
                     if r.url in seen_urls:
                         continue
@@ -413,9 +511,14 @@ def seed_discovery(
             if not chunk:
                 continue
             try:
-                ents = _extract_entities_with_llm(
-                    client, entity_type=entity_type, search_results=chunk
-                )
+                if p_client is not None:
+                    ents = _extract_entities_with_llm(
+                        p_client, entity_type=entity_type, search_results=chunk
+                    )
+                else:
+                    ents = _extract_entities_heuristic(
+                        entity_type=entity_type, search_results=chunk
+                    )
                 entities.extend(ents)
             except Exception as exc:
                 errors.append(f"extract failed chunk {i}-{i + chunk_size}: {exc}")
@@ -594,7 +697,7 @@ def seed_discovery(
                 coop.meta = coop.meta or {}
                 coop.meta.setdefault("discovery", {})
                 coop.meta["discovery"].update(
-                    {"provider": "perplexity", "last_run": now.isoformat()}
+                    {"provider": discovery_provider, "last_run": now.isoformat()}
                 )
 
                 # Quality data in meta["quality"]
@@ -690,7 +793,7 @@ def seed_discovery(
                 roaster.meta = roaster.meta or {}
                 roaster.meta.setdefault("discovery", {})
                 roaster.meta["discovery"].update(
-                    {"provider": "perplexity", "last_run": now.isoformat()}
+                    {"provider": discovery_provider, "last_run": now.isoformat()}
                 )
 
                 # Sourcing data in meta["sourcing"]
@@ -807,7 +910,7 @@ def seed_discovery(
                             source_id=src.id,
                             evidence_url=u,
                             extracted_at=now,
-                            meta={"provider": "perplexity"},
+                            meta={"provider": discovery_provider},
                         )
                         db.add(ev)
                         db.commit()
@@ -822,10 +925,13 @@ def seed_discovery(
         if dry_run:
             db.rollback()
 
-    except PerplexityError as exc:
+    except (PerplexityError, TavilyError) as exc:
         errors.append(str(exc))
     finally:
-        client.close()
+        if p_client is not None:
+            p_client.close()
+        if t_client is not None:
+            t_client.close()
 
     return {
         "entity_type": entity_type,
@@ -835,4 +941,5 @@ def seed_discovery(
         "updated": updated,
         "skipped": skipped,
         "errors": errors,
+        "provider": discovery_provider,
     }

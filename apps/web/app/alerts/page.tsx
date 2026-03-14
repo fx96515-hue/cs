@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, isDemoMode } from "../../lib/api";
 import Badge from "../components/Badge";
 import DataQualityMini from "../components/DataQualityMini";
 
@@ -23,57 +23,46 @@ type QualityAlert = {
 type AlertSummary = {
   total_alerts: number;
   unacknowledged: number;
-  by_severity: {
-    critical: number;
-    warning: number;
-    info: number;
-  };
+  by_severity: { critical: number; warning: number; info: number };
 };
-
-function severityToTone(severity: string): "bad" | "warn" | "neutral" {
-  if (severity === "critical") return "bad";
-  if (severity === "warning") return "warn";
-  return "neutral";
-}
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<QualityAlert[]>([]);
   const [summary, setSummary] = useState<AlertSummary | null>(null);
-  const [filter, setFilter] = useState<{
-    severity: string;
-    acknowledged: string;
-    entity_type: string;
-  }>({ severity: "all", acknowledged: "false", entity_type: "all" });
+  const [filter, setFilter] = useState({ severity: "all", acknowledged: "false", entity_type: "all" });
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
 
   const fetchAlerts = useCallback(async () => {
+    if (isDemoMode()) { setIsDemo(true); setLoading(false); return; }
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (filter.severity !== "all") params.set("severity", filter.severity);
       if (filter.acknowledged !== "all") params.set("acknowledged", filter.acknowledged);
       if (filter.entity_type !== "all") params.set("entity_type", filter.entity_type);
-
       const qs = params.toString();
       const data = await apiFetch<QualityAlert[]>(`/alerts${qs ? `?${qs}` : ""}`);
-      setAlerts(data);
+      setAlerts(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error("Failed to fetch alerts:", e);
+      console.error("Fehler beim Laden der Warnungen:", e);
     } finally {
       setLoading(false);
     }
   }, [filter]);
 
   const fetchSummary = useCallback(async () => {
+    if (isDemoMode()) return;
     try {
       const data = await apiFetch<AlertSummary>("/alerts/summary");
       setSummary(data);
     } catch (e) {
-      console.error("Failed to fetch summary:", e);
+      console.error("Fehler beim Laden der Zusammenfassung:", e);
     }
   }, []);
 
   async function acknowledgeAlert(id: number) {
+    if (isDemoMode()) return;
     try {
       await apiFetch(`/alerts/${id}/acknowledge`, {
         method: "POST",
@@ -81,186 +70,226 @@ export default function AlertsPage() {
       });
       await Promise.all([fetchAlerts(), fetchSummary()]);
     } catch (e) {
-      console.error("Failed to acknowledge alert:", e);
+      console.error("Fehler beim Bestätigen der Warnung:", e);
     }
   }
 
   async function checkNow() {
+    if (isDemoMode()) return;
     try {
       await apiFetch("/alerts/check-now", { method: "POST" });
       await Promise.all([fetchAlerts(), fetchSummary()]);
     } catch (e) {
-      console.error("Failed to check alerts:", e);
+      console.error("Fehler beim Prüfen der Warnungen:", e);
     }
   }
 
   useEffect(() => {
+    setIsDemo(isDemoMode());
     Promise.all([fetchAlerts(), fetchSummary()]).catch((error: unknown) => {
       console.error("Failed to initialize alerts page:", error);
     });
   }, [fetchAlerts, fetchSummary]);
 
-  const severityBadge = (severity: string) => {
-    const tone = severityToTone(severity);
-    return <Badge tone={tone}>{severity}</Badge>;
+  const severityLabel: Record<string, string> = {
+    critical: "Kritisch",
+    warning: "Warnung",
+    info: "Info",
   };
-
-  const alertTypeBadge = (type: string) => {
-    const label = type
-      .replace("_", " ")
-      .split(" ")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-    return <Badge tone="neutral">{label}</Badge>;
+  const severityTone: Record<string, "bad" | "warn" | "neutral"> = {
+    critical: "bad",
+    warning: "warn",
+    info: "neutral",
   };
 
   return (
-    <div className="page">
-      <div className="pageHeader">
-        <div>
-          <div className="h1">Warnungen</div>
-          <div className="muted">Qualitaets- und Zertifizierungsaenderungen ueberwachen</div>
+    <>
+      {/* Seitenheader */}
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <h1 className="h1">Warnungen</h1>
+          <p className="subtitle">Qualitäts- und Zertifizierungsänderungen überwachen</p>
         </div>
-        <button className="btn btnPrimary" onClick={checkNow}>
-          Jetzt pruefen
-        </button>
-      </div>
+        <div className="pageHeaderActions">
+          <button type="button" className="btn btnPrimary" onClick={checkNow} disabled={isDemo}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+              <path d="M16 21h5v-5"/>
+            </svg>
+            Jetzt prüfen
+          </button>
+        </div>
+      </header>
 
-      {summary && (
-        <div className="grid3" style={{ marginBottom: 20 }}>
-          <div className="panel">
-            <div className="statLabel">Gesamt</div>
-            <div className="statValue">{summary.total_alerts}</div>
+      {/* Kennzahlen */}
+      {summary && !isDemo && (
+        <div className="kpiGrid">
+          <div className="kpiCard">
+            <span className="cardLabel">Warnungen gesamt</span>
+            <span className="cardValue">{summary.total_alerts}</span>
+            <span className="cardHint">Alle Zeiträume</span>
           </div>
-          <div className="panel">
-            <div className="statLabel">Unbestaetigt</div>
-            <div className="statValue">{summary.unacknowledged}</div>
+          <div className="kpiCard">
+            <span className="cardLabel">Unbestätigt</span>
+            <span className="cardValue" style={{ color: summary.unacknowledged > 0 ? "var(--color-danger)" : undefined }}>
+              {summary.unacknowledged}
+            </span>
+            <span className="cardHint">Benötigen Aufmerksamkeit</span>
           </div>
-          <div className="panel">
-            <div className="statLabel">Nach Schweregrad</div>
-            <div className="row gap" style={{ marginTop: 8 }}>
-              <div>
-                <Badge tone="bad">Kritisch: {summary.by_severity.critical}</Badge>
-              </div>
-              <div>
-                <Badge tone="warn">Warnung: {summary.by_severity.warning}</Badge>
-              </div>
-              <div>
-                <Badge tone="neutral">Info: {summary.by_severity.info}</Badge>
-              </div>
-            </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Kritisch</span>
+            <span className="cardValue">{summary.by_severity.critical}</span>
+            <span className="cardHint">Hohe Priorität</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Warnhinweise</span>
+            <span className="cardValue">{summary.by_severity.warning}</span>
+            <span className="cardHint">Mittlere Priorität</span>
           </div>
         </div>
       )}
 
-      <div className="panel">
-        <div className="panelTitle">Filter</div>
-        <div className="row gap" style={{ flexWrap: "wrap" }}>
-          <div>
-            <div className="label">Schweregrad</div>
-            <select
-              className="input"
-              value={filter.severity}
-              onChange={(e) => setFilter({ ...filter, severity: e.target.value })}
-            >
-              <option value="all">Alle</option>
-              <option value="critical">Kritisch</option>
-              <option value="warning">Warnung</option>
-              <option value="info">Info</option>
-            </select>
-          </div>
-          <div>
-            <div className="label">Status</div>
-            <select
-              className="input"
-              value={filter.acknowledged}
-              onChange={(e) => setFilter({ ...filter, acknowledged: e.target.value })}
-            >
-              <option value="all">Alle</option>
-              <option value="false">Unbestaetigt</option>
-              <option value="true">Bestaetigt</option>
-            </select>
-          </div>
-          <div>
-            <div className="label">Entitaetstyp</div>
-            <select
-              className="input"
-              value={filter.entity_type}
-              onChange={(e) => setFilter({ ...filter, entity_type: e.target.value })}
-            >
-              <option value="all">Alle</option>
-              <option value="cooperative">Kooperative</option>
-              <option value="roaster">Roesterei</option>
-            </select>
+      {/* Filter */}
+      <section className="panel" aria-labelledby="filter-title">
+        <div className="panelHeader">
+          <h2 id="filter-title" className="panelTitle">Filter</h2>
+          <button
+            type="button"
+            className="btn btnSm btnGhost"
+            onClick={() => setFilter({ severity: "all", acknowledged: "false", entity_type: "all" })}
+          >
+            Zurücksetzen
+          </button>
+        </div>
+        <div className="panelBody">
+          <div className="fieldGrid2">
+            <div className="field">
+              <label className="fieldLabel" htmlFor="severity-select">Schweregrad</label>
+              <select
+                id="severity-select"
+                className="input"
+                value={filter.severity}
+                onChange={(e) => setFilter({ ...filter, severity: e.target.value })}
+              >
+                <option value="all">Alle</option>
+                <option value="critical">Kritisch</option>
+                <option value="warning">Warnung</option>
+                <option value="info">Info</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="fieldLabel" htmlFor="status-select">Status</label>
+              <select
+                id="status-select"
+                className="input"
+                value={filter.acknowledged}
+                onChange={(e) => setFilter({ ...filter, acknowledged: e.target.value })}
+              >
+                <option value="all">Alle</option>
+                <option value="false">Unbestätigt</option>
+                <option value="true">Bestätigt</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="fieldLabel" htmlFor="entity-select">Entitätstyp</label>
+              <select
+                id="entity-select"
+                className="input"
+                value={filter.entity_type}
+                onChange={(e) => setFilter({ ...filter, entity_type: e.target.value })}
+              >
+                <option value="all">Alle</option>
+                <option value="cooperative">Kooperative</option>
+                <option value="roaster">Rösterei</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="panel" style={{ marginTop: 14 }}>
-        <div className="panelTitle">Warnungen ({alerts.length})</div>
-        {loading ? (
-          <div className="muted">Laedt...</div>
-        ) : alerts.length === 0 ? (
-          <div className="muted">Keine Warnungen gefunden.</div>
-        ) : (
-          <div className="table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Schweregrad</th>
-                  <th>Typ</th>
-                  <th>Entitaet</th>
-                  <th>Feld</th>
-                  <th>Aenderung</th>
-                  <th>Erstellt</th>
-                  <th>Aktion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alerts.map((alert) => (
+      {/* Warnungstabelle */}
+      <section className="panel" aria-labelledby="alerts-title">
+        <div className="panelHeader">
+          <h2 id="alerts-title" className="panelTitle">Warnungsliste</h2>
+          {!isDemo && <span className="badge neutral">{alerts.length} Einträge</span>}
+        </div>
+        <div className="tableWrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Schweregrad</th>
+                <th>Typ</th>
+                <th>Entität</th>
+                <th>Feld</th>
+                <th>Änderung</th>
+                <th>Datum</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {isDemo ? (
+                <tr><td colSpan={7} className="tableEmpty">Demo-Modus – keine Daten verfügbar.</td></tr>
+              ) : loading ? (
+                <tr><td colSpan={7} className="tableEmpty">Lädt...</td></tr>
+              ) : alerts.length === 0 ? (
+                <tr><td colSpan={7} className="tableEmpty">Keine Warnungen gefunden.</td></tr>
+              ) : (
+                alerts.map((alert) => (
                   <tr key={alert.id}>
-                    <td>{severityBadge(alert.severity)}</td>
-                    <td>{alertTypeBadge(alert.alert_type)}</td>
                     <td>
-                      {alert.entity_type} #{alert.entity_id}
+                      <Badge tone={severityTone[alert.severity] ?? "neutral"}>
+                        {severityLabel[alert.severity] ?? alert.severity}
+                      </Badge>
                     </td>
-                    <td>{alert.field_name || "-"}</td>
+                    <td>
+                      <span className="small">
+                        {alert.alert_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="mono small">{alert.entity_type} #{alert.entity_id}</span>
+                    </td>
+                    <td>{alert.field_name || "–"}</td>
                     <td>
                       {alert.old_value !== null && alert.new_value !== null ? (
-                        <span>
-                          {alert.old_value.toFixed(1)} - {alert.new_value.toFixed(1)}{" "}
+                        <span className="mono small">
+                          {alert.old_value.toFixed(1)} → {alert.new_value.toFixed(1)}
                           {alert.change_amount !== null && (
-                            <span className={alert.change_amount > 0 ? "good" : "bad"}>
-                              ({alert.change_amount > 0 ? "+" : ""}
-                              {alert.change_amount.toFixed(1)})
-                            </span>
+                            <Badge tone={alert.change_amount > 0 ? "good" : "bad"} style={{ marginLeft: "var(--space-2)" }}>
+                              {alert.change_amount > 0 ? "+" : ""}{alert.change_amount.toFixed(1)}
+                            </Badge>
                           )}
                         </span>
-                      ) : (
-                        "-"
-                      )}
+                      ) : "–"}
                     </td>
-                    <td>{new Date(alert.created_at).toLocaleDateString("de-DE")}</td>
+                    <td className="small muted">
+                      {new Date(alert.created_at).toLocaleDateString("de-DE")}
+                    </td>
                     <td>
                       {!alert.acknowledged ? (
-                        <button className="btn btnSmall" onClick={() => acknowledgeAlert(alert.id)}>
-                          Bestaetigen
+                        <button className="btn btnSm" onClick={() => acknowledgeAlert(alert.id)}>
+                          Bestätigen
                         </button>
                       ) : (
-                        <span className="muted">OK {alert.acknowledged_by || "Bestaetigt"}</span>
+                        <Badge tone="good">{alert.acknowledged_by || "Bestätigt"}</Badge>
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      <div style={{ marginTop: 14 }}>
-        <DataQualityMini title="Data Quality (Alerts Kontext)" limit={10} />
-      </div>
-    </div>
+      {/* Datenqualität */}
+      {!isDemo && (
+        <div style={{ marginTop: "var(--space-6)" }}>
+          <DataQualityMini title="Datenqualität" limit={10} />
+        </div>
+      )}
+    </>
   );
 }

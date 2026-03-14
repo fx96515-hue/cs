@@ -6,6 +6,29 @@ import { useRoasters } from "../hooks/useRoasters";
 import { RoasterFilters } from "../types";
 import { format } from "date-fns";
 
+/* ============================================================
+   GERMAN SALES DASHBOARD - ENTERPRISE VIEW
+   ============================================================ */
+
+function getScoreColor(score: number): string {
+  if (score >= 80) return "badgeOk";
+  if (score >= 60) return "badgeWarn";
+  return "badgeErr";
+}
+
+function getStatusBadge(status: string | null | undefined): { className: string; label: string } {
+  const statusMap: Record<string, { className: string; label: string }> = {
+    contacted: { className: "badgeInfo", label: "Kontaktiert" },
+    in_conversation: { className: "badgeInfo", label: "Im Gespraech" },
+    qualified: { className: "badgeOk", label: "Qualifiziert" },
+    proposal: { className: "badgeWarn", label: "Angebot" },
+    negotiation: { className: "badgeWarn", label: "Verhandlung" },
+    closed_won: { className: "badgeOk", label: "Gewonnen" },
+    closed_lost: { className: "badgeErr", label: "Verloren" },
+  };
+  return statusMap[status || ""] || { className: "badge", label: status || "Neu" };
+}
+
 export default function GermanSalesDashboard() {
   const [filters, setFilters] = useState<Partial<RoasterFilters>>({
     country: "Germany",
@@ -41,279 +64,320 @@ export default function GermanSalesDashboard() {
 
   return (
     <div className="page">
-      <div className="pageHeader">
-        <div>
-          <div className="h1">Deutsche Roestereien Vertriebspipeline</div>
-          <div className="muted">
-            Beziehungen und Vertriebsmoeglichkeiten mit deutschen Spezialitaetenroestern
+      <div className="content">
+        {/* Page Header */}
+        <header className="pageHeader">
+          <div className="pageHeaderContent">
+            <h1 className="h1">Deutschland Vertrieb</h1>
+            <p className="subtitle">
+              Beziehungen und Vertriebschancen mit deutschen Spezialitaetenroestern verwalten
+            </p>
+          </div>
+          <div className="pageHeaderActions">
+            <button type="button" className="btn" onClick={() => refetch()}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M16 21h5v-5"/>
+              </svg>
+              Aktualisieren
+            </button>
+            <Link href="/roasters" className="btn btnPrimary">
+              Alle Röstereien
+            </Link>
+          </div>
+        </header>
+
+        {/* KPI Grid */}
+        <div className="kpiGrid">
+          <div className="kpiCard">
+            <span className="cardLabel">Röstereien Gesamt</span>
+            <span className="cardValue">{stats.total}</span>
+            <span className="cardHint">In CRM-Datenbank</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">In Pipeline</span>
+            <span className="cardValue">{stats.contacted}</span>
+            <span className="cardHint">Kontaktiert oder im Gespraech</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Qualifiziert</span>
+            <span className="cardValue">{stats.qualified}</span>
+            <span className="cardHint">Bereit für Angebote</span>
+          </div>
+          <div className="kpiCard">
+            <span className="cardLabel">Durchschn. Sales Score</span>
+            <span className="cardValue">{stats.avgSalesScore.toFixed(1)}</span>
+            <span className="cardHint">Von 100 Punkten</span>
           </div>
         </div>
-        <div className="actions">
-          <button type="button" className="btn btnPrimary" onClick={() => refetch()}>
-            Aktualisieren
-          </button>
-        </div>
-      </div>
 
-      <div className="grid gridCols4" style={{ marginBottom: "18px" }}>
-        <div className="panel card">
-          <div className="cardLabel">Roestereien gesamt</div>
-          <div className="cardValue">{stats.total}</div>
-          <div className="cardHint">In CRM-Datenbank</div>
-        </div>
-        <div className="panel card">
-          <div className="cardLabel">In Pipeline</div>
-          <div className="cardValue">{stats.contacted}</div>
-          <div className="cardHint">Kontaktiert oder im Gespraech</div>
-        </div>
-        <div className="panel card">
-          <div className="cardLabel">Qualifiziert</div>
-          <div className="cardValue">{stats.qualified}</div>
-          <div className="cardHint">Bereit fuer Angebote</div>
-        </div>
-        <div className="panel card">
-          <div className="cardLabel">Durchschn. Vertriebs-Score</div>
-          <div className="cardValue">{stats.avgSalesScore.toFixed(1)}</div>
-          <div className="cardHint">Von 100</div>
-        </div>
-      </div>
-
-      <div className="grid gridCols2" style={{ marginBottom: "18px" }}>
-        <div className="panel" style={{ padding: "18px" }}>
-          <div className="h2">Prioritaetskontakte</div>
-          <div className="muted" style={{ marginBottom: "14px" }}>
-            Top 10 Roestereien nach Vertriebs-Fit-Score
-          </div>
-          {priorityRoasters.length > 0 ? (
-            <div className="list">
-              {priorityRoasters.map((roaster) => (
-                <div key={roaster.id} className="listRow">
-                  <div className="listMain">
-                    <div className="listTitle">{roaster.company_name}</div>
-                    <div className="listMeta">
-                      <span>{roaster.city || "Germany"}</span>
-                      {roaster.roaster_type && (
-                        <>
-                          <span className="dot">|</span>
-                          <span>{roaster.roaster_type}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <span
-                    className="badge"
-                    style={{
-                      background: "rgba(200,149,108,0.12)",
-                      borderColor: "rgba(200,149,108,0.35)",
-                    }}
-                  >
-                    Score: {roaster.sales_fit_score}
-                  </span>
-                  <Link href={`/roasters/${roaster.id}`} className="link">
-                    Ansehen -
-                  </Link>
-                </div>
-              ))}
+        {/* Two Column Layout */}
+        <div className="grid2col">
+          {/* Priority Contacts */}
+          <div className="panel">
+            <div className="panelHeader">
+              <h2 className="panelTitle">Prioritaetskontakte</h2>
+              <span className="badge">{priorityRoasters.length}</span>
             </div>
-          ) : (
-            <div className="empty">Keine Prioritaetskontakte gefunden</div>
-          )}
-        </div>
-
-        <div className="panel" style={{ padding: "18px" }}>
-          <div className="h2">Ausstehende Nachverfolgungen</div>
-          <div className="muted" style={{ marginBottom: "14px" }}>
-            Roestereien, die heute oder ueberfaellig eine Nachverfolgung benoetigen
-          </div>
-          {pendingFollowups.length > 0 ? (
-            <div className="list">
-              {pendingFollowups.slice(0, 10).map((roaster) => (
-                <div key={roaster.id} className="listRow">
-                  <div className="listMain">
-                    <div className="listTitle">{roaster.company_name}</div>
-                    <div className="listMeta">
-                      <span>{roaster.city || "Germany"}</span>
-                      {roaster.next_followup_date && (
-                        <>
-                          <span className="dot">|</span>
-                          <span>Faellig: {format(new Date(roaster.next_followup_date), "MMM dd")}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <span className="badge badgeWarn">Nachverfolgung</span>
-                  <Link href={`/roasters/${roaster.id}`} className="link">
-                    Aktion -
-                  </Link>
+            <div className="panelBody">
+              <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
+                Top 10 Röstereien nach Vertriebs-Fit-Score
+              </p>
+              {priorityRoasters.length > 0 ? (
+                <div className="list">
+                  {priorityRoasters.map((roaster) => (
+                    <Link 
+                      key={roaster.id} 
+                      href={`/roasters/${roaster.id}`}
+                      className="listItem"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <div className="listMain">
+                        <div className="listTitle">{roaster.company_name}</div>
+                        <div className="listMeta">
+                          <span>{roaster.city || "Deutschland"}</span>
+                          {roaster.roaster_type && (
+                            <>
+                              <span className="dot">·</span>
+                              <span>{roaster.roaster_type}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`badge ${getScoreColor(roaster.sales_fit_score || 0)}`}>
+                        {roaster.sales_fit_score}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="emptyState">
+                  <p>Keine Prioritaetskontakte gefunden</p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="empty">Alles erledigt! Keine ausstehenden Nachverfolgungen.</div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      <div className="panel" style={{ padding: "18px", marginBottom: "18px" }}>
-        <div className="h2">Roestereien filtern</div>
-        <div className="grid gridCols4" style={{ marginTop: "14px", gap: "10px" }}>
-          <div>
-            <label style={{ fontSize: "12px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-              Stadt
-            </label>
-            <input
-              type="text"
-              className="input"
-              placeholder="z.B. Berlin"
-              value={filters.city || ""}
-              onChange={(e) => setFilters({ ...filters, city: e.target.value || undefined })}
-            />
+          {/* Pending Followups */}
+          <div className="panel">
+            <div className="panelHeader">
+              <h2 className="panelTitle">Ausstehende Nachverfolgungen</h2>
+              <span className={`badge ${pendingFollowups.length > 0 ? "badgeWarn" : "badgeOk"}`}>
+                {pendingFollowups.length}
+              </span>
+            </div>
+            <div className="panelBody">
+              <p className="subtitle" style={{ marginBottom: "var(--space-4)" }}>
+                Röstereien mit faelliger Nachverfolgung
+              </p>
+              {pendingFollowups.length > 0 ? (
+                <div className="list">
+                  {pendingFollowups.slice(0, 10).map((roaster) => (
+                    <Link 
+                      key={roaster.id} 
+                      href={`/roasters/${roaster.id}`}
+                      className="listItem"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <div className="listMain">
+                        <div className="listTitle">{roaster.company_name}</div>
+                        <div className="listMeta">
+                          <span>{roaster.city || "Deutschland"}</span>
+                          {roaster.next_followup_date && (
+                            <>
+                              <span className="dot">·</span>
+                              <span>Faellig: {format(new Date(roaster.next_followup_date), "dd.MM.")}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <span className="badge badgeErr">Ueberfaellig</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="emptyState">
+                  <p>Alles erledigt - keine ausstehenden Nachverfolgungen</p>
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: "12px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-              Roestertyp
-            </label>
-            <select
-              className="input"
-              value={filters.roaster_type || ""}
-              onChange={(e) => setFilters({ ...filters, roaster_type: e.target.value || undefined })}
-            >
-              <option value="">Alle Typen</option>
-              <option value="Specialty">Spezialitaet</option>
-              <option value="Commercial">Kommerziell</option>
-              <option value="Micro">Mikro</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", color: "var(--muted)", display: "block", marginBottom: "6px" }}>
-              Min. Vertriebs-Score
-            </label>
-            <input
-              type="number"
-              className="input"
-              placeholder="0-100"
-              min="0"
-              max="100"
-              value={filters.min_sales_fit_score || ""}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  min_sales_fit_score: e.target.value ? Number(e.target.value) : undefined,
-                })
-              }
-            />
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end" }}>
+        </div>
+
+        {/* Filters Panel */}
+        <div className="panel" style={{ marginTop: "var(--space-6)" }}>
+          <div className="panelHeader">
+            <h2 className="panelTitle">Filter</h2>
             <button
               type="button"
-              className="btn"
+              className="btn btnSm btnGhost"
               onClick={() => setFilters({ country: "Germany" })}
-              style={{ width: "100%" }}
             >
-              Filter loeschen
+              Zuruecksetzen
             </button>
           </div>
+          <div className="panelBody">
+            <div className="fieldGrid2">
+              <div className="field">
+                <label className="fieldLabel">Stadt</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="z.B. Berlin, Hamburg"
+                  value={filters.city || ""}
+                  onChange={(e) => setFilters({ ...filters, city: e.target.value || undefined })}
+                />
+              </div>
+              <div className="field">
+                <label className="fieldLabel">Roestertyp</label>
+                <select
+                  className="input"
+                  value={filters.roaster_type || ""}
+                  onChange={(e) => setFilters({ ...filters, roaster_type: e.target.value || undefined })}
+                >
+                  <option value="">Alle Typen</option>
+                  <option value="Specialty">Spezialitaet</option>
+                  <option value="Commercial">Kommerziell</option>
+                  <option value="Micro">Mikro</option>
+                </select>
+              </div>
+              <div className="field">
+                <label className="fieldLabel">Min. Sales Score</label>
+                <input
+                  type="number"
+                  className="input"
+                  placeholder="0-100"
+                  min="0"
+                  max="100"
+                  value={filters.min_sales_fit_score || ""}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      min_sales_fit_score: e.target.value ? Number(e.target.value) : undefined,
+                    })
+                  }
+                />
+              </div>
+              <div className="field">
+                <label className="fieldLabel">Kontaktstatus</label>
+                <select
+                  className="input"
+                  value={filters.contact_status || ""}
+                  onChange={(e) => setFilters({ ...filters, contact_status: e.target.value || undefined })}
+                >
+                  <option value="">Alle Status</option>
+                  <option value="contacted">Kontaktiert</option>
+                  <option value="in_conversation">Im Gespraech</option>
+                  <option value="qualified">Qualifiziert</option>
+                  <option value="proposal">Angebot</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="panel" style={{ padding: "18px" }}>
-        <div className="h2">Alle Roestereien</div>
-        <div className="muted" style={{ marginBottom: "14px" }}>
-          {isLoading ? "Lade Roestereien..." : `${roasters.length} Roestereien gefunden`}
-        </div>
-
-        {roasters.length > 0 ? (
-          <div style={{ overflowX: "auto" }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Firma</th>
-                  <th>Stadt</th>
-                  <th>Typ</th>
-                  <th>Kapazitaet (kg)</th>
-                  <th>Vertriebs-Score</th>
-                  <th>Kontaktstatus</th>
-                  <th>Letzter Kontakt</th>
-                  <th>Naechste Nachverfolgung</th>
-                  <th>Aktionen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roasters.map((roaster) => (
-                  <tr key={roaster.id}>
-                    <td style={{ fontWeight: "600" }}>{roaster.company_name}</td>
-                    <td>{roaster.city || "-"}</td>
-                    <td>{roaster.roaster_type || "-"}</td>
-                    <td>
-                      {roaster.annual_capacity_kg
-                        ? roaster.annual_capacity_kg.toLocaleString()
-                        : "-"}
-                    </td>
-                    <td>
-                      {roaster.sales_fit_score ? (
-                        <span
-                          className="badge"
-                          style={{
-                            background:
-                              roaster.sales_fit_score >= 80
-                                ? "rgba(64,214,123,0.12)"
-                                : roaster.sales_fit_score >= 60
-                                  ? "rgba(255,183,64,0.12)"
-                                  : "rgba(255,92,92,0.12)",
-                            borderColor:
-                              roaster.sales_fit_score >= 80
-                                ? "rgba(64,214,123,0.35)"
-                                : roaster.sales_fit_score >= 60
-                                  ? "rgba(255,183,64,0.35)"
-                                  : "rgba(255,92,92,0.35)",
-                          }}
-                        >
-                          {roaster.sales_fit_score}
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td>
-                      {roaster.contact_status ? (
-                        <span className="badge">{roaster.contact_status}</span>
-                      ) : (
-                        <span className="badge">neu</span>
-                      )}
-                    </td>
-                    <td>
-                      {roaster.last_contact_date
-                        ? format(new Date(roaster.last_contact_date), "MMM dd, yyyy")
-                        : "-"}
-                    </td>
-                    <td>
-                      {roaster.next_followup_date ? (
-                        <span
-                          className={
-                            new Date(roaster.next_followup_date) <= new Date() ? "badge badgeErr" : "badge"
-                          }
-                        >
-                          {format(new Date(roaster.next_followup_date), "MMM dd")}
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td>
-                      <Link href={`/roasters/${roaster.id}`} className="link">
-                        Ansehen -
-                      </Link>
-                    </td>
+        {/* Main Table */}
+        <div className="panel" style={{ marginTop: "var(--space-6)" }}>
+          <div className="panelHeader">
+            <h2 className="panelTitle">Alle Röstereien</h2>
+            <span className="badge">
+              {isLoading ? "..." : `${roasters.length} Eintraege`}
+            </span>
+          </div>
+          
+          {roasters.length > 0 ? (
+            <div className="tableWrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Unternehmen</th>
+                    <th>Stadt</th>
+                    <th>Typ</th>
+                    <th>Kapazitaet</th>
+                    <th>Sales Score</th>
+                    <th>Status</th>
+                    <th>Letzter Kontakt</th>
+                    <th>Naechste Aktion</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty" style={{ padding: "40px", textAlign: "center", color: "var(--muted)" }}>
-            Keine Roestereien gefunden. Fuehren Sie Discovery Seed in Betrieb aus, um die Datenbank zu fuellen.
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {roasters.map((roaster) => {
+                    const status = getStatusBadge(roaster.contact_status);
+                    return (
+                      <tr key={roaster.id}>
+                        <td>
+                          <span style={{ fontWeight: 600 }}>{roaster.company_name}</span>
+                        </td>
+                        <td>{roaster.city || "-"}</td>
+                        <td>{roaster.roaster_type || "-"}</td>
+                        <td>
+                          {roaster.annual_capacity_kg
+                            ? `${(roaster.annual_capacity_kg / 1000).toFixed(0)}t`
+                            : "-"}
+                        </td>
+                        <td>
+                          {roaster.sales_fit_score ? (
+                            <span className={`badge ${getScoreColor(roaster.sales_fit_score)}`}>
+                              {roaster.sales_fit_score}
+                            </span>
+                          ) : (
+                            <span className="badge">-</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`badge ${status.className}`}>{status.label}</span>
+                        </td>
+                        <td>
+                          {roaster.last_contact_date
+                            ? format(new Date(roaster.last_contact_date), "dd.MM.yy")
+                            : "-"}
+                        </td>
+                        <td>
+                          {roaster.next_followup_date ? (
+                            <span
+                              className={`badge ${
+                                new Date(roaster.next_followup_date) <= new Date()
+                                  ? "badgeErr"
+                                  : ""
+                              }`}
+                            >
+                              {format(new Date(roaster.next_followup_date), "dd.MM.")}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td>
+                          <Link href={`/roasters/${roaster.id}`} className="btn btnSm btnGhost">
+                            Details
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="panelBody">
+              <div className="emptyState">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3, marginBottom: "var(--space-4)" }}>
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <h3 className="h4">Keine Röstereien gefunden</h3>
+                <p className="subtitle">
+                  Führen Sie Discovery Seed unter Betrieb aus, um die Datenbank zu befüllen.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

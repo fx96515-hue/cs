@@ -30,8 +30,8 @@ interface ServiceStatus {
 
 const EXAMPLE_QUESTIONS = [
   "Welche Kooperativen in Cajamarca haben Fair Trade Zertifizierung",
-  "Vergleiche Roestereien mit Peru-Fokus",
-  "Was sind aktuelle News zu Kaffee-Maerkten",
+  "Vergleiche Röstereien mit Peru-Fokus",
+  "Was sind aktuelle News zu Kaffee-Märkten",
 ];
 
 export default function AssistantPage() {
@@ -83,13 +83,13 @@ export default function AssistantPage() {
   function getProviderError(provider: string): string {
     switch (provider) {
       case "ollama":
-        return "Ollama ist nicht gestartet. Fuehre `ollama serve` aus und lade ein Modell: `ollama pull llama3.1:8b`";
+        return "Ollama ist nicht gestartet. Führe `ollama serve` aus und lade ein Modell: `ollama pull llama3.1:8b`";
       case "openai":
         return "OPENAI_API_KEY ist nicht konfiguriert";
       case "groq":
         return "GROQ_API_KEY ist nicht konfiguriert";
       default:
-        return "KI-Assistant ist derzeit nicht verfuegbar.";
+        return "KI-Assistant ist derzeit nicht verfügbar.";
     }
   }
 
@@ -245,12 +245,12 @@ export default function AssistantPage() {
         <div className="header-row">
           <div>
             <h1>KI-Assistant</h1>
-            <p className="muted">Interaktiver Chatbot mit Zugriff auf Kooperativen, Roestereien und News</p>
+            <p className="muted">Interaktiver Chatbot mit Zugriff auf Kooperativen, Röstereien und Nachrichten</p>
           </div>
           <div className="header-actions">
             {sessionId && (
               <button className="btn-secondary" onClick={handleNewSession}>
-                Neues Gespraech
+                Neues Gespräch
               </button>
             )}
             {serviceStatus?.available && (
@@ -271,7 +271,7 @@ export default function AssistantPage() {
           <div className="empty-state">
             <div className="empty-icon">[AI]</div>
             <h2>Willkommen beim KI-Assistant!</h2>
-            <p className="muted">Stellen Sie eine Frage oder waehlen Sie ein Beispiel:</p>
+            <p className="muted">Stellen Sie eine Frage oder wählen Sie ein Beispiel:</p>
             <div className="example-questions">
               {EXAMPLE_QUESTIONS.map((q, i) => (
                 <button

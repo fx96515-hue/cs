@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { Breadcrumb } from "../../components/Breadcrumb";
+import { useToast } from "../../components/ToastProvider";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -22,6 +24,7 @@ export default function RoasterDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params?.id);
   const router = useRouter();
+  const toast = useToast();
   const [r, setR] = useState<Roaster | null>(null);
   const [saving, setSaving] = useState(false);
   const [flags, setFlags] = useState<DataQualityFlag[]>([]);
@@ -103,11 +106,13 @@ export default function RoasterDetailPage() {
   async function archive() {
     setErr(null);
     setMsg(null);
-    if (!confirm("Roesterei archivieren?")) return;
+    if (!confirm("Rösterei archivieren?")) return;
     try {
       await apiFetch(`/roasters/${id}`, { method: "DELETE" });
+      toast.success(`"${r?.name}" wurde archiviert.`);
       router.push("/roasters");
     } catch (error: unknown) {
+      toast.error(toErrorMessage(error));
       setErr(toErrorMessage(error));
     }
   }
@@ -116,12 +121,12 @@ export default function RoasterDetailPage() {
     setErr(null);
     setMsg(null);
     try {
-      const restored = await apiFetch<Roaster>(`/roasters/${id}/restore`, {
-        method: "POST",
-      });
+      const restored = await apiFetch<Roaster>(`/roasters/${id}/restore`, { method: "POST" });
       setR(restored);
+      toast.success("Rösterei wurde wiederhergestellt.");
       setMsg("Wiederhergestellt.");
     } catch (error: unknown) {
+      toast.error(toErrorMessage(error));
       setErr(toErrorMessage(error));
     }
   }
@@ -129,7 +134,7 @@ export default function RoasterDetailPage() {
   if (err) {
     return (
       <div className="page">
-        <div className="error">{err}</div>
+                <div className="alert bad"><div className="alertText">{err}</div></div>
         <Link className="btn" href="/roasters">
           Zurueck
         </Link>
@@ -153,9 +158,14 @@ export default function RoasterDetailPage() {
 
   return (
     <div className="page">
+      <Breadcrumb items={[
+        { label: "Startseite", href: "/dashboard" },
+        { label: "Röstereien", href: "/roasters" },
+        { label: r.name },
+      ]} />
       <div className="pageHeader">
         <div>
-          <div className="h1">Roesterei #{r.id}</div>
+          <div className="h1">Rösterei #{r.id}</div>
           <div className="muted">Stammdaten & Notizen</div>
         </div>
         <div className="row gap">
@@ -177,12 +187,12 @@ export default function RoasterDetailPage() {
         </div>
       </div>
 
-      {msg ? <div className="success">{msg}</div> : null}
+          {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
 
       {r?.deleted_at ? (
         <div className="alert bad">
           <div className="alertTitle">Archiviert</div>
-          <div className="alertText">Diese Roesterei ist archiviert und nicht aktiv.</div>
+          <div className="alertText">Diese Rösterei ist archiviert und nicht aktiv.</div>
         </div>
       ) : null}
 
@@ -250,7 +260,7 @@ export default function RoasterDetailPage() {
         <div className="rowBetween" style={{ marginBottom: 10 }}>
           <div>
             <div className="panelTitle">Datenqualitaet</div>
-            <div className="muted">Offene Flags fuer diese Roesterei.</div>
+            <div className="muted">Offene Flags fuer diese Rösterei.</div>
           </div>
           <div className="row gap">
             <button className="btn" onClick={recomputeFlags} disabled={qualityBusy}>
