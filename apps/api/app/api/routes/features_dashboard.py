@@ -110,7 +110,13 @@ def features_importance(
 
     for model in models:
         importances = _load_feature_importance(model)
-        fallback_features = model.features_used if isinstance(model.features_used, list) else list((model.features_used or {}).keys())
+        raw_features: Any = model.features_used
+        if isinstance(raw_features, list):
+            fallback_features = [str(feature) for feature in raw_features]
+        elif isinstance(raw_features, dict):
+            fallback_features = [str(feature) for feature in raw_features.keys()]
+        else:
+            fallback_features = []
 
         if not importances and fallback_features:
             equal_weight = round(1 / max(len(fallback_features), 1), 4)
@@ -129,11 +135,20 @@ def features_importance(
                 }
             )
 
-    payload = [
-        {"name": category, "features": sorted(features, key=lambda item: item["importance"], reverse=True)}
-        for category, features in grouped.items()
-        if features
-    ]
+    payload: list[dict[str, Any]] = []
+    for category, features in grouped.items():
+        if not features:
+            continue
+        payload.append(
+            {
+                "name": category,
+                "features": sorted(
+                    features,
+                    key=lambda item: float(item.get("importance", 0.0)),
+                    reverse=True,
+                ),
+            }
+        )
     return payload or _catalog_payload()
 
 
@@ -156,7 +171,7 @@ def features_quality_report(
     latest_training = db.execute(select(func.max(MLModel.training_date))).scalar_one()
     total_features = 0
     for model in db.execute(select(MLModel.features_used)).all():
-        raw = model[0]
+        raw: Any = model[0]
         if isinstance(raw, list):
             total_features += len(raw)
         elif isinstance(raw, dict):
