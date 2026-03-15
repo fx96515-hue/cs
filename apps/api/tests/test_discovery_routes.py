@@ -73,3 +73,31 @@ def test_discovery_seed_status_includes_progress_info(client, auth_headers, monk
 def test_discovery_seed_status_rejects_invalid_task_id(client, auth_headers):
     response = client.get("/discovery/seed/task@bad", headers=auth_headers)
     assert response.status_code == 422
+
+
+def test_discovery_seed_normalizes_country_filter(client, auth_headers, monkeypatch):
+    captured_kwargs: dict = {}
+
+    def _fake_send_task(_name, kwargs):
+        captured_kwargs.update(kwargs)
+        return type("Task", (), {"id": "task-123"})()
+
+    monkeypatch.setattr("app.api.routes.discovery.celery.send_task", _fake_send_task)
+
+    response = client.post(
+        "/discovery/seed",
+        json={"entity_type": "cooperative", "max_entities": 10, "country_filter": "pe"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert captured_kwargs["country_filter"] == "PE"
+
+
+def test_discovery_seed_rejects_invalid_country_filter(client, auth_headers):
+    response = client.post(
+        "/discovery/seed",
+        json={"entity_type": "cooperative", "max_entities": 10, "country_filter": "PER"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Annotated, Literal, Optional, Any
 
 
@@ -22,6 +22,16 @@ class SeedRequest(BaseModel):
     country_filter: Optional[str] = Field(
         None, description="Override country filter (PE|DE)"
     )
+
+    @field_validator("country_filter")
+    @classmethod
+    def validate_country_filter(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        normalized = value.strip().upper()
+        if len(normalized) != 2 or not normalized.isalpha():
+            raise ValueError("country_filter must be a 2-letter ISO code (e.g. PE)")
+        return normalized
 
 
 @router.post("/seed")
