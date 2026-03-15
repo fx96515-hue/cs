@@ -201,7 +201,7 @@ def dev_bootstrap(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid bootstrap password configuration",
         ) from e
 
     try:
@@ -213,7 +213,7 @@ def dev_bootstrap(
     except EmailNotValidError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid BOOTSTRAP_ADMIN_EMAIL: {e}",
+            detail="Invalid bootstrap email configuration",
         ) from e
 
     admin = db.query(User).filter(func.lower(User.email) == bootstrap_email).first()
