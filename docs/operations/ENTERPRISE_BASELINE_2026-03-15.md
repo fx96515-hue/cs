@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`675 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`682 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -90,6 +90,31 @@ This baseline captures the current technical status before broader hardening/ref
 
 13. Core entity routes accepted non-positive path IDs
 - Status: FIXED
+- Issue: cooperative/roaster/report/peru entity routes accepted unbounded integer IDs in path parameters.
+- Action: enforced `Path(ge=1)` across those route boundaries and added dedicated negative-path tests.
+
+14. Outreach request schema accepted weak variants
+- Status: FIXED
+- Issue: outreach input fields (`entity_type`, `language`, `purpose`, `entity_id`) were not strictly constrained.
+- Action: switched to strict typed request schema (`Literal` + positive integer constraint) and extended API tests.
+
+15. Peru region refresh/intelligence inputs lacked explicit bounds
+- Status: FIXED
+- Issue: `region_name` input accepted weak/blank variants across refresh/intelligence routes.
+- Action: added schema/path boundaries and normalization-compatible validation with regression tests.
+
+16. Discovery task status exposed raw failure text and accepted broad task IDs
+- Status: FIXED
+- Issue: `/discovery/seed/{task_id}` leaked raw task failure details and allowed unconstrained ids.
+- Action: sanitized failure payloads and enforced bounded/pattern-validated task IDs; added route tests.
+
+17. Discovery seed accepted weak country filter values
+- Status: FIXED
+- Issue: `country_filter` was optional but unvalidated free text.
+- Action: enforced ISO-2 validation and normalization (uppercase) with test coverage.
+
+13. Core entity routes accepted non-positive path IDs
+- Status: FIXED
 - Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
 - Action: enforced `Path(ge=1)` boundaries and added regression tests for invalid zero IDs.
 
@@ -156,6 +181,10 @@ This baseline captures the current technical status before broader hardening/ref
 - `f561a23` `improve(ui): add muted token alias for legacy component consistency`
 - `cfef249` `docs(audit): capture pipeline trigger validation hardening`
 - `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
+- `fa03e5f` `docs(audit): record route-id and outreach validation hardening`
+- `4bd7d28` `harden(api): validate peru region inputs for refresh and intelligence routes`
+- `aa0345e` `harden(api): validate discovery task ids and sanitize failure payloads`
+- `be0ed9b` `harden(api): validate and normalize discovery country filters`
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
