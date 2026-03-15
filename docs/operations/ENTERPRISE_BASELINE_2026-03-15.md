@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`684 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`687 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -123,6 +123,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `/features/import-template/{data_type}` accepted unconstrained path values and returned user input in 404 detail.
 - Action: bounded/pattern-validated `data_type` path parameter and sanitized not-found detail.
 
+20. Auto-outreach accepted weak campaign and status query/path inputs
+- Status: FIXED
+- Issue: campaign input and status/suggestions endpoints lacked strict bounds on names, scores, ids, and limits.
+- Action: tightened schema/path/query validation (`name`, score ranges, `entity_id >= 1`, bounded `limit`) and added API regression tests.
+
 13. Core entity routes accepted non-positive path IDs
 - Status: FIXED
 - Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
@@ -199,6 +204,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `7c55a7b` `improve(frontend): align peru region error state with shared alert pattern`
 - `efc65ab` `docs(audit): log discovery hardening and peru region UI consistency update`
 - `86ccfd6` `harden(api): constrain feature template path input and sanitize 404 detail`
+- `a23e733` `docs(audit): record discovery/features hardening progress and latest test baseline`
+- `689ce9a` `harden(api): tighten auto-outreach request and path/query validation`
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
