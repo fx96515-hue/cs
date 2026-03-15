@@ -153,6 +153,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: outreach request accepted unconstrained string fields for entity/language/purpose.
 - Action: enforced strict typed schema (`Literal`-based) + positive `entity_id` and counterpart-name validation.
 
+24. Knowledge-graph routes leaked internal not-found details
+- Status: FIXED
+- Issue: multiple graph endpoints returned raw `ValueError` text in 404 responses.
+- Action: standardized not-found details to generic `Not found` across graph analysis/path/connections endpoints and hardened API expectation tests.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -230,6 +235,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
+- `dbe5e19` `harden(api): sanitize knowledge-graph not-found error details`
 
 ## Next Execution Slice
 
