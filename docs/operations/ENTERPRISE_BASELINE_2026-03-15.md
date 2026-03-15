@@ -168,6 +168,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: several pages used `div.pageHeader`/`pageActions` instead of the shared semantic header structure.
 - Action: aligned `ml`, `reports`, `search`, and `sentiment` pages to `header.pageHeader` + `pageHeaderContent/pageHeaderActions` for consistent layout semantics.
 
+27. Docker build contexts still included avoidable local/developer files
+- Status: IMPROVED
+- Issue: per-app Docker contexts included test/docs/log artifacts not required for runtime image builds.
+- Action: tightened `apps/api/.dockerignore` and `apps/web/.dockerignore` to exclude tests, local logs, docs, and auxiliary dev files; verified compose configuration remains valid.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -250,6 +255,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `212b7a8` `harden(api): standardize dedup and outreach bad-request details`
 - `d395aaf` `docs(audit): capture dedup/outreach error-contract hardening`
 - `a1d747a` `improve(frontend): unify page-header structure across analytics pages`
+- `6bcddda` `docs(audit): log frontend header consistency slice`
+- `a367a25` `chore(docker): tighten app build contexts via dockerignore`
 
 ## Next Execution Slice
 
