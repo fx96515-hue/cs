@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`693 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`695 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -180,6 +180,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `/ml/data/import-freight` and `/ml/data/import-prices` returned raw exception details in 400 responses.
 - Action: standardized both endpoints to generic `Import failed` and added regression tests that assert sanitized error contracts.
 
+29. Dev bootstrap endpoint exposed configuration-validation internals
+- Status: FIXED
+- Issue: `/auth/dev/bootstrap` returned raw password/email validation details.
+- Action: replaced response details with stable generic contract messages and added tests for sanitized password/email-config failures.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -266,6 +271,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `a367a25` `chore(docker): tighten app build contexts via dockerignore`
 - `4a72714` `docs(audit): record docker context cleanup slice`
 - `6ab7299` `harden(api): sanitize ml import failure error details`
+- `c378bf2` `docs(audit): record ml import hardening and gate updates`
+- `361c158` `harden(auth): sanitize bootstrap config validation error details`
 
 ## Next Execution Slice
 
