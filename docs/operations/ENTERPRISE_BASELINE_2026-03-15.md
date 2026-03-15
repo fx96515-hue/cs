@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`651 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`652 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -47,6 +47,11 @@ This baseline captures the current technical status before broader hardening/ref
   - require explicit admin passwords for Grafana/Keycloak stack services
   - generate strong local secrets automatically in `run_windows.ps1`
   - removed implicit `adminadmin` fallback in setup scripts
+
+5. Auth email matching could fail on mixed-case input
+- Status: FIXED
+- Issue: login/bootstrap user lookup compared emails case-sensitively.
+- Action: normalized email lookup to case-insensitive query paths and added regression coverage.
 
 ## High-Priority Findings
 
@@ -88,6 +93,9 @@ This baseline captures the current technical status before broader hardening/ref
 - `b717d88` `improve(frontend): apply shared content layout to additional workflow pages`
 - `3ea950a` `chore(repo): remove stale pre-commit backup config`
 - `d8cbe8e` `improve(frontend): align KI page wrapper with shared content layout`
+- `22f5a18` `docs(audit): update baseline with current hardening progress`
+- `2b5ea9d` `harden(auth): normalize email matching for login and bootstrap`
+- `cc88614` `chore(repo): remove stale QA backup file`
 
 ## Next Execution Slice
 
