@@ -1,5 +1,6 @@
 FROM node:lts-alpine AS base
 ENV NEXT_TELEMETRY_DISABLED=1
+RUN apk upgrade --no-cache zlib
 
 FROM base AS deps
 WORKDIR /usr/src/app

@@ -32,6 +32,12 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: calls used non-canonical endpoints (`/cooperatives`, `/roasters`) and could lose bearer headers on redirect.
 - Action: switched to canonical routes with trailing slash and fixed token-length output formatting.
 
+3. Frontend Docker image critical CVE (zlib)
+- Status: FIXED
+- Issue: `coffeestudio-frontend:local` reported `CVE-2026-22184` (CRITICAL, fixed version available).
+- Action: upgraded `zlib` in frontend Docker base stage (`apk upgrade --no-cache zlib`) and re-scanned.
+- Validation: Trivy HIGH/CRITICAL result is now clean for frontend image.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
