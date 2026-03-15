@@ -21,6 +21,7 @@
   --color-text: #1a1a1a;
   --color-text-secondary: #4a4a4a;
   --color-text-muted: #737373;
+  --muted: var(--color-text-muted);
   --color-text-placeholder: #a3a3a3;
   
   --color-primary: #1a1a1a;
