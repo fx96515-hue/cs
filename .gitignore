@@ -94,3 +94,5 @@ diagnostics/
 *.sqlite3
 apps/web/.npm-cache/
 
+# Local temporary security/export artifacts
+.tmp_*.json

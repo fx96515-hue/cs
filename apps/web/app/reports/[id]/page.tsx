@@ -32,15 +32,13 @@ export default function ReportDetailPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [showPayload, setShowPayload] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const loading = report === null && err === null;
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
     apiFetch<Report>(`/reports/${id}`)
       .then(setReport)
-      .catch((e: unknown) => setErr(toErrorMessage(e)))
-      .finally(() => setLoading(false));
+      .catch((e: unknown) => setErr(toErrorMessage(e)));
   }, [id]);
 
   return (
