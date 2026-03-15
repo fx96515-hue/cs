@@ -1,7 +1,7 @@
 """Auto-outreach API routes."""
 
 from typing import Annotated, Any, Literal
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 import structlog
 
@@ -66,7 +66,7 @@ def get_suggestions(
     entity_type: Literal["cooperative", "roaster"],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
-    limit: Annotated[int, Query(le=100)] = 20,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ):
     """Get AI-suggested outreach targets."""
     try:
@@ -88,7 +88,7 @@ def get_suggestions(
 )
 def get_entity_status(
     entity_type: Literal["cooperative", "roaster"],
-    entity_id: int,
+    entity_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):

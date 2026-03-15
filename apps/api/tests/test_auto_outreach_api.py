@@ -73,3 +73,28 @@ def test_get_entity_status_runtime_error_returns_500(client, auth_headers, monke
 
     assert response.status_code == 500
     assert response.json()["detail"] == "Failed to get entity outreach status"
+
+
+def test_create_campaign_rejects_blank_name(client, auth_headers):
+    response = client.post(
+        "/auto-outreach/campaign",
+        json={"name": "   ", "entity_type": "cooperative"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_get_suggestions_rejects_non_positive_limit(client, auth_headers):
+    response = client.get(
+        "/auto-outreach/suggestions?entity_type=cooperative&limit=0",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_get_entity_status_rejects_non_positive_entity_id(client, auth_headers):
+    response = client.get(
+        "/auto-outreach/status/cooperative/0",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
