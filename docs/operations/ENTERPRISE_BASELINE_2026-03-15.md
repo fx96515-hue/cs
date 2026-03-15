@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`652 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`655 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -52,6 +52,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Status: FIXED
 - Issue: login/bootstrap user lookup compared emails case-sensitively.
 - Action: normalized email lookup to case-insensitive query paths and added regression coverage.
+
+6. Dev bootstrap endpoint reachable from non-local clients in dev/test
+- Status: FIXED
+- Issue: `/auth/dev/bootstrap` had no client-origin boundary beyond environment gating.
+- Action: enforced loopback-only access and added tests for local/remote host detection.
 
 ## High-Priority Findings
 
@@ -98,6 +103,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `cc88614` `chore(repo): remove stale QA backup file`
 - `c2b7db7` `docs(audit): record auth hardening and latest validation`
 - `25ab7d4` `chore(repo): deduplicate and normalize gitignore rules`
+- `55d3469` `harden(auth): restrict dev bootstrap endpoint to loopback clients`
 
 ## Next Execution Slice
 
