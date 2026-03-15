@@ -96,6 +96,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `22f5a18` `docs(audit): update baseline with current hardening progress`
 - `2b5ea9d` `harden(auth): normalize email matching for login and bootstrap`
 - `cc88614` `chore(repo): remove stale QA backup file`
+- `c2b7db7` `docs(audit): record auth hardening and latest validation`
+- `25ab7d4` `chore(repo): deduplicate and normalize gitignore rules`
 
 ## Next Execution Slice
 
