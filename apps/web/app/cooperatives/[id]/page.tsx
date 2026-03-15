@@ -212,12 +212,12 @@ export default function CooperativeDetailsPage() {
         { label: "Kooperativen", href: "/cooperatives" },
         { label: data?.name ?? `#${id}` },
       ]} />
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Kooperative #{id}</div>
           <div className="muted">Datenpflege + Website + Enrichment</div>
         </div>
-        <div className="row gap">
+        <div className="pageHeaderActions row gap">
           <Link className="btn" href="/cooperatives">
             Zur Liste
           </Link>
@@ -241,7 +241,7 @@ export default function CooperativeDetailsPage() {
             </a>
           ) : null}
         </div>
-      </div>
+      </header>
 
       {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
       {err ? <div className="alert bad"><div className="alertText">{err}</div></div> : null}

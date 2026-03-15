@@ -87,14 +87,14 @@ export default function RegionDetailPage() {
 
   return (
     <div className="content">
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">{region.name}</div>
           <div className="muted">
             {region.country} | {region.description || "Kaffeeanbaugebiet"}
           </div>
         </div>
-        <div className="row gap">
+        <div className="pageHeaderActions row gap">
           <div className={getScoreBadgeClass(region.scores?.quality_consistency)}>
             Qualitaet: {region.scores?.quality_consistency?.toFixed(0) || "-"}
           </div>
@@ -107,7 +107,7 @@ export default function RegionDetailPage() {
             Zurueck
           </Link>
         </div>
-      </div>
+      </header>
 
       <div className="gridKpi">
         <div className="panel card">

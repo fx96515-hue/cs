@@ -163,12 +163,12 @@ export default function RoasterDetailPage() {
         { label: "Röstereien", href: "/roasters" },
         { label: r.name },
       ]} />
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Rösterei #{r.id}</div>
           <div className="muted">Stammdaten & Notizen</div>
         </div>
-        <div className="row gap">
+        <div className="pageHeaderActions row gap">
           <Link className="btn" href="/roasters">
             Zur Liste
           </Link>
@@ -185,7 +185,7 @@ export default function RoasterDetailPage() {
             {saving ? "Speichere..." : "Speichern"}
           </button>
         </div>
-      </div>
+      </header>
 
       {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
 
