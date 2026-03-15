@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from pydantic import BaseModel, Field
 from typing import Annotated, Literal, Optional, Any
 
@@ -43,7 +43,15 @@ def enqueue_seed(
 @router.get("/seed/{task_id}")
 @router.get("/tasks/{task_id}")
 def get_seed_status(
-    task_id: str,
+    task_id: Annotated[
+        str,
+        Path(
+            min_length=1,
+            max_length=128,
+            pattern=r"^[A-Za-z0-9._:-]+$",
+            description="Celery task id for discovery jobs",
+        ),
+    ],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     res = celery.AsyncResult(task_id)
@@ -51,7 +59,7 @@ def get_seed_status(
     if res.successful():
         body["result"] = res.result
     elif res.failed():
-        body["error"] = str(res.result)
+        body["error"] = "Discovery task failed"
     else:
         # can include progress info if provided via update_state
         if res.info and res.info != "PENDING":
