@@ -156,175 +156,175 @@ export default function LotDetailPage() {
   }
 
   return (
-    <div>
-      <h1>Lot</h1>
-      <div style={{ marginBottom: 10 }}>
-        {lot?.deleted_at ? (
-          <button onClick={restore} style={{ marginRight: 8 }}>
-            Wiederherstellen
+    <div className="content">
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
+          <h1 className="h1">Lot-Details</h1>
+          <p className="subtitle">Stammdaten, Margenberechnung und gespeicherte Runs.</p>
+        </div>
+        <div className="pageHeaderActions">
+          {lot?.deleted_at ? (
+            <button className="btn" onClick={restore}>
+              Wiederherstellen
+            </button>
+          ) : (
+            <button className="btn btnDanger" onClick={archive}>
+              Archivieren
+            </button>
+          )}
+          <button className="btn" onClick={() => router.push("/lots")}>
+            Zur Liste
           </button>
-        ) : (
-          <button onClick={archive} style={{ marginRight: 8 }}>
-            Archivieren
-          </button>
-        )}
-        <button onClick={() => router.push("/lots")}>Zur Liste</button>
-      </div>
-      {err && <div style={{ color: "crimson" }}>{err}</div>}
+        </div>
+      </header>
 
-      {lot ? (
+      {err ? (
+        <div className="alert bad">
+          <div className="alertText">{err}</div>
+        </div>
+      ) : null}
+
+      {!lot ? (
+        <section className="panel">
+          <div className="panelBody">
+            <div className="muted">Laedt Lot-Daten...</div>
+          </div>
+        </section>
+      ) : (
         <>
           {lot.deleted_at ? (
-            <div
-              style={{
-                padding: 10,
-                background: "#fff3cd",
-                border: "1px solid #ffeeba",
-                borderRadius: 8,
-                marginBottom: 12,
-              }}
-            >
-              Dieses Lot ist archiviert.
+            <div className="alert warn">
+              <div className="alertText">Dieses Lot ist archiviert.</div>
             </div>
           ) : null}
-          <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, marginBottom: 16 }}>
-            <div>
-              <b>{lot.name}</b>
-            </div>
-            <div style={{ fontSize: 12, color: "#555" }}>
-              ID {lot.id} - Coop #{lot.cooperative_id}
-              {lot.crop_year ? ` - Crop ${lot.crop_year}` : ""}
-              {lot.incoterm ? ` - ${lot.incoterm}` : ""}
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <div>
-                <b>Preis:</b> {lot.price_per_kg ?? "-"} {lot.currency ?? ""} / kg (green)
-              </div>
-              <div>
-                <b>Gewicht:</b> {lot.weight_kg ?? "-"} kg
-              </div>
-              <div>
-                <b>Expected SCA:</b> {lot.expected_cupping_score ?? "-"}
-              </div>
-            </div>
-          </div>
 
-          <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, marginBottom: 16 }}>
-            <b>Margenrechnung speichern</b>
-            <div
-              style={{
-                marginTop: 10,
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: 10,
-              }}
-            >
-              <input
-                placeholder="purchase_price_per_kg"
-                value={calc.purchase_price_per_kg}
-                onChange={(e) => setCalc({ ...calc, purchase_price_per_kg: e.target.value })}
-              />
-              <input
-                placeholder="purchase_currency"
-                value={calc.purchase_currency}
-                onChange={(e) => setCalc({ ...calc, purchase_currency: e.target.value })}
-              />
-              <input
-                placeholder="landed_costs_per_kg"
-                value={calc.landed_costs_per_kg}
-                onChange={(e) => setCalc({ ...calc, landed_costs_per_kg: e.target.value })}
-              />
-              <input
-                placeholder="roast_and_pack_costs_per_kg"
-                value={calc.roast_and_pack_costs_per_kg}
-                onChange={(e) => setCalc({ ...calc, roast_and_pack_costs_per_kg: e.target.value })}
-              />
-              <input
-                placeholder="yield_factor"
-                value={calc.yield_factor}
-                onChange={(e) => setCalc({ ...calc, yield_factor: e.target.value })}
-              />
-              <input
-                placeholder="selling_price_per_kg"
-                value={calc.selling_price_per_kg}
-                onChange={(e) => setCalc({ ...calc, selling_price_per_kg: e.target.value })}
-              />
-              <input
-                placeholder="selling_currency"
-                value={calc.selling_currency}
-                onChange={(e) => setCalc({ ...calc, selling_currency: e.target.value })}
-              />
-              <input
-                placeholder="fx_usd_to_eur (optional)"
-                value={calc.fx_usd_to_eur}
-                onChange={(e) => setCalc({ ...calc, fx_usd_to_eur: e.target.value })}
-              />
-              <input
-                placeholder="profile (conservative/...)"
-                value={profile}
-                onChange={(e) => setProfile(e.target.value)}
-              />
+          <section className="panel">
+            <div className="panelHeader">
+              <div className="panelTitle">{lot.name}</div>
             </div>
-            <button
-              onClick={computeAndStore}
-              disabled={busy}
-              style={{
-                marginTop: 10,
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid #eee",
-                background: "white",
-                cursor: "pointer",
-              }}
-            >
-              {busy ? "Rechnen..." : "Berechnen & speichern"}
-            </button>
-            <div style={{ fontSize: 12, color: "#555", marginTop: 6 }}>
-              Ergebnis wird als <i>Margin Run</i> in der DB gespeichert.
+            <div className="panelBody">
+              <div className="muted">
+                ID {lot.id} - Coop #{lot.cooperative_id}
+                {lot.crop_year ? ` - Crop ${lot.crop_year}` : ""}
+                {lot.incoterm ? ` - ${lot.incoterm}` : ""}
+              </div>
+              <div className="row" style={{ marginTop: 12, flexWrap: "wrap" }}>
+                <span><b>Preis:</b> {lot.price_per_kg ?? "-"} {lot.currency ?? ""} / kg (green)</span>
+                <span><b>Gewicht:</b> {lot.weight_kg ?? "-"} kg</span>
+                <span><b>Expected SCA:</b> {lot.expected_cupping_score ?? "-"}</span>
+              </div>
             </div>
-          </div>
+          </section>
 
-          <h2>Margin Runs</h2>
-          {runs.length === 0 ? (
-            <div>Keine Runs vorhanden.</div>
-          ) : (
-            <ul>
-              {runs.map((r) => {
-                const grossMarginPerKg = r.outputs.gross_margin_per_kg;
-                const gmKg = formatOutputValue(grossMarginPerKg, 2);
-                const grossMarginPct = r.outputs.gross_margin_pct;
-                const gmPct = formatOutputValue(grossMarginPct, 1);
-                return (
-                  <li key={r.id} style={{ marginBottom: 10 }}>
-                    <div>
-                      <b>Run #{r.id}</b> - {r.profile} - {new Date(r.computed_at).toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: 12, color: "#555" }}>
-                      GM/kg: {gmKg} - GM%: {gmPct}
-                    </div>
-                    <details>
-                      <summary style={{ cursor: "pointer" }}>Details</summary>
-                      <pre
-                        style={{
-                          marginTop: 6,
-                          padding: 10,
-                          background: "#fafafa",
-                          border: "1px solid #eee",
-                          borderRadius: 12,
-                          overflowX: "auto",
-                        }}
-                      >
+          <section className="panel" style={{ marginTop: "var(--space-4)" }}>
+            <div className="panelHeader">
+              <div className="panelTitle">Margenrechnung speichern</div>
+            </div>
+            <div className="panelBody">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: 10,
+                }}
+              >
+                <input
+                  placeholder="purchase_price_per_kg"
+                  value={calc.purchase_price_per_kg}
+                  onChange={(e) => setCalc({ ...calc, purchase_price_per_kg: e.target.value })}
+                />
+                <input
+                  placeholder="purchase_currency"
+                  value={calc.purchase_currency}
+                  onChange={(e) => setCalc({ ...calc, purchase_currency: e.target.value })}
+                />
+                <input
+                  placeholder="landed_costs_per_kg"
+                  value={calc.landed_costs_per_kg}
+                  onChange={(e) => setCalc({ ...calc, landed_costs_per_kg: e.target.value })}
+                />
+                <input
+                  placeholder="roast_and_pack_costs_per_kg"
+                  value={calc.roast_and_pack_costs_per_kg}
+                  onChange={(e) => setCalc({ ...calc, roast_and_pack_costs_per_kg: e.target.value })}
+                />
+                <input
+                  placeholder="yield_factor"
+                  value={calc.yield_factor}
+                  onChange={(e) => setCalc({ ...calc, yield_factor: e.target.value })}
+                />
+                <input
+                  placeholder="selling_price_per_kg"
+                  value={calc.selling_price_per_kg}
+                  onChange={(e) => setCalc({ ...calc, selling_price_per_kg: e.target.value })}
+                />
+                <input
+                  placeholder="selling_currency"
+                  value={calc.selling_currency}
+                  onChange={(e) => setCalc({ ...calc, selling_currency: e.target.value })}
+                />
+                <input
+                  placeholder="fx_usd_to_eur (optional)"
+                  value={calc.fx_usd_to_eur}
+                  onChange={(e) => setCalc({ ...calc, fx_usd_to_eur: e.target.value })}
+                />
+                <input
+                  placeholder="profile (conservative/...)"
+                  value={profile}
+                  onChange={(e) => setProfile(e.target.value)}
+                />
+              </div>
+              <div className="row" style={{ marginTop: 10 }}>
+                <button className="btn" onClick={computeAndStore} disabled={busy}>
+                  {busy ? "Rechnen..." : "Berechnen & speichern"}
+                </button>
+                <span className="muted">Ergebnis wird als Margin Run in der DB gespeichert.</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="panel" style={{ marginTop: "var(--space-4)" }}>
+            <div className="panelHeader">
+              <div className="panelTitle">Margin Runs</div>
+            </div>
+            <div className="panelBody">
+              {runs.length === 0 ? (
+                <div className="muted">Keine Runs vorhanden.</div>
+              ) : (
+                <div className="list">
+                  {runs.map((r) => {
+                    const gmKg = formatOutputValue(r.outputs.gross_margin_per_kg, 2);
+                    const gmPct = formatOutputValue(r.outputs.gross_margin_pct, 1);
+                    return (
+                      <div key={r.id} className="listItem" style={{ display: "block" }}>
+                        <div className="rowBetween" style={{ alignItems: "flex-start" }}>
+                          <div>
+                            <div className="listTitle">
+                              Run #{r.id} - {r.profile}
+                            </div>
+                            <div className="listMeta">
+                              <span>{new Date(r.computed_at).toLocaleString()}</span>
+                              <span className="dot">-</span>
+                              <span>GM/kg: {gmKg}</span>
+                              <span className="dot">-</span>
+                              <span>GM%: {gmPct}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <details style={{ marginTop: 8 }}>
+                          <summary style={{ cursor: "pointer" }}>Details</summary>
+                          <pre className="codeBox" style={{ marginTop: 6, overflowX: "auto" }}>
 {JSON.stringify({ inputs: r.inputs, outputs: r.outputs }, null, 2)}
-                      </pre>
-                    </details>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                          </pre>
+                        </details>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
         </>
-      ) : (
-        <div>Loading...</div>
       )}
     </div>
   );
