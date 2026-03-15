@@ -250,7 +250,7 @@ async def ml_task_status(
     },
 )
 async def get_feature_importance(
-    model_id: int,
+    model_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
@@ -369,7 +369,7 @@ async def list_ml_models(
     responses={404: {"description": "Model not found"}},
 )
 async def get_model_details(
-    model_id: int,
+    model_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
@@ -389,7 +389,7 @@ async def get_model_details(
     responses={404: {"description": "Model not found"}},
 )
 async def retrain_model(
-    model_id: int,
+    model_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin"))],
 ):

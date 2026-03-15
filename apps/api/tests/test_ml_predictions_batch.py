@@ -186,3 +186,17 @@ def test_freight_cost_trend_rejects_invalid_months_back(client, auth_headers):
         headers=auth_headers,
     )
     assert response.status_code == 422
+
+
+def test_ml_model_routes_reject_non_positive_model_id(client, auth_headers):
+    details = client.get("/ml/models/0", headers=auth_headers)
+    assert details.status_code == 422
+
+    feature_importance = client.get(
+        "/ml/models/0/feature-importance",
+        headers=auth_headers,
+    )
+    assert feature_importance.status_code == 422
+
+    retrain = client.post("/ml/models/0/retrain", headers=auth_headers)
+    assert retrain.status_code == 422
