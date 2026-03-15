@@ -87,8 +87,8 @@ def get_entity_analysis(
         except ValueError:
             parsed_id = entity_id
         return knowledge_graph.get_entity_analysis(db, entity_type, parsed_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/entity/{node_id}/connections", responses=GRAPH_COMMON_RESPONSES)
@@ -102,8 +102,8 @@ def get_entity_connections(
     try:
         entity_type, parsed_id = _parse_node_id(node_id)
         return knowledge_graph.get_entity_analysis(db, entity_type, parsed_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/communities", responses=GRAPH_DISABLED_RESPONSES)
@@ -156,8 +156,8 @@ def get_shortest_path(
         return knowledge_graph.get_shortest_path(
             db, source_type, parsed_source_id, target_type, parsed_target_id
         )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/path/{from_id}/{to_id}", responses=GRAPH_COMMON_RESPONSES)
@@ -175,8 +175,8 @@ def get_path_by_node_ids(
         return knowledge_graph.get_shortest_path(
             db, source_type, parsed_source_id, target_type, parsed_target_id
         )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get(
@@ -201,5 +201,5 @@ def get_hidden_connections(
         except ValueError:
             parsed_id = entity_id
         return knowledge_graph.get_hidden_connections(db, entity_type, parsed_id, max_hops)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")

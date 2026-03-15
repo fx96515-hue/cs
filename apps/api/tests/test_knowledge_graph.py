@@ -344,6 +344,7 @@ def test_api_get_entity_analysis_not_found(client, auth_headers, db):
     """Test GET /graph/analysis with non-existent entity."""
     response = client.get("/graph/analysis/cooperative/999", headers=auth_headers)
     assert response.status_code == 404
+    assert response.json()["detail"] == "Not found"
 
 
 def test_api_get_communities(client, auth_headers, db):
