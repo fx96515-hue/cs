@@ -113,6 +113,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `country_filter` was optional but unvalidated free text.
 - Action: enforced ISO-2 validation and normalization (uppercase) with test coverage.
 
+18. Peru region detail page used ad-hoc error-state rendering
+- Status: IMPROVED
+- Issue: error state used custom inline styling instead of shared alert semantics.
+- Action: aligned page-level error panel to shared `ErrorPanel` pattern while preserving current visual language.
+
 13. Core entity routes accepted non-positive path IDs
 - Status: FIXED
 - Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
@@ -185,6 +190,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `4bd7d28` `harden(api): validate peru region inputs for refresh and intelligence routes`
 - `aa0345e` `harden(api): validate discovery task ids and sanitize failure payloads`
 - `be0ed9b` `harden(api): validate and normalize discovery country filters`
+- `b4e2fb3` `docs(audit): sync baseline with latest boundary and error-hardening slices`
+- `7c55a7b` `improve(frontend): align peru region error state with shared alert pattern`
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
