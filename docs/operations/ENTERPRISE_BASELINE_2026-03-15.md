@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`663 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`665 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -73,6 +73,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `/scheduler/jobs/{job_id}/run` and `/scheduler/tasks/{task_id}` lacked explicit identifier bounds.
 - Action: added bounded/pattern-validated path parameters and expanded scheduler route test coverage.
 
+10. Freshness monitor returned placeholder source metadata
+- Status: FIXED
+- Issue: market freshness observations returned `source: None` even when `source_id` was present.
+- Action: implemented source-name resolution with lightweight caching and added dedicated monitor tests.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -123,6 +128,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `4739d32` `docs(audit): record circuit-reset validation hardening`
 - `b162e47` `harden(api): validate pipeline trigger source names and aliases`
 - `ea88345` `harden(api): validate scheduler job/task identifiers`
+- `d48bcb2` `docs(audit): record scheduler identifier hardening`
+- `c6a9ed8` `improve(data): resolve freshness source names and cover with tests`
 - `cfef249` `docs(audit): capture pipeline trigger validation hardening`
 - `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
 
