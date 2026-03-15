@@ -51,12 +51,17 @@ This baseline captures the current technical status before broader hardening/ref
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
-- Status: PARTIAL
+- Status: IMPROVED
 - Action: ignore rule added for local temp dumps (`.tmp_*.json`) to improve repo hygiene.
 
 2. Frontend lint quality warning in report detail page
 - Status: FIXED
 - Action: removed synchronous `setState` call from `useEffect` path.
+
+3. Frontend detail/dashboard layout inconsistencies across pages
+- Status: PARTIAL
+- Action: standardized shared `content` container usage and unified detail page wrappers/alerts on high-traffic pages.
+- Remaining exception: `apps/web/app/analyst/page.tsx` keeps dedicated `chatLayout` by design.
 
 ## Medium Findings
 
@@ -64,17 +69,28 @@ This baseline captures the current technical status before broader hardening/ref
 - Status: OPEN
 - Note: CI currently formats first and then checks; this does not block CI but indicates style drift.
 
-2. Large working tree with concurrent in-flight hardening edits
-- Status: OPEN
-- Note: further changes should continue in small, scoped commits to avoid blast radius.
+2. KI chat page had non-standard root wrapper
+- Status: FIXED
+- Action: aligned to shared `content` wrapper while preserving full-height chat behavior.
 
 ## Commits Created in This Audit Slice
 
 - `5e136f6` `fix(smoke): restore integration script and clear frontend lint warning`
 - `ce272a8` `fix(smoke-win): avoid auth header loss on redirected endpoints`
+- `1fe0eae` `docs(audit): add enterprise baseline status and priorities`
+- `43c6e60` `fix(smoke-win): silence expected health probe curl noise`
+- `f6051db` `harden(docker): patch frontend image zlib critical CVE`
+- `13de8f4` `harden(local): enforce secure compose defaults and bootstrap secrets`
+- `fd40d1e` `improve(frontend): align lot detail page with shared dashboard patterns`
+- `557c055` `improve(frontend): unify detail-page wrapper and success alert classes`
+- `c0606fa` `improve(frontend): standardize page content wrapper on key dashboards`
+- `acf2309` `improve(frontend): align content container usage across operations pages`
+- `b717d88` `improve(frontend): apply shared content layout to additional workflow pages`
+- `3ea950a` `chore(repo): remove stale pre-commit backup config`
+- `d8cbe8e` `improve(frontend): align KI page wrapper with shared content layout`
 
 ## Next Execution Slice
 
-1. Normalize smoke/ops scripts (`scripts/smoke.sh`, `scripts/win/10_smoke_api.ps1`, `run_windows.ps1`) for consistent endpoint conventions and error handling.
-2. Stabilize security scanning policy (focus on actionable HIGH/CRITICAL + handling unfixed OS CVEs consistently).
-3. Start structured hardening pass on critical backend input boundaries and auth-adjacent endpoints.
+1. Run targeted backend hardening pass for input validation and defensive boundaries on auth-adjacent and mutation endpoints.
+2. Close remaining frontend consistency gap for special chat layouts via shared utility classes (without redesign).
+3. Continue repo hygiene and documentation hardening (`.dockerignore`/dev docs/checklist synchronization).
