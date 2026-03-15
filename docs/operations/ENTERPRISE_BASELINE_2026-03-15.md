@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`660 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`663 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -68,6 +68,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `/pipeline/trigger/{source_name}` accepted broad arbitrary path values.
 - Action: added bounded/pattern-validated path input and canonical alias mapping for supported trigger sources.
 
+9. Scheduler trigger/status endpoints accepted unbounded identifiers
+- Status: FIXED
+- Issue: `/scheduler/jobs/{job_id}/run` and `/scheduler/tasks/{task_id}` lacked explicit identifier bounds.
+- Action: added bounded/pattern-validated path parameters and expanded scheduler route test coverage.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -117,6 +122,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `15cc237` `harden(api): enforce provider validation on circuit reset endpoint`
 - `4739d32` `docs(audit): record circuit-reset validation hardening`
 - `b162e47` `harden(api): validate pipeline trigger source names and aliases`
+- `ea88345` `harden(api): validate scheduler job/task identifiers`
 - `cfef249` `docs(audit): capture pipeline trigger validation hardening`
 - `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
 
