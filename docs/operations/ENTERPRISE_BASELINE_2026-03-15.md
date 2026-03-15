@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`655 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`656 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -57,6 +57,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Status: FIXED
 - Issue: `/auth/dev/bootstrap` had no client-origin boundary beyond environment gating.
 - Action: enforced loopback-only access and added tests for local/remote host detection.
+
+7. Circuit reset endpoint accepted unbounded provider keys and returned 200 on unknown provider
+- Status: FIXED
+- Issue: `/data-health/reset-circuit/{provider}` accepted broad input and mixed errors into success responses.
+- Action: enforced bounded provider key validation and returned proper `404` for unknown providers.
 
 ## High-Priority Findings
 
@@ -104,6 +109,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `c2b7db7` `docs(audit): record auth hardening and latest validation`
 - `25ab7d4` `chore(repo): deduplicate and normalize gitignore rules`
 - `55d3469` `harden(auth): restrict dev bootstrap endpoint to loopback clients`
+- `15cc237` `harden(api): enforce provider validation on circuit reset endpoint`
 
 ## Next Execution Slice
 
