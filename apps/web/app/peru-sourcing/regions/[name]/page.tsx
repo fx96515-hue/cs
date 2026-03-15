@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { apiFetch } from "../../../../lib/api";
 import { usePeruRegionIntelligence, useCooperatives } from "../../../hooks/usePeruRegions";
+import { ErrorPanel } from "../../../components/AlertError";
 
 export default function RegionDetailPage() {
   const params = useParams();
@@ -32,10 +33,12 @@ export default function RegionDetailPage() {
     return (
       <div className="content">
         <div className="panel">
-          <div style={{ color: "var(--muted)" }}>Region nicht gefunden oder Fehler beim Laden.</div>
-          <Link href="/peru-sourcing" className="btn" style={{ marginTop: "14px" }}>
-            Zurueck zur Uebersicht
-          </Link>
+          <ErrorPanel message="Region nicht gefunden oder Fehler beim Laden." compact />
+          <div className="pageActions" style={{ marginTop: "var(--space-3)" }}>
+            <Link href="/peru-sourcing" className="btn">
+              Zurueck zur Uebersicht
+            </Link>
+          </div>
         </div>
       </div>
     );
