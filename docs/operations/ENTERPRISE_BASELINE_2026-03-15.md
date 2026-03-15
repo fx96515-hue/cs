@@ -190,6 +190,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: batch endpoints returned raw exception messages in `errors[]`; selected ML route/query inputs lacked explicit bounds.
 - Action: standardized batch item errors to `Prediction failed`, bounded `months_back` (`1..120`) and constrained `task_id` format/length with regression tests.
 
+31. Frontend page-header consistency gaps remained on detail/intelligence pages
+- Status: IMPROVED
+- Issue: several detail and intelligence pages still used legacy `div.pageHeader` structures.
+- Action: aligned `news`, `graph`, `cooperatives/[id]`, `roasters/[id]`, and `peru-sourcing/regions/[name]` to shared `header.pageHeader` semantics and header action containers.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -280,6 +285,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `361c158` `harden(auth): sanitize bootstrap config validation error details`
 - `9bbf50b` `docs(audit): log bootstrap error-contract hardening`
 - `c4e297d` `harden(api): constrain ml task/trend params and sanitize batch errors`
+- `6447ce4` `docs(audit): capture ml boundary and batch-error hardening`
+- `d5c74db` `improve(frontend): align detail and intelligence pages to shared header pattern`
 
 ## Next Execution Slice
 
