@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`669 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`675 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -88,6 +88,16 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: several pages/components still referenced `--muted` despite primary token migration to `--color-text-muted`.
 - Action: added `--muted` alias in global design tokens for backward-compatible consistency.
 
+13. Core entity routes accepted non-positive path IDs
+- Status: FIXED
+- Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
+- Action: enforced `Path(ge=1)` boundaries and added regression tests for invalid zero IDs.
+
+14. Outreach endpoint accepted weak request variants
+- Status: FIXED
+- Issue: outreach request accepted unconstrained string fields for entity/language/purpose.
+- Action: enforced strict typed schema (`Literal`-based) + positive `entity_id` and counterpart-name validation.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -146,6 +156,9 @@ This baseline captures the current technical status before broader hardening/ref
 - `f561a23` `improve(ui): add muted token alias for legacy component consistency`
 - `cfef249` `docs(audit): capture pipeline trigger validation hardening`
 - `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
+- `eba7a00` `docs(audit): capture muted-token compatibility hardening`
+- `a8a4949` `harden(api): enforce positive path ids across core entity routes`
+- `a78d3cf` `harden(api): enforce strict outreach request schema validation`
 
 ## Next Execution Slice
 
