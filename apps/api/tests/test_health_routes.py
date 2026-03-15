@@ -86,4 +86,3 @@ def test_health_redis_failure_returns_sanitized_error(client, monkeypatch):
     response = client.get("/health/redis")
     assert response.status_code == 503
     assert response.json()["detail"] == "Redis health check failed"
-

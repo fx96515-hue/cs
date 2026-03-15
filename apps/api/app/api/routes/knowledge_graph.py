@@ -186,7 +186,9 @@ def get_path_by_node_ids(
 def get_hidden_connections(
     entity_type: str,
     entity_id: str,  # Accept str to handle both numeric IDs and string-based IDs
-    max_hops: Annotated[int, Query(ge=2, le=5, description="Maximum hops to search")] = 3,
+    max_hops: Annotated[
+        int, Query(ge=2, le=5, description="Maximum hops to search")
+    ] = 3,
     *,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
@@ -200,6 +202,8 @@ def get_hidden_connections(
             parsed_id = int(entity_id)
         except ValueError:
             parsed_id = entity_id
-        return knowledge_graph.get_hidden_connections(db, entity_type, parsed_id, max_hops)
+        return knowledge_graph.get_hidden_connections(
+            db, entity_type, parsed_id, max_hops
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

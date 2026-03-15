@@ -88,7 +88,9 @@ def _upsert_news_items(
         item.title = str(_coerce_result_field(result, "title") or item.title)[:500]
         item.snippet = _coerce_result_field(result, "snippet") or item.snippet
         item.country = country
-        item.published_at = _parse_datetime(_coerce_result_field(result, "published_at"))
+        item.published_at = _parse_datetime(
+            _coerce_result_field(result, "published_at")
+        )
         item.retrieved_at = now
         item.meta = {"provider": provider, "query": query}
         processed += 1
@@ -192,7 +194,9 @@ def refresh_news(
                             "title": _coerce_result_field(item, "title"),
                             "url": _coerce_result_field(item, "url"),
                             "snippet": _coerce_result_field(item, "snippet"),
-                            "published_at": _coerce_result_field(item, "published_date"),
+                            "published_at": _coerce_result_field(
+                                item, "published_date"
+                            ),
                         }
                         for item in raw_results
                         if not _already_seen(_coerce_result_field(item, "url"))

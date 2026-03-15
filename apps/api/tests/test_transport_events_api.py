@@ -89,4 +89,3 @@ def test_transport_events_viewer_read_only(client, auth_headers, viewer_auth_hea
         headers=viewer_auth_headers,
     )
     assert forbidden_create.status_code == 403
-

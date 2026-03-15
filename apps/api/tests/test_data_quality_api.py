@@ -111,4 +111,3 @@ def test_recompute_flags_entity_not_found(client, auth_headers):
     )
     assert response.status_code == 404
     assert response.json()["detail"] == "Not found"
-

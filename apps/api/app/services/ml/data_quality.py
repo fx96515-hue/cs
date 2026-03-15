@@ -12,7 +12,9 @@ class AnomalyDetector:
     @staticmethod
     def detect_price_anomalies(price_history: list[dict]) -> list[dict]:
         anomalies: list[dict] = []
-        prices = [row.get("price") for row in price_history if row.get("price") is not None]
+        prices = [
+            row.get("price") for row in price_history if row.get("price") is not None
+        ]
         if len(prices) < 2:
             return anomalies
 

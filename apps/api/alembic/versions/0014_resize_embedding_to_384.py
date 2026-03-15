@@ -21,9 +21,7 @@ depends_on = None
 def _pgvector_available(conn) -> bool:
     """Return True if the vector type exists in this database."""
     result = conn.execute(
-        sa.text(
-            "SELECT 1 FROM pg_extension WHERE extname = 'vector'"
-        )
+        sa.text("SELECT 1 FROM pg_extension WHERE extname = 'vector'")
     )
     return result.fetchone() is not None
 

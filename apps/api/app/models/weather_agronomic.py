@@ -25,7 +25,9 @@ class WeatherAgronomicData(Base, TimestampMixin):
     temp_max_c: Mapped[float | None] = mapped_column(Float, nullable=True)
     temp_avg_c: Mapped[float | None] = mapped_column(Float, nullable=True)
     precipitation_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
-    precipitation_probability: Mapped[float | None] = mapped_column(Float, nullable=True)
+    precipitation_probability: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
     humidity_min: Mapped[float | None] = mapped_column(Float, nullable=True)
     humidity_max: Mapped[float | None] = mapped_column(Float, nullable=True)
     humidity_avg: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -36,7 +38,9 @@ class WeatherAgronomicData(Base, TimestampMixin):
     frost_risk: Mapped[float | None] = mapped_column(Float, nullable=True)
     drought_stress: Mapped[float | None] = mapped_column(Float, nullable=True)
     source: Mapped[str] = mapped_column(String(64), nullable=False)
-    source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id"), nullable=True)
+    source_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sources.id"), nullable=True
+    )
     raw_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
@@ -49,8 +53,12 @@ class SocialSentimentData(Base, TimestampMixin):
     author: Mapped[str | None] = mapped_column(String(128), nullable=True)
     content_text: Mapped[str | None] = mapped_column(String(4000), nullable=True)
     content_title: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    published_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    collected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     sentiment_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     sentiment_magnitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     sentiment_label: Mapped[str | None] = mapped_column(String(16), nullable=True)
@@ -69,8 +77,12 @@ class ShipmentApiEvent(Base, TimestampMixin):
     __tablename__ = "shipment_api_events"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    shipment_id: Mapped[int | None] = mapped_column(ForeignKey("shipments.id"), nullable=True, index=True)
-    vessel_imo: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
+    shipment_id: Mapped[int | None] = mapped_column(
+        ForeignKey("shipments.id"), nullable=True, index=True
+    )
+    vessel_imo: Mapped[str | None] = mapped_column(
+        String(16), nullable=True, index=True
+    )
     vessel_mmsi: Mapped[str | None] = mapped_column(String(16), nullable=True)
     vessel_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     vessel_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -81,12 +93,16 @@ class ShipmentApiEvent(Base, TimestampMixin):
     course: Mapped[float | None] = mapped_column(Float, nullable=True)
     heading: Mapped[float | None] = mapped_column(Float, nullable=True)
     event_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    event_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    event_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     port_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     port_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     port_country: Mapped[str | None] = mapped_column(String(64), nullable=True)
     eta_destination: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    eta_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    eta_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     source: Mapped[str] = mapped_column(String(32), nullable=False)
     raw_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
@@ -103,7 +119,9 @@ class MLFeaturesCache(Base, TimestampMixin):
     features: Mapped[dict] = mapped_column(JSON, nullable=False)
     feature_names: Mapped[list] = mapped_column(JSON, nullable=False)
     feature_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    computed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     computation_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     missing_features: Mapped[list | None] = mapped_column(JSON, nullable=True)
     quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -116,7 +134,9 @@ class DataLineageLog(Base, TimestampMixin):
     table_name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     record_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     action: Mapped[str] = mapped_column(String(32), nullable=False)
-    action_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    action_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     source_type: Mapped[str] = mapped_column(String(64), nullable=False)
     source_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
@@ -149,10 +169,18 @@ class SourceHealthMetrics(Base, TimestampMixin):
     records_rejected: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_types: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     last_error_message: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    circuit_breaker_status: Mapped[str] = mapped_column(String(16), nullable=False, default="closed")
-    circuit_breaker_trips: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    circuit_breaker_status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="closed"
+    )
+    circuit_breaker_trips: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
     data_quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     missing_fields_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     outliers_detected: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_failure_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_failure_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

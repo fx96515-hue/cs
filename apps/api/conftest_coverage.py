@@ -2,6 +2,7 @@
 pytest configuration for coverage reporting.
 Run: pytest --cov=apps/api/app --cov-report=html apps/api/tests
 """
+
 import pytest
 
 

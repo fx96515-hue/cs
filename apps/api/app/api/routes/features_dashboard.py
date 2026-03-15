@@ -35,9 +35,32 @@ def _safe_validation_summary(validation: dict[str, Any]) -> dict[str, Any]:
 
 def _feature_category(name: str) -> str:
     lowered = name.lower()
-    if any(token in lowered for token in ("fuel", "port", "carrier", "route", "container", "transit", "freight")):
+    if any(
+        token in lowered
+        for token in (
+            "fuel",
+            "port",
+            "carrier",
+            "route",
+            "container",
+            "transit",
+            "freight",
+        )
+    ):
         return "Fracht-Features"
-    if any(token in lowered for token in ("price", "ice", "differential", "cupping", "quality", "cert", "origin", "process")):
+    if any(
+        token in lowered
+        for token in (
+            "price",
+            "ice",
+            "differential",
+            "cupping",
+            "quality",
+            "cert",
+            "origin",
+            "process",
+        )
+    ):
         return "Preis-Features"
     return "Cross-Features"
 
@@ -174,8 +197,12 @@ def features_quality_report(
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     model_count = db.execute(select(func.count()).select_from(MLModel)).scalar_one()
-    freight_count = db.execute(select(func.count()).select_from(FreightHistory)).scalar_one()
-    price_count = db.execute(select(func.count()).select_from(CoffeePriceHistory)).scalar_one()
+    freight_count = db.execute(
+        select(func.count()).select_from(FreightHistory)
+    ).scalar_one()
+    price_count = db.execute(
+        select(func.count()).select_from(CoffeePriceHistory)
+    ).scalar_one()
 
     latest_training = db.execute(select(func.max(MLModel.training_date))).scalar_one()
     total_features = 0
@@ -214,21 +241,30 @@ def features_quality_report(
         "freight",
     )
     price_quality = QualityReport.generate_report(
-        [{"price": price_usd_per_lb or price_usd_per_kg} for price_usd_per_kg, price_usd_per_lb in price_rows],
+        [
+            {"price": price_usd_per_lb or price_usd_per_kg}
+            for price_usd_per_kg, price_usd_per_lb in price_rows
+        ],
         "price",
     )
     avg_quality_score = round(
         ((freight_quality["quality_score"] + price_quality["quality_score"]) / 2) * 100,
         2,
     )
-    missing_data_points = max(total_records * max(total_features, 1) - total_features, 0)
+    missing_data_points = max(
+        total_records * max(total_features, 1) - total_features, 0
+    )
     catalog_feature_count = sum(len(item["features"]) for item in _catalog_payload())
     return {
         "totalFeatures": total_features or catalog_feature_count,
         "avgCoverage": avg_quality_score if total_records > 0 else 0.0,
-        "avgImportance": round(1 / max(total_features, 1), 4) if total_features else 0.0,
+        "avgImportance": round(1 / max(total_features, 1), 4)
+        if total_features
+        else 0.0,
         "missingDataPoints": missing_data_points,
-        "lastUpdate": latest_training.isoformat() if latest_training else datetime.utcnow().isoformat(),
+        "lastUpdate": latest_training.isoformat()
+        if latest_training
+        else datetime.utcnow().isoformat(),
         "modelsTracked": int(model_count or 0),
         "trainingRecords": total_records,
         "catalogFeatures": catalog_feature_count,
@@ -241,7 +277,8 @@ def features_quality_report(
             if avg_quality_score >= 50
             else "poor"
         ),
-        "anomaliesDetected": int(freight_quality["anomaly_count"]) + int(price_quality["anomaly_count"]),
+        "anomaliesDetected": int(freight_quality["anomaly_count"])
+        + int(price_quality["anomaly_count"]),
     }
 
 
@@ -282,7 +319,10 @@ async def features_bulk_import(
     if "freight_cost_usd" in headers:
         validation = BulkImportManager.import_data(content, "freight")
         if validation["valid_rows"] == 0:
-            raise HTTPException(status_code=400, detail=validation["errors"] or ["CSV validation failed"])
+            raise HTTPException(
+                status_code=400,
+                detail=validation["errors"] or ["CSV validation failed"],
+            )
         payload = []
         for row in rows:
             payload.append(
@@ -298,8 +338,12 @@ async def features_bulk_import(
                     "departure_date": row["departure_date"],
                     "arrival_date": row["arrival_date"],
                     "season": row["season"],
-                    "fuel_price_index": float(row["fuel_price_index"]) if row.get("fuel_price_index") else None,
-                    "port_congestion_score": float(row["port_congestion_score"]) if row.get("port_congestion_score") else None,
+                    "fuel_price_index": float(row["fuel_price_index"])
+                    if row.get("fuel_price_index")
+                    else None,
+                    "port_congestion_score": float(row["port_congestion_score"])
+                    if row.get("port_congestion_score")
+                    else None,
                 }
             )
         imported = await service.import_freight_data(payload)
@@ -313,7 +357,10 @@ async def features_bulk_import(
     if "price_usd_per_kg" in headers:
         validation = BulkImportManager.import_data(content, "price")
         if validation["valid_rows"] == 0:
-            raise HTTPException(status_code=400, detail=validation["errors"] or ["CSV validation failed"])
+            raise HTTPException(
+                status_code=400,
+                detail=validation["errors"] or ["CSV validation failed"],
+            )
         payload = []
         for row in rows:
             payload.append(
@@ -324,8 +371,14 @@ async def features_bulk_import(
                     "variety": row["variety"],
                     "process_method": row["process_method"],
                     "quality_grade": row["quality_grade"],
-                    "cupping_score": float(row["cupping_score"]) if row.get("cupping_score") else None,
-                    "certifications": [part.strip() for part in row.get("certifications", "").split(",") if part.strip()],
+                    "cupping_score": float(row["cupping_score"])
+                    if row.get("cupping_score")
+                    else None,
+                    "certifications": [
+                        part.strip()
+                        for part in row.get("certifications", "").split(",")
+                        if part.strip()
+                    ],
                     "price_usd_per_kg": float(row["price_usd_per_kg"]),
                     "price_usd_per_lb": float(row["price_usd_per_lb"]),
                     "ice_c_price_usd_per_lb": float(row["ice_c_price_usd_per_lb"]),

@@ -15,7 +15,9 @@ branch_labels = None
 depends_on = None
 
 
-def _column_exists(inspector: sa.engine.reflection.Inspector, table: str, column: str) -> bool:
+def _column_exists(
+    inspector: sa.engine.reflection.Inspector, table: str, column: str
+) -> bool:
     return any(col["name"] == column for col in inspector.get_columns(table))
 
 
@@ -95,9 +97,7 @@ def downgrade() -> None:
         op.drop_table("regions")
 
     if "cooperatives" in inspector.get_table_names():
-        coop_columns = {
-            col["name"] for col in inspector.get_columns("cooperatives")
-        }
+        coop_columns = {col["name"] for col in inspector.get_columns("cooperatives")}
         for col_name in [
             "communication_metrics",
             "sourcing_scores",

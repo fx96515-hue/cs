@@ -105,7 +105,9 @@ def downgrade() -> None:
             if _fk_constraint_exists(
                 inspector, "cooperatives", "fk_cooperatives_region_id"
             ):
-                op.drop_constraint("fk_cooperatives_region_id", "cooperatives", type_="foreignkey")
+                op.drop_constraint(
+                    "fk_cooperatives_region_id", "cooperatives", type_="foreignkey"
+                )
             op.drop_column("cooperatives", "region_id")
 
     if "coffee_price_history" in inspector.get_table_names():

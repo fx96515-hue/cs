@@ -117,7 +117,11 @@ def test_features_importance_endpoint(client, auth_headers, db):
             model_type="coffee_price",
             model_version="v2",
             training_date=datetime.now(timezone.utc),
-            features_used=["ice_c_price_usd_per_lb", "quality_grade", "certifications_premium"],
+            features_used=[
+                "ice_c_price_usd_per_lb",
+                "quality_grade",
+                "certifications_premium",
+            ],
             performance_metrics={"mae": 0.8},
             training_data_count=40,
             model_file_path="models/missing.joblib",
@@ -140,7 +144,11 @@ def test_features_catalog_endpoint(client, auth_headers):
     data = response.json()
     assert isinstance(data, list)
     assert any(category["name"] == "Cross-Features" for category in data)
-    assert any(feature["name"] == "freight_to_price_ratio" for category in data for feature in category["features"])
+    assert any(
+        feature["name"] == "freight_to_price_ratio"
+        for category in data
+        for feature in category["features"]
+    )
 
 
 def test_features_import_template_endpoint(client, auth_headers):

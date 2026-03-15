@@ -1069,9 +1069,7 @@ def backfill_missing_cooperative_data(
     try:
         for coop in candidates:
             processed += 1
-            query = (
-                f"{coop.name} Peru coffee cooperative website contact email certifications region"
-            )
+            query = f"{coop.name} Peru coffee cooperative website contact email certifications region"
             try:
                 if p_client is not None:
                     results = p_client.search(
@@ -1153,7 +1151,10 @@ def backfill_missing_cooperative_data(
                                 source_id=src.id,
                                 evidence_url=r.url,
                                 extracted_at=now,
-                                meta={"provider": discovery_provider, "mode": "backfill"},
+                                meta={
+                                    "provider": discovery_provider,
+                                    "mode": "backfill",
+                                },
                             )
                             db.add(ev)
                             db.commit()

@@ -52,7 +52,11 @@ def _parse_iso_datetime_or_422(value: str, field_name: str) -> datetime:
 
 def _ensure_unique_identifiers(db: Session, payload: ShipmentCreate) -> None:
     checks = (
-        ("container_number", payload.container_number, "Container number already exists"),
+        (
+            "container_number",
+            payload.container_number,
+            "Container number already exists",
+        ),
         ("bill_of_lading", payload.bill_of_lading, "Bill of lading already exists"),
     )
     for column_name, value, error_message in checks:
@@ -107,15 +111,23 @@ def _resolve_create_lot_ids(payload: ShipmentCreate, shipment: Shipment) -> list
     return []
 
 
-def _apply_update_datetime_fields(update_dict: dict[str, Any], current_status: str) -> None:
+def _apply_update_datetime_fields(
+    update_dict: dict[str, Any], current_status: str
+) -> None:
     if "departure_at" in update_dict and update_dict.get("departure_at"):
-        update_dict.setdefault("departure_date", update_dict["departure_at"].isoformat())
-    if "estimated_arrival_at" in update_dict and update_dict.get("estimated_arrival_at"):
+        update_dict.setdefault(
+            "departure_date", update_dict["departure_at"].isoformat()
+        )
+    if "estimated_arrival_at" in update_dict and update_dict.get(
+        "estimated_arrival_at"
+    ):
         update_dict.setdefault(
             "estimated_arrival", update_dict["estimated_arrival_at"].isoformat()
         )
     if "actual_arrival_at" in update_dict and update_dict.get("actual_arrival_at"):
-        update_dict.setdefault("actual_arrival", update_dict["actual_arrival_at"].isoformat())
+        update_dict.setdefault(
+            "actual_arrival", update_dict["actual_arrival_at"].isoformat()
+        )
 
     if "departure_at" not in update_dict and "departure_date" in update_dict:
         update_dict["departure_at"] = _parse_iso_datetime_or_422(
