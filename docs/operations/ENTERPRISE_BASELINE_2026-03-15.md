@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`689 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`691 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -138,6 +138,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `/regions` accepted unconstrained `country` query values.
 - Action: added bounded/pattern validation and normalization for country filter values with regression tests.
 
+23. ML training endpoint exposed raw error detail
+- Status: FIXED
+- Issue: `/ml/train/train/{model_type}` could return internal exception text to clients.
+- Action: sanitized ValueError/runtime error responses to stable generic messages and added dedicated API tests.
+
 13. Core entity routes accepted non-positive path IDs
 - Status: FIXED
 - Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
@@ -220,6 +225,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `b932f06` `harden(api): sanitize peru sourcing not-found error details`
 - `2449bab` `docs(audit): log peru sourcing error-contract hardening`
 - `f7cae09` `harden(api): validate regions country filter input`
+- `8cddddd` `docs(audit): record regions country-filter validation hardening`
+- `7cda909` `harden(api): sanitize ml training error details`
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
