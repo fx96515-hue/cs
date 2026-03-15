@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`656 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`660 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -63,6 +63,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `/data-health/reset-circuit/{provider}` accepted broad input and mixed errors into success responses.
 - Action: enforced bounded provider key validation and returned proper `404` for unknown providers.
 
+8. Pipeline trigger endpoint accepted broad source-name input
+- Status: FIXED
+- Issue: `/pipeline/trigger/{source_name}` accepted broad arbitrary path values.
+- Action: added bounded/pattern-validated path input and canonical alias mapping for supported trigger sources.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -110,6 +115,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `25ab7d4` `chore(repo): deduplicate and normalize gitignore rules`
 - `55d3469` `harden(auth): restrict dev bootstrap endpoint to loopback clients`
 - `15cc237` `harden(api): enforce provider validation on circuit reset endpoint`
+- `4739d32` `docs(audit): record circuit-reset validation hardening`
+- `b162e47` `harden(api): validate pipeline trigger source names and aliases`
 
 ## Next Execution Slice
 
