@@ -117,6 +117,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `15cc237` `harden(api): enforce provider validation on circuit reset endpoint`
 - `4739d32` `docs(audit): record circuit-reset validation hardening`
 - `b162e47` `harden(api): validate pipeline trigger source names and aliases`
+- `cfef249` `docs(audit): capture pipeline trigger validation hardening`
+- `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
 
 ## Next Execution Slice
 
