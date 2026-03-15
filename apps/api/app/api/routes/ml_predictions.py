@@ -428,8 +428,8 @@ async def import_freight_data(
             records_imported=count,
             message=f"Successfully imported {count} freight records",
         )
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Import failed: {exc}")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Import failed")
 
 
 @router.post(
@@ -455,6 +455,6 @@ async def import_price_data(
             records_imported=count,
             message=f"Successfully imported {count} price records",
         )
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Import failed: {exc}")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Import failed")
 
