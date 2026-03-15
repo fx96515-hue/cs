@@ -5,7 +5,9 @@ Endpoints for region intelligence, cooperative sourcing analysis,
 and data management.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -86,7 +88,7 @@ def get_region_intelligence(
     "/cooperatives/{coop_id}/sourcing-analysis", response_model=SourcingAnalysisResponse
 )
 def get_cooperative_sourcing_analysis(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
@@ -114,7 +116,7 @@ def get_cooperative_sourcing_analysis(
 
 @router.post("/cooperatives/{coop_id}/analyze", response_model=SourcingAnalysisResponse)
 def analyze_cooperative_for_sourcing(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     request: AnalyzeCooperativeRequest | None = None,
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst")),

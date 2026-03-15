@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -20,7 +22,7 @@ def list_reports(
 
 @router.get("/{report_id}", response_model=ReportOut)
 def get_report(
-    report_id: int,
+    report_id: Annotated[int, Path(ge=1)],
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):

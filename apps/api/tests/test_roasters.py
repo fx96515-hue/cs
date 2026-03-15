@@ -152,3 +152,8 @@ def test_delete_nonexistent_roaster(client, auth_headers):
     """Test deleting a roaster that doesn't exist."""
     response = client.delete("/roasters/99999", headers=auth_headers)
     assert response.status_code == 404
+
+
+def test_roaster_id_path_rejects_zero(client, auth_headers):
+    response = client.get("/roasters/0", headers=auth_headers)
+    assert response.status_code == 422

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -95,7 +95,7 @@ def create_roaster(
 
 @router.get("/{roaster_id}", response_model=RoasterOut, responses=NOT_FOUND_RESPONSE)
 def get_roaster(
-    roaster_id: int,
+    roaster_id: Annotated[int, Path(ge=1)],
     include_deleted: Annotated[bool, Query()] = False,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -112,7 +112,7 @@ def get_roaster(
 
 @router.patch("/{roaster_id}", response_model=RoasterOut, responses=NOT_FOUND_RESPONSE)
 def update_roaster(
-    roaster_id: int,
+    roaster_id: Annotated[int, Path(ge=1)],
     payload: RoasterUpdate,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
@@ -173,7 +173,7 @@ def update_roaster(
 
 @router.delete("/{roaster_id}", responses=NOT_FOUND_RESPONSE)
 def delete_roaster(
-    roaster_id: int,
+    roaster_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -219,7 +219,7 @@ def delete_roaster(
 
 @router.post("/{roaster_id}/restore", responses=NOT_FOUND_RESPONSE)
 def restore_roaster(
-    roaster_id: int,
+    roaster_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):

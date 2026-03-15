@@ -96,6 +96,11 @@ def test_analyze_cooperative_not_found(client, auth_headers, db):
     assert response.status_code == 404
 
 
+def test_peru_coop_id_path_rejects_zero(client, auth_headers, db):
+    response = client.post("/peru/cooperatives/0/analyze", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_analyze_cooperative_success(client, auth_headers, db):
     """Test successful cooperative analysis."""
     # Create a cooperative with complete data

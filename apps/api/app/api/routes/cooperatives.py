@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from fastapi.responses import StreamingResponse
 import structlog
 from sqlalchemy.orm import Session
@@ -107,7 +107,7 @@ def create_coop(
     responses=NOT_FOUND_RESPONSES,
 )
 def get_coop(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
     include_deleted: Annotated[bool, Query()] = False,
@@ -127,7 +127,7 @@ def get_coop(
     responses=NOT_FOUND_RESPONSES,
 )
 def update_coop(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     payload: CooperativeUpdate,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
@@ -197,7 +197,7 @@ def update_coop(
     responses=NOT_FOUND_RESPONSES,
 )
 def delete_coop(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -246,7 +246,7 @@ def delete_coop(
     responses=NOT_FOUND_RESPONSES,
 )
 def restore_coop(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -289,7 +289,7 @@ def restore_coop(
     responses=NOT_FOUND_RESPONSES,
 )
 def recompute_score(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
@@ -334,7 +334,7 @@ def backfill_missing_cooperatives(
     responses=NOT_FOUND_RESPONSES,
 )
 def backfill_single_cooperative(
-    coop_id: int,
+    coop_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
     dry_run: bool = False,
