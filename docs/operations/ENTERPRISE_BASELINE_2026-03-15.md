@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`687 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`689 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -133,6 +133,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: some peru sourcing 404 responses echoed user-provided identifiers.
 - Action: standardized not-found details to generic `Not found` for safer and more consistent error contracts.
 
+22. Regions filter endpoint accepted weak free-text country input
+- Status: FIXED
+- Issue: `/regions` accepted unconstrained `country` query values.
+- Action: added bounded/pattern validation and normalization for country filter values with regression tests.
+
 13. Core entity routes accepted non-positive path IDs
 - Status: FIXED
 - Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
@@ -213,6 +218,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `689ce9a` `harden(api): tighten auto-outreach request and path/query validation`
 - `f477447` `docs(audit): capture auto-outreach validation hardening and latest baseline`
 - `b932f06` `harden(api): sanitize peru sourcing not-found error details`
+- `2449bab` `docs(audit): log peru sourcing error-contract hardening`
+- `f7cae09` `harden(api): validate regions country filter input`
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
