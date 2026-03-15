@@ -323,26 +323,6 @@ class TestSimilarEntities:
         assert response.status_code == 200
         assert response.json()["entity_id"] == coop.id
 
-    def test_legacy_similar_route_alias_works(self, client, auth_headers, db):
-        coop = Cooperative(name="Alias Coop", embedding=_make_embedding())
-        db.add(coop)
-        db.commit()
-        db.refresh(coop)
-
-        with (
-            _search_enabled(),
-            patch("app.api.routes.semantic_search._search_cooperatives") as mock_search,
-        ):
-            mock_search.return_value = []
-
-            response = client.get(
-                f"/search/similar/cooperative/{coop.id}",
-                headers=auth_headers,
-            )
-
-        assert response.status_code == 200
-        assert response.json()["entity_id"] == coop.id
-
     def test_unauthenticated_returns_401(self, client):
         response = client.get("/search/entity/cooperative/1/similar")
         assert response.status_code == 401

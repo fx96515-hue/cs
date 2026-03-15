@@ -24,6 +24,15 @@ from app.services.ml.model_management import MLModelManagementService
 router = APIRouter()
 
 
+def _safe_validation_summary(validation: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "validRows": int(validation.get("valid_rows", 0) or 0),
+        "invalidRows": int(validation.get("invalid_rows", 0) or 0),
+        "totalRows": int(validation.get("total_rows", 0) or 0),
+        "errorCount": len(validation.get("errors") or []),
+    }
+
+
 def _feature_category(name: str) -> str:
     lowered = name.lower()
     if any(token in lowered for token in ("fuel", "port", "carrier", "route", "container", "transit", "freight")):
@@ -296,9 +305,9 @@ async def features_bulk_import(
         imported = await service.import_freight_data(payload)
         return {
             "status": "success",
-            "recordsImported": imported,
+            "recordsImported": int(imported or 0),
             "dataset": "freight",
-            "validation": validation,
+            "validation": _safe_validation_summary(validation),
         }
 
     if "price_usd_per_kg" in headers:
@@ -327,9 +336,9 @@ async def features_bulk_import(
         imported = await service.import_price_data(payload)
         return {
             "status": "success",
-            "recordsImported": imported,
+            "recordsImported": int(imported or 0),
             "dataset": "price",
-            "validation": validation,
+            "validation": _safe_validation_summary(validation),
         }
 
     raise HTTPException(

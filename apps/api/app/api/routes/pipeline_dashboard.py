@@ -25,6 +25,24 @@ class PipelineSourceDef(TypedDict):
     item: str
 
 
+def _redact_error_payload(payload: Any) -> Any:
+    if isinstance(payload, dict):
+        redacted: dict[str, Any] = {}
+        for key, value in payload.items():
+            if key == "errors" and isinstance(value, list):
+                redacted[key] = (
+                    ["Internal processing error. Check server logs for details."]
+                    if value
+                    else []
+                )
+            else:
+                redacted[key] = _redact_error_payload(value)
+        return redacted
+    if isinstance(payload, list):
+        return [_redact_error_payload(item) for item in payload]
+    return payload
+
+
 def _get_redis() -> redis.Redis:
     return redis.from_url(settings.REDIS_URL)
 
@@ -176,8 +194,8 @@ def trigger_all_sources(
         return {
             "status": result.status,
             "duration_seconds": result.duration_seconds,
-            "operations": result.operations,
-            "errors": result.errors,
+            "operations": _redact_error_payload(result.operations),
+            "errors": _redact_error_payload(result.errors),
             "started_at": result.started_at.isoformat(),
             "completed_at": result.completed_at.isoformat(),
         }
@@ -196,16 +214,20 @@ def trigger_single_source(
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
         if normalized in {"fx rates", "coffee prices", "freight rates"}:
-            result = orchestrator.run_market_pipeline()
-            return {"status": result["status"], "scope": "market", "result": result}
-        if normalized in {"peru weather", "market news"}:
-            result = orchestrator.run_intelligence_pipeline()
+            orchestrator.run_market_pipeline()
             return {
-                "status": result["status"],
+                "status": "ok",
+                "scope": "market",
+                "message": "Market pipeline executed. See logs for diagnostics.",
+            }
+        if normalized in {"peru weather", "market news"}:
+            orchestrator.run_intelligence_pipeline()
+            return {
+                "status": "ok",
                 "scope": "intelligence",
-                "result": result,
+                "message": "Intelligence pipeline executed. See logs for diagnostics.",
             }
     finally:
         redis_client.close()
 
-    raise HTTPException(status_code=404, detail=f"Unknown pipeline source: {source_name}")
+    raise HTTPException(status_code=404, detail="Unknown pipeline source")

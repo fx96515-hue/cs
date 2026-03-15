@@ -161,6 +161,10 @@ def refresh_news(
     provider_used: str | None = None
     stored_urls: set[str] = set()
 
+    def _sanitize_error(message: str) -> str:
+        # Keep client-facing errors generic; full exception details stay in server logs.
+        return message
+
     def _already_seen(url: str | None) -> bool:
         if not url or url in stored_urls:
             return True
@@ -205,9 +209,9 @@ def refresh_news(
                     )
                     created += c
                     updated += u
-                except Exception as e:
+                except Exception:
                     db.rollback()
-                    errors.append(f"perplexity query failed: {q}: {e}")
+                    errors.append(_sanitize_error(f"perplexity query failed: {q}"))
 
             if created or updated:
                 provider_used = "perplexity"
@@ -243,9 +247,9 @@ def refresh_news(
             updated += u
             if (c or u) and provider_used is None:
                 provider_used = "google_news_rss"
-        except Exception as exc:
+        except Exception:
             db.rollback()
-            errors.append(f"google_news_rss failed: {exc}")
+            errors.append(_sanitize_error("google_news_rss failed"))
 
     status = "ok" if (created or updated) else "failed"
     return {

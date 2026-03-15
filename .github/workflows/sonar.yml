@@ -89,22 +89,32 @@ jobs:
       - name: Build Sonar arguments
         if: steps.sonar_config.outputs.enabled == 'true'
         id: sonar_args
-        shell: bash
-        run: |
-          args="-Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}"
-          args="$args -Dsonar.sources=apps/api/app"
-          args="$args -Dsonar.tests=apps/api/tests"
-          args="$args -Dsonar.python.coverage.reportPaths=apps/api/coverage.xml"
-          args="$args -Dsonar.newCode.referenceBranch=main"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            args="$args -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
-            args="$args -Dsonar.pullrequest.branch=${{ github.head_ref }}"
-            args="$args -Dsonar.pullrequest.base=${{ github.base_ref }}"
-          fi
-          if [ -n "${{ vars.SONAR_ORGANIZATION }}" ]; then
-            args="$args -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}"
-          fi
-          echo "args=$args" >> "$GITHUB_OUTPUT"
+        uses: actions/github-script@v8
+        env:
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        with:
+          script: |
+            const args = [
+              `-Dsonar.projectKey=${process.env.SONAR_PROJECT_KEY}`,
+              "-Dsonar.sources=apps/api/app",
+              "-Dsonar.tests=apps/api/tests",
+              "-Dsonar.python.coverage.reportPaths=apps/api/coverage.xml",
+              "-Dsonar.newCode.referenceBranch=main",
+            ];
+            if (process.env.EVENT_NAME === "pull_request") {
+              args.push(`-Dsonar.pullrequest.key=${process.env.PR_NUMBER}`);
+              args.push(`-Dsonar.pullrequest.branch=${process.env.HEAD_REF}`);
+              args.push(`-Dsonar.pullrequest.base=${process.env.BASE_REF}`);
+            }
+            if (process.env.SONAR_ORGANIZATION) {
+              args.push(`-Dsonar.organization=${process.env.SONAR_ORGANIZATION}`);
+            }
+            core.setOutput("args", args.join(" "));
 
       - name: Sonar scan (Python coverage)
         if: steps.sonar_config.outputs.enabled == 'true'
