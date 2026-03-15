@@ -24,6 +24,23 @@ class DataFreshnessMonitor:
             db: Database session
         """
         self.db = db
+        self._source_name_cache: dict[int, str] = {}
+
+    def _resolve_source_name(self, source_id: int | None) -> str | None:
+        """Resolve source display name for a source id."""
+        if source_id is None:
+            return None
+        if source_id in self._source_name_cache:
+            return self._source_name_cache[source_id]
+
+        from app.models.source import Source
+
+        source = self.db.query(Source).filter(Source.id == source_id).first()
+        if not source:
+            return None
+
+        self._source_name_cache[source_id] = source.name
+        return source.name
 
     def _get_latest_observation(self, key: str) -> Optional[dict]:
         """Get latest observation for a key.
@@ -61,7 +78,7 @@ class DataFreshnessMonitor:
             "last_updated": observed_at.isoformat(),
             "age_hours": round(age_hours, 2),
             "value": obs.value,
-            "source": None,  # TODO: Add relationship or query separately
+            "source": self._resolve_source_name(obs.source_id),
         }
 
     def _check_staleness(self, data: Optional[dict], max_age_hours: float) -> dict:
