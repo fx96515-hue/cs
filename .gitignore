@@ -19,9 +19,11 @@ node_modules/
 .next/
 out/
 dist/
+build/
 *.tsbuildinfo
 test-results/
 playwright-report/
+apps/web/.npm-cache/
 
 # --- OS / IDE ---
 .DS_Store
@@ -33,9 +35,8 @@ Thumbs.db
 .env
 .env.*
 !*.example
+!.env.example
 apps/web/.env.local
-
-# Enterprise env (local only)
 infra/env/enterprise.env
 
 # --- Logs ---
@@ -44,25 +45,9 @@ infra/env/enterprise.env
 # --- Backups / artifacts ---
 backups/
 .patch_backups/
-# Secrets / env
-.env
-.env.*
-!.env.example
+*.bak_*
 
-# Local venv / caches
-.venv/
-__pycache__/
-*.pyc
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-
-# Node
-node_modules/
-dist/
-build/
-
-# Diagnostics & local dumps/logs
+# --- Diagnostics & local dumps ---
 diagnostics/
 *_logs_*.txt
 *_docker_*.txt
@@ -71,9 +56,9 @@ diagnostics/
 *_api_*.txt
 *_ui_*.txt
 00_pwd.txt
-*.bak_*
+.tmp_*.json
 
-# QA System artifacts
+# --- QA System artifacts ---
 .qa_backups/
 .qa_reports/
 
@@ -82,17 +67,8 @@ diagnostics/
 *.rej
 *.orig
 
-# patches
-*.patch
-
-# Local GitHub CLI cache used by CI log downloads
+# --- Local caches / runtime DBs ---
 .localapp/
-
-# Local runtime databases and transient npm cache
 *.db
 *.sqlite
 *.sqlite3
-apps/web/.npm-cache/
-
-# Local temporary security/export artifacts
-.tmp_*.json
