@@ -103,7 +103,7 @@ export default function AlertsPage() {
   };
 
   return (
-    <>
+    <div className="content">
       {/* Seitenheader */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
@@ -290,6 +290,6 @@ export default function AlertsPage() {
           <DataQualityMini title="Datenqualität" limit={10} />
         </div>
       )}
-    </>
+    </div>
   );
 }

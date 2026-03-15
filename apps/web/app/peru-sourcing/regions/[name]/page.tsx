@@ -22,7 +22,7 @@ export default function RegionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="panel">Lade Region...</div>
       </div>
     );
@@ -30,7 +30,7 @@ export default function RegionDetailPage() {
 
   if (error || !region) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="panel">
           <div style={{ color: "var(--muted)" }}>Region nicht gefunden oder Fehler beim Laden.</div>
           <Link href="/peru-sourcing" className="btn" style={{ marginTop: "14px" }}>
@@ -83,7 +83,7 @@ export default function RegionDetailPage() {
   }
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">{region.name}</div>
