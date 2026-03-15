@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`665 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`669 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -78,6 +78,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: market freshness observations returned `source: None` even when `source_id` was present.
 - Action: implemented source-name resolution with lightweight caching and added dedicated monitor tests.
 
+11. Source CRUD accepted weak kind/reliability inputs
+- Status: FIXED
+- Issue: source schema accepted unconstrained `kind` values and out-of-range reliability scores.
+- Action: constrained/normalized allowed source kinds, bounded reliability to `0..1`, and enforced `source_id >= 1` at route boundaries.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -130,6 +135,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `ea88345` `harden(api): validate scheduler job/task identifiers`
 - `d48bcb2` `docs(audit): record scheduler identifier hardening`
 - `c6a9ed8` `improve(data): resolve freshness source names and cover with tests`
+- `2eeeb2c` `docs(audit): capture freshness source metadata improvement`
+- `07b759e` `harden(api): tighten source schema and route id validation`
 - `cfef249` `docs(audit): capture pipeline trigger validation hardening`
 - `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
 
