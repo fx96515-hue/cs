@@ -292,7 +292,7 @@ export default function KIPage() {
   }
 
   return (
-    <div className="page" style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
+    <div className="content" style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <header className="pageHeader" style={{ flexShrink: 0 }}>
         <div>
