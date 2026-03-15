@@ -5,8 +5,10 @@ Response models for region intelligence, cooperative sourcing analysis,
 and related endpoints.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Any
+
+from app.core.validation import validate_text_field
 
 
 # Region schemas
@@ -153,3 +155,13 @@ class AnalyzeCooperativeRequest(BaseModel):
 
 class RefreshRegionRequest(BaseModel):
     region_name: str = Field(..., description="Name of the region to refresh")
+
+    @field_validator("region_name")
+    @classmethod
+    def validate_region_name(cls, v: str) -> str:
+        return validate_text_field(
+            v,
+            field_name="Region",
+            required=True,
+            max_length=120,
+        )

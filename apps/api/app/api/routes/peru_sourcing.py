@@ -58,7 +58,7 @@ def list_peru_regions(
     response_model=RegionIntelligenceResponse,
 )
 def get_region_intelligence(
-    region_name: str,
+    region_name: Annotated[str, Path(min_length=1, max_length=120)],
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):

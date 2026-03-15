@@ -222,3 +222,12 @@ def test_refresh_region_data_alias_name(client, auth_headers, db):
     assert response.status_code == 200
     data = response.json()
     assert data["region"] == "Cusco"
+
+
+def test_refresh_region_data_rejects_blank_region_name(client, auth_headers, db):
+    response = client.post(
+        "/peru/regions/refresh",
+        json={"region_name": "   "},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
