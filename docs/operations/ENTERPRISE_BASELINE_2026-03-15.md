@@ -163,6 +163,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `dedup` and `outreach` routes surfaced raw `ValueError` details to clients.
 - Action: standardized both routes to stable `Invalid request` responses and added regression assertions for the API error contract.
 
+26. Frontend page-header structure drift across analytics/search/report pages
+- Status: IMPROVED
+- Issue: several pages used `div.pageHeader`/`pageActions` instead of the shared semantic header structure.
+- Action: aligned `ml`, `reports`, `search`, and `sentiment` pages to `header.pageHeader` + `pageHeaderContent/pageHeaderActions` for consistent layout semantics.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -243,6 +248,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `dbe5e19` `harden(api): sanitize knowledge-graph not-found error details`
 - `17d37a6` `docs(audit): record knowledge-graph error-contract hardening`
 - `212b7a8` `harden(api): standardize dedup and outreach bad-request details`
+- `d395aaf` `docs(audit): capture dedup/outreach error-contract hardening`
+- `a1d747a` `improve(frontend): unify page-header structure across analytics pages`
 
 ## Next Execution Slice
 
