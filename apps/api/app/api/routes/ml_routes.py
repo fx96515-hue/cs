@@ -42,10 +42,10 @@ def train_model(
                 detail="model_type must be 'freight_cost' or 'coffee_price'",
             )
         return result
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid training request")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Training failed")
 
 
 @router.get("/training-status", response_model=list[TrainingStatusOut])
