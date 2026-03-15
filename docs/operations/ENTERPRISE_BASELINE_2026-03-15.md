@@ -38,6 +38,16 @@ This baseline captures the current technical status before broader hardening/ref
 - Action: upgraded `zlib` in frontend Docker base stage (`apk upgrade --no-cache zlib`) and re-scanned.
 - Validation: Trivy HIGH/CRITICAL result is now clean for frontend image.
 
+4. Insecure local defaults and broad local port exposure in compose/scripts
+- Status: FIXED
+- Issue: permissive defaults (`adminadmin`, weak JWT fallback) and non-loopback published ports increased local attack surface.
+- Action: hardened compose and Windows scripts:
+  - bind published dev ports to loopback (`127.0.0.1`)
+  - require `JWT_SECRET` in compose runtime
+  - require explicit admin passwords for Grafana/Keycloak stack services
+  - generate strong local secrets automatically in `run_windows.ps1`
+  - removed implicit `adminadmin` fallback in setup scripts
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts

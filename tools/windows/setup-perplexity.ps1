@@ -194,7 +194,8 @@ if (-not $adminEmail) {
 
 $adminPassword = Get-EnvValue 'BOOTSTRAP_ADMIN_PASSWORD'
 if (-not $adminPassword) {
-  $adminPassword = 'adminadmin'
+  Write-Host 'ERROR: BOOTSTRAP_ADMIN_PASSWORD is not set in .env. Run run_windows.ps1 first or set a strong password manually.' -ForegroundColor Red
+  exit 1
 }
 
 # Login to get JWT token

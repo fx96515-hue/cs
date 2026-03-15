@@ -39,8 +39,17 @@ function Get-EnvValue {
   return ($line -split "=",2)[1]
 }
 
+function New-RandomSecret {
+  param([int]$ByteCount = 24)
+  $bytes = New-Object byte[] $ByteCount
+  [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+  $raw = [Convert]::ToBase64String($bytes)
+  $normalized = ($raw -replace "[^A-Za-z0-9]", "") + "Aa1!"
+  return $normalized.Substring(0, [Math]::Min($normalized.Length, 28))
+}
+
 $jwt = Get-EnvValue "JWT_SECRET"
-if (-not $jwt) {
+if (-not $jwt -or $jwt -eq "dev-secret-CHANGE-ME-2026-EXTRA-LENGTH" -or $jwt.Length -lt 32) {
   # Generate a strong random secret for local JWT signing.
   $bytes = New-Object byte[] 32
   [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
@@ -55,9 +64,25 @@ if (-not $bootEmail) {
 }
 
 $bootPw = Get-EnvValue "BOOTSTRAP_ADMIN_PASSWORD"
-if (-not $bootPw) {
-  Set-EnvValue -Key "BOOTSTRAP_ADMIN_PASSWORD" -Value "adminadmin"
-  Write-Host "Set BOOTSTRAP_ADMIN_PASSWORD=adminadmin for local dev (.env)." -ForegroundColor Yellow
+if (-not $bootPw -or $bootPw -eq "adminadmin") {
+  $bootPw = New-RandomSecret
+  Set-EnvValue -Key "BOOTSTRAP_ADMIN_PASSWORD" -Value $bootPw
+  Write-Host "Generated BOOTSTRAP_ADMIN_PASSWORD for local dev (.env)." -ForegroundColor Green
+}
+
+$grafanaPw = Get-EnvValue "GRAFANA_ADMIN_PASSWORD"
+if (-not $grafanaPw -or $grafanaPw -eq "adminadmin") {
+  Set-EnvValue -Key "GRAFANA_ADMIN_PASSWORD" -Value (New-RandomSecret)
+}
+
+$keycloakPw = Get-EnvValue "KEYCLOAK_ADMIN_PASSWORD"
+if (-not $keycloakPw -or $keycloakPw -eq "adminadmin") {
+  Set-EnvValue -Key "KEYCLOAK_ADMIN_PASSWORD" -Value (New-RandomSecret)
+}
+
+$grafanaAnon = Get-EnvValue "GRAFANA_ANON_ENABLED"
+if (-not $grafanaAnon -or $grafanaAnon -eq "true") {
+  Set-EnvValue -Key "GRAFANA_ANON_ENABLED" -Value "false"
 }
 
 Write-Host "Stopping old containers (if any) ..." -ForegroundColor Cyan
@@ -94,7 +119,7 @@ try {
 
 Write-Host "Open UI: http://localhost:3000" -ForegroundColor Green
 Write-Host "Open API Docs: http://localhost:8000/docs" -ForegroundColor Green
-Write-Host "Login (dev): admin@coffeestudio.com / adminadmin" -ForegroundColor Green
+Write-Host ("Login (dev): admin@coffeestudio.com / {0}" -f $bootPw) -ForegroundColor Green
 
 
 Write-Host "MAX stack: run .\scripts\win\03_max_stack_up.ps1" -ForegroundColor Yellow

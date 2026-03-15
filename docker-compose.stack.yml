@@ -137,9 +137,9 @@ services:
     restart: unless-stopped
     profiles: ["stack"]
     environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=${GRAFANA_ANON_ENABLED:-true}
+      - GF_AUTH_ANONYMOUS_ENABLED=${GRAFANA_ANON_ENABLED:-false}
       - GF_AUTH_ANONYMOUS_ORG_ROLE=${GRAFANA_ANON_ROLE:-Viewer}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-adminadmin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./infra/observability/config/grafana_datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
@@ -195,7 +195,7 @@ services:
       - MB_DB_DBNAME=coffeestudio
       - MB_DB_PORT=5432
       - MB_DB_USER=coffeestudio
-      - MB_DB_PASS=coffeestudio
+      - MB_DB_PASS=${POSTGRES_PASSWORD:-coffeestudio}
       - MB_DB_HOST=postgres
     depends_on:
       - postgres
@@ -212,7 +212,7 @@ services:
     command: ["start-dev", "--http-enabled=true", "--hostname=auth.localhost"]
     environment:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-adminadmin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD must be set}
     labels:
       - traefik.enable=true
       - traefik.http.routers.keycloak.rule=Host(`auth.localhost`)
@@ -248,7 +248,7 @@ services:
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=coffeestudio
       - DB_POSTGRESDB_USER=coffeestudio
-      - DB_POSTGRESDB_PASSWORD=coffeestudio
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-coffeestudio}
     depends_on:
       - postgres
     volumes:
@@ -292,7 +292,7 @@ services:
     profiles: ["stack"]
     environment:
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-}
-      - DATABASE_URL=postgresql://coffeestudio:coffeestudio@postgres:5432/coffeestudio
+      - DATABASE_URL=postgresql://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio
       - STORE_MODEL_IN_DB=true
     command: ["--port", "4000", "--host", "0.0.0.0"]
     depends_on:
@@ -318,7 +318,7 @@ services:
     restart: unless-stopped
     profiles: ["stack"]
     environment:
-      - DATABASE_URL=postgresql://coffeestudio:coffeestudio@postgres:5432/coffeestudio
+      - DATABASE_URL=postgresql://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio
       - CLICKHOUSE_URL=http://clickhouse:8123
       - NEXTAUTH_URL=http://langfuse.localhost
       - NEXTAUTH_SECRET=${LANGFUSE_NEXTAUTH_SECRET:-}
@@ -371,7 +371,6 @@ volumes:
   ollama_data:
   openwebui_data:
   clickhouse_data:
-
 
 
 
