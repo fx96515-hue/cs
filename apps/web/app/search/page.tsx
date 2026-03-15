@@ -101,7 +101,7 @@ export default function SearchPage() {
   const showEmptyResults = searched && !loading && !error && !serviceHint && results.length === 0;
 
   return (
-    <div className="page">
+    <div className="content">
       <div className="pageHeader">
         <div>
           <div className="h1">Semantische Suche</div>

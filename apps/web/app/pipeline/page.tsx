@@ -155,7 +155,7 @@ export default function PipelinePage() {
   };
 
   return (
-    <>
+    <div className="content">
       {/* Page Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
@@ -356,6 +356,6 @@ export default function PipelinePage() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -323,7 +323,7 @@ export default function SchedulerPage() {
   }
 
   return (
-    <div className="page-container">
+    <div className="content">
       {/* Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
