@@ -26,5 +26,5 @@ def generate(
             counterpart_name=payload.counterpart_name,
             refine_with_llm=payload.refine_with_llm,
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request")

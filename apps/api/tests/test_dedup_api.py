@@ -41,6 +41,7 @@ def test_suggest_duplicates_invalid_entity_type(client, auth_headers, db):
     response = client.get("/dedup/suggest?entity_type=invalid", headers=auth_headers)
 
     assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid request"
 
 
 def test_suggest_duplicates_empty_database(client, auth_headers, db):

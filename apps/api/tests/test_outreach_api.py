@@ -77,6 +77,7 @@ def test_generate_outreach_entity_not_found(client, auth_headers, db):
     response = client.post("/outreach/generate", json=payload, headers=auth_headers)
 
     assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid request"
 
 
 def test_generate_outreach_viewer_can_access(client, viewer_auth_headers, db):

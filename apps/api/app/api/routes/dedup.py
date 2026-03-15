@@ -33,8 +33,8 @@ def suggest(
         return suggest_duplicates(
             db, entity_type=entity_type, threshold=threshold, limit_pairs=limit
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.post(
@@ -56,8 +56,8 @@ def merge(
             merge_id=payload.merge_id,
         )
         return result
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.get("/history", response_model=list[MergeHistoryOut])
