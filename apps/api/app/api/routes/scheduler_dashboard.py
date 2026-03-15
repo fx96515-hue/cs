@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Any
 
 from celery.result import AsyncResult
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 
 from app.api.deps import require_role
 from app.workers.celery_app import celery
@@ -121,10 +121,21 @@ def scheduler_summary(_: ViewerPermissionDep):
 
 
 @router.post("/jobs/{job_id}/run")
-def run_scheduler_job(job_id: str, _: AnalystPermissionDep):
+def run_scheduler_job(
+    job_id: Annotated[
+        str,
+        Path(
+            min_length=1,
+            max_length=64,
+            pattern=r"^[a-z0-9_:-]+$",
+            description="Scheduler job key from Celery beat schedule",
+        ),
+    ],
+    _: AnalystPermissionDep,
+):
     schedule = celery.conf.beat_schedule or {}
     if job_id not in schedule:
-        raise HTTPException(status_code=404, detail=f"Unknown scheduler job: {job_id}")
+        raise HTTPException(status_code=404, detail="Unknown scheduler job")
 
     entry = schedule[job_id]
     task = celery.send_task(
@@ -136,7 +147,18 @@ def run_scheduler_job(job_id: str, _: AnalystPermissionDep):
 
 
 @router.get("/tasks/{task_id}")
-def scheduler_task_status(task_id: str, _: ViewerPermissionDep):
+def scheduler_task_status(
+    task_id: Annotated[
+        str,
+        Path(
+            min_length=1,
+            max_length=128,
+            pattern=r"^[A-Za-z0-9._:-]+$",
+            description="Celery task id",
+        ),
+    ],
+    _: ViewerPermissionDep,
+):
     result = AsyncResult(task_id, app=celery)
     payload = None
     try:
