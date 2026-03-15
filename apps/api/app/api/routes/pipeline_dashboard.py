@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, TypedDict
 
 import redis
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -23,6 +23,15 @@ class PipelineSourceDef(TypedDict):
     breaker: str | None
     category: str
     item: str
+
+
+PIPELINE_TRIGGER_ALIASES: dict[str, str] = {
+    "fx rates": "market",
+    "coffee prices": "market",
+    "freight rates": "market",
+    "peru weather": "intelligence",
+    "market news": "intelligence",
+}
 
 
 def _redact_error_payload(payload: Any) -> Any:
@@ -205,22 +214,32 @@ def trigger_all_sources(
 
 @router.post("/trigger/{source_name}")
 def trigger_single_source(
-    source_name: str,
+    source_name: Annotated[
+        str,
+        Path(
+            min_length=1,
+            max_length=64,
+            pattern=r"^[a-zA-Z0-9 _-]+$",
+            description="Human-readable pipeline source label",
+        ),
+    ],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
-    normalized = source_name.strip().lower()
+    normalized = " ".join(source_name.strip().lower().split())
+    scope = PIPELINE_TRIGGER_ALIASES.get(normalized)
+
     redis_client = _get_redis()
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
-        if normalized in {"fx rates", "coffee prices", "freight rates"}:
+        if scope == "market":
             orchestrator.run_market_pipeline()
             return {
                 "status": "ok",
                 "scope": "market",
                 "message": "Market pipeline executed. See logs for diagnostics.",
             }
-        if normalized in {"peru weather", "market news"}:
+        if scope == "intelligence":
             orchestrator.run_intelligence_pipeline()
             return {
                 "status": "ok",
