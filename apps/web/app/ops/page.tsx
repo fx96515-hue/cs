@@ -448,24 +448,26 @@ function OpsPageContent() {
 
 export default function OpsPage() {
   return (
-    <Suspense
-      fallback={
-        <>
-          <header className="pageHeader">
-            <div className="pageHeaderContent">
-              <h1 className="h1">Betrieb</h1>
-              <p className="subtitle">Laedt...</p>
+    <div className="content">
+      <Suspense
+        fallback={
+          <>
+            <header className="pageHeader">
+              <div className="pageHeaderContent">
+                <h1 className="h1">Betrieb</h1>
+                <p className="subtitle">Laedt...</p>
+              </div>
+            </header>
+            <div className="panel">
+              <div className="panelBody">
+                <span className="muted">Parameter werden initialisiert...</span>
+              </div>
             </div>
-          </header>
-          <div className="panel">
-            <div className="panelBody">
-              <span className="muted">Parameter werden initialisiert...</span>
-            </div>
-          </div>
-        </>
-      }
-    >
-      <OpsPageContent />
-    </Suspense>
+          </>
+        }
+      >
+        <OpsPageContent />
+      </Suspense>
+    </div>
   );
 }

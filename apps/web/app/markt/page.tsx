@@ -169,7 +169,7 @@ export default function MarktPage() {
   };
 
   return (
-    <>
+    <div className="content">
       {/* Page Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
@@ -736,6 +736,6 @@ export default function MarktPage() {
           </section>
         </div>
       )}
-    </>
+    </div>
   );
 }
