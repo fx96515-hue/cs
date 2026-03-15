@@ -8,7 +8,7 @@ import inspect
 from typing import Annotated, Any
 from time import perf_counter
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 import redis
 from sqlalchemy.orm import Session
 
@@ -191,7 +191,15 @@ def trigger_intelligence_refresh(
 
 @router.post("/reset-circuit/{provider}")
 def reset_circuit_breaker(
-    provider: str,
+    provider: Annotated[
+        str,
+        Path(
+            min_length=1,
+            max_length=64,
+            pattern=r"^[a-z0-9_]+$",
+            description="Circuit breaker provider key (e.g. fx_rates, coffee_prices)",
+        ),
+    ],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -205,23 +213,21 @@ def reset_circuit_breaker(
     redis_client = _get_redis()
     try:
         orchestrator = DataPipelineOrchestrator(db, redis_client)
+        provider_key = provider.strip().lower()
 
-        if provider not in orchestrator.breakers:
-            return {
-                "error": f"Unknown provider: {provider}",
-                "available_providers": list(orchestrator.breakers.keys()),
-            }
+        if provider_key not in orchestrator.breakers:
+            raise HTTPException(status_code=404, detail="Unknown provider")
 
-        breaker = orchestrator.breakers[provider]
+        breaker = orchestrator.breakers[provider_key]
         old_status = breaker.get_status()
         breaker.reset()
         new_status = breaker.get_status()
 
         return {
-            "provider": provider,
+            "provider": provider_key,
             "old_state": old_status["state"],
             "new_state": new_status["state"],
-            "message": f"Circuit breaker for {provider} reset to closed state",
+            "message": f"Circuit breaker for {provider_key} reset to closed state",
         }
     finally:
         redis_client.close()
