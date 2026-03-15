@@ -17,16 +17,21 @@ out/
 dist/
 
 # Test artifacts
+tests/
+playwright.config.ts
 playwright-report/
 test-results/
 coverage/
 
 # Logs and misc local files
+logs/
 *.log
+*.md
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+*.tsbuildinfo
 
 # Docker/compose files not needed in app build context
 docker-compose*.yml

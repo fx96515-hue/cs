@@ -21,6 +21,10 @@ venv/
 tests/
 docs/
 scripts/
+.qa_reports/
+*.md
+requirements-dev.txt
+conftest_coverage.py
 
 # Local runtime artifacts
 *.db
