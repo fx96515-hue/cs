@@ -158,6 +158,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: multiple graph endpoints returned raw `ValueError` text in 404 responses.
 - Action: standardized not-found details to generic `Not found` across graph analysis/path/connections endpoints and hardened API expectation tests.
 
+25. Dedup/outreach endpoints exposed raw service validation text on 400
+- Status: FIXED
+- Issue: `dedup` and `outreach` routes surfaced raw `ValueError` details to clients.
+- Action: standardized both routes to stable `Invalid request` responses and added regression assertions for the API error contract.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -236,6 +241,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
 - `dbe5e19` `harden(api): sanitize knowledge-graph not-found error details`
+- `17d37a6` `docs(audit): record knowledge-graph error-contract hardening`
+- `212b7a8` `harden(api): standardize dedup and outreach bad-request details`
 
 ## Next Execution Slice
 
