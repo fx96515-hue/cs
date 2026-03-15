@@ -11,12 +11,14 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`691 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`693 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
 - `apps/web`: `npx tsc --noEmit`: PASS
 - `apps/web`: `npm run build`: PASS
+- `apps/web`: `npm audit --omit=dev --audit-level=high`: PASS (`0 vulnerabilities`)
+- `apps/api`: `python -m pip check`: PASS
 - `docker compose up -d --build`: PASS
 - `powershell -File scripts/win/smoke.ps1`: PASS
 
@@ -173,6 +175,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: per-app Docker contexts included test/docs/log artifacts not required for runtime image builds.
 - Action: tightened `apps/api/.dockerignore` and `apps/web/.dockerignore` to exclude tests, local logs, docs, and auxiliary dev files; verified compose configuration remains valid.
 
+28. ML data import endpoints leaked internal exception text on failure
+- Status: FIXED
+- Issue: `/ml/data/import-freight` and `/ml/data/import-prices` returned raw exception details in 400 responses.
+- Action: standardized both endpoints to generic `Import failed` and added regression tests that assert sanitized error contracts.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -257,6 +264,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `a1d747a` `improve(frontend): unify page-header structure across analytics pages`
 - `6bcddda` `docs(audit): log frontend header consistency slice`
 - `a367a25` `chore(docker): tighten app build contexts via dockerignore`
+- `4a72714` `docs(audit): record docker context cleanup slice`
+- `6ab7299` `harden(api): sanitize ml import failure error details`
 
 ## Next Execution Slice
 
