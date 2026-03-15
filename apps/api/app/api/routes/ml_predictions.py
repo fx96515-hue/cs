@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 
@@ -80,9 +80,9 @@ async def predict_freight_batch(
                 departure_date=item.departure_date,
             )
             results.append(result)  # type: ignore[arg-type]
-        except Exception as exc:
+        except Exception:
             results.append(None)
-            errors.append({"index": idx, "error": str(exc)})
+            errors.append({"index": idx, "error": "Prediction failed"})
 
     return BatchFreightPredictionResponse(results=results, errors=errors)
 
@@ -119,7 +119,7 @@ async def get_freight_cost_trend(
     route: str,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    months_back: int = 12,
+    months_back: int = Query(12, ge=1, le=120),
 ):
     """Get historical freight cost trend for a route."""
     service = FreightPredictionService(db)
@@ -174,9 +174,9 @@ async def predict_coffee_price_batch(
                 forecast_date=item.forecast_date,
             )
             results.append(result)  # type: ignore[arg-type]
-        except Exception as exc:
+        except Exception:
             results.append(None)
-            errors.append({"index": idx, "error": str(exc)})
+            errors.append({"index": idx, "error": "Prediction failed"})
 
     return BatchCoffeePricePredictionResponse(results=results, errors=errors)
 
@@ -225,8 +225,8 @@ async def calculate_optimal_purchase_timing(
 
 @router.get("/tasks/{task_id}", response_model=AsyncTaskStatus)
 async def ml_task_status(
-    task_id: str,
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+    task_id: str = Path(min_length=8, max_length=100, pattern=r"^[A-Za-z0-9._:-]+$"),
 ):
     """Check async ML task status."""
     res = AsyncResult(task_id, app=celery)

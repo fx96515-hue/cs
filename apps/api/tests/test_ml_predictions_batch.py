@@ -112,3 +112,77 @@ def test_import_price_data_error_is_sanitized(client, auth_headers, monkeypatch)
     response = client.post("/ml/data/import-prices", json=payload, headers=auth_headers)
     assert response.status_code == 400
     assert response.json()["detail"] == "Import failed"
+
+
+def test_batch_freight_prediction_error_is_sanitized(client, auth_headers, monkeypatch):
+    async def _raise_prediction_error(*args, **kwargs):
+        raise RuntimeError("internal model traceback")
+
+    monkeypatch.setattr(
+        "app.services.ml.freight_prediction.FreightPredictionService.predict_freight_cost",
+        _raise_prediction_error,
+    )
+
+    payload = {
+        "requests": [
+            {
+                "origin_port": "Callao",
+                "destination_port": "Hamburg",
+                "weight_kg": 20000,
+                "container_type": "40ft",
+                "departure_date": date.today().isoformat(),
+            }
+        ]
+    }
+    response = client.post(
+        "/ml/predict-freight/batch", json=payload, headers=auth_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["results"] == [None]
+    assert data["errors"][0]["error"] == "Prediction failed"
+
+
+def test_batch_coffee_prediction_error_is_sanitized(client, auth_headers, monkeypatch):
+    async def _raise_prediction_error(*args, **kwargs):
+        raise RuntimeError("internal model traceback")
+
+    monkeypatch.setattr(
+        "app.services.ml.price_prediction.CoffeePricePredictionService.predict_coffee_price",
+        _raise_prediction_error,
+    )
+
+    payload = {
+        "requests": [
+            {
+                "origin_country": "Peru",
+                "origin_region": "Cajamarca",
+                "variety": "Caturra",
+                "process_method": "washed",
+                "quality_grade": "specialty",
+                "cupping_score": 86.0,
+                "certifications": ["Organic"],
+                "forecast_date": date.today().isoformat(),
+            }
+        ]
+    }
+    response = client.post(
+        "/ml/predict-coffee-price/batch", json=payload, headers=auth_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["results"] == [None]
+    assert data["errors"][0]["error"] == "Prediction failed"
+
+
+def test_ml_task_status_rejects_invalid_task_id(client, auth_headers):
+    response = client.get("/ml/tasks/abc", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_freight_cost_trend_rejects_invalid_months_back(client, auth_headers):
+    response = client.get(
+        "/ml/freight-cost-trend?route=Callao-Hamburg&months_back=0",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
