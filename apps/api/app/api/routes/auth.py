@@ -7,6 +7,7 @@ from email_validator import EmailNotValidError, validate_email
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -60,20 +61,21 @@ def login(
     payload: LoginRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
-    user = db.query(User).filter(User.email == payload.email).first()
+    email = str(payload.email).strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == email).first()
 
     if not user or not verify_password(payload.password, user.password_hash):
         ip_address = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
         logger.warning(
             "auth.login_failed",
-            email=payload.email,
+            email=email,
             ip=ip_address,
             user_agent=user_agent,
         )
 
         AuditLogger.log_auth_event(
-            email=payload.email,
+            email=email,
             event_type="login_failed",
             ip_address=ip_address,
             user_agent=user_agent,
@@ -189,14 +191,18 @@ def dev_bootstrap(
         ) from e
 
     try:
-        validate_email(settings.BOOTSTRAP_ADMIN_EMAIL, check_deliverability=False)
+        bootstrap_email = (
+            validate_email(
+                settings.BOOTSTRAP_ADMIN_EMAIL, check_deliverability=False
+            ).normalized.lower()
+        )
     except EmailNotValidError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid BOOTSTRAP_ADMIN_EMAIL: {e}",
         ) from e
 
-    admin = db.query(User).filter(User.email == settings.BOOTSTRAP_ADMIN_EMAIL).first()
+    admin = db.query(User).filter(func.lower(User.email) == bootstrap_email).first()
     if admin:
         admin.password_hash = hash_password(settings.BOOTSTRAP_ADMIN_PASSWORD)
         admin.is_active = True
@@ -205,7 +211,7 @@ def dev_bootstrap(
         return {"status": "updated", "email": admin.email}
 
     admin = User(
-        email=settings.BOOTSTRAP_ADMIN_EMAIL,
+        email=bootstrap_email,
         password_hash=hash_password(settings.BOOTSTRAP_ADMIN_PASSWORD),
         role="admin",
         is_active=True,
