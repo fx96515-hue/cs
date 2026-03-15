@@ -128,6 +128,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: campaign input and status/suggestions endpoints lacked strict bounds on names, scores, ids, and limits.
 - Action: tightened schema/path/query validation (`name`, score ranges, `entity_id >= 1`, bounded `limit`) and added API regression tests.
 
+21. Peru sourcing endpoints returned detailed not-found messages
+- Status: FIXED
+- Issue: some peru sourcing 404 responses echoed user-provided identifiers.
+- Action: standardized not-found details to generic `Not found` for safer and more consistent error contracts.
+
 13. Core entity routes accepted non-positive path IDs
 - Status: FIXED
 - Issue: several cooperative/roaster/report/peru routes accepted unbounded integer IDs in path parameters.
@@ -206,6 +211,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `86ccfd6` `harden(api): constrain feature template path input and sanitize 404 detail`
 - `a23e733` `docs(audit): record discovery/features hardening progress and latest test baseline`
 - `689ce9a` `harden(api): tighten auto-outreach request and path/query validation`
+- `f477447` `docs(audit): capture auto-outreach validation hardening and latest baseline`
+- `b932f06` `harden(api): sanitize peru sourcing not-found error details`
 - `eba7a00` `docs(audit): capture muted-token compatibility hardening`
 - `a8a4949` `harden(api): enforce positive path ids across core entity routes`
 - `a78d3cf` `harden(api): enforce strict outreach request schema validation`
