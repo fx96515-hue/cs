@@ -29,6 +29,14 @@ logger = structlog.get_logger(__name__)
 
 limiter = Limiter(key_func=get_remote_address)
 INVALID_CREDENTIALS_DETAIL = "Invalid credentials"
+LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost", "testclient"}
+
+
+def _is_loopback_request(request: Request) -> bool:
+    if request.client is None:
+        return False
+    host = (request.client.host or "").strip().lower()
+    return host in LOOPBACK_HOSTS
 
 
 def _set_auth_cookie(response: Response, token: str) -> None:
@@ -174,6 +182,12 @@ def dev_bootstrap(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Not found",
+        )
+
+    if not _is_loopback_request(request):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden",
         )
 
     if not settings.BOOTSTRAP_ADMIN_PASSWORD:
