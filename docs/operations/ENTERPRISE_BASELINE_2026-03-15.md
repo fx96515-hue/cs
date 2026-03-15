@@ -83,6 +83,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: source schema accepted unconstrained `kind` values and out-of-range reliability scores.
 - Action: constrained/normalized allowed source kinds, bounded reliability to `0..1`, and enforced `source_id >= 1` at route boundaries.
 
+12. Legacy UI token usage (`var(--muted)`) had no guaranteed root definition
+- Status: FIXED
+- Issue: several pages/components still referenced `--muted` despite primary token migration to `--color-text-muted`.
+- Action: added `--muted` alias in global design tokens for backward-compatible consistency.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -137,6 +142,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `c6a9ed8` `improve(data): resolve freshness source names and cover with tests`
 - `2eeeb2c` `docs(audit): capture freshness source metadata improvement`
 - `07b759e` `harden(api): tighten source schema and route id validation`
+- `2c9ad75` `docs(audit): record source schema and route-boundary hardening`
+- `f561a23` `improve(ui): add muted token alias for legacy component consistency`
 - `cfef249` `docs(audit): capture pipeline trigger validation hardening`
 - `c2b6c18` `chore(docker): exclude local QA and diagnostics artifacts from build context`
 
