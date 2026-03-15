@@ -6,7 +6,7 @@ from io import StringIO
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Path as PathParam, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -349,7 +349,15 @@ async def features_bulk_import(
 
 @router.get("/import-template/{data_type}")
 def features_import_template(
-    data_type: str,
+    data_type: Annotated[
+        str,
+        PathParam(
+            min_length=1,
+            max_length=16,
+            pattern=r"^[a-z]+$",
+            description="Template type (price|freight|weather)",
+        ),
+    ],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     templates: dict[str, dict[str, Any]] = {
@@ -402,5 +410,5 @@ def features_import_template(
         },
     }
     if data_type not in templates:
-        raise HTTPException(status_code=404, detail=f"Unknown template: {data_type}")
+        raise HTTPException(status_code=404, detail="Not found")
     return {"dataType": data_type, **templates[data_type]}
