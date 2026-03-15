@@ -133,8 +133,8 @@ export default function RoasterDetailPage() {
 
   if (err) {
     return (
-      <div className="page">
-                <div className="alert bad"><div className="alertText">{err}</div></div>
+      <div className="content">
+        <div className="alert bad"><div className="alertText">{err}</div></div>
         <Link className="btn" href="/roasters">
           Zurueck
         </Link>
@@ -144,7 +144,7 @@ export default function RoasterDetailPage() {
 
   if (!r) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="panel">Lade...</div>
       </div>
     );
@@ -157,7 +157,7 @@ export default function RoasterDetailPage() {
     : null;
 
   return (
-    <div className="page">
+    <div className="content">
       <Breadcrumb items={[
         { label: "Startseite", href: "/dashboard" },
         { label: "Röstereien", href: "/roasters" },
@@ -187,7 +187,7 @@ export default function RoasterDetailPage() {
         </div>
       </div>
 
-          {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
+      {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
 
       {r?.deleted_at ? (
         <div className="alert bad">

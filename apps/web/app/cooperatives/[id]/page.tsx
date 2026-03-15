@@ -199,14 +199,14 @@ export default function CooperativeDetailsPage() {
 
   if (!data && !err) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="panel">Lade...</div>
       </div>
     );
   }
 
   return (
-    <div className="page">
+    <div className="content">
       <Breadcrumb items={[
         { label: "Startseite", href: "/dashboard" },
         { label: "Kooperativen", href: "/cooperatives" },
@@ -243,7 +243,7 @@ export default function CooperativeDetailsPage() {
         </div>
       </div>
 
-      {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
+      {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
       {err ? <div className="alert bad"><div className="alertText">{err}</div></div> : null}
 
       {data?.deleted_at ? (
