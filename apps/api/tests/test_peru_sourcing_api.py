@@ -67,14 +67,7 @@ def test_get_region_intelligence_not_found(client, auth_headers, db):
         "/peru/regions/NonExistent/intelligence", headers=auth_headers
     )
     assert response.status_code == 404
-    # Check if response is JSON and has detail field
-    try:
-        data = response.json()
-        if "detail" in data:
-            assert "not found" in data["detail"].lower()
-    except Exception:
-        # Response might not be JSON, just check status code
-        pass
+    assert response.json()["detail"] == "Not found"
 
 
 def test_get_region_intelligence_alias_name(client, auth_headers, db):

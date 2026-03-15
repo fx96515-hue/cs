@@ -78,7 +78,7 @@ def get_region_intelligence(
     if not intelligence:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Region '{region_name}' not found",
+            detail="Not found",
         )
 
     return intelligence
@@ -110,8 +110,8 @@ def get_cooperative_sourcing_analysis(
     try:
         analysis = analyzer.analyze_for_sourcing(coop_id, force_refresh=False)
         return analysis
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
 
 
 @router.post("/cooperatives/{coop_id}/analyze", response_model=SourcingAnalysisResponse)
@@ -144,8 +144,8 @@ def analyze_cooperative_for_sourcing(
     try:
         analysis = analyzer.analyze_for_sourcing(coop_id, force_refresh=force_refresh)
         return analysis
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
 
 
 @router.post("/regions/refresh")
