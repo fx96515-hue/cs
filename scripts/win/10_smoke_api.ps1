@@ -5,28 +5,34 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# Credentials aus Umgebungsvariablen lesen
-$Email = $env:SMOKE_TEST_EMAIL
-$Password = $env:SMOKE_TEST_PASSWORD
-
-if (-not $Email -or -not $Password) {
-  # Fallback auf Standardwerte für lokale Entwicklung
-  Write-Warning "SMOKE_TEST_EMAIL und SMOKE_TEST_PASSWORD nicht gesetzt. Verwende Standard-Credentials für lokale Entwicklung."
-  $Email = "admin@coffeestudio.com"
-  $Password = "adminadmin"
+function Get-DotEnvValue {
+  param([Parameter(Mandatory=$true)][string]$Key)
+  $repoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
+  $envPath = Join-Path $repoRoot ".env"
+  if (-not (Test-Path $envPath)) { return $null }
+  $line = Get-Content $envPath | Where-Object { $_ -match "^$([regex]::Escape($Key))=" } | Select-Object -First 1
+  if (-not $line) { return $null }
+  return ($line -split "=", 2)[1]
 }
 
-# Avoid proxy surprises for localhost domains
-$env:NO_PROXY="localhost,127.0.0.1,::1,.localhost,api.localhost,ui.localhost"
-$env:HTTP_PROXY=""
-$env:HTTPS_PROXY=""
+$Email = if ($env:SMOKE_TEST_EMAIL) { $env:SMOKE_TEST_EMAIL } else { Get-DotEnvValue "BOOTSTRAP_ADMIN_EMAIL" }
+$Password = if ($env:SMOKE_TEST_PASSWORD) { $env:SMOKE_TEST_PASSWORD } else { Get-DotEnvValue "BOOTSTRAP_ADMIN_PASSWORD" }
+
+if (-not $Email -or -not $Password) {
+  throw "SMOKE_TEST_EMAIL/SMOKE_TEST_PASSWORD oder BOOTSTRAP_ADMIN_EMAIL/BOOTSTRAP_ADMIN_PASSWORD in .env fehlen."
+}
+
+$env:NO_PROXY = "localhost,127.0.0.1,::1,.localhost,api.localhost,ui.localhost"
+$env:HTTP_PROXY = ""
+$env:HTTPS_PROXY = ""
 
 function CurlRaw {
   param(
     [Parameter(Mandatory=$true)][ValidateSet("GET","POST","PUT","PATCH","DELETE")] [string]$Method,
     [Parameter(Mandatory=$true)][string]$Url,
     [Parameter(Mandatory=$false)][string]$JsonBody = $null,
-    [Parameter(Mandatory=$false)][hashtable]$Headers = @{}
+    [Parameter(Mandatory=$false)][hashtable]$Headers = @{},
+    [switch]$QuietErrors
   )
 
   $args = @("-sS", "-4", "--noproxy", "*", "-X", $Method, $Url, "-H", "Accept: application/json")
@@ -37,9 +43,15 @@ function CurlRaw {
 
   if ($null -ne $JsonBody -and $Method -ne "GET") {
     $args += @("-H", "Content-Type: application/json", "--data-binary", "@-")
+    if ($QuietErrors) {
+      return ($JsonBody | & curl.exe @args 2>$null)
+    }
     return ($JsonBody | & curl.exe @args)
   }
 
+  if ($QuietErrors) {
+    return (& curl.exe @args 2>$null)
+  }
   return (& curl.exe @args)
 }
 
@@ -61,12 +73,13 @@ function JsonPost {
 function TryHealth {
   param([string]$B)
   try {
-    $h = JsonGet ("{0}/health" -f $B)
+    $raw = CurlRaw -Method "GET" -Url ("{0}/health" -f $B) -QuietErrors
+    if ([string]::IsNullOrWhiteSpace($raw)) { return $false }
+    $h = $raw | ConvertFrom-Json
     return ($h -and $h.status -eq "ok")
   } catch { return $false }
 }
 
-# Base fallback
 if (-not (TryHealth $Base)) {
   $fallback = "http://127.0.0.1:8000"
   Write-Host ("Base failed, fallback to {0}" -f $fallback)
