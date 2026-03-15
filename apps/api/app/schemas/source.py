@@ -3,6 +3,8 @@ from typing import Optional
 
 from app.core.validation import validate_text_field, validate_url_field
 
+ALLOWED_SOURCE_KINDS = {"web", "api", "internal", "manual"}
+
 
 class SourceCreate(BaseModel):
     name: str
@@ -25,6 +27,26 @@ class SourceCreate(BaseModel):
     @classmethod
     def validate_notes(cls, v: Optional[str]) -> Optional[str]:
         return validate_text_field(v, field_name="Notizen")
+
+    @field_validator("kind")
+    @classmethod
+    def validate_kind(cls, v: str) -> str:
+        normalized = validate_text_field(v, field_name="Typ", required=True)
+        kind = normalized.lower()
+        if kind not in ALLOWED_SOURCE_KINDS:
+            raise ValueError(
+                "Typ muss einer der folgenden Werte sein: web, api, internal, manual"
+            )
+        return kind
+
+    @field_validator("reliability")
+    @classmethod
+    def validate_reliability(cls, v: Optional[float]) -> Optional[float]:
+        if v is None:
+            return None
+        if v < 0 or v > 1:
+            raise ValueError("Reliability muss zwischen 0 und 1 liegen")
+        return v
 
 
 class SourceUpdate(BaseModel):
@@ -50,6 +72,28 @@ class SourceUpdate(BaseModel):
     @classmethod
     def validate_notes(cls, v: Optional[str]) -> Optional[str]:
         return validate_text_field(v, field_name="Notizen")
+
+    @field_validator("kind")
+    @classmethod
+    def validate_kind(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        normalized = validate_text_field(v, field_name="Typ", required=True)
+        kind = normalized.lower()
+        if kind not in ALLOWED_SOURCE_KINDS:
+            raise ValueError(
+                "Typ muss einer der folgenden Werte sein: web, api, internal, manual"
+            )
+        return kind
+
+    @field_validator("reliability")
+    @classmethod
+    def validate_reliability(cls, v: Optional[float]) -> Optional[float]:
+        if v is None:
+            return None
+        if v < 0 or v > 1:
+            raise ValueError("Reliability muss zwischen 0 und 1 liegen")
+        return v
 
 
 class SourceOut(BaseModel):

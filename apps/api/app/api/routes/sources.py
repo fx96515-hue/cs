@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -58,7 +60,7 @@ def create_source(
 
 @router.get("/{source_id}", response_model=SourceOut)
 def get_source(
-    source_id: int,
+    source_id: Annotated[int, Path(ge=1)],
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
 ):
@@ -70,7 +72,7 @@ def get_source(
 
 @router.patch("/{source_id}", response_model=SourceOut)
 def update_source(
-    source_id: int,
+    source_id: Annotated[int, Path(ge=1)],
     payload: SourceUpdate,
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin", "analyst")),
@@ -102,7 +104,7 @@ def update_source(
 
 @router.delete("/{source_id}")
 def delete_source(
-    source_id: int,
+    source_id: Annotated[int, Path(ge=1)],
     db: Session = Depends(get_db),
     user: User = Depends(require_role("admin")),
 ):
