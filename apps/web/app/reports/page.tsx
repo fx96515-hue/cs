@@ -49,12 +49,12 @@ export default function ReportsPage() {
 
   return (
     <div className="content">
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Berichte</div>
           <div className="muted">Generierte Tages-, Wochen- und Systemreports — neueste zuerst.</div>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <a
             className="btn"
             href="http://prom.localhost"
@@ -69,7 +69,7 @@ export default function ReportsPage() {
             Prometheus
           </a>
         </div>
-      </div>
+      </header>
 
       {err && <ErrorPanel message={err} onRetry={load} />}
 

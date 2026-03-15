@@ -102,19 +102,19 @@ export default function SearchPage() {
 
   return (
     <div className="content">
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Semantische Suche</div>
           <div className="muted">
             Durchsucht Kooperativen und Roestereien ueber die semantische Such-API.
           </div>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <Badge tone={isDemoMode() ? "warn" : "info"}>
             {isDemoMode() ? "Demo-Modus" : "Live API"}
           </Badge>
         </div>
-      </div>
+      </header>
 
       <div className="panel" style={{ marginBottom: "var(--space-5)" }}>
         <div className="panelHeader">
