@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`699 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`700 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -195,6 +195,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: several detail and intelligence pages still used legacy `div.pageHeader` structures.
 - Action: aligned `news`, `graph`, `cooperatives/[id]`, `roasters/[id]`, and `peru-sourcing/regions/[name]` to shared `header.pageHeader` semantics and header action containers.
 
+32. ML model detail routes accepted non-positive model IDs
+- Status: FIXED
+- Issue: ML model detail/retrain/feature-importance routes lacked explicit positive ID bounds.
+- Action: enforced `model_id >= 1` path validation and added regression tests for rejected zero IDs.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -287,6 +292,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `c4e297d` `harden(api): constrain ml task/trend params and sanitize batch errors`
 - `6447ce4` `docs(audit): capture ml boundary and batch-error hardening`
 - `d5c74db` `improve(frontend): align detail and intelligence pages to shared header pattern`
+- `6c2aae5` `docs(audit): record additional frontend header harmonization`
+- `18bde8f` `harden(api): enforce positive ml model ids on model routes`
 
 ## Next Execution Slice
 
