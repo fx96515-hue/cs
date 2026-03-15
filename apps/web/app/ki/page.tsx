@@ -27,6 +27,8 @@ const QUICK_ACTIONS = [
   { label: 'Marktanalyse', prompt: 'Analysiere die Markttrends der letzten 3 Monate mit Fokus auf Preise', color: '#7c3aed' },
 ]
 
+const DEMO_RESPONSE_DELAY_MS = 1000
+
 // Demo responses based on keywords
 const DEMO_RESPONSES: Record<string, { response: string; tools: string[] }> = {
   'kooperativen': {
@@ -210,6 +212,12 @@ export default function KIPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messageIdRef = useRef(0)
+
+  const nextMessageId = () => {
+    messageIdRef.current += 1
+    return messageIdRef.current.toString()
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -220,7 +228,7 @@ export default function KIPage() {
     if (!input.trim() || isLoading) return
     
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: nextMessageId(),
       role: 'user',
       content: input,
       timestamp: new Date()
@@ -234,10 +242,10 @@ export default function KIPage() {
     const demo = getDemoResponse(input)
     
     // Simulate typing delay
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200))
+    await new Promise(resolve => setTimeout(resolve, DEMO_RESPONSE_DELAY_MS))
 
     const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
+      id: nextMessageId(),
       role: 'assistant',
       content: demo.response,
       timestamp: new Date(),
@@ -253,7 +261,7 @@ export default function KIPage() {
     setInput(question)
     // Auto-submit
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: nextMessageId(),
       role: 'user',
       content: question,
       timestamp: new Date()
@@ -266,7 +274,7 @@ export default function KIPage() {
     
     setTimeout(() => {
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: nextMessageId(),
         role: 'assistant',
         content: demo.response,
         timestamp: new Date(),
@@ -275,7 +283,7 @@ export default function KIPage() {
       setMessages(prev => [...prev, assistantMessage])
       setIsLoading(false)
       setInput('')
-    }, 800 + Math.random() * 1200)
+    }, DEMO_RESPONSE_DELAY_MS)
   }
 
   const clearChat = () => {

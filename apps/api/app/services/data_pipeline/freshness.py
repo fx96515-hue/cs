@@ -121,7 +121,7 @@ class DataFreshnessMonitor:
             self.db.query(NewsItem).order_by(NewsItem.published_at.desc()).first()
         )
 
-        if latest_news:
+        if latest_news and latest_news.published_at is not None:
             published_at = latest_news.published_at
             if published_at.tzinfo is None:
                 published_at = published_at.replace(tzinfo=timezone.utc)

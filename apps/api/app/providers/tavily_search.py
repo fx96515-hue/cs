@@ -40,11 +40,12 @@ class TavilyClient:
             or getattr(settings, "TAVILY_API_KEY", None)
             or os.getenv("TAVILY_API_KEY")
         )
-        self.base_url = (
+        base_url_value = (
             base_url
             or os.getenv("TAVILY_BASE_URL")
             or getattr(settings, "TAVILY_BASE_URL", "https://api.tavily.com")
-        ).rstrip("/")
+        )
+        self.base_url = str(base_url_value).rstrip("/")
         self.timeout_s = timeout_s or int(
             os.getenv(
                 "TAVILY_TIMEOUT_SECONDS",
