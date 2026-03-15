@@ -16,7 +16,10 @@ router = APIRouter()
 
 @router.get("/", response_model=list[RegionOut])
 def list_regions(
-    country: str | None = None,
+    country: Annotated[
+        str | None,
+        Query(min_length=2, max_length=64, pattern=r"^[A-Za-z][A-Za-z\s-]*$"),
+    ] = None,
     limit: Annotated[int, Query(ge=1, le=2000)] = 500,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -24,7 +27,8 @@ def list_regions(
 ):
     q = db.query(Region)
     if country:
-        q = q.filter(Region.country == country)
+        normalized_country = " ".join(country.split())
+        q = q.filter(Region.country == normalized_country)
     if hasattr(Region, "deleted_at"):
         q = q.filter(Region.deleted_at.is_(None))
     return q.order_by(Region.country.asc(), Region.name.asc()).limit(limit).all()
