@@ -21,8 +21,8 @@ def generate(
             db,
             entity_type=payload.entity_type,
             entity_id=payload.entity_id,
-            language=payload.language,  # type: ignore[arg-type]
-            purpose=payload.purpose,  # type: ignore[arg-type]
+            language=payload.language,
+            purpose=payload.purpose,
             counterpart_name=payload.counterpart_name,
             refine_with_llm=payload.refine_with_llm,
         )

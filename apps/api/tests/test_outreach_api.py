@@ -61,7 +61,7 @@ def test_generate_outreach_invalid_entity_type(client, auth_headers, db):
 
     response = client.post("/outreach/generate", json=payload, headers=auth_headers)
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_generate_outreach_entity_not_found(client, auth_headers, db):
@@ -139,3 +139,27 @@ def test_generate_outreach_different_languages(client, auth_headers, db):
         assert response.status_code == 200
         data = response.json()
         assert data["language"] == lang
+
+
+def test_generate_outreach_rejects_non_positive_entity_id(client, auth_headers):
+    payload = {
+        "entity_type": "cooperative",
+        "entity_id": 0,
+        "language": "en",
+        "purpose": "sourcing_pitch",
+        "refine_with_llm": False,
+    }
+    response = client.post("/outreach/generate", json=payload, headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_generate_outreach_rejects_invalid_language(client, auth_headers):
+    payload = {
+        "entity_type": "cooperative",
+        "entity_id": 1,
+        "language": "fr",
+        "purpose": "sourcing_pitch",
+        "refine_with_llm": False,
+    }
+    response = client.post("/outreach/generate", json=payload, headers=auth_headers)
+    assert response.status_code == 422
