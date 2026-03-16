@@ -46,6 +46,9 @@ infra/env/enterprise.env
 backups/
 .patch_backups/
 *.bak_*
+*.bak
+*.old
+.worktrees/
 
 # --- Diagnostics & local dumps ---
 diagnostics/

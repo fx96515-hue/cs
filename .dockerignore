@@ -37,6 +37,9 @@ test-results/
 diagnostics/
 logs/
 *.bak_*
+*.bak
+*.old
+.worktrees/
 *.patch
 *.rej
 *.orig
