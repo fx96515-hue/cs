@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`725 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`726 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -240,6 +240,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: news refresh/list endpoints allowed weak topic length, non-ISO country variants, and non-positive item limits.
 - Action: constrained/normalized `topic`, `country` (ISO-2, uppercase), and `max_items` bounds; added API regression tests for invalid values.
 
+41. Semantic-search entity-type inputs were weakly constrained
+- Status: FIXED
+- Issue: semantic search query/path `entity_type` inputs accepted broad strings and relied on manual runtime checks.
+- Action: enforced strict literal values at API boundary (`all|cooperative|roaster` for search, `cooperative|roaster` for similar routes) and added regression tests.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -350,6 +355,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `d08d66d` `docs(audit): record shipment and enrich boundary hardening`
 - `8b1b505` `harden(api): validate deals status filter values`
 - `6d5dc4e` `harden(api): tighten news route input boundaries`
+- `1d71cf9` `harden(api): constrain semantic search entity-type inputs`
 
 ## Fortschrittsliste (Taskleiste)
 
