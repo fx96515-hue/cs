@@ -270,6 +270,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: quality-alert list/anomaly endpoints accepted unconstrained entity-type and severity filter values.
 - Action: enforced bounded entity-type pattern and severity literals (`info|warning|critical`) with regression tests for invalid filters.
 
+47. Report detail page still used legacy header-action and custom error alert pattern
+- Status: IMPROVED
+- Issue: report detail view used `pageActions` in header and ad-hoc inline error alert markup.
+- Action: aligned to shared `pageHeaderContent/pageHeaderActions` semantics and reused `ErrorPanel` for consistent error-state rendering.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -386,6 +391,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `96a20ca` `harden(api): constrain data-quality filter and path enums`
 - `b3392a1` `harden(api): constrain ml training model-type boundaries`
 - `fc9b5c0` `harden(api): validate quality-alert filter boundaries`
+- `ee1fda4` `improve(frontend): align report detail header and error panel patterns`
 
 ## Fortschrittsliste (Taskleiste)
 
