@@ -499,3 +499,5 @@ This baseline captures the current technical status before broader hardening/ref
 - 1e3118b refactor(reports): move reports module to domain structure with compatibility wrappers
 
 - f8baed8 refactor(outreach): migrate outreach module to domain structure with wrappers
+
+- b938a50 refactor(news): migrate news module to domain structure with wrappers
