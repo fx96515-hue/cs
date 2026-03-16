@@ -83,7 +83,7 @@ export default function SentimentPage() {
           <div className="panelTitle">Region</div>
         </div>
         <div className="panelBody">
-          <div className="pageActions" style={{ flexWrap: "wrap" }}>
+          <div className="pageHeaderActions" style={{ flexWrap: "wrap" }}>
             {REGIONS.map((r) => (
               <button
                 key={r}

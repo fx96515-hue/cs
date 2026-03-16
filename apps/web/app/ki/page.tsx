@@ -295,11 +295,11 @@ export default function KIPage() {
     <div className="content" style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <header className="pageHeader" style={{ flexShrink: 0 }}>
-        <div>
+        <div className="pageHeaderContent">
           <h1 className="h1">KI-Assistent</h1>
           <p className="muted">Intelligente Suche und Analyse fuer Kaffee-Sourcing</p>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <span className="badge badgeInfo" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ 
               width: 8, 
