@@ -86,7 +86,7 @@ def test_recompute_flags_success(client, auth_headers, db, monkeypatch):
         return {"resolved": 1, "created": 2}
 
     monkeypatch.setattr(
-        "app.api.routes.data_quality.recompute_entity_flags",
+        "app.domains.data_quality.api.routes.recompute_entity_flags",
         _fake_recompute,
     )
 
