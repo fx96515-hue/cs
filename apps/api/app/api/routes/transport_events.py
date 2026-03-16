@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -18,7 +18,7 @@ NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
 
 @router.get("/", response_model=list[TransportEventOut])
 def list_transport_events(
-    shipment_id: int | None = None,
+    shipment_id: Annotated[int | None, Query(ge=1)] = None,
     limit: Annotated[int, Query(ge=1, le=1000)] = 500,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -49,7 +49,7 @@ def create_transport_event(
     responses=NOT_FOUND_RESPONSE,
 )
 def get_transport_event(
-    event_id: int,
+    event_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
@@ -61,7 +61,7 @@ def get_transport_event(
 
 @router.delete("/{event_id}", responses=NOT_FOUND_RESPONSE)
 def delete_transport_event(
-    event_id: int,
+    event_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin"))],
 ):

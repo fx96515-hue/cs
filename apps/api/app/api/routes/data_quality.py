@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role, get_db
@@ -39,7 +39,7 @@ ENTITY_MODEL_MAP = {
 @router.get("/flags", response_model=list[DataQualityFlagOut])
 def list_flags(
     entity_type: str | None = None,
-    entity_id: int | None = None,
+    entity_id: Annotated[int | None, Query(ge=1)] = None,
     severity: str | None = None,
     include_resolved: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=1000)] = 200,
@@ -50,7 +50,7 @@ def list_flags(
     q = db.query(DataQualityFlag)
     if entity_type:
         q = q.filter(DataQualityFlag.entity_type == entity_type)
-    if entity_id:
+    if entity_id is not None:
         q = q.filter(DataQualityFlag.entity_id == entity_id)
     if severity:
         q = q.filter(DataQualityFlag.severity == severity)
@@ -65,7 +65,7 @@ def list_flags(
     responses=RESOLVE_FLAG_RESPONSES,
 )
 def resolve_flag(
-    flag_id: int,
+    flag_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
@@ -82,7 +82,7 @@ def resolve_flag(
 @router.post("/recompute/{entity_type}/{entity_id}", responses=RECOMPUTE_RESPONSES)
 def recompute_flags(
     entity_type: str,
-    entity_id: int,
+    entity_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):

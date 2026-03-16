@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -18,9 +18,9 @@ NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
 
 @router.get("/", response_model=list[PriceQuoteOut])
 def list_price_quotes(
-    lot_id: int | None = None,
-    deal_id: int | None = None,
-    source_id: int | None = None,
+    lot_id: Annotated[int | None, Query(ge=1)] = None,
+    deal_id: Annotated[int | None, Query(ge=1)] = None,
+    source_id: Annotated[int | None, Query(ge=1)] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -55,7 +55,7 @@ def create_price_quote(
     responses=NOT_FOUND_RESPONSE,
 )
 def get_price_quote(
-    quote_id: int,
+    quote_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
 ):
@@ -71,7 +71,7 @@ def get_price_quote(
     responses=NOT_FOUND_RESPONSE,
 )
 def update_price_quote(
-    quote_id: int,
+    quote_id: Annotated[int, Path(ge=1)],
     payload: PriceQuoteUpdate,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
@@ -88,7 +88,7 @@ def update_price_quote(
 
 @router.delete("/{quote_id}", responses=NOT_FOUND_RESPONSE)
 def delete_price_quote(
-    quote_id: int,
+    quote_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin"))],
 ):

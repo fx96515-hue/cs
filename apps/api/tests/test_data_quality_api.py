@@ -112,3 +112,19 @@ def test_recompute_flags_entity_not_found(client, auth_headers):
     assert response.status_code == 404
     assert response.json()["detail"] == "Not found"
 
+
+def test_data_quality_rejects_non_positive_flag_and_entity_ids(client, auth_headers):
+    resolve_response = client.post("/data-quality/flags/0/resolve", headers=auth_headers)
+    assert resolve_response.status_code == 422
+
+    recompute_response = client.post(
+        "/data-quality/recompute/cooperative/0",
+        headers=auth_headers,
+    )
+    assert recompute_response.status_code == 422
+
+
+def test_data_quality_rejects_non_positive_entity_filter(client, auth_headers):
+    response = client.get("/data-quality/flags?entity_id=0", headers=auth_headers)
+    assert response.status_code == 422
+
