@@ -1,6 +1,6 @@
 """Quality alerts API routes."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
@@ -19,6 +19,8 @@ from app.services import quality_alerts
 
 router = APIRouter()
 anomalies_router = APIRouter()
+ENTITY_TYPE_PATTERN = r"^[a-z][a-z0-9_]{1,31}$"
+AlertSeverity = Literal["info", "warning", "critical"]
 
 
 def _require_anomaly_detection_enabled() -> None:
@@ -32,8 +34,8 @@ def _require_anomaly_detection_enabled() -> None:
 
 @router.get("", response_model=list[QualityAlertOut])
 def list_alerts(
-    entity_type: str | None = None,
-    severity: str | None = None,
+    entity_type: Annotated[str | None, Query(pattern=ENTITY_TYPE_PATTERN)] = None,
+    severity: AlertSeverity | None = None,
     acknowledged: bool | None = None,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -95,8 +97,8 @@ def check_now(
 
 @anomalies_router.get("", response_model=list[QualityAlertOut])
 def list_anomalies(
-    entity_type: str | None = None,
-    severity: str | None = None,
+    entity_type: Annotated[str | None, Query(pattern=ENTITY_TYPE_PATTERN)] = None,
+    severity: AlertSeverity | None = None,
     acknowledged: bool | None = None,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
