@@ -13,24 +13,24 @@ DEFAULT_DOCS: list[dict[str, Any]] = [
     {
         "category": "logistics",
         "key": "import_workflow_raw_coffee_de",
-        "title": "Import-Workflow Rohkaffee (DE) Ã¢â‚¬â€ Checkliste",
+        "title": "Import-Workflow Rohkaffee (DE) - Checkliste",
         "language": "de",
         "content_md": (
             "**Hinweis**: Nur allgemeine Orientierung, keine Rechtsberatung.\\n\\n"
             "### Ziel\\n"
-            "Rohkaffee (grÃƒÂ¼n) aus Peru in DE importieren, anschlieÃƒÅ¸end Verkauf an RÃƒÂ¶stereien.\\n\\n"
+            "Rohkaffee (gruen) aus Peru in DE importieren, anschliessend Verkauf an Roestereien.\\n\\n"
             "### Minimaler Ablauf (high-level)\\n"
             "1. Lieferant verifizieren (Kooperative/Exporter, Dokumente, Referenzen)\\n"
-            "2. Spezifikationen (VarietÃƒÂ¤ten, Processing, Ernte, Feuchte, Screen, Defects, SCA Score)\\n"
-            "3. Muster: Cupping + QualitÃƒÂ¤tsfreigabe\\n"
+            "2. Spezifikationen (Varietaeten, Processing, Ernte, Feuchte, Screen, Defects, SCA Score)\\n"
+            "3. Muster: Cupping + Qualitaetsfreigabe\\n"
             "4. Vertrag/Incoterm (typisch FOB/CIF) + Payment Terms\\n"
             "5. Logistik buchen (Sea/Air), Versicherung, Inlandstrucking\\n"
             "6. Dokumente: Invoice, Packing List, Bill of Lading/AWB, ggf. Phytosanitary/COO\\n"
             "7. Zoll/Import in DE (Spediteur/Customs Broker) + Einfuhrumsatzsteuer\\n"
             "8. Ankunft/Quality Hold: Gewicht, Stichproben, Defect Check, Lagerung\\n"
-            "9. Vertrieb: Preisschema, Samples an RÃƒÂ¶ster, Kommunikation/CRM\\n\\n"
+            "9. Vertrieb: Preisschema, Samples an Roester, Kommunikation/CRM\\n\\n"
             "### CoffeeStudio Nutzung\\n"
-            "- Kooperative/RÃƒÂ¶ster: `status`, `next_action`, `evidence_count`\\n"
+            "- Kooperative/Roester: `status`, `next_action`, `evidence_count`\\n"
             "- Website/Deep Research: `/enrich/...` -> `web_extracts`\\n"
             "- News Radar: `/news/refresh`\\n"
             "- Landed Cost: `/logistics/landed-cost`\\n"

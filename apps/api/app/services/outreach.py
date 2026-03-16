@@ -27,13 +27,13 @@ def _template(
         if language == "de":
             return (
                 f"Hallo {counterpart or 'Team'},\n\n"
-                "ich baue gerade ein Direct-Trade-Sourcing fÃ¼r SpezialitÃ¤tenkaffee aus Peru auf. "
-                f"Ich bin auf {name} gestoÃŸen{f' ({website})' if website else ''}. "
-                "Ich wÃ¼rde gerne kurz verstehen, ob ihr grundsÃ¤tzlich offen fÃ¼r grÃ¼ne Rohkaffee-Angebote aus Peru seid "
-                "(Microlots/Koop-Lots) und wie euer Prozess fÃ¼r Samples/Preise aussieht.\n\n"
-                "Wenn das passt, schicke ich gerne ein kurzes Profil + erste Lot-Optionen (Region/VarietÃ¤t/Processing) "
+                "ich baue gerade ein Direct-Trade-Sourcing fuer Spezialitaetenkaffee aus Peru auf. "
+                f"Ich bin auf {name} gestossen{f' ({website})' if website else ''}. "
+                "Ich wuerde gerne kurz verstehen, ob ihr grundsaetzlich offen fuer gruene Rohkaffee-Angebote aus Peru seid "
+                "(Microlots/Koop-Lots) und wie euer Prozess fuer Samples/Preise aussieht.\n\n"
+                "Wenn das passt, schicke ich gerne ein kurzes Profil + erste Lot-Optionen (Region/Varietaet/Processing) "
                 "und wir stimmen MOQ/Incoterms ab.\n\n"
-                "Viele GrÃ¼ÃŸe\nCoffeeStudio"
+                "Viele Gruesse\nCoffeeStudio"
             )
         if language == "en":
             return (
@@ -47,10 +47,10 @@ def _template(
         # es
         return (
             f"Hola {counterpart or 'equipo'},\n\n"
-            "Estoy construyendo un flujo de abastecimiento direct-trade de cafÃ© de especialidad desde PerÃº. "
+            "Estoy construyendo un flujo de abastecimiento direct-trade de cafe de especialidad desde Peru. "
             f"He encontrado {name}{f' ({website})' if website else ''}. "
-            "Â¿EstÃ¡n abiertos a ofertas de cafÃ© verde de PerÃº y cuÃ¡l es su proceso para muestras y precios?\n\n"
-            "Si encaja, puedo enviar un perfil breve y algunas opciones de lotes (regiÃ³n/variedad/proceso) y acordar MOQ/Incoterms.\n\n"
+            "?Estan abiertos a ofertas de cafe verde de Peru y cual es su proceso para muestras y precios?\n\n"
+            "Si encaja, puedo enviar un perfil breve y algunas opciones de lotes (region/variedad/proceso) y acordar MOQ/Incoterms.\n\n"
             "Saludos\nCoffeeStudio"
         )
 
@@ -58,12 +58,12 @@ def _template(
     if language == "de":
         return (
             f"Hallo {counterpart or 'Team'},\n\n"
-            f"ich interessiere mich fÃ¼r eure Kaffees/Projekte in {region or 'Peru'}. "
-            "KÃ¶nntet ihr mir bitte sagen, ob Samples (Rohkaffee) mÃ¶glich sind und welche Bedingungen gelten "
+            f"ich interessiere mich fuer eure Kaffees/Projekte in {region or 'Peru'}. "
+            "Koenntet ihr mir bitte sagen, ob Samples (Rohkaffee) moeglich sind und welche Bedingungen gelten "
             "(MOQ, Incoterms, Erntefenster, Preisindikationen)?\n\n"
-            f"Kontext: CoffeeStudio â€“ lokales Sourcing/Intelligence-Tool. Website/Quelle: {website or '-'}\n"
+            f"Kontext: CoffeeStudio - lokales Sourcing/Intelligence-Tool. Website/Quelle: {website or '-'}\n"
             f"Kontakt-Hinweis: {contact_hint or '-'}\n\n"
-            "Danke & viele GrÃ¼ÃŸe\nCoffeeStudio"
+            "Danke & viele Gruesse\nCoffeeStudio"
         )
     if language == "en":
         return (
@@ -75,7 +75,7 @@ def _template(
         )
     return (
         f"Hola {counterpart or 'equipo'},\n\n"
-        "Â¿SerÃ­a posible recibir muestras de cafÃ© verde y conocer las condiciones "
+        "?Seria posible recibir muestras de cafe verde y conocer las condiciones "
         "(MOQ, Incoterms, ventana de cosecha, precios indicativos)?\n\n"
         f"Contexto: CoffeeStudio. Fuente: {website or '-'}\n\n"
         "Gracias y saludos\nCoffeeStudio"
@@ -113,8 +113,8 @@ def generate_outreach(
         try:
             system = (
                 "Du bist ein professioneller Sales/Partnership Writer. "
-                "Optimiere den folgenden Text fÃ¼r Klarheit, HÃ¶flichkeit und KÃ¼rze. "
-                "Bewahre Fakten, erfinde nichts. Gib NUR den fertigen Text zurÃ¼ck."
+                "Optimiere den folgenden Text fuer Klarheit, Hoeflichkeit und Kuerze. "
+                "Bewahre Fakten, erfinde nichts. Gib NUR den fertigen Text zurueck."
             )
             draft = client.chat_completions(
                 messages=[
