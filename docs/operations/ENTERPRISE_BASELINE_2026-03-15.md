@@ -466,15 +466,16 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Docker-Kontext und lokale Sicherheitsdefaults gehÃ¤rtet
 - [x] Verbleibende Backend-Routen auf letzte Boundary-LÃ¼cken geprÃ¼ft und geschlossen
 - [x] Frontend-Formular-/Tabellen-/State-Patterns weitergehend konsolidiert (laufend)
+- [x] Assistant-/Reports-/Outreach-/News-Module in domain-first Struktur migriert (mit Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
 
 ## Next Execution Slice
 
-1. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
-2. Finish repository cleanup and documentation hardening remaining slices.
-3. Keep baseline document synchronized after each incremental change.
+1. Continue domain-first modularization for remaining high-traffic API modules with compatibility wrappers.
+2. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
+3. Finish repository cleanup and documentation hardening remaining slices.
 
 
 ## Latest Slice (2026-03-16)
@@ -488,16 +489,24 @@ This baseline captures the current technical status before broader hardening/ref
 - 2c93557 improve(assistant): add auto provider selection and retire legacy /ki demo page (redirect)
 
 - ce181a2 refactor(assistant): establish domain-first module structure with compatibility wrappers
-- pending-commit docs(architecture): add STRUCTURE_BLUEPRINT for full project modularization roadmap
+- 0b9500f docs(architecture): add STRUCTURE_BLUEPRINT for full project modularization roadmap
 
 - dd54130 refactor(assistant): move llm provider stack into assistant domain
+- d0c1182 docs(audit): log assistant provider-domain migration slice
 
 - 1f821e6 chore(api): remove obsolete legacy route wrapper package
+- af9d482 docs(audit): record legacy api-route wrapper cleanup
 
 - 71a65d5 improve(frontend): replace legacy /ki links with canonical /assistant route
+- 188c96b docs(audit): log assistant route-link consistency cleanup
 
 - 1e3118b refactor(reports): move reports module to domain structure with compatibility wrappers
+- 4319481 docs(audit): record reports domain migration slice
 
 - f8baed8 refactor(outreach): migrate outreach module to domain structure with wrappers
+- c9d9420 docs(audit): log outreach domain migration slice
 
 - b938a50 refactor(news): migrate news module to domain structure with wrappers
+- 42d9f03 docs(audit): record news domain migration slice
+
+- pending-commit improve(frontend): remove redundant ErrorPanel component and keep shared AlertError alias as single source of truth
