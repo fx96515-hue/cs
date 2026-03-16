@@ -35,6 +35,7 @@ Runbooks, setup, release, and delivery guardrails.
 - `operations/backend-setup.md`
 - `operations/RELEASE_GATES.md`
 - `operations/STATUS.md`
+- `operations/RELEASE_READINESS_2026-03-16.md`
 
 ### Security
 

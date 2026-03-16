@@ -380,6 +380,21 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: app Docker contexts did not explicitly exclude nested Python caches and common Node package-manager cache noise.
 - Action: tightened `apps/api/.dockerignore` and `apps/web/.dockerignore` with recursive cache patterns and additional local artifact exclusions.
 
+69. Internal API router still used legacy route-wrapper imports in selected modules
+- Status: FIXED
+- Issue: central router still imported `discovery`, `health`, and `rag_analyst` through `app.api.routes` wrappers.
+- Action: switched router imports to canonical domain modules, leaving wrappers as compatibility-only surface.
+
+70. Domain ownership documentation was uneven across modules
+- Status: FIXED
+- Issue: many domains lacked local ownership docs (purpose, structure, boundaries, dependency rules).
+- Action: added `README.md` to all domain directories with standardized ownership and boundary guidance.
+
+71. Release-readiness artifact missing for current enterprise baseline tranche
+- Status: FIXED
+- Issue: no consolidated go/no-go report existed after latest domainization and hardening slices.
+- Action: added `docs/operations/RELEASE_READINESS_2026-03-16.md` with gate results, checklist, risks, and merge recommendation.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -552,7 +567,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Security-Haertung Runde 2: websocket-email lookup case-insensitive abgesichert
 - [x] Frontend-Konsistenz Runde 2: verbleibende pageActions-Nutzung auf pageHeaderActions vereinheitlicht
 - [x] Docker-/Local-Dev Runde 2: app-level .dockerignore weiter gehaertet
-- [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
+- [x] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abgeschlossen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
 
@@ -642,3 +657,5 @@ This baseline captures the current technical status before broader hardening/ref
 - 4414ba4 docs(audit): log semantic-search domain migration slice
 - a1316c9 refactor(routes): migrate remaining legacy api routes to domain structure
 - f1345e0 docs(audit): log complete legacy-route domain migration
+- 7f8cacb refactor(core): domainize core schemas and knowledge-graph service
+- 05d712f docs(audit): log schema/service domainization and round-2 hardening
