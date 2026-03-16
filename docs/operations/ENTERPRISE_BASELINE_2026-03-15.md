@@ -493,3 +493,5 @@ This baseline captures the current technical status before broader hardening/ref
 - dd54130 refactor(assistant): move llm provider stack into assistant domain
 
 - 1f821e6 chore(api): remove obsolete legacy route wrapper package
+
+- 71a65d5 improve(frontend): replace legacy /ki links with canonical /assistant route
