@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`704 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`706 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -205,6 +205,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: websocket auth could return different rejection reason strings (`Missing token`, role/account hints).
 - Action: standardized auth-related websocket close reasons to `Unauthorized` and added route-level regression tests for sanitized helper behavior.
 
+34. Lots endpoints accepted non-positive identifiers in path/query boundaries
+- Status: FIXED
+- Issue: lots detail/mutation routes and cooperative filter accepted non-positive IDs.
+- Action: enforced positive bounds (`Path(ge=1)`, `Query(ge=1)`) and added regression tests for rejected zero values.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -301,9 +306,12 @@ This baseline captures the current technical status before broader hardening/ref
 - `18bde8f` `harden(api): enforce positive ml model ids on model routes`
 - `cd884bc` `docs(audit): record ml model-id boundary hardening`
 - `f0fb942` `harden(api): sanitize market websocket auth rejection reasons`
+- `e9dcf6f` `docs(audit): capture websocket auth-contract hardening`
+- `0458b6e` `harden(api): enforce positive lot ids and cooperative filter bounds`
+- `e4ba9d0` `docs(dev): align local frontend setup to npm workflow`
 
 ## Next Execution Slice
 
-1. Run targeted backend hardening pass for input validation and defensive boundaries on auth-adjacent and mutation endpoints.
-2. Close remaining frontend consistency gap for special chat layouts via shared utility classes (without redesign).
-3. Continue repo hygiene and documentation hardening (`.dockerignore`/dev docs/checklist synchronization).
+1. Continue targeted backend boundary hardening on remaining mutation/list routes with unconstrained IDs.
+2. Keep frontend consistency improvements focused on shared interaction/state patterns (without redesign).
+3. Repeat full-gate validation after each hardening slice and keep this baseline synchronized.
