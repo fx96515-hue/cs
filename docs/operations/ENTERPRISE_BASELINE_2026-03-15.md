@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`735 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`737 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -275,6 +275,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: report detail view used `pageActions` in header and ad-hoc inline error alert markup.
 - Action: aligned to shared `pageHeaderContent/pageHeaderActions` semantics and reused `ErrorPanel` for consistent error-state rendering.
 
+48. Shipment and ML model-list filters accepted weak free-text values
+- Status: FIXED
+- Issue: shipment list `status` and ML model list `model_type` query filters accepted broad strings.
+- Action: enforced literal-bound query contracts for shipment statuses and supported ML model types; added regression tests for invalid filter values.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -392,6 +397,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `b3392a1` `harden(api): constrain ml training model-type boundaries`
 - `fc9b5c0` `harden(api): validate quality-alert filter boundaries`
 - `ee1fda4` `improve(frontend): align report detail header and error panel patterns`
+- `895fb2a` `harden(api): constrain shipment and ml model-type query filters`
 
 ## Fortschrittsliste (Taskleiste)
 
