@@ -290,6 +290,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: some pages still used `pageActions` where shared action-container semantics had already moved to `pageHeaderActions`.
 - Action: aligned remaining header/filter action containers to shared `pageHeaderActions` semantics without changing visual direction.
 
+51. Root README verification section used a partial gate subset
+- Status: IMPROVED
+- Issue: top-level verification docs referenced only a narrow backend test subset and missed key type/lint/compose checks.
+- Action: updated README verification section to include full backend test/lint/type commands, frontend lint/build, compose validation, and Windows smoke command.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -414,6 +419,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `e993ea4` `docs(audit): record repo-ignore hygiene improvements`
 - `f017da9` `docs(audit): update taskleiste after backend boundary completion`
 - `6352020` `improve(frontend): standardize remaining page action container semantics`
+- `65fa6da` `docs(readme): align verification gates with full enterprise checks`
 
 ## Fortschrittsliste (Taskleiste)
 
