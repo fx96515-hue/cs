@@ -294,7 +294,7 @@ const navGroups: NavGroup[] = [
     label: "Suche & KI",
     icon: icons.ai,
     items: [
-      { href: "/ki", label: "KI-Assistent", icon: subIcons.assistant, badge: "Neu" },
+      { href: "/assistant", label: "KI-Assistent", icon: subIcons.assistant, badge: "Neu" },
       { href: "/search", label: "Semantische Suche", icon: subIcons.search },
     ],
   },

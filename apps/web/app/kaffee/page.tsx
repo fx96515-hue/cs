@@ -458,7 +458,7 @@ export default function CoffeeInfoPage() {
               Marktdaten
             </Link>
             <Link
-              href="/ki"
+              href="/assistant"
               className="muted"
               style={{
                 fontSize: 'var(--font-size-xs)',
