@@ -16,7 +16,7 @@ class _DummyRedisClient:
 
 def test_ready_returns_200_when_db_and_redis_are_ok(client, monkeypatch):
     monkeypatch.setattr(
-        "app.api.routes.health.redis_lib.from_url",
+        "app.domains.health.api.health_routes.redis_lib.from_url",
         lambda *args, **kwargs: _DummyRedisClient(should_fail=False),
     )
 
@@ -35,7 +35,7 @@ def test_ready_redacts_dependency_errors(client, db, monkeypatch):
 
     monkeypatch.setattr(db, "execute", _db_failure)
     monkeypatch.setattr(
-        "app.api.routes.health.redis_lib.from_url",
+        "app.domains.health.api.health_routes.redis_lib.from_url",
         lambda *args, **kwargs: _DummyRedisClient(should_fail=True),
     )
 
@@ -68,7 +68,7 @@ def test_health_db_failure_returns_sanitized_error(client, db, monkeypatch):
 
 def test_health_redis_success(client, monkeypatch):
     monkeypatch.setattr(
-        "app.api.routes.health.redis_lib.from_url",
+        "app.domains.health.api.health_routes.redis_lib.from_url",
         lambda *args, **kwargs: _DummyRedisClient(should_fail=False),
     )
 
@@ -79,7 +79,7 @@ def test_health_redis_success(client, monkeypatch):
 
 def test_health_redis_failure_returns_sanitized_error(client, monkeypatch):
     monkeypatch.setattr(
-        "app.api.routes.health.redis_lib.from_url",
+        "app.domains.health.api.health_routes.redis_lib.from_url",
         lambda *args, **kwargs: _DummyRedisClient(should_fail=True),
     )
 

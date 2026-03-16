@@ -6,7 +6,7 @@ def test_create_campaign_value_error_returns_400(client, auth_headers, monkeypat
         raise ValueError("invalid campaign config")
 
     monkeypatch.setattr(
-        "app.api.routes.auto_outreach.auto_outreach.create_campaign",
+        "app.domains.auto_outreach.api.routes.auto_outreach.create_campaign",
         _raise_value_error,
     )
 
@@ -25,7 +25,7 @@ def test_create_campaign_runtime_error_returns_500(client, auth_headers, monkeyp
         raise RuntimeError("internal traceback")
 
     monkeypatch.setattr(
-        "app.api.routes.auto_outreach.auto_outreach.create_campaign",
+        "app.domains.auto_outreach.api.routes.auto_outreach.create_campaign",
         _raise_runtime_error,
     )
 
@@ -44,7 +44,7 @@ def test_get_suggestions_runtime_error_returns_500(client, auth_headers, monkeyp
         raise RuntimeError("internal traceback")
 
     monkeypatch.setattr(
-        "app.api.routes.auto_outreach.auto_outreach.get_outreach_suggestions",
+        "app.domains.auto_outreach.api.routes.auto_outreach.get_outreach_suggestions",
         _raise_runtime_error,
     )
 
@@ -62,7 +62,7 @@ def test_get_entity_status_runtime_error_returns_500(client, auth_headers, monke
         raise RuntimeError("internal traceback")
 
     monkeypatch.setattr(
-        "app.api.routes.auto_outreach.auto_outreach.get_entity_outreach_status",
+        "app.domains.auto_outreach.api.routes.auto_outreach.get_entity_outreach_status",
         _raise_runtime_error,
     )
 

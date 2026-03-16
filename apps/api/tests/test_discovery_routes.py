@@ -11,7 +11,7 @@ def test_discovery_seed_status_success(client, auth_headers, monkeypatch):
             return False
 
     monkeypatch.setattr(
-        "app.api.routes.discovery.celery.AsyncResult",
+        "app.domains.discovery.api.routes.celery.AsyncResult",
         lambda _task_id: _Result(),
     )
 
@@ -35,7 +35,7 @@ def test_discovery_seed_status_failure_is_sanitized(client, auth_headers, monkey
             return True
 
     monkeypatch.setattr(
-        "app.api.routes.discovery.celery.AsyncResult",
+        "app.domains.discovery.api.routes.celery.AsyncResult",
         lambda _task_id: _Result(),
     )
 
@@ -59,7 +59,7 @@ def test_discovery_seed_status_includes_progress_info(client, auth_headers, monk
             return False
 
     monkeypatch.setattr(
-        "app.api.routes.discovery.celery.AsyncResult",
+        "app.domains.discovery.api.routes.celery.AsyncResult",
         lambda _task_id: _Result(),
     )
 
@@ -82,7 +82,7 @@ def test_discovery_seed_normalizes_country_filter(client, auth_headers, monkeypa
         captured_kwargs.update(kwargs)
         return type("Task", (), {"id": "task-123"})()
 
-    monkeypatch.setattr("app.api.routes.discovery.celery.send_task", _fake_send_task)
+    monkeypatch.setattr("app.domains.discovery.api.routes.celery.send_task", _fake_send_task)
 
     response = client.post(
         "/discovery/seed",

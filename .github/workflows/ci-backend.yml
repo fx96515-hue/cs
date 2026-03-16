@@ -62,6 +62,10 @@ jobs:
           ruff format --check app/ tests/
 
       - name: Validate Docker Compose Configs
+        env:
+          JWT_SECRET: ci_dummy_secret_key_for_compose_validation_32_chars
+          GRAFANA_ADMIN_PASSWORD: ci_grafana_admin_password
+          KEYCLOAK_ADMIN_PASSWORD: ci_keycloak_admin_password
         run: |
           docker compose config -q
           docker compose -f docker-compose.stack.yml config -q

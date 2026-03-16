@@ -395,6 +395,21 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: no consolidated go/no-go report existed after latest domainization and hardening slices.
 - Action: added `docs/operations/RELEASE_READINESS_2026-03-16.md` with gate results, checklist, risks, and merge recommendation.
 
+72. PR backend lint/type workflow failed on compose validation due missing required env vars
+- Status: FIXED
+- Issue: `docker compose config -q` in backend CI lacked required secrets (`JWT_SECRET`, `GRAFANA_ADMIN_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`) and failed before lint/type gates completed.
+- Action: added explicit CI-only env values for compose validation step in `ci-backend.yml`.
+
+73. Wrapper decommission readiness lacked a repeatable audit mechanism
+- Status: IMPROVED
+- Issue: no standard command existed to prove wrapper usage is zero before removing compatibility modules.
+- Action: added `scripts/maintenance/audit_wrapper_usage.ps1` and a formal wrapper decommission runbook (`docs/operations/WRAPPER_DECOMMISSION_PLAN.md`).
+
+74. Legacy test monkeypatch targets still depended on wrapper import paths
+- Status: FIXED
+- Issue: selected tests (`auto_outreach`, `health`, `discovery`) still patched wrapper modules under `app.api.routes.*`.
+- Action: moved monkeypatch targets to canonical domain modules and revalidated route test suites.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -568,6 +583,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Frontend-Konsistenz Runde 2: verbleibende pageActions-Nutzung auf pageHeaderActions vereinheitlicht
 - [x] Docker-/Local-Dev Runde 2: app-level .dockerignore weiter gehaertet
 - [x] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abgeschlossen
+- [x] Wrapper-Decommission-Startphase umgesetzt (Audit-Script + canonical test patch targets + Runbook)
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
 
