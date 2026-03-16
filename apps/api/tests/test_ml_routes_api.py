@@ -5,7 +5,9 @@ def test_train_model_value_error_is_sanitized(client, auth_headers, monkeypatch)
     def _raise_value_error(*args, **kwargs):
         raise ValueError("sensitive training internals")
 
-    monkeypatch.setattr("app.api.routes.ml_routes.train_freight_model", _raise_value_error)
+    monkeypatch.setattr(
+        "app.domains.ml_training.api.routes.train_freight_model", _raise_value_error
+    )
 
     response = client.post("/ml/train/train/freight_cost", headers=auth_headers)
     assert response.status_code == 400
@@ -16,7 +18,9 @@ def test_train_model_runtime_error_is_sanitized(client, auth_headers, monkeypatc
     def _raise_runtime_error(*args, **kwargs):
         raise RuntimeError("traceback and secrets")
 
-    monkeypatch.setattr("app.api.routes.ml_routes.train_freight_model", _raise_runtime_error)
+    monkeypatch.setattr(
+        "app.domains.ml_training.api.routes.train_freight_model", _raise_runtime_error
+    )
 
     response = client.post("/ml/train/train/freight_cost", headers=auth_headers)
     assert response.status_code == 500
