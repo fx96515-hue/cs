@@ -482,3 +482,5 @@ This baseline captures the current technical status before broader hardening/ref
 - Commit: `44e00a5` `chore(encoding): normalize mojibake strings and validation script output`
 - Scope: reports, knowledge-base seed text, outreach templates, alembic seed region naming, enterprise validation script output/syntax.
 - Validation: `ruff check app tests` PASS, `mypy --config-file ../../mypy.ini app` PASS, `pytest apps/api/tests -q` PASS (737 passed, 3 skipped).
+
+- 1a6e3af improve(frontend): align assistant page error state with shared ErrorPanel
