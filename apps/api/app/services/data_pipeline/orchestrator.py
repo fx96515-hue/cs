@@ -22,7 +22,7 @@ from app.providers.peru_intel import fetch_openmeteo_weather
 from app.models.freight_history import FreightHistory
 from app.services.data_pipeline.circuit_breaker import CircuitBreaker
 from app.services.market_ingest import upsert_market_observation
-from app.services.news import refresh_news as refresh_news_service
+from app.domains.news.services.refresh import refresh_news as refresh_news_service
 from app.services.peru_regions import seed_default_regions
 
 log = structlog.get_logger()

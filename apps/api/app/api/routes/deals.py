@@ -12,7 +12,10 @@ from app.db.session import get_db
 from app.models.deal import Deal
 from app.models.user import User
 from app.schemas.deal import DealCreate, DealOut, DealUpdate
-from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
+from app.domains.data_quality.services.flags import (
+    recompute_entity_flags,
+    resolve_entity_flags,
+)
 
 router = APIRouter()
 DEAL_STATUS_QUERY_PATTERN = r"^(open|in_progress|closed|canceled)$"

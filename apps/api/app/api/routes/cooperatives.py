@@ -17,7 +17,7 @@ from app.services.scoring import recompute_and_persist_cooperative
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
 from app.core.versioning import capture_entity_version
-from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
+from app.domains.data_quality.services.flags import recompute_entity_flags, resolve_entity_flags
 from app.core.config import settings
 
 router = APIRouter()
