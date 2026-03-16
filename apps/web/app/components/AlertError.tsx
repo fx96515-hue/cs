@@ -82,5 +82,5 @@ export function AlertError({ message, onRetry, style, compact }: AlertErrorProps
   );
 }
 
-// ErrorPanel ist ein direkter Alias — importiere aus AlertError
+// ErrorPanel ist ein direkter Alias - importiere aus AlertError
 export { AlertError as ErrorPanel };

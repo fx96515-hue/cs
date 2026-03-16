@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
 import { Breadcrumb } from "../../components/Breadcrumb";
+import { ErrorPanel } from "../../components/AlertError";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -199,25 +200,25 @@ export default function CooperativeDetailsPage() {
 
   if (!data && !err) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="panel">Lade...</div>
       </div>
     );
   }
 
   return (
-    <div className="page">
+    <div className="content">
       <Breadcrumb items={[
         { label: "Startseite", href: "/dashboard" },
         { label: "Kooperativen", href: "/cooperatives" },
         { label: data?.name ?? `#${id}` },
       ]} />
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Kooperative #{id}</div>
           <div className="muted">Datenpflege + Website + Enrichment</div>
         </div>
-        <div className="row gap">
+        <div className="pageHeaderActions row gap">
           <Link className="btn" href="/cooperatives">
             Zur Liste
           </Link>
@@ -241,10 +242,10 @@ export default function CooperativeDetailsPage() {
             </a>
           ) : null}
         </div>
-      </div>
+      </header>
 
-      {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
-      {err ? <div className="alert bad"><div className="alertText">{err}</div></div> : null}
+      {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
+      {err ? <ErrorPanel message={err} /> : null}
 
       {data?.deleted_at ? (
         <div className="alert bad">

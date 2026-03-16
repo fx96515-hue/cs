@@ -190,6 +190,11 @@ def test_get_sentiment_entity_empty(client, auth_headers, db):
     assert body["total"] == 0
 
 
+def test_get_sentiment_entity_rejects_non_positive_id(client, auth_headers, db):
+    response = client.get("/sentiment/entity/0", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_post_analyze_sentiment(client, auth_headers, db):
     item = NewsItem(
         topic="peru coffee",
@@ -224,7 +229,7 @@ def test_viewer_cannot_analyze_sentiment(client, viewer_auth_headers, db):
 
 
 def test_sentiment_disabled_returns_503(client, auth_headers, db):
-    with patch("app.api.routes.sentiment.settings") as mock_settings:
+    with patch("app.domains.sentiment.api.routes.settings") as mock_settings:
         mock_settings.SENTIMENT_ENABLED = False
         response = client.get("/sentiment/PE", headers=auth_headers)
         assert response.status_code == 503

@@ -56,6 +56,11 @@ def test_get_report_not_found(client, auth_headers, db):
     assert response.status_code == 404
 
 
+def test_report_id_path_rejects_zero(client, auth_headers):
+    response = client.get("/reports/0", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_list_reports_with_limit(client, auth_headers, db):
     """Test listing reports with limit parameter."""
     for i in range(5):

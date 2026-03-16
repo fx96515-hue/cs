@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: coffeestudio
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeestudio}
     ports:
-    - 5432:5432
+    - 127.0.0.1:5432:5432
     volumes:
     - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7
     ports:
-    - 6379:6379
+    - 127.0.0.1:6379:6379
     healthcheck:
       test:
       - CMD
@@ -40,7 +40,7 @@ services:
       APP_ENV: ${APP_ENV:-dev}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
       JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-coffeestudio-users}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
@@ -52,7 +52,7 @@ services:
       PERPLEXITY_MODEL_DISCOVERY: ${PERPLEXITY_MODEL_DISCOVERY:-sonar-pro}
       PERPLEXITY_TIMEOUT_SECONDS: ${PERPLEXITY_TIMEOUT_SECONDS:-60}
     ports:
-    - 8000:8000
+    - 127.0.0.1:8000:8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,7 +89,7 @@ services:
       APP_ENV: ${APP_ENV:-dev}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
       JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-coffeestudio-users}
       TZ: ${APP_TIMEZONE:-Europe/Berlin}
@@ -123,7 +123,7 @@ services:
       APP_ENV: ${APP_ENV:-dev}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://coffeestudio:${POSTGRES_PASSWORD:-coffeestudio}@postgres:5432/coffeestudio}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
       JWT_ISSUER: ${JWT_ISSUER:-coffeestudio}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-coffeestudio-users}
       TZ: ${APP_TIMEZONE:-Europe/Berlin}
@@ -153,7 +153,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
-    - 3000:3000
+    - 127.0.0.1:3000:3000
     depends_on:
       backend:
         condition: service_healthy

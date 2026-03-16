@@ -1,0 +1,1 @@
+"""Deals schema domain package."""

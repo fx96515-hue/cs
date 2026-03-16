@@ -61,6 +61,20 @@ jobs:
           cd apps/api
           ruff format --check app/ tests/
 
+      - name: Validate Docker Compose Configs
+        env:
+          JWT_SECRET: ci_dummy_secret_key_for_compose_validation_32_chars
+          GRAFANA_ADMIN_PASSWORD: ci_grafana_admin_password
+          KEYCLOAK_ADMIN_PASSWORD: ci_keycloak_admin_password
+        run: |
+          cat > .env << 'EOF'
+          JWT_SECRET=${JWT_SECRET}
+          GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+          KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+          EOF
+          docker compose config -q
+          docker compose -f docker-compose.stack.yml config -q
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest

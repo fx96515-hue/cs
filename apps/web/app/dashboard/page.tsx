@@ -7,6 +7,7 @@ import KpiCard from "../components/KpiCard";
 import Badge from "../components/Badge";
 import MarketPriceWidget from "../components/MarketPriceWidget";
 import AnomalyFeedWidget from "../components/AnomalyFeedWidget";
+import { ErrorPanel } from "../components/AlertError";
 import { toErrorMessage } from "../utils/error";
 
 /* ============================================================
@@ -126,14 +127,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Error State */}
-      {err && (
-        <div className="alert bad">
-          <div>
-            <div className="alertTitle">Fehler beim Laden</div>
-            <div className="alertText">{err}</div>
-          </div>
-        </div>
-      )}
+      {err && <ErrorPanel message={err} onRetry={loadData} />}
 
       {/* KPI Grid */}
       <section className="kpiGrid" aria-label="Kennzahlen">
@@ -268,7 +262,7 @@ export default function DashboardPage() {
           <h3 className="h4" style={{ marginBottom: "var(--space-4)" }}>Nächste Schritte</h3>
           <ol className="steps">
             <li><b>Ersterfassung</b> durchführen - Kooperativen und Röstereien initial eintragen.</li>
-            <li><b>Datenabreichung</b> aktivieren - Webseiten analysieren, Bewertungen berechnen.</li>
+            <li><b>Datenanreicherung</b> aktivieren - Webseiten analysieren, Bewertungen berechnen.</li>
             <li><b>CRM nutzen</b> - Röstereien pflegen, Anfragen starten, Abschlüsse nachverfolgen.</li>
           </ol>
         </div>

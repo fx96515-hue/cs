@@ -8,7 +8,9 @@
 
 # Python caches and virtual envs
 __pycache__/
+**/__pycache__/
 *.py[cod]
+**/*.py[cod]
 *.pyo
 *.pyd
 .venv/
@@ -21,11 +23,16 @@ venv/
 tests/
 docs/
 scripts/
+.qa_reports/
+*.md
+requirements-dev.txt
+conftest_coverage.py
 
 # Local runtime artifacts
 *.db
 *.sqlite
 *.sqlite3
+.worktrees/
 *.log
 htmlcov/
 .coverage

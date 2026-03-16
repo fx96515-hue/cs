@@ -48,6 +48,17 @@ def test_login_invalid_email(client):
     assert "Invalid credentials" in data["error"]["message"]
 
 
+def test_login_email_case_insensitive(client, test_user):
+    """Login should accept mixed-case emails and match users case-insensitively."""
+    response = client.post(
+        "/auth/login",
+        json={"email": "Test@Example.Com", "password": "TestP@ss123!"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+
+
 def test_login_inactive_user(client, db):
     """Test login with inactive user account."""
     inactive_user = User(

@@ -11,7 +11,7 @@ from app.db.session import SessionLocal
 from app.models.report import Report
 from app.models.cooperative import Cooperative
 from app.models.roaster import Roaster
-from app.services.reports import generate_daily_report
+from app.domains.reports.services.report_builder import generate_daily_report
 from app.services.discovery import seed_discovery, backfill_missing_cooperative_data
 from app.services.enrichment import enrich_entity
 from app.services.data_pipeline.orchestrator import DataPipelineOrchestrator
@@ -104,7 +104,7 @@ def refresh_news():
         # Run sentiment analysis after news refresh when enabled
         if getattr(settings, "SENTIMENT_ENABLED", False):
             try:
-                from app.services.sentiment import (
+                from app.domains.sentiment.services.analysis import (
                     analyze_news_items,
                     aggregate_region_sentiment,
                 )
@@ -141,7 +141,7 @@ def refresh_intelligence():
         # Run sentiment analysis after intelligence refresh when enabled
         if getattr(settings, "SENTIMENT_ENABLED", False):
             try:
-                from app.services.sentiment import (
+                from app.domains.sentiment.services.analysis import (
                     analyze_news_items,
                     aggregate_region_sentiment,
                 )
@@ -288,7 +288,7 @@ def check_quality_alerts(threshold: float = 5.0):
     Args:
         threshold: Minimum score change to trigger alert (default: 5.0)
     """
-    from app.services.quality_alerts import check_all_entities
+    from app.domains.quality_alerts.services.alerts import check_all_entities
 
     db = _db()
     try:
@@ -330,7 +330,7 @@ def auto_outreach_follow_up(entity_type: str, days_threshold: int = 7):
         entity_type: 'cooperative' or 'roaster'
         days_threshold: Days since last contact to trigger follow-up
     """
-    from app.services.auto_outreach import get_outreach_suggestions
+    from app.domains.auto_outreach.services.campaigns import get_outreach_suggestions
     from app.models.entity_event import EntityEvent
 
     db = _db()
@@ -635,7 +635,10 @@ def analyze_sentiment():
     if not getattr(settings, "SENTIMENT_ENABLED", False):
         return {"status": "skipped", "reason": "SENTIMENT_ENABLED is false"}
 
-    from app.services.sentiment import analyze_news_items, aggregate_region_sentiment
+    from app.domains.sentiment.services.analysis import (
+        aggregate_region_sentiment,
+        analyze_news_items,
+    )
 
     db = _db()
     try:

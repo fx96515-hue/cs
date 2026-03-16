@@ -172,6 +172,11 @@ def test_filter_shipments_by_status(client, auth_headers, db):
     assert all(s["status"] == "in_transit" for s in data)
 
 
+def test_filter_shipments_rejects_invalid_status(client, auth_headers):
+    response = client.get("/shipments?status=invalid_status", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_filter_shipments_by_port(client, auth_headers, db):
     """Test filtering shipments by port."""
     shipment1 = Shipment(
@@ -592,3 +597,31 @@ def test_add_tracking_event_invalid_timestamp_returns_422(client, auth_headers, 
     )
     assert response.status_code == 422
     assert "timestamp" in response.json()["detail"]
+
+
+def test_shipments_reject_non_positive_shipment_id(client, auth_headers):
+    get_response = client.get("/shipments/0", headers=auth_headers)
+    assert get_response.status_code == 422
+
+    patch_response = client.patch(
+        "/shipments/0", json={"status": "in_transit"}, headers=auth_headers
+    )
+    assert patch_response.status_code == 422
+
+    delete_response = client.delete("/shipments/0", headers=auth_headers)
+    assert delete_response.status_code == 422
+
+    restore_response = client.post("/shipments/0/restore", headers=auth_headers)
+    assert restore_response.status_code == 422
+
+    track_response = client.post(
+        "/shipments/0/track",
+        json={
+            "event": "Transit",
+            "location": "Callao",
+            "timestamp": "2026-01-10T10:00:00+00:00",
+            "details": "boundary-test",
+        },
+        headers=auth_headers,
+    )
+    assert track_response.status_code == 422

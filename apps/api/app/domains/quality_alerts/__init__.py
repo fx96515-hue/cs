@@ -1,0 +1,1 @@
+"""Quality-alerts domain package."""

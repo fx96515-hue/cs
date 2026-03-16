@@ -31,7 +31,7 @@ def test_scheduler_run_job_endpoint(client, auth_headers, monkeypatch):
         return SimpleNamespace(id="queued-task-123")
 
     monkeypatch.setattr(
-        "app.api.routes.scheduler_dashboard.celery.send_task", fake_send_task
+        "app.domains.scheduler.api.routes.celery.send_task", fake_send_task
     )
 
     response = client.post("/scheduler/jobs/market_refresh_01/run", headers=auth_headers)
@@ -43,3 +43,38 @@ def test_scheduler_run_job_endpoint(client, auth_headers, monkeypatch):
 def test_scheduler_run_unknown_job_returns_404(client, auth_headers):
     response = client.post("/scheduler/jobs/unknown/run", headers=auth_headers)
     assert response.status_code == 404
+    assert response.json()["detail"] == "Unknown scheduler job"
+
+
+def test_scheduler_run_job_rejects_invalid_job_id(client, auth_headers):
+    response = client.post("/scheduler/jobs/invalid*job/run", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_scheduler_task_status_endpoint(client, auth_headers, monkeypatch):
+    class _FakeAsyncResult:
+        def __init__(self, task_id, app):
+            self._task_id = task_id
+            self.state = "SUCCESS"
+            self.result = {"ok": True}
+
+        def ready(self):
+            return True
+
+    monkeypatch.setattr(
+        "app.domains.scheduler.api.routes.AsyncResult",
+        _FakeAsyncResult,
+    )
+
+    response = client.get("/scheduler/tasks/task-123", headers=auth_headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["task_id"] == "task-123"
+    assert payload["state"] == "SUCCESS"
+    assert payload["ready"] is True
+    assert payload["result"] == {"ok": True}
+
+
+def test_scheduler_task_status_rejects_invalid_task_id(client, auth_headers):
+    response = client.get("/scheduler/tasks/task@bad", headers=auth_headers)
+    assert response.status_code == 422

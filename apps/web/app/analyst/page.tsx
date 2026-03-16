@@ -175,11 +175,11 @@ export default function AnalystPage() {
 
       {/* Header */}
       <header className="pageHeader" style={{ marginBottom: 0, flexShrink: 0 }}>
-        <div>
+        <div className="pageHeaderContent">
           <h1 className="h1">KI-Analyst</h1>
           <p className="muted">Fragen zu Kooperativen, Röstereien und Sourcing-Strategien</p>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           {statusLoading && (
             <span className="chatStatusBadge">
               <span className="chatStatusDot chatStatusDotOffline" />

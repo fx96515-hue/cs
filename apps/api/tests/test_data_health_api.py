@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from app.api.routes import data_health as data_health_routes
+from app.domains.health.api import data_health_routes
 
 
 class _DummyRedis:
@@ -157,17 +157,20 @@ def test_refresh_all_redacts_top_level_errors(client, auth_headers, monkeypatch)
     ]
 
 
-def test_reset_circuit_unknown_provider_returns_safe_response(
-    client, auth_headers, monkeypatch
-):
+def test_reset_circuit_unknown_provider_returns_404(client, auth_headers, monkeypatch):
     _patch_data_health_deps(monkeypatch)
 
     response = client.post("/data-health/reset-circuit/unknown", headers=auth_headers)
 
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["error"] == "Unknown provider: unknown"
-    assert "available_providers" in payload
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Unknown provider"
+
+
+def test_reset_circuit_provider_rejects_invalid_key(client, auth_headers):
+    response = client.post(
+        "/data-health/reset-circuit/Invalid-Key", headers=auth_headers
+    )
+    assert response.status_code == 422
 
 
 def test_data_health_status_endpoint(client, auth_headers, monkeypatch):

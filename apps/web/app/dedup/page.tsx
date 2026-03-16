@@ -93,7 +93,7 @@ export default function DedupPage() {
   };
 
   return (
-    <>
+    <div className="content">
       {/* Seitenheader */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
@@ -288,6 +288,6 @@ export default function DedupPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

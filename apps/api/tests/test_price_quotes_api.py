@@ -90,3 +90,29 @@ def test_price_quotes_viewer_read_only(client, auth_headers, viewer_auth_headers
     )
     assert forbidden_create.status_code == 403
 
+
+def test_price_quotes_reject_non_positive_ids(client, auth_headers):
+    response_get = client.get("/price-quotes/0", headers=auth_headers)
+    assert response_get.status_code == 422
+
+    response_patch = client.patch(
+        "/price-quotes/0",
+        json={"price_per_kg": 5.1},
+        headers=auth_headers,
+    )
+    assert response_patch.status_code == 422
+
+    response_delete = client.delete("/price-quotes/0", headers=auth_headers)
+    assert response_delete.status_code == 422
+
+
+def test_price_quotes_reject_non_positive_filters(client, auth_headers):
+    response_lot = client.get("/price-quotes/?lot_id=0", headers=auth_headers)
+    assert response_lot.status_code == 422
+
+    response_deal = client.get("/price-quotes/?deal_id=0", headers=auth_headers)
+    assert response_deal.status_code == 422
+
+    response_source = client.get("/price-quotes/?source_id=0", headers=auth_headers)
+    assert response_source.status_code == 422
+

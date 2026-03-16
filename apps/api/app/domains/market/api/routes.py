@@ -1,0 +1,314 @@
+import json
+from typing import Annotated
+
+import redis as redis_lib
+import redis.asyncio as aioredis
+import structlog
+from celery.result import AsyncResult
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.api.deps import require_role
+from app.api.response_utils import apply_create_status
+from app.core.audit import AuditLogger
+from app.core.config import settings
+from app.core.security import decode_token
+from app.db.session import SessionLocal, get_db
+from app.models.market import MarketObservation
+from app.models.user import User
+from app.domains.market.schemas.market import MarketObservationCreate, MarketObservationOut
+from app.workers.celery_app import celery
+
+log = structlog.get_logger()
+router = APIRouter()
+
+DbSessionDep = Annotated[Session, Depends(get_db)]
+ViewerPermissionDep = Annotated[
+    object, Depends(require_role("admin", "analyst", "viewer"))
+]
+AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
+AnalystUserDep = Annotated[User, Depends(require_role("admin", "analyst"))]
+
+WS_POLICY_VIOLATION_CODE = 1008
+WS_ALLOWED_ROLES = frozenset({"admin", "analyst", "viewer"})
+WS_AUTH_ERROR_REASON = "Unauthorized"
+
+
+async def _close_ws(websocket: WebSocket, reason: str) -> None:
+    await websocket.close(code=WS_POLICY_VIOLATION_CODE, reason=reason)
+
+
+def _resolve_ws_user_email(token: str) -> str:
+    try:
+        payload = decode_token(token)
+    except Exception as exc:
+        raise ValueError("Invalid token") from exc
+
+    user_email = payload.get("sub") if isinstance(payload, dict) else None
+    if not user_email:
+        raise ValueError("Invalid token payload")
+    return user_email
+
+
+def _load_ws_user(user_email: str) -> User | None:
+    db = SessionLocal()
+    try:
+        normalized_email = user_email.strip().lower()
+        return db.query(User).filter(func.lower(User.email) == normalized_email).first()
+    finally:
+        db.close()
+
+
+def _ws_auth_rejection_reason(user: User | None) -> str | None:
+    if user is None or not getattr(user, "is_active", False):
+        return WS_AUTH_ERROR_REASON
+    if getattr(user, "role", None) not in WS_ALLOWED_ROLES:
+        return WS_AUTH_ERROR_REASON
+    return None
+
+
+def _get_cached_price_payload() -> dict | None:
+    from app.services.price_stream import get_cached_price
+
+    sync_redis = redis_lib.from_url(settings.REDIS_URL)
+    try:
+        return get_cached_price(sync_redis)
+    finally:
+        sync_redis.close()
+
+
+async def _stream_ws_prices(websocket: WebSocket) -> None:
+    from app.services.price_stream import REDIS_CHANNEL
+
+    async_redis = aioredis.from_url(settings.REDIS_URL)
+    pubsub = async_redis.pubsub()
+    await pubsub.subscribe(REDIS_CHANNEL)
+
+    try:
+        async for message in pubsub.listen():
+            if message.get("type") != "message":
+                continue
+            data = message["data"]
+            if isinstance(data, bytes):
+                data = data.decode("utf-8")
+            await websocket.send_text(data)
+    finally:
+        await pubsub.unsubscribe(REDIS_CHANNEL)
+        await pubsub.aclose()
+        await async_redis.aclose()
+
+
+@router.get("/observations", response_model=list[MarketObservationOut])
+def list_observations(
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
+    key: str | None = None,
+    limit: int = Query(200, ge=1, le=500),
+):
+    q = db.query(MarketObservation)
+    if key:
+        q = q.filter(MarketObservation.key == key)
+    return q.order_by(MarketObservation.observed_at.desc()).limit(limit).all()
+
+
+@router.post("/observations", response_model=MarketObservationOut)
+def create_observation(
+    payload: MarketObservationCreate,
+    request: Request,
+    response: Response,
+    db: DbSessionDep,
+    user: AnalystUserDep,
+):
+    obs = MarketObservation(**payload.model_dump())
+    db.add(obs)
+    db.commit()
+    db.refresh(obs)
+
+    # Log creation for audit trail
+    AuditLogger.log_create(
+        db=db,
+        user=user,
+        entity_type="market_observation",
+        entity_id=obs.id,
+        entity_data=payload.model_dump(),
+    )
+
+    apply_create_status(request, response, created=True)
+
+    return obs
+
+
+@router.get("/latest")
+def latest_snapshot(
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
+):
+    # return latest per key
+    keys = ["FX:USD_EUR", "COFFEE_C:USD_LB", "FREIGHT:USD_PER_40FT"]
+    out = {}
+    for k in keys:
+        obs = (
+            db.query(MarketObservation)
+            .filter(MarketObservation.key == k)
+            .order_by(
+                MarketObservation.source_id.is_(None),
+                MarketObservation.observed_at.desc(),
+                MarketObservation.id.desc(),
+            )
+            .first()
+        )
+        out[k] = (
+            None
+            if not obs
+            else {
+                "value": obs.value,
+                "unit": obs.unit,
+                "currency": obs.currency,
+                "observed_at": obs.observed_at,
+            }
+        )
+    return out
+
+
+@router.get("/series")
+def series(
+    key: str,
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
+    limit: int = Query(365, ge=1, le=500),
+):
+    """Return a time series for one key (newest -> oldest)."""
+    rows = (
+        db.query(MarketObservation)
+        .filter(MarketObservation.key == key)
+        .order_by(MarketObservation.observed_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "observed_at": r.observed_at,
+            "value": r.value,
+            "unit": r.unit,
+            "currency": r.currency,
+        }
+        for r in rows
+    ]
+
+
+@router.post("/refresh")
+def refresh_market_async(_: AnalystPermissionDep):
+    """Enqueue a market refresh via Celery.
+
+    This mirrors the periodic beat job, but allows manual triggering from the UI.
+    """
+    res = celery.send_task("app.workers.tasks.refresh_market")
+    return {"status": "queued", "task_id": res.id}
+
+
+@router.get("/tasks/{task_id}")
+def market_task_status(task_id: str, _: ViewerPermissionDep):
+    r = AsyncResult(task_id, app=celery)
+    payload = None
+    try:
+        payload = r.result if r.ready() else None
+    except Exception as exc:
+        log.warning("market_task_status_failed", task_id=task_id, error=str(exc))
+        payload = None
+    return {"task_id": task_id, "state": r.state, "ready": r.ready(), "result": payload}
+
+
+@router.get("/realtime/status")
+def realtime_status(_: ViewerPermissionDep):
+    """Return whether the realtime price feed is enabled and the last cached price."""
+    from app.services.price_stream import get_cached_price
+
+    enabled = getattr(settings, "REALTIME_PRICE_FEED_ENABLED", False)
+    cached: dict | None = None
+    redis_error: str | None = None
+
+    if enabled:
+        try:
+            r = redis_lib.from_url(settings.REDIS_URL)
+            cached = get_cached_price(r)
+            r.close()
+        except Exception as e:
+            redis_error = str(e)
+            log.warning("realtime_status_redis_error", error=redis_error)
+
+    return {
+        "realtime_enabled": enabled,
+        "cached_price": cached,
+        **({"redis_error": redis_error} if redis_error else {}),
+    }
+
+
+@router.websocket("/ws/price")
+async def websocket_price(
+    websocket: WebSocket,
+    token: str | None = Query(default=None),
+):
+    """WebSocket endpoint that streams realtime coffee price updates.
+
+    Authentication: pass the JWT as ``?token=<JWT>`` query parameter.
+    Note: passing credentials in query params is a known limitation of the
+    WebSocket protocol (``Authorization`` headers are not supported in browser
+    WebSocket APIs). Consider the token short-lived and treat the connection
+    URL as a secret.
+
+    The endpoint is only active when ``REALTIME_PRICE_FEED_ENABLED=true``.
+    When the feature flag is off, the connection is immediately closed with
+    code 1008 (Policy Violation).
+
+    On connection the current cached price is sent immediately, followed by
+    live updates as they are published to the Redis Pub/Sub channel.
+    """
+    if not getattr(settings, "REALTIME_PRICE_FEED_ENABLED", False):
+        await _close_ws(websocket, "Realtime feed disabled")
+        return
+
+    if not token:
+        await _close_ws(websocket, WS_AUTH_ERROR_REASON)
+        return
+
+    try:
+        user_email = _resolve_ws_user_email(token)
+    except ValueError:
+        await _close_ws(websocket, WS_AUTH_ERROR_REASON)
+        return
+
+    rejection_reason = _ws_auth_rejection_reason(_load_ws_user(user_email))
+    if rejection_reason:
+        await _close_ws(websocket, rejection_reason)
+        return
+
+    await websocket.accept()
+
+    try:
+        cached = _get_cached_price_payload()
+    except Exception as exc:
+        log.warning("ws_price_initial_cache_error", error=str(exc))
+        cached = None
+
+    if cached:
+        try:
+            await websocket.send_text(json.dumps(cached))
+        except Exception:
+            return
+
+    try:
+        await _stream_ws_prices(websocket)
+    except WebSocketDisconnect:
+        log.info("ws_price_disconnect")
+    except Exception as exc:
+        log.warning("ws_price_error", error=str(exc))
+

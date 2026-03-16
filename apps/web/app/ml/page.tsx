@@ -104,12 +104,12 @@ export default function MLPage() {
 
   return (
     <div className="content">
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">ML-Modelle</div>
           <div className="muted">Machine Learning Modelle und Kaufzeitprognosen</div>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <button
             className="btn btnPrimary"
             onClick={() => trainModel("freight_cost")}
@@ -125,7 +125,7 @@ export default function MLPage() {
             {trainingModel === "coffee_price" ? "Training läuft..." : "Preismodell trainieren"}
           </button>
         </div>
-      </div>
+      </header>
 
       {err && <ErrorPanel message={err} onRetry={fetchAll} />}
 

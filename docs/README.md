@@ -1,44 +1,59 @@
-# CoffeeStudio Platform Documentation
+# CoffeeStudio Documentation
 
-This directory contains all project documentation organized by topic.
+This folder contains project documentation grouped by purpose.
 
-## 📁 Documentation Structure
+## Documentation Structure
 
-### Architecture & Implementation
-Documentation about system design, implementation details, and technical summaries.
+### Architecture
 
-- [AI QA Implementation Summary](architecture/AI_QA_IMPLEMENTATION_SUMMARY.md)
-- [Enterprise Implementation Summary](architecture/ENTERPRISE_IMPLEMENTATION_SUMMARY.md)
-- [Enterprise Validation Report](architecture/ENTERPRISE_VALIDATION_REPORT.md)
-- [Implementation Summary](architecture/IMPLEMENTATION_SUMMARY.md)
-- [Implementation Validation Summary](architecture/IMPLEMENTATION_VALIDATION_SUMMARY.md)
-- [Integration Validation](architecture/INTEGRATION_VALIDATION.md)
-- [Peru Sourcing Backend Summary](architecture/PERU_SOURCING_BACKEND_SUMMARY.md)
+System design, implementation notes, and validation snapshots.
 
-### Guides & Quick Starts
-Step-by-step guides and tutorials for using and developing the platform.
+- `architecture/enterprise-roadbook.md`
+- `architecture/ENTERPRISE_IMPLEMENTATION_SUMMARY.md`
+- `architecture/ENTERPRISE_VALIDATION_REPORT.md`
+- `architecture/DATA_MODEL_ERD.md`
+- `architecture/DATA_GOVERNANCE.md`
 
-- [API Usage Guide](guides/API_USAGE_GUIDE.md)
-- [QA Quick Start](guides/QA_QUICK_START.md)
-- [Quick Start: Peru Sourcing](guides/QUICK_START_PERU_SOURCING.md)
-- [Refactoring Plan](guides/REFACTORING_PLAN.md)
-- [Testing Guide](guides/TESTING.md)
+### Guides
 
-### Security
-Security policies, audit reports, and best practices.
+Developer and feature guides.
 
-- [Security Policy](security/SECURITY.md)
-- [Security Audit Report](security/SECURITY_AUDIT_REPORT.md)
-- [Security Best Practices](security/SECURITY_BEST_PRACTICES.md)
+- `guides/API_USAGE_GUIDE.md`
+- `guides/TESTING.md`
+- `guides/QA_QUICK_START.md`
+- `guides/semantic-search-guide.md`
+- `guides/knowledge-graph-guide.md`
+- `guides/peru-sourcing-intelligence.md`
+- `guides/assistant-provider-selection.md`
 
 ### Operations
-Operational documentation including runbooks and status reports.
 
-- [Operations Runbook](operations/OPERATIONS_RUNBOOK.md)
-- [Project Status](operations/STATUS.md)
+Runbooks, setup, release, and delivery guardrails.
 
-## 🔙 Back to Main Documentation
+- `operations/OPERATIONS_RUNBOOK.md`
+- `operations/enterprise-quickstart.md`
+- `operations/backend-setup.md`
+- `operations/RELEASE_GATES.md`
+- `operations/STATUS.md`
+- `operations/RELEASE_READINESS_2026-03-16.md`
+- `operations/WRAPPER_DECOMMISSION_PLAN.md`
 
-- [Main README](../README.md)
-- [Windows Setup Guide](../README_WINDOWS.md)
-- [Changelog](../CHANGELOG.md)
+### Security
+
+Security policy, audit, and hardening references.
+
+- `security/SECURITY.md`
+- `security/SECURITY_AUDIT_REPORT.md`
+- `security/SECURITY_BEST_PRACTICES.md`
+
+### Audit Baseline
+
+Current enterprise hardening baseline and task tracking.
+
+- `operations/ENTERPRISE_BASELINE_2026-03-15.md`
+
+## Root References
+
+- `../README.md`
+- `../README_WINDOWS.md`
+- `../CHANGELOG.md`

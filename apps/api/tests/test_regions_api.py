@@ -1,6 +1,7 @@
 """Tests for regions API routes."""
 
 from app.models.peru_region import PeruRegion
+from app.models.region import Region
 
 
 def test_list_peru_regions_empty(client, auth_headers, db):
@@ -69,3 +70,24 @@ def test_regions_without_auth(client, db):
     response = client.get("/regions/peru")
 
     assert response.status_code == 401
+
+
+def test_list_regions_by_country_filter(client, auth_headers, db):
+    db.add_all(
+        [
+            Region(name="Cusco", country="Peru"),
+            Region(name="Berlin", country="Germany"),
+        ]
+    )
+    db.commit()
+
+    response = client.get("/regions?country=Peru", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    assert all(item["country"] == "Peru" for item in data)
+
+
+def test_list_regions_rejects_invalid_country_filter(client, auth_headers):
+    response = client.get("/regions?country=Peru@", headers=auth_headers)
+    assert response.status_code == 422

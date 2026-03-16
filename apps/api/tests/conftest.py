@@ -75,7 +75,7 @@ def db():
     and set timestamps via SQLAlchemy events (see above).
     """
     # Invalidate knowledge graph cache so each test builds a fresh graph
-    from app.services import knowledge_graph as kg_service
+    from app.domains.knowledge_graph.services import graph_service as kg_service
 
     kg_service.invalidate_cache()
 
@@ -117,7 +117,7 @@ def client(db):
 
     # Also clear the auth-module rate limiter to prevent cross-test contamination
     try:
-        from app.api.routes import auth as auth_module
+        from app.domains.auth.api import routes as auth_module
 
         if hasattr(auth_module, "limiter"):
             _s = auth_module.limiter._storage

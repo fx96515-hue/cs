@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { ErrorPanel } from "../../components/AlertError";
 import { toErrorMessage } from "../../utils/error";
 
 type Report = {
@@ -32,34 +33,28 @@ export default function ReportDetailPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [showPayload, setShowPayload] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const loading = report === null && err === null;
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
     apiFetch<Report>(`/reports/${id}`)
       .then(setReport)
-      .catch((e: unknown) => setErr(toErrorMessage(e)))
-      .finally(() => setLoading(false));
+      .catch((e: unknown) => setErr(toErrorMessage(e)));
   }, [id]);
 
   return (
     <div className="content">
       <header className="pageHeader">
-        <div>
+        <div className="pageHeaderContent">
           <h1 className="h1">{report?.title || `Report #${id}`}</h1>
           <p className="subtitle">Detailansicht des generierten Tages-/Systemberichts.</p>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <Link className="btn" href="/reports">Zurueck zu Berichten</Link>
         </div>
       </header>
 
-      {err ? (
-        <div className="alert bad">
-          <div className="alertText">{err}</div>
-        </div>
-      ) : null}
+      {err ? <ErrorPanel message={err} /> : null}
 
       <section className="panel">
         <div className="panelHeader">

@@ -1,0 +1,105 @@
+from datetime import datetime, timezone
+from typing import Annotated, Any, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from sqlalchemy.orm import Session
+
+from app.api.deps import require_role, get_db
+from app.models.data_quality_flag import DataQualityFlag
+from app.models.cooperative import Cooperative
+from app.models.roaster import Roaster
+from app.models.lot import Lot
+from app.models.deal import Deal
+from app.models.shipment import Shipment
+from app.domains.data_quality.schemas.data_quality import DataQualityFlagOut
+from app.domains.data_quality.services.flags import recompute_entity_flags
+from app.models.user import User
+
+router = APIRouter()
+NOT_FOUND_DETAIL = "Not found"
+RESOLVE_FLAG_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL}
+}
+RECOMPUTE_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": NOT_FOUND_DETAIL},
+}
+
+
+ENTITY_MODEL_MAP = {
+    "cooperative": Cooperative,
+    "roaster": Roaster,
+    "lot": Lot,
+    "shipment": Shipment,
+    "deal": Deal,
+}
+DataQualityEntityType = Literal["cooperative", "roaster", "lot", "shipment", "deal"]
+DataQualitySeverity = Literal["info", "warning", "critical"]
+
+
+@router.get("/flags", response_model=list[DataQualityFlagOut])
+def list_flags(
+    entity_type: DataQualityEntityType | None = None,
+    entity_id: Annotated[int | None, Query(ge=1)] = None,
+    severity: DataQualitySeverity | None = None,
+    include_resolved: Annotated[bool, Query()] = False,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 200,
+    *,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_role("admin", "analyst"))],
+):
+    q = db.query(DataQualityFlag)
+    if entity_type:
+        q = q.filter(DataQualityFlag.entity_type == entity_type)
+    if entity_id is not None:
+        q = q.filter(DataQualityFlag.entity_id == entity_id)
+    if severity:
+        q = q.filter(DataQualityFlag.severity == severity)
+    if not include_resolved:
+        q = q.filter(DataQualityFlag.resolved_at.is_(None))
+    return q.order_by(DataQualityFlag.detected_at.desc()).limit(limit).all()
+
+
+@router.post(
+    "/flags/{flag_id}/resolve",
+    response_model=DataQualityFlagOut,
+    responses=RESOLVE_FLAG_RESPONSES,
+)
+def resolve_flag(
+    flag_id: Annotated[int, Path(ge=1)],
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
+):
+    flag = db.query(DataQualityFlag).filter(DataQualityFlag.id == flag_id).first()
+    if not flag:
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    flag.resolved_at = flag.resolved_at or datetime.now(timezone.utc)
+    flag.resolved_by = user.email
+    db.commit()
+    db.refresh(flag)
+    return flag
+
+
+@router.post("/recompute/{entity_type}/{entity_id}", responses=RECOMPUTE_RESPONSES)
+def recompute_flags(
+    entity_type: DataQualityEntityType,
+    entity_id: Annotated[int, Path(ge=1)],
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(require_role("admin", "analyst"))],
+):
+    model = ENTITY_MODEL_MAP.get(entity_type)
+    if not model:
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    model_id_column = getattr(model, "id", None)
+    if model_id_column is None:
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    instance = db.query(model).filter(model_id_column == entity_id).first()
+    if not instance:
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
+    result = recompute_entity_flags(
+        db=db,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        instance=instance,
+        user=user,
+    )
+    return {"status": "ok", **result}

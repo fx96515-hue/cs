@@ -544,6 +544,7 @@ def seed_discovery(
             if len(aggregated) >= 120:
                 break
             try:
+                results: list[Any]
                 if p_client is not None:
                     results = p_client.search(
                         q, max_results=20, country=country, max_tokens_per_page=512
@@ -1073,6 +1074,7 @@ def backfill_missing_cooperative_data(
                 f"{coop.name} Peru coffee cooperative website contact email certifications region"
             )
             try:
+                results: list[Any]
                 if p_client is not None:
                     results = p_client.search(
                         query,

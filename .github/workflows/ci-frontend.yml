@@ -48,6 +48,11 @@ jobs:
           cd apps/web
           npx tsc --noEmit
 
+      - name: Audit Production Dependencies
+        run: |
+          cd apps/web
+          npm audit --omit=dev --audit-level=high
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest

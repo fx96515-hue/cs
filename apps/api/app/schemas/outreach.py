@@ -1,22 +1,8 @@
-from pydantic import BaseModel, Field
+﻿"""Compatibility wrapper for outreach schemas.
 
+Canonical implementation lives in app.domains.outreach.schemas.outreach.
+"""
 
-class OutreachRequest(BaseModel):
-    entity_type: str
-    entity_id: int
-    language: str = "de"
-    purpose: str = "sourcing_pitch"
-    counterpart_name: str | None = None
-    refine_with_llm: bool = Field(
-        False, description="If true and PERPLEXITY_API_KEY is set, polish the text"
-    )
+from app.domains.outreach.schemas.outreach import OutreachRequest, OutreachResponse
 
-
-class OutreachResponse(BaseModel):
-    status: str
-    entity_type: str
-    entity_id: int
-    language: str
-    purpose: str
-    used_llm: bool
-    text: str
+__all__ = ["OutreachRequest", "OutreachResponse"]

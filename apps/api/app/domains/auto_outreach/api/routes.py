@@ -1,0 +1,105 @@
+"""Auto-outreach API routes."""
+
+from typing import Annotated, Any, Literal
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from sqlalchemy.orm import Session
+import structlog
+
+from app.api.deps import require_role, get_db
+from app.domains.auto_outreach.schemas.auto_outreach import (
+    CreateCampaignIn,
+    CampaignOut,
+    OutreachSuggestionOut,
+    EntityOutreachStatusOut,
+)
+from app.domains.auto_outreach.services import campaigns as auto_outreach
+
+
+router = APIRouter()
+log = structlog.get_logger(__name__)
+
+ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    400: {"description": "Invalid request"},
+    500: {"description": "Server error"},
+}
+
+
+@router.post("/campaign", response_model=CampaignOut, responses=ERROR_RESPONSES)
+def create_campaign(
+    payload: CreateCampaignIn,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+):
+    """Create and launch an outreach campaign."""
+    try:
+        result = auto_outreach.create_campaign(
+            db,
+            name=payload.name,
+            entity_type=payload.entity_type,
+            language=payload.language,
+            purpose=payload.purpose,
+            min_quality_score=payload.min_quality_score,
+            min_reliability_score=payload.min_reliability_score,
+            min_economics_score=payload.min_economics_score,
+            region=payload.region,
+            certification=payload.certification,
+            limit=payload.limit,
+            refine_with_llm=payload.refine_with_llm,
+        )
+        return result
+    except ValueError:
+        log.warning("create_campaign_invalid")
+        raise HTTPException(status_code=400, detail="Invalid request") from None
+    except Exception:
+        log.error("create_campaign_failed")
+        raise HTTPException(
+            status_code=500, detail="Campaign creation failed"
+        ) from None
+
+
+@router.get(
+    "/suggestions",
+    response_model=list[OutreachSuggestionOut],
+    responses=ERROR_RESPONSES,
+)
+def get_suggestions(
+    entity_type: Literal["cooperative", "roaster"],
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+):
+    """Get AI-suggested outreach targets."""
+    try:
+        suggestions = auto_outreach.get_outreach_suggestions(
+            db, entity_type=entity_type, limit=limit
+        )
+        return suggestions
+    except Exception:
+        log.error("get_suggestions_failed")
+        raise HTTPException(
+            status_code=500, detail="Failed to get outreach suggestions"
+        ) from None
+
+
+@router.get(
+    "/status/{entity_type}/{entity_id}",
+    response_model=EntityOutreachStatusOut,
+    responses=ERROR_RESPONSES,
+)
+def get_entity_status(
+    entity_type: Literal["cooperative", "roaster"],
+    entity_id: Annotated[int, Path(ge=1)],
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+):
+    """Get outreach status for a specific entity."""
+    try:
+        status = auto_outreach.get_entity_outreach_status(
+            db, entity_type=entity_type, entity_id=entity_id
+        )
+        return status
+    except Exception:
+        log.error("get_entity_status_failed")
+        raise HTTPException(
+            status_code=500, detail="Failed to get entity outreach status"
+        ) from None

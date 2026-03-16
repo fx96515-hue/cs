@@ -1,0 +1,1 @@
+"""Regions schema domain package."""

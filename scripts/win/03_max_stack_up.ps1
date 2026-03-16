@@ -231,7 +231,7 @@ Write-Host "  UI:        http://ui.localhost" -ForegroundColor Green
 Write-Host "  API:       http://api.localhost/docs  (direct: http://localhost:8000/docs)" -ForegroundColor Green
 Write-Host "  Traefik:   http://traefik.localhost/dashboard/" -ForegroundColor Green
 Write-Host "  Portainer: http://docker.localhost" -ForegroundColor Green
-Write-Host "  Grafana:   http://ops.localhost  (admin/adminadmin)" -ForegroundColor Green
+Write-Host "  Grafana:   http://ops.localhost  (set GRAFANA_ADMIN_PASSWORD in .env)" -ForegroundColor Green
 Write-Host "  Prom:      http://prom.localhost" -ForegroundColor Green
 Write-Host "  n8n:       http://flows.localhost" -ForegroundColor Green
 Write-Host "  LLM UI:    http://llm.localhost" -ForegroundColor Green

@@ -1,25 +1,8 @@
-from pydantic import BaseModel
+"""Compatibility wrapper for regions schemas.
 
+Canonical implementation lives in app.domains.regions.schemas.regions.
+"""
 
-class PeruRegionOut(BaseModel):
-    id: int
-    code: str
-    name: str
-    description_de: str | None = None
-    altitude_range: str | None = None
-    typical_varieties: str | None = None
-    typical_processing: str | None = None
-    logistics_notes: str | None = None
-    risk_notes: str | None = None
+from app.domains.regions.schemas.regions import PeruRegionOut, RegionOut
 
-    class Config:
-        from_attributes = True
-
-
-class RegionOut(BaseModel):
-    id: int
-    name: str
-    country: str
-
-    class Config:
-        from_attributes = True
+__all__ = ["PeruRegionOut", "RegionOut"]

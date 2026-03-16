@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
 import { Breadcrumb } from "../../components/Breadcrumb";
+import { ErrorPanel } from "../../components/AlertError";
 import { useToast } from "../../components/ToastProvider";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
@@ -133,8 +134,8 @@ export default function RoasterDetailPage() {
 
   if (err) {
     return (
-      <div className="page">
-                <div className="alert bad"><div className="alertText">{err}</div></div>
+      <div className="content">
+        <ErrorPanel message={err} />
         <Link className="btn" href="/roasters">
           Zurueck
         </Link>
@@ -144,7 +145,7 @@ export default function RoasterDetailPage() {
 
   if (!r) {
     return (
-      <div className="page">
+      <div className="content">
         <div className="panel">Lade...</div>
       </div>
     );
@@ -157,18 +158,18 @@ export default function RoasterDetailPage() {
     : null;
 
   return (
-    <div className="page">
+    <div className="content">
       <Breadcrumb items={[
         { label: "Startseite", href: "/dashboard" },
         { label: "Röstereien", href: "/roasters" },
         { label: r.name },
       ]} />
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Rösterei #{r.id}</div>
           <div className="muted">Stammdaten & Notizen</div>
         </div>
-        <div className="row gap">
+        <div className="pageHeaderActions row gap">
           <Link className="btn" href="/roasters">
             Zur Liste
           </Link>
@@ -185,9 +186,9 @@ export default function RoasterDetailPage() {
             {saving ? "Speichere..." : "Speichern"}
           </button>
         </div>
-      </div>
+      </header>
 
-          {msg ? <div className="alert ok"><div className="alertText">{msg}</div></div> : null}
+      {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
 
       {r?.deleted_at ? (
         <div className="alert bad">

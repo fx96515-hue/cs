@@ -1,46 +1,8 @@
-from typing import Annotated
+"""Compatibility wrapper for regions routes.
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+Canonical implementation lives in app.domains.regions.api.routes.
+"""
 
-from app.api.deps import require_role
-from app.db.session import get_db
-from app.models.peru_region import PeruRegion
-from app.models.region import Region
-from app.schemas.regions import PeruRegionOut, RegionOut
-from app.services.peru_regions import seed_default_regions
+from app.domains.regions.api.routes import router
 
-
-router = APIRouter()
-
-
-@router.get("/", response_model=list[RegionOut])
-def list_regions(
-    country: str | None = None,
-    limit: Annotated[int, Query(ge=1, le=2000)] = 500,
-    *,
-    db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-):
-    q = db.query(Region)
-    if country:
-        q = q.filter(Region.country == country)
-    if hasattr(Region, "deleted_at"):
-        q = q.filter(Region.deleted_at.is_(None))
-    return q.order_by(Region.country.asc(), Region.name.asc()).limit(limit).all()
-
-
-@router.get("/peru", response_model=list[PeruRegionOut])
-def list_peru_regions(
-    db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-):
-    return db.query(PeruRegion).order_by(PeruRegion.name.asc()).all()
-
-
-@router.post("/peru/seed")
-def seed(
-    db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst"))],
-):
-    return seed_default_regions(db)
+__all__ = ["router"]

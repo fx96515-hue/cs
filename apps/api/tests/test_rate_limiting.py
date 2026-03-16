@@ -1,6 +1,9 @@
 """Tests for rate limiting functionality."""
 
 from fastapi.testclient import TestClient
+from starlette.requests import Request
+
+from app.domains.auth.api import routes as auth_routes
 from app.core.config import settings
 
 
@@ -90,6 +93,70 @@ def test_bootstrap_disabled_outside_dev(client: TestClient, monkeypatch):
     monkeypatch.setattr(settings, "APP_ENV", "prod")
     response = client.post("/auth/dev/bootstrap")
     assert response.status_code == 404
+
+
+def test_bootstrap_rejects_non_loopback_requests(client: TestClient, monkeypatch):
+    """Bootstrap endpoint must only be callable from loopback clients."""
+    monkeypatch.setattr(settings, "APP_ENV", "dev")
+    monkeypatch.setattr(auth_routes, "_is_loopback_request", lambda _request: False)
+    response = client.post("/auth/dev/bootstrap")
+    assert response.status_code == 403
+
+
+def test_bootstrap_sanitizes_invalid_password_config(client: TestClient, monkeypatch):
+    """Bootstrap should not expose password-policy internals in error detail."""
+    monkeypatch.setattr(settings, "APP_ENV", "dev")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "weak")
+    response = client.post("/auth/dev/bootstrap")
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid bootstrap password configuration"
+
+
+def test_bootstrap_sanitizes_invalid_email_config(client: TestClient, monkeypatch):
+    """Bootstrap should not expose email validation internals in error detail."""
+    monkeypatch.setattr(settings, "APP_ENV", "dev")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "AdminAdmin123!")
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_EMAIL", "invalid-email")
+    response = client.post("/auth/dev/bootstrap")
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid bootstrap email configuration"
+
+
+def test_loopback_detector_accepts_local_hosts():
+    """Loopback detector should allow known local client hosts."""
+    for host in ("127.0.0.1", "localhost", "::1", "testclient"):
+        req = Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": "/auth/dev/bootstrap",
+                "headers": [],
+                "query_string": b"",
+                "client": (host, 12345),
+                "server": ("testserver", 80),
+                "scheme": "http",
+                "http_version": "1.1",
+            }
+        )
+        assert auth_routes._is_loopback_request(req) is True
+
+
+def test_loopback_detector_rejects_remote_hosts():
+    """Loopback detector should reject non-local client hosts."""
+    req = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/auth/dev/bootstrap",
+            "headers": [],
+            "query_string": b"",
+            "client": ("203.0.113.10", 12345),
+            "server": ("testserver", 80),
+            "scheme": "http",
+            "http_version": "1.1",
+        }
+    )
+    assert auth_routes._is_loopback_request(req) is False
 
 
 def test_rate_limit_headers_present():

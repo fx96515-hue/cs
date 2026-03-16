@@ -1,0 +1,1 @@
+"""Logistics service domain package."""

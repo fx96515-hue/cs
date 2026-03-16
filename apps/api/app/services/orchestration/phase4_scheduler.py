@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.models.data_quality_flag import DataQualityFlag
 from app.services.data_pipeline.freshness import DataFreshnessMonitor
 from app.services.data_pipeline.phase2_orchestrator import Phase2DataPipelineFacade
-from app.services.quality_alerts import get_alert_summary
+from app.domains.quality_alerts.services.alerts import get_alert_summary
 from app.workers.celery_app import celery
 
 

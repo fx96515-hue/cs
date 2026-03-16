@@ -4,7 +4,7 @@ import pytest
 from app.models.cooperative import Cooperative
 from app.models.region import Region
 from app.models.roaster import Roaster
-from app.services import knowledge_graph
+from app.domains.knowledge_graph.services import graph_service as knowledge_graph
 
 
 def test_build_empty_graph(db):
@@ -344,6 +344,12 @@ def test_api_get_entity_analysis_not_found(client, auth_headers, db):
     """Test GET /graph/analysis with non-existent entity."""
     response = client.get("/graph/analysis/cooperative/999", headers=auth_headers)
     assert response.status_code == 404
+    assert response.json()["detail"] == "Not found"
+
+
+def test_api_get_entity_analysis_invalid_type_returns_422(client, auth_headers):
+    response = client.get("/graph/analysis/unknown/1", headers=auth_headers)
+    assert response.status_code == 422
 
 
 def test_api_get_communities(client, auth_headers, db):
@@ -448,6 +454,11 @@ def test_api_get_hidden_connections_invalid_max_hops(client, auth_headers, db):
         "/graph/hidden-connections/cooperative/1?max_hops=1", headers=auth_headers
     )
     assert response.status_code == 422  # Validation error
+
+
+def test_api_get_hidden_connections_invalid_type_returns_422(client, auth_headers):
+    response = client.get("/graph/hidden-connections/unknown/1", headers=auth_headers)
+    assert response.status_code == 422
 
 
 def test_api_requires_authentication(client, db):

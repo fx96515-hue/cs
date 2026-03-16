@@ -1,14 +1,8 @@
-from datetime import datetime
-from pydantic import BaseModel
+﻿"""Compatibility wrapper for report schema.
 
+Canonical implementation lives in app.domains.reports.schemas.report.
+"""
 
-class ReportOut(BaseModel):
-    id: int
-    kind: str
-    title: str | None = None
-    report_at: datetime
-    markdown: str
-    payload: dict | None = None
+from app.domains.reports.schemas.report import ReportOut
 
-    class Config:
-        from_attributes = True
+__all__ = ["ReportOut"]

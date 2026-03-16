@@ -298,7 +298,7 @@ def test_post_anomalies_scan(client, auth_headers, db):
 
 def test_get_anomalies_feature_flag_disabled(client, auth_headers, db):
     """GET /anomalies returns 503 when ANOMALY_DETECTION_ENABLED=False."""
-    with patch("app.api.routes.quality_alerts.settings") as mock_settings:
+    with patch("app.domains.quality_alerts.api.routes.settings") as mock_settings:
         mock_settings.ANOMALY_DETECTION_ENABLED = False
         response = client.get("/anomalies", headers=auth_headers)
     assert response.status_code == 503
@@ -307,7 +307,7 @@ def test_get_anomalies_feature_flag_disabled(client, auth_headers, db):
 
 def test_post_anomalies_scan_feature_flag_disabled(client, auth_headers, db):
     """POST /anomalies/scan returns 503 when ANOMALY_DETECTION_ENABLED=False."""
-    with patch("app.api.routes.quality_alerts.settings") as mock_settings:
+    with patch("app.domains.quality_alerts.api.routes.settings") as mock_settings:
         mock_settings.ANOMALY_DETECTION_ENABLED = False
         response = client.post("/anomalies/scan", headers=auth_headers)
     assert response.status_code == 503

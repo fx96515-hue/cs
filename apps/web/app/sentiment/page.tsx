@@ -68,12 +68,12 @@ export default function SentimentPage() {
 
   return (
     <div className="content">
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Sentiment-Analyse</div>
           <div className="muted">Marktsentiment pro Region aus News-Quellen.</div>
         </div>
-      </div>
+      </header>
 
       {err && <ErrorPanel message={err} onRetry={() => load(region)} />}
 
@@ -83,7 +83,7 @@ export default function SentimentPage() {
           <div className="panelTitle">Region</div>
         </div>
         <div className="panelBody">
-          <div className="pageActions" style={{ flexWrap: "wrap" }}>
+          <div className="pageHeaderActions" style={{ flexWrap: "wrap" }}>
             {REGIONS.map((r) => (
               <button
                 key={r}

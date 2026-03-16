@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiBaseUrl, authHeaders, hasAuthSession } from "../../lib/api";
+import { ErrorPanel } from "../components/AlertError";
 
 const MAX_MESSAGE_LENGTH = 1000;
 
@@ -260,11 +261,7 @@ export default function AssistantPage() {
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-error">
-          <strong>Fehler:</strong> {error}
-        </div>
-      )}
+      {error ? <ErrorPanel compact message={error} onRetry={checkStatus} /> : null}
 
       <div className="chat-area">
         {messages.length === 0 && (
@@ -387,15 +384,6 @@ export default function AssistantPage() {
         }
         .btn-secondary:hover {
           background: var(--coffee-light, #efebe9);
-        }
-        .alert {
-          padding: 0.9rem 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          background: #fee;
-          border: 1px solid #fcc;
-          color: #c33;
-          font-size: 0.9rem;
         }
         .chat-area {
           flex: 1;

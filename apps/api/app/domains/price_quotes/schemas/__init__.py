@@ -1,0 +1,1 @@
+"""Price-quotes schema domain package."""

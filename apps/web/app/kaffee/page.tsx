@@ -418,7 +418,7 @@ export default function CoffeeInfoPage() {
               color: 'var(--color-text-muted)',
             }}
           >
-            <p>Keine Ergebnisse fuer "{searchQuery}"</p>
+            <p>Keine Ergebnisse fuer &quot;{searchQuery}&quot;</p>
           </div>
         )}
       </section>
@@ -458,7 +458,7 @@ export default function CoffeeInfoPage() {
               Marktdaten
             </Link>
             <Link
-              href="/ki"
+              href="/assistant"
               className="muted"
               style={{
                 fontSize: 'var(--font-size-xs)',

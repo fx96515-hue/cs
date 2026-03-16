@@ -172,3 +172,22 @@ def test_lots_without_auth(client, db):
     response = client.get("/lots")
 
     assert response.status_code == 401
+
+
+def test_lots_reject_non_positive_path_ids(client, auth_headers):
+    response_get = client.get("/lots/0", headers=auth_headers)
+    assert response_get.status_code == 422
+
+    response_patch = client.patch("/lots/0", json={"varieties": "Bourbon"}, headers=auth_headers)
+    assert response_patch.status_code == 422
+
+    response_delete = client.delete("/lots/0", headers=auth_headers)
+    assert response_delete.status_code == 422
+
+    response_restore = client.post("/lots/0/restore", headers=auth_headers)
+    assert response_restore.status_code == 422
+
+
+def test_lots_reject_non_positive_cooperative_filter(client, auth_headers):
+    response = client.get("/lots?cooperative_id=0", headers=auth_headers)
+    assert response.status_code == 422

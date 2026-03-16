@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { format, differenceInDays } from "date-fns";
 import { useShipments, useCreateShipment } from "../hooks/useShipments";
 import { apiFetch } from "../../lib/api";
+import { ErrorPanel } from "../components/AlertError";
 import { Shipment } from "../types";
 
 /* ============================================================
@@ -168,9 +169,13 @@ export default function ShipmentsDashboard() {
               <h1 className="h1">Sendungsverfolgung</h1>
             </div>
           </header>
-          <div className="alert bad">
-            <span>Fehler beim Laden der Sendungen: {String(error)}</span>
-          </div>
+          <ErrorPanel
+            compact
+            message={`Fehler beim Laden der Sendungen: ${String(error)}`}
+            onRetry={() => {
+              void refetch();
+            }}
+          />
         </div>
       </div>
     );

@@ -10,7 +10,7 @@ def test_enrich_entity_invalid_type(client, auth_headers, db):
 
     response = client.post("/enrich/invalid_type/1", json=payload, headers=auth_headers)
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_enrich_entity_not_found(client, auth_headers, db):
@@ -74,7 +74,9 @@ def test_enrich_handles_unexpected_errors(client, auth_headers, monkeypatch):
     def _raise_internal_error(*args, **kwargs):
         raise RuntimeError("internal stack trace should not leak")
 
-    monkeypatch.setattr("app.api.routes.enrich.enrich_entity", _raise_internal_error)
+    monkeypatch.setattr(
+        "app.domains.enrich.api.routes.enrich_entity", _raise_internal_error
+    )
 
     response = client.post(
         "/enrich/cooperative/1",
@@ -84,3 +86,12 @@ def test_enrich_handles_unexpected_errors(client, auth_headers, monkeypatch):
 
     assert response.status_code == 500
     assert response.json()["detail"] == "Enrichment failed"
+
+
+def test_enrich_rejects_non_positive_entity_id(client, auth_headers):
+    response = client.post(
+        "/enrich/cooperative/0",
+        json={"url": "https://example.com", "use_llm": False},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422

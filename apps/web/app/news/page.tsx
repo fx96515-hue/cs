@@ -81,12 +81,12 @@ export default function NewsPage() {
 
   return (
     <div className="content">
-      <div className="pageHeader">
-        <div>
+      <header className="pageHeader">
+        <div className="pageHeaderContent">
           <div className="h1">Marktradar</div>
           <div className="muted">News, Quellen, Themen — ein Ort.</div>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <button className="btn" onClick={load} disabled={loading || refreshing}>
             Neu laden
           </button>
@@ -94,7 +94,7 @@ export default function NewsPage() {
             {refreshing ? "Refresh..." : "Refresh (API)"}
           </button>
         </div>
-      </div>
+      </header>
 
       {err && <ErrorPanel message={err} onRetry={load} />}
 

@@ -86,7 +86,7 @@ def test_recompute_flags_success(client, auth_headers, db, monkeypatch):
         return {"resolved": 1, "created": 2}
 
     monkeypatch.setattr(
-        "app.api.routes.data_quality.recompute_entity_flags",
+        "app.domains.data_quality.api.routes.recompute_entity_flags",
         _fake_recompute,
     )
 
@@ -100,8 +100,7 @@ def test_recompute_flags_success(client, auth_headers, db, monkeypatch):
 
 def test_recompute_flags_invalid_entity_type(client, auth_headers):
     response = client.post("/data-quality/recompute/invalid/1", headers=auth_headers)
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Unsupported entity_type"
+    assert response.status_code == 422
 
 
 def test_recompute_flags_entity_not_found(client, auth_headers):
@@ -111,4 +110,36 @@ def test_recompute_flags_entity_not_found(client, auth_headers):
     )
     assert response.status_code == 404
     assert response.json()["detail"] == "Not found"
+
+
+def test_data_quality_rejects_non_positive_flag_and_entity_ids(client, auth_headers):
+    resolve_response = client.post("/data-quality/flags/0/resolve", headers=auth_headers)
+    assert resolve_response.status_code == 422
+
+    recompute_response = client.post(
+        "/data-quality/recompute/cooperative/0",
+        headers=auth_headers,
+    )
+    assert recompute_response.status_code == 422
+
+
+def test_data_quality_rejects_non_positive_entity_filter(client, auth_headers):
+    response = client.get("/data-quality/flags?entity_id=0", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_data_quality_rejects_invalid_entity_type_and_severity_filter(
+    client, auth_headers
+):
+    invalid_entity_type = client.get(
+        "/data-quality/flags?entity_type=invalid",
+        headers=auth_headers,
+    )
+    assert invalid_entity_type.status_code == 422
+
+    invalid_severity = client.get(
+        "/data-quality/flags?severity=urgent",
+        headers=auth_headers,
+    )
+    assert invalid_severity.status_code == 422
 

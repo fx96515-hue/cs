@@ -37,9 +37,23 @@ test-results/
 diagnostics/
 logs/
 *.bak_*
+*.bak
+*.old
+.worktrees/
 *.patch
 *.rej
 *.orig
+.qa_backups/
+.qa_reports/
+.localapp/
+.tmp_*.json
+*_logs_*.txt
+*_docker_*.txt
+*_compose_*.txt
+*_db_*.txt
+*_api_*.txt
+*_ui_*.txt
+00_pwd.txt
 
 # Local DB / runtime artifacts
 *.db

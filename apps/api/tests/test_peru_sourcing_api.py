@@ -67,14 +67,7 @@ def test_get_region_intelligence_not_found(client, auth_headers, db):
         "/peru/regions/NonExistent/intelligence", headers=auth_headers
     )
     assert response.status_code == 404
-    # Check if response is JSON and has detail field
-    try:
-        data = response.json()
-        if "detail" in data:
-            assert "not found" in data["detail"].lower()
-    except Exception:
-        # Response might not be JSON, just check status code
-        pass
+    assert response.json()["detail"] == "Not found"
 
 
 def test_get_region_intelligence_alias_name(client, auth_headers, db):
@@ -94,6 +87,11 @@ def test_analyze_cooperative_not_found(client, auth_headers, db):
     """Test analyzing non-existent cooperative."""
     response = client.post("/peru/cooperatives/99999/analyze", headers=auth_headers)
     assert response.status_code == 404
+
+
+def test_peru_coop_id_path_rejects_zero(client, auth_headers, db):
+    response = client.post("/peru/cooperatives/0/analyze", headers=auth_headers)
+    assert response.status_code == 422
 
 
 def test_analyze_cooperative_success(client, auth_headers, db):
@@ -217,3 +215,12 @@ def test_refresh_region_data_alias_name(client, auth_headers, db):
     assert response.status_code == 200
     data = response.json()
     assert data["region"] == "Cusco"
+
+
+def test_refresh_region_data_rejects_blank_region_name(client, auth_headers, db):
+    response = client.post(
+        "/peru/regions/refresh",
+        json={"region_name": "   "},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422

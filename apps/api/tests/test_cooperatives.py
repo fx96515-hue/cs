@@ -144,6 +144,11 @@ def test_delete_nonexistent_cooperative(client, auth_headers):
     assert response.status_code == 404
 
 
+def test_cooperative_id_path_rejects_zero(client, auth_headers):
+    response = client.get("/cooperatives/0", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_audit_logging_on_crud_operations(client, auth_headers, db, test_user, caplog):
     """Test that audit logs are created for CRUD operations."""
     import logging

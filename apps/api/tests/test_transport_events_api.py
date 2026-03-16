@@ -90,3 +90,16 @@ def test_transport_events_viewer_read_only(client, auth_headers, viewer_auth_hea
     )
     assert forbidden_create.status_code == 403
 
+
+def test_transport_events_reject_non_positive_event_id(client, auth_headers):
+    response_get = client.get("/transport-events/0", headers=auth_headers)
+    assert response_get.status_code == 422
+
+    response_delete = client.delete("/transport-events/0", headers=auth_headers)
+    assert response_delete.status_code == 422
+
+
+def test_transport_events_reject_non_positive_shipment_filter(client, auth_headers):
+    response = client.get("/transport-events/?shipment_id=0", headers=auth_headers)
+    assert response.status_code == 422
+

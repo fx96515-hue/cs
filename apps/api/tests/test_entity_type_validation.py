@@ -6,14 +6,14 @@ from app.models.roaster import Roaster
 
 
 def test_enrich_invalid_entity_type_rejected(client: TestClient, auth_headers):
-    """Test that POST /enrich/invalid_entity/1 returns 400."""
+    """Test that POST /enrich/invalid_entity/1 returns 422."""
     response = client.post(
         "/enrich/invalid_entity/1",
         json={"url": "https://example.com"},
         headers=auth_headers,
     )
-    assert response.status_code == 400
-    # Manual validation should reject this
+    assert response.status_code == 422
+    # Route boundary validation should reject this
 
 
 def test_enrich_cooperative_valid_type(client: TestClient, auth_headers, db):

@@ -121,3 +121,32 @@ def test_sources_without_auth(client, db):
     response = client.get("/sources")
 
     assert response.status_code == 401
+
+
+def test_create_source_normalizes_kind_to_lowercase(client, auth_headers):
+    payload = {"name": "Kind Test", "url": "https://test.com", "kind": "API"}
+    response = client.post("/sources", json=payload, headers=auth_headers)
+    assert response.status_code in [200, 201]
+    assert response.json()["kind"] == "api"
+
+
+def test_create_source_rejects_invalid_kind(client, auth_headers):
+    payload = {"name": "Kind Test", "url": "https://test.com", "kind": "partner"}
+    response = client.post("/sources", json=payload, headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_create_source_rejects_invalid_reliability(client, auth_headers):
+    payload = {
+        "name": "Reliability Test",
+        "url": "https://test.com",
+        "kind": "api",
+        "reliability": 1.2,
+    }
+    response = client.post("/sources", json=payload, headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_source_id_path_rejects_zero(client, auth_headers):
+    response = client.get("/sources/0", headers=auth_headers)
+    assert response.status_code == 422

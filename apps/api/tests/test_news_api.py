@@ -1,4 +1,4 @@
-"""Tests for news API routes."""
+﻿"""Tests for news API routes."""
 
 from unittest.mock import patch
 from app.models.news_item import NewsItem
@@ -65,7 +65,7 @@ def test_list_news_with_topic_filter(client, auth_headers, db):
 
 def test_refresh_news_endpoint(client, auth_headers, db):
     """Test refreshing news endpoint."""
-    with patch("app.services.news.settings") as mock_settings:
+    with patch("app.domains.news.services.refresh.settings") as mock_settings:
         mock_settings.PERPLEXITY_API_KEY = None
 
         response = client.post("/news/refresh", headers=auth_headers)
@@ -122,3 +122,19 @@ def test_list_news_with_limit(client, auth_headers, db):
     assert response.status_code == 200
     data = response.json()
     assert len(data) <= 3
+
+
+def test_news_refresh_rejects_invalid_country_code(client, auth_headers):
+    response = client.post("/news/refresh?country=PER", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_news_refresh_rejects_non_positive_max_items(client, auth_headers):
+    response = client.post("/news/refresh?max_items=0", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_news_list_rejects_empty_topic(client, auth_headers):
+    response = client.get("/news?topic=", headers=auth_headers)
+    assert response.status_code == 422
+

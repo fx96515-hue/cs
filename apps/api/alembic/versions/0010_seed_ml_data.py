@@ -74,7 +74,7 @@ def _build_price_data(base_date: date) -> list[dict]:
         ("Peru", "Cusco"),
         ("Peru", "Amazonas"),
         ("Colombia", "Huila"),
-        ("Colombia", "NariÃ±o"),
+        ("Colombia", "Narino"),
     ]
     varieties = ["Caturra", "Bourbon", "Typica", "Catimor"]
     processes = ["Washed", "Natural", "Honey"]

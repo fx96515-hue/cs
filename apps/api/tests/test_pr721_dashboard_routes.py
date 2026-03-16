@@ -149,3 +149,14 @@ def test_features_import_template_endpoint(client, auth_headers):
     data = response.json()
     assert data["dataType"] == "price"
     assert "price_usd_per_kg" in data["columns"]
+
+
+def test_features_import_template_unknown_type_returns_404(client, auth_headers):
+    response = client.get("/features/import-template/unknown", headers=auth_headers)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Not found"
+
+
+def test_features_import_template_rejects_invalid_chars(client, auth_headers):
+    response = client.get("/features/import-template/price-v2", headers=auth_headers)
+    assert response.status_code == 422

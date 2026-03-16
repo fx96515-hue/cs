@@ -1,20 +1,44 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, cooperatives, roasters, health, discovery
-from app.api.routes import sources, market, reports, lots, margins
-from app.api.routes import enrich, dedup, news, logistics, outreach, regions
-from app.api.routes import deals, price_quotes, transport_events
-from app.api.routes import kb, cuppings, ml_predictions, peru_sourcing, shipments
-from app.api.routes import data_health, quality_alerts, auto_outreach, ops_dashboard
-from app.api.routes import ml_routes, semantic_search, rag_analyst, knowledge_graph
-from app.api.routes import assistant, data_quality
-from app.api.routes import sentiment
-from app.api.routes import (
-    pipeline_dashboard,
-    features_dashboard,
-    scheduler_dashboard,
-    monitoring_dashboard,
-)
+from app.domains.assistant.api import chat_routes as assistant
+from app.domains.assistant.api import analyst_routes as rag_analyst
+from app.domains.auth.api import routes as auth
+from app.domains.auto_outreach.api import routes as auto_outreach
+from app.domains.cooperatives.api import routes as cooperatives
+from app.domains.cuppings.api import routes as cuppings
+from app.domains.data_quality.api import routes as data_quality
+from app.domains.deals.api import routes as deals
+from app.domains.dedup.api import routes as dedup
+from app.domains.enrich.api import routes as enrich
+from app.domains.features.api import routes as features_dashboard
+from app.domains.discovery.api import routes as discovery
+from app.domains.health.api import health_routes as health
+from app.domains.health.api import data_health_routes as data_health
+from app.domains.kb.api import routes as kb
+from app.domains.knowledge_graph.api import routes as knowledge_graph
+from app.domains.logistics.api import routes as logistics
+from app.domains.lots.api import routes as lots
+from app.domains.margins.api import routes as margins
+from app.domains.market.api import routes as market
+from app.domains.ml_predictions.api import routes as ml_predictions
+from app.domains.ml_training.api import routes as ml_routes
+from app.domains.monitoring.api import routes as monitoring_dashboard
+from app.domains.news.api import routes as news
+from app.domains.ops.api import routes as ops_dashboard
+from app.domains.outreach.api import routes as outreach
+from app.domains.peru_sourcing.api import routes as peru_sourcing
+from app.domains.pipeline.api import routes as pipeline_dashboard
+from app.domains.price_quotes.api import routes as price_quotes
+from app.domains.quality_alerts.api import routes as quality_alerts
+from app.domains.regions.api import routes as regions
+from app.domains.reports.api import routes as reports
+from app.domains.roasters.api import routes as roasters
+from app.domains.scheduler.api import routes as scheduler_dashboard
+from app.domains.semantic_search.api import routes as semantic_search
+from app.domains.sentiment.api import routes as sentiment
+from app.domains.shipments.api import routes as shipments
+from app.domains.sources.api import routes as sources
+from app.domains.transport_events.api import routes as transport_events
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])

@@ -184,7 +184,7 @@ export default function FeaturesPage() {
   };
 
   return (
-    <>
+    <div className="content">
       {/* Page Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
@@ -394,6 +394,6 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -169,7 +169,7 @@ export default function MarktPage() {
   };
 
   return (
-    <>
+    <div className="content">
       {/* Page Header */}
       <header className="pageHeader">
         <div className="pageHeaderContent">
@@ -626,7 +626,7 @@ export default function MarktPage() {
                   <div className="muted" style={{ fontSize: "var(--font-size-sm)" }}>= $4.77/lb landed cost</div>
                 </div>
               </div>
-              <Link href="/ki" className="btn btnPrimary" style={{ width: "100%" }}>
+              <Link href="/assistant" className="btn btnPrimary" style={{ width: "100%" }}>
                 Eigene Kalkulation mit KI-Assistent
               </Link>
             </div>
@@ -736,6 +736,6 @@ export default function MarktPage() {
           </section>
         </div>
       )}
-    </>
+    </div>
   );
 }
