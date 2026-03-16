@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`728 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`731 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -250,6 +250,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: multiple knowledge-graph endpoints accepted unconstrained entity-type path input.
 - Action: enforced strict literal entity-type boundaries (`cooperative|roaster|region|certification`) and added regression tests for invalid types.
 
+43. Dedup and enrich endpoints used broad entity-type inputs
+- Status: FIXED
+- Issue: dedup query/payload and enrich path parameters accepted broad strings and relied on downstream checks.
+- Action: enforced strict literal entity-type boundaries at API/schema level, bounded dedup threshold (`0..100`), and added regression tests for invalid entity types/thresholds.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -362,6 +367,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `6d5dc4e` `harden(api): tighten news route input boundaries`
 - `1d71cf9` `harden(api): constrain semantic search entity-type inputs`
 - `48030d7` `harden(api): constrain knowledge-graph entity-type boundaries`
+- `ad961ae` `harden(api): tighten dedup and enrich entity-type boundaries`
 
 ## Fortschrittsliste (Taskleiste)
 
