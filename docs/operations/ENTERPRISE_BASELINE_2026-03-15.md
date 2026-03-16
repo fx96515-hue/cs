@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`706 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`708 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -210,6 +210,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: lots detail/mutation routes and cooperative filter accepted non-positive IDs.
 - Action: enforced positive bounds (`Path(ge=1)`, `Query(ge=1)`) and added regression tests for rejected zero values.
 
+35. Deals endpoints accepted non-positive identifiers in path/query boundaries
+- Status: FIXED
+- Issue: deals detail/mutation routes and list filters accepted non-positive IDs.
+- Action: enforced positive bounds (`Path(ge=1)`, `Query(ge=1)`) and added dedicated API boundary tests.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -309,6 +314,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `e9dcf6f` `docs(audit): capture websocket auth-contract hardening`
 - `0458b6e` `harden(api): enforce positive lot ids and cooperative filter bounds`
 - `e4ba9d0` `docs(dev): align local frontend setup to npm workflow`
+- `94bba5b` `docs(audit): finalize latest gate results and lot-boundary hardening`
+- `58fc382` `harden(api): enforce positive deal ids and filter bounds`
 
 ## Next Execution Slice
 
