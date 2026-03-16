@@ -497,3 +497,5 @@ This baseline captures the current technical status before broader hardening/ref
 - 71a65d5 improve(frontend): replace legacy /ki links with canonical /assistant route
 
 - 1e3118b refactor(reports): move reports module to domain structure with compatibility wrappers
+
+- f8baed8 refactor(outreach): migrate outreach module to domain structure with wrappers
