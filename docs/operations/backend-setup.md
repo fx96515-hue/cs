@@ -1,131 +1,102 @@
-# Backend Setup Instructions
+# Backend Setup
 
-## ✅ Status: VOLLSTÄNDIG FUNKTIONSFÄHIG
+This guide is the stable backend quickstart for local development and validation.
 
-Das Backend ist jetzt vollständig kompatibel und lauffähig!
+## Scope
 
-## 🔧 Behobene Probleme
+- API service (`apps/api`)
+- Postgres and Redis runtime dependencies
+- Celery worker and beat process
+- migrations and smoke checks
 
-### 1. Alpine/Debian Inkompatibilität
-- **Vorher:** Multi-stage Build mit Debian (builder) + Alpine (runtime)
-- **Problem:** Pydantic Binary Wheels benötigen glibc (nicht musl libc)
-- **Lösung:** Runtime Stage auf `python:3.12-slim` (Debian) umgestellt
-- **Ergebnis:** ✅ Alle Python Packages laden korrekt
+## Prerequisites
 
-### 2. Fehlende ML Build Dependencies
-- **Problem:** gcc, g++ fehlten für numpy/pandas/scikit-learn
-- **Lösung:** Build-Tools im Builder Stage hinzugefügt
-- **Ergebnis:** ✅ ML Packages kompilieren erfolgreich
+- Docker Desktop (or Docker Engine + Compose)
+- Python 3.11+ (only needed for local non-container test runs)
+- A local `.env` file based on `.env.example`
 
-### 3. Alembic Migration Chain
-- **Problem:** Doppelte Migrationen mit falschen Revision-Referenzen
-- **Lösung:** 
-  - Entfernt: `0009_peru_sourcing_intelligence_v0_4_0.py`
-  - Entfernt: `0010_peru_sourcing_intelligence_v0_4_0.py`
-  - Fixed: `0010_seed_ml_data.py` (psycopg3 Kompatibilität)
-- **Ergebnis:** ✅ Alle Migrationen laufen fehlerfrei
+## Required Environment Variables
 
-## 🚀 Schnellstart
+Set at least these values in `.env`:
 
-### 1. .env Datei erstellen
-```bash
-cp .env.example .env
-```
-
-Dann `.env` editieren und mindestens diese Werte setzen:
 ```env
-JWT_SECRET=dev_secret_change_me_minimum_32_characters_long_for_security
-BOOTSTRAP_ADMIN_EMAIL=admin@coffeestudio.com
-BOOTSTRAP_ADMIN_PASSWORD=admin_dev_password_change_in_production
 DATABASE_URL=postgresql+psycopg://coffeestudio:coffeestudio@postgres:5432/coffeestudio
 REDIS_URL=redis://redis:6379/0
+JWT_SECRET=<set-a-strong-secret>
+BOOTSTRAP_ADMIN_EMAIL=admin@coffeestudio.com
+BOOTSTRAP_ADMIN_PASSWORD=<set-a-strong-password>
 ```
 
-### 2. Services starten
+Notes:
+
+- Do not commit real secrets.
+- Do not use placeholder defaults in shared environments.
+- For local dev bootstrap, backend bootstrap routes are environment-gated and host-restricted.
+
+## Start Local Stack
+
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-### 3. Status prüfen
+Start including worker profile:
+
 ```bash
-docker compose ps
+docker compose --profile workers up -d --build
 ```
 
-Alle Services sollten "healthy" sein:
-- ✅ postgres
-- ✅ redis
-- ✅ backend
-- ✅ worker
-- ✅ beat
+## Apply Migrations
 
-### 4. Health Check
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+## Health and Smoke Checks
+
+Backend health:
+
 ```bash
 curl http://localhost:8000/health
 ```
 
-Erwartete Antwort:
-```json
-{"status": "ok"}
+Windows smoke:
+
+```powershell
+powershell -File scripts/win/smoke.ps1
 ```
 
-### 5. Logs prüfen (optional)
+Expected smoke result: all gates passed.
+
+## Backend Quality Gates
+
+Run from `apps/api`:
+
 ```bash
-docker compose logs backend -f
+python -m pytest -q
+ruff check app tests
+mypy --config-file ../../mypy.ini app
 ```
 
-## 📋 Migration Chain
+## Troubleshooting
 
-Die korrekte Migrations-Kette ist jetzt:
-1. 0001_init
-2. 0002_market_reports_sources_lots
-3. 0003_entity_evidence
-4. 0004_roaster_contact_email
-5. 0005_data_backbone_v0_3_0
-6. 0006_kb_and_cupping_v0_3_0
-7. 0007_market_observation_uniques_v0_3_1
-8. 0008_timestamp_defaults_kb_cupping_v0_3_2b
-9. 0009_ml_prediction_tables
-10. 0010_seed_ml_data
-11. 0011_add_shipments_table
+Backend container not healthy:
 
-## 🔍 Fehlerbehebung
+1. Check container status: `docker compose ps`
+2. Check logs: `docker compose logs backend --tail=200`
+3. Verify env values in `.env` (DB/Redis/JWT)
+4. Rebuild cleanly if needed: `docker compose build --no-cache backend`
 
-### Backend startet nicht
-1. Prüfen Sie, ob `.env` existiert und korrekte Werte hat
-2. Prüfen Sie logs: `docker compose logs backend`
-3. Rebuild: `docker compose build backend --no-cache`
+Migration failures:
 
-### Migrations schlagen fehl
-- Prüfen Sie, dass keine alten Duplikat-Migrationen existieren
-- Bei Bedarf Database neu erstellen: `docker compose down -v && docker compose up -d`
+1. Verify DB container is healthy before running Alembic
+2. Review `docker compose logs backend`
+3. If local state is broken, recreate local volumes only when appropriate:
+   `docker compose down -v && docker compose up -d --build`
 
-### Permission Denied Fehler
-- Docker neu starten
-- Images neu bauen: `docker compose build --no-cache`
+## Related Docs
 
-## 🎯 Wichtige Änderungen
-
-### Dockerfile (apps/api/Dockerfile)
-- ✅ Runtime: `python:3.12-slim` (vorher: `python:3.12-alpine`)
-- ✅ Package Manager: `apt-get` (vorher: `apk`)
-- ✅ Runtime Libs: `libpq5` (vorher: `libpq`)
-- ✅ User Creation: `groupadd`/`useradd` (vorher: `addgroup`/`adduser`)
-- ✅ Build Dependencies: gcc, g++, libpq-dev hinzugefügt
-
-### Alembic Migrations
-- ❌ Entfernt: `0009_peru_sourcing_intelligence_v0_4_0.py` (Duplikat)
-- ❌ Entfernt: `0010_peru_sourcing_intelligence_v0_4_0.py` (Duplikat)
-- ✅ Fixed: `0010_seed_ml_data.py` (psycopg3 Kompatibilität)
-
-## ✅ Validation
-
-Alle Tests bestanden:
-- ✅ Docker Build erfolgreich
-- ✅ Alle Packages installiert
-- ✅ Pydantic Core lädt korrekt
-- ✅ Alle Migrationen laufen durch
-- ✅ Backend startet und ist healthy
-- ✅ Health Endpoint antwortet
-- ✅ Keine Security Vulnerabilities
-
-**Status:** 🟢 PRODUCTION READY
+- `README.md`
+- `README_WINDOWS.md`
+- `docs/operations/enterprise-quickstart.md`
+- `docs/operations/OPERATIONS_RUNBOOK.md`
+- `docs/security/SECURITY.md`
