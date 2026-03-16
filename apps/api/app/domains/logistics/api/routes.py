@@ -1,0 +1,21 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.api.deps import require_role
+from app.db.session import get_db
+from app.domains.logistics.schemas.logistics import LandedCostRequest, LandedCostResponse
+from app.domains.logistics.services.costs import calc_landed_cost
+
+
+router = APIRouter()
+
+
+@router.post("/landed-cost", response_model=LandedCostResponse)
+def landed_cost(
+    payload: LandedCostRequest,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
+):
+    return calc_landed_cost(db, **payload.model_dump())

@@ -1,21 +1,8 @@
-from typing import Annotated
+"""Compatibility wrapper for logistics routes.
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+Canonical implementation lives in app.domains.logistics.api.routes.
+"""
 
-from app.api.deps import require_role
-from app.db.session import get_db
-from app.schemas.logistics import LandedCostRequest, LandedCostResponse
-from app.services.logistics import calc_landed_cost
+from app.domains.logistics.api.routes import router
 
-
-router = APIRouter()
-
-
-@router.post("/landed-cost", response_model=LandedCostResponse)
-def landed_cost(
-    payload: LandedCostRequest,
-    db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-):
-    return calc_landed_cost(db, **payload.model_dump())
+__all__ = ["router"]
