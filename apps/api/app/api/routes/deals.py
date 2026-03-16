@@ -15,6 +15,7 @@ from app.schemas.deal import DealCreate, DealOut, DealUpdate
 from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 
 router = APIRouter()
+DEAL_STATUS_QUERY_PATTERN = r"^(open|in_progress|closed|canceled)$"
 NOT_FOUND_DETAIL = "Not found"
 NOT_FOUND_RESPONSE: dict[int | str, dict[str, Any]] = {
     404: {"description": NOT_FOUND_DETAIL}
@@ -41,7 +42,7 @@ def list_deals(
     cooperative_id: Annotated[int | None, Query(ge=1)] = None,
     roaster_id: Annotated[int | None, Query(ge=1)] = None,
     lot_id: Annotated[int | None, Query(ge=1)] = None,
-    status: str | None = None,
+    status: Annotated[str | None, Query(pattern=DEAL_STATUS_QUERY_PATTERN)] = None,
     include_deleted: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
     *,

@@ -24,3 +24,8 @@ def test_deals_reject_non_positive_filter_ids(client, auth_headers):
 
     response_lot = client.get("/deals?lot_id=0", headers=auth_headers)
     assert response_lot.status_code == 422
+
+
+def test_deals_reject_invalid_status_filter(client, auth_headers):
+    response = client.get("/deals?status=unknown", headers=auth_headers)
+    assert response.status_code == 422
