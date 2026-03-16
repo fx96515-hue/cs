@@ -470,6 +470,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Assistant-Provider auf Cloud-First/Freemium-Ready erweitert (OpenRouter -> Groq -> Ollama in `auto`)
 - [x] Auto-Outreach in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Knowledge-Base (`kb`) in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
+- [x] Dedup-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -516,4 +517,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 92ccdcd improve(assistant): add OpenRouter cloud provider support and auto cloud-first fallback order
 - 5ae2294 refactor(auto-outreach): move module into domain-first structure with compatibility wrappers
 - 6358025 docs(audit): log auto-outreach domain migration slice
-- pending-commit refactor(kb): migrate knowledge-base module to domain structure with wrappers
+- 22fd77e refactor(kb): migrate knowledge-base module to domain structure with wrappers
+- cbd1bf0 docs(audit): log kb domain migration slice
+- pending-commit refactor(dedup): migrate module to domain structure with wrappers
