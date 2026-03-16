@@ -280,6 +280,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: shipment list `status` and ML model list `model_type` query filters accepted broad strings.
 - Action: enforced literal-bound query contracts for shipment statuses and supported ML model types; added regression tests for invalid filter values.
 
+49. Local worktree/backup artifacts could reappear in repo and docker contexts
+- Status: IMPROVED
+- Issue: generic backup suffixes and local `.worktrees` folder were not explicitly ignored by root ignore rules.
+- Action: extended `.gitignore` and `.dockerignore` with `.worktrees/`, `*.bak`, and `*.old` to keep local noise out of status/build contexts.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -398,6 +403,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `fc9b5c0` `harden(api): validate quality-alert filter boundaries`
 - `ee1fda4` `improve(frontend): align report detail header and error panel patterns`
 - `895fb2a` `harden(api): constrain shipment and ml model-type query filters`
+- `0f6ea21` `chore(repo): ignore local worktrees and generic backup artifacts`
 
 ## Fortschrittsliste (Taskleiste)
 
