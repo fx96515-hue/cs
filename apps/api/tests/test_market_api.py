@@ -153,3 +153,29 @@ def test_resolve_ws_user_email_rejects_invalid_token(monkeypatch):
 
     with pytest.raises(ValueError, match="Invalid token"):
         market_routes._resolve_ws_user_email("invalid-token")
+
+
+def test_load_ws_user_normalizes_email_before_query(monkeypatch):
+    captured: dict[str, object] = {}
+    expected_user = object()
+
+    class _DummyQuery:
+        def filter(self, expression):
+            captured["email"] = expression.right.value
+            return self
+
+        def first(self):
+            return expected_user
+
+    class _DummyDb:
+        def query(self, _model):
+            return _DummyQuery()
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(market_routes, "SessionLocal", lambda: _DummyDb())
+    user = market_routes._load_ws_user("  ADMIN@Example.COM  ")
+
+    assert user is expected_user
+    assert captured["email"] == "admin@example.com"

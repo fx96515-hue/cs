@@ -12,7 +12,7 @@ from app.models.shipment import Shipment
 from app.models.shipment_lot import ShipmentLot
 from app.models.transport_event import TransportEvent
 from app.models.user import User
-from app.schemas.shipment import (
+from app.domains.shipments.schemas.shipment import (
     ShipmentCreate,
     ShipmentOut,
     ShipmentUpdate,

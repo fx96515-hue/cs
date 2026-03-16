@@ -34,7 +34,10 @@ export default function RegionDetailPage() {
       <div className="content">
         <div className="panel">
           <ErrorPanel message="Region nicht gefunden oder Fehler beim Laden." compact />
-          <div className="pageActions" style={{ marginTop: "var(--space-3)" }}>
+          <div
+            className="pageHeaderActions"
+            style={{ marginTop: "var(--space-3)" }}
+          >
             <Link href="/peru-sourcing" className="btn">
               Zurueck zur Uebersicht
             </Link>

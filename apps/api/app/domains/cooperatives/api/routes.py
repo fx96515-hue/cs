@@ -11,7 +11,7 @@ from app.api.response_utils import apply_create_status
 from app.db.session import get_db
 from app.models.cooperative import Cooperative
 from app.models.user import User
-from app.schemas.cooperative import CooperativeCreate, CooperativeOut, CooperativeUpdate
+from app.domains.cooperatives.schemas.cooperative import CooperativeCreate, CooperativeOut, CooperativeUpdate
 from app.services.discovery import backfill_missing_cooperative_data
 from app.services.scoring import recompute_and_persist_cooperative
 from app.core.export import DataExporter

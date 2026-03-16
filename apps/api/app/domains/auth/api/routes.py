@@ -22,7 +22,7 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import LoginRequest, TokenResponse, UserOut
+from app.domains.auth.schemas.auth import LoginRequest, TokenResponse, UserOut
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)

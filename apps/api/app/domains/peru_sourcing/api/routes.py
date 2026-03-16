@@ -14,7 +14,7 @@ from sqlalchemy import select
 from app.api.deps import require_role
 from app.db.session import get_db
 from app.models.region import Region
-from app.schemas.peru_sourcing import (
+from app.domains.peru_sourcing.schemas.peru_sourcing import (
     RegionIntelligenceResponse,
     RegionBasicResponse,
     SourcingAnalysisResponse,

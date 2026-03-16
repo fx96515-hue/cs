@@ -14,6 +14,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -24,7 +25,7 @@ from app.core.security import decode_token
 from app.db.session import SessionLocal, get_db
 from app.models.market import MarketObservation
 from app.models.user import User
-from app.schemas.market import MarketObservationCreate, MarketObservationOut
+from app.domains.market.schemas.market import MarketObservationCreate, MarketObservationOut
 from app.workers.celery_app import celery
 
 log = structlog.get_logger()
@@ -61,7 +62,8 @@ def _resolve_ws_user_email(token: str) -> str:
 def _load_ws_user(user_email: str) -> User | None:
     db = SessionLocal()
     try:
-        return db.query(User).filter(User.email == user_email).first()
+        normalized_email = user_email.strip().lower()
+        return db.query(User).filter(func.lower(User.email) == normalized_email).first()
     finally:
         db.close()
 

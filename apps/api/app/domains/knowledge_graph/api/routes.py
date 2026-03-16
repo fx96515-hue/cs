@@ -7,14 +7,14 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_role
 from app.core.config import settings
-from app.schemas.knowledge_graph import (
+from app.domains.knowledge_graph.schemas.knowledge_graph import (
     Community,
     EntityAnalysis,
     HiddenConnection,
     NetworkData,
     PathResult,
 )
-from app.services import knowledge_graph
+from app.domains.knowledge_graph.services import graph_service
 
 router = APIRouter()
 GraphEntityType = Literal["cooperative", "roaster", "region", "certification"]
@@ -68,7 +68,7 @@ def get_network(
     __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> NetworkData:
     """Get the complete knowledge graph network data for visualization."""
-    return knowledge_graph.get_network_data(db, node_types=node_types)
+    return graph_service.get_network_data(db, node_types=node_types)
 
 
 @router.get("/analysis/{entity_type}/{entity_id}", responses=GRAPH_COMMON_RESPONSES)
@@ -87,7 +87,7 @@ def get_entity_analysis(
             parsed_id = int(entity_id)
         except ValueError:
             parsed_id = entity_id
-        return knowledge_graph.get_entity_analysis(db, entity_type, parsed_id)
+        return graph_service.get_entity_analysis(db, entity_type, parsed_id)
     except ValueError:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -102,7 +102,7 @@ def get_entity_connections(
     """Get connections for a specific entity by full node ID (e.g. cooperative_1, roaster_2)."""
     try:
         entity_type, parsed_id = _parse_node_id(node_id)
-        return knowledge_graph.get_entity_analysis(db, entity_type, parsed_id)
+        return graph_service.get_entity_analysis(db, entity_type, parsed_id)
     except ValueError:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -114,7 +114,7 @@ def get_communities(
     __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> list[Community]:
     """Detect and return communities in the knowledge graph."""
-    return knowledge_graph.get_communities(db)
+    return graph_service.get_communities(db)
 
 
 @router.get("/cluster", responses=GRAPH_DISABLED_RESPONSES)
@@ -124,7 +124,7 @@ def get_clusters(
     __: Annotated[None, Depends(_require_graph_enabled)],
 ) -> list[Community]:
     """Alias for /graph/communities - cluster detection in the knowledge graph."""
-    return knowledge_graph.get_communities(db)
+    return graph_service.get_communities(db)
 
 
 @router.get(
@@ -154,7 +154,7 @@ def get_shortest_path(
         except ValueError:
             parsed_target_id = target_id
 
-        return knowledge_graph.get_shortest_path(
+        return graph_service.get_shortest_path(
             db, source_type, parsed_source_id, target_type, parsed_target_id
         )
     except ValueError:
@@ -173,7 +173,7 @@ def get_path_by_node_ids(
     try:
         source_type, parsed_source_id = _parse_node_id(from_id)
         target_type, parsed_target_id = _parse_node_id(to_id)
-        return knowledge_graph.get_shortest_path(
+        return graph_service.get_shortest_path(
             db, source_type, parsed_source_id, target_type, parsed_target_id
         )
     except ValueError:
@@ -201,6 +201,8 @@ def get_hidden_connections(
             parsed_id = int(entity_id)
         except ValueError:
             parsed_id = entity_id
-        return knowledge_graph.get_hidden_connections(db, entity_type, parsed_id, max_hops)
+        return graph_service.get_hidden_connections(
+            db, entity_type, parsed_id, max_hops
+        )
     except ValueError:
         raise HTTPException(status_code=404, detail="Not found")

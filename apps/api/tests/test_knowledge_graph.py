@@ -4,7 +4,7 @@ import pytest
 from app.models.cooperative import Cooperative
 from app.models.region import Region
 from app.models.roaster import Roaster
-from app.services import knowledge_graph
+from app.domains.knowledge_graph.services import graph_service as knowledge_graph
 
 
 def test_build_empty_graph(db):

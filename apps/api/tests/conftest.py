@@ -75,7 +75,7 @@ def db():
     and set timestamps via SQLAlchemy events (see above).
     """
     # Invalidate knowledge graph cache so each test builds a fresh graph
-    from app.services import knowledge_graph as kg_service
+    from app.domains.knowledge_graph.services import graph_service as kg_service
 
     kg_service.invalidate_cache()
 

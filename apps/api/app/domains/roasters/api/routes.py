@@ -10,7 +10,7 @@ from app.api.response_utils import apply_create_status
 from app.db.session import get_db
 from app.models.roaster import Roaster
 from app.models.user import User
-from app.schemas.roaster import RoasterCreate, RoasterOut, RoasterUpdate
+from app.domains.roasters.schemas.roaster import RoasterCreate, RoasterOut, RoasterUpdate
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
 from app.core.versioning import capture_entity_version
