@@ -300,6 +300,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `docs/operations/playbooks/playbooks/` introduced unnecessary nesting and reduced discoverability.
 - Action: flattened playbook location to `docs/operations/playbooks/enterprise-smoke.md`.
 
+53. Dashboard still used ad-hoc error-state markup
+- Status: IMPROVED
+- Issue: dashboard error rendering used custom alert markup instead of the shared error-state component.
+- Action: switched to shared `ErrorPanel` usage and corrected a copy typo (`Datenabreichung` -> `Datenanreicherung`) for consistency.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -426,6 +431,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `6352020` `improve(frontend): standardize remaining page action container semantics`
 - `65fa6da` `docs(readme): align verification gates with full enterprise checks`
 - `c9a70bd` `chore(docs): flatten nested operations playbooks directory`
+- `e896fbd` `improve(frontend): use shared ErrorPanel on dashboard and fix copy typo`
 
 ## Fortschrittsliste (Taskleiste)
 
