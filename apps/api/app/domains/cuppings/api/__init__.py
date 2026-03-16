@@ -1,0 +1,1 @@
+"""Cuppings API domain package."""

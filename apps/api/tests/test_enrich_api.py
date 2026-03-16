@@ -74,7 +74,9 @@ def test_enrich_handles_unexpected_errors(client, auth_headers, monkeypatch):
     def _raise_internal_error(*args, **kwargs):
         raise RuntimeError("internal stack trace should not leak")
 
-    monkeypatch.setattr("app.api.routes.enrich.enrich_entity", _raise_internal_error)
+    monkeypatch.setattr(
+        "app.domains.enrich.api.routes.enrich_entity", _raise_internal_error
+    )
 
     response = client.post(
         "/enrich/cooperative/1",

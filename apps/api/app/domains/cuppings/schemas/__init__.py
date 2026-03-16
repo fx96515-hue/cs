@@ -1,0 +1,1 @@
+"""Cuppings schema domain package."""
