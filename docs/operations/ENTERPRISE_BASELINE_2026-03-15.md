@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`722 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`725 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -235,6 +235,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: deals `status` query filter allowed arbitrary strings.
 - Action: constrained status query to supported values (`open|in_progress|closed|canceled`) and added API regression test.
 
+40. News endpoints accepted weak country/max-items/topic query boundaries
+- Status: FIXED
+- Issue: news refresh/list endpoints allowed weak topic length, non-ISO country variants, and non-positive item limits.
+- Action: constrained/normalized `topic`, `country` (ISO-2, uppercase), and `max_items` bounds; added API regression tests for invalid values.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -344,9 +349,23 @@ This baseline captures the current technical status before broader hardening/ref
 - `42bdf9c` `harden(api): enforce positive entity and shipment path ids`
 - `d08d66d` `docs(audit): record shipment and enrich boundary hardening`
 - `8b1b505` `harden(api): validate deals status filter values`
+- `6d5dc4e` `harden(api): tighten news route input boundaries`
+
+## Fortschrittsliste (Taskleiste)
+
+- [x] Baseline-Gates grün validiert (API/Typing/Lint/Web-Build/Docker-Config)
+- [x] Kritische Input-Boundary-Härtung für Kern-API-Routen (mehrere Slices)
+- [x] Error-Contract-Sanitizing in sicherheitsrelevanten Endpunkten
+- [x] Frontend-Header-/Layout-Konsistenz auf zentralen Seiten verbessert
+- [x] Docker-Kontext und lokale Sicherheitsdefaults gehärtet
+- [ ] Verbleibende Backend-Routen auf letzte Boundary-Lücken prüfen und schließen
+- [ ] Frontend-Formular-/Tabellen-/State-Patterns vollständig angleichen
+- [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschließen
+- [ ] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisieren
+- [ ] Abschlussvalidierung über alle Gates inkl. Docker-Runtime-Smoketest erneut durchführen
 
 ## Next Execution Slice
 
-1. Continue targeted backend boundary hardening on remaining mutation/list routes with unconstrained IDs.
-2. Keep frontend consistency improvements focused on shared interaction/state patterns (without redesign).
-3. Repeat full-gate validation after each hardening slice and keep this baseline synchronized.
+1. Finish remaining backend boundary/error-contract hardening with tight regression tests.
+2. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
+3. Execute repository cleanup + docs hardening slices and rerun full-gate validation.
