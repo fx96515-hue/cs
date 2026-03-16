@@ -486,3 +486,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 1a6e3af improve(frontend): align assistant page error state with shared ErrorPanel
 
 - 2c93557 improve(assistant): add auto provider selection and retire legacy /ki demo page (redirect)
+
+- ce181a2 refactor(assistant): establish domain-first module structure with compatibility wrappers
+- pending-commit docs(architecture): add STRUCTURE_BLUEPRINT for full project modularization roadmap
