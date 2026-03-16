@@ -477,6 +477,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Margins-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Data-Quality-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Interne Imports auf kanonische Domain-Pfade konsolidiert (weniger Legacy-Wrapper-Abhaengigkeit)
+- [x] Regions/Peru-Seed in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -537,4 +538,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 8b23974 docs(audit): log margins domain migration slice
 - 8c2b4cc refactor(data-quality): migrate module to domain structure with wrappers
 - d88e460 docs(audit): log data-quality domain migration slice
-- pending-commit refactor(core): switch internal imports to canonical domain modules
+- d19bcea refactor(core): use canonical domain imports for migrated modules
+- a24ad11 docs(audit): log canonical-import consolidation slice
+- pending-commit refactor(regions): migrate module to domain structure with wrappers
