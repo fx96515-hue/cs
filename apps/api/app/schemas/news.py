@@ -1,24 +1,8 @@
-from datetime import datetime
-from pydantic import BaseModel
+﻿"""Compatibility wrapper for news schemas.
 
+Canonical implementation lives in app.domains.news.schemas.news.
+"""
 
-class NewsItemOut(BaseModel):
-    id: int
-    topic: str
-    title: str
-    url: str
-    snippet: str | None = None
-    country: str | None = None
-    published_at: datetime | None = None
-    retrieved_at: datetime | None = None
+from app.domains.news.schemas.news import NewsItemOut, NewsRefreshResponse
 
-    class Config:
-        from_attributes = True
-
-
-class NewsRefreshResponse(BaseModel):
-    status: str
-    topic: str | None = None
-    created: int | None = None
-    updated: int | None = None
-    errors: list[str] = []
+__all__ = ["NewsItemOut", "NewsRefreshResponse"]
