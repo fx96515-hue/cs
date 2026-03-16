@@ -484,3 +484,5 @@ This baseline captures the current technical status before broader hardening/ref
 - Validation: `ruff check app tests` PASS, `mypy --config-file ../../mypy.ini app` PASS, `pytest apps/api/tests -q` PASS (737 passed, 3 skipped).
 
 - 1a6e3af improve(frontend): align assistant page error state with shared ErrorPanel
+
+- 2c93557 improve(assistant): add auto provider selection and retire legacy /ki demo page (redirect)
