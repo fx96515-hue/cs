@@ -350,6 +350,36 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: `auth`, `cooperatives`, `knowledge_graph`, `lots`, `market`, `peru_sourcing`, `roasters`, and `shipments` routes were still owned under `app.api.routes`.
 - Action: migrated all remaining legacy route modules to domain-first locations with compatibility wrappers and updated route-level test imports to canonical domain modules where patching/helper access is required.
 
+63. Core route-domain schemas still lived in legacy shared schema paths
+- Status: FIXED
+- Issue: newly migrated core route domains still imported legacy schema modules (`app.schemas.*`) instead of domain-local schema ownership.
+- Action: moved `auth/cooperative/knowledge_graph/lot/market/peru_sourcing/roaster/shipment` schemas into domain-local schema packages, retained wrappers under `app.schemas.*`, and switched domain routes to canonical imports.
+
+64. Knowledge-graph service remained outside domain ownership
+- Status: FIXED
+- Issue: graph service logic lived in shared `app.services` despite domain-first route ownership.
+- Action: moved canonical implementation to `app.domains.knowledge_graph.services.graph_service`, retained compatibility wrapper in `app.services.knowledge_graph`, and switched routes/tests to canonical domain service imports.
+
+65. API router still depended on legacy route wrappers for most modules
+- Status: IMPROVED
+- Issue: central API router imported route wrappers from `app.api.routes`, increasing indirection and wrapper coupling.
+- Action: switched router wiring to canonical domain route modules across migrated domains while keeping wrappers only for compatibility.
+
+66. Market websocket user lookup used case-sensitive email matching
+- Status: FIXED
+- Issue: `_load_ws_user` compared websocket token emails case-sensitively and could reject valid mixed-case accounts.
+- Action: normalized websocket email lookup to case-insensitive query behavior and added regression coverage.
+
+67. Peru region detail page still used legacy action-container class
+- Status: IMPROVED
+- Issue: detail page action block still used `pageActions` class despite standardized `pageHeaderActions` pattern.
+- Action: aligned page action container to `pageHeaderActions` for consistent header/action semantics.
+
+68. App-level docker ignore rules missed deeper cache/noise patterns
+- Status: IMPROVED
+- Issue: app Docker contexts did not explicitly exclude nested Python caches and common Node package-manager cache noise.
+- Action: tightened `apps/api/.dockerignore` and `apps/web/.dockerignore` with recursive cache patterns and additional local artifact exclusions.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -516,6 +546,12 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Pipeline-Dashboard in domain-first Struktur migriert (Route + Legacy-Kompatibilitaet)
 - [x] Semantic-Search in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Verbleibende Legacy-Kernrouten vollstaendig in Domain-Struktur migriert (mit Kompatibilitaetswrappern)
+- [x] Kern-Schemas (auth/cooperative/knowledge-graph/lot/market/peru-sourcing/roaster/shipment) in Domain-Struktur migriert
+- [x] Knowledge-Graph Service in Domain-Struktur migriert (mit Kompatibilitaetswrapper)
+- [x] API-Router auf kanonische Domain-Routeimporte konsolidiert
+- [x] Security-Haertung Runde 2: websocket-email lookup case-insensitive abgesichert
+- [x] Frontend-Konsistenz Runde 2: verbleibende pageActions-Nutzung auf pageHeaderActions vereinheitlicht
+- [x] Docker-/Local-Dev Runde 2: app-level .dockerignore weiter gehaertet
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -605,3 +641,4 @@ This baseline captures the current technical status before broader hardening/ref
 - d9b774f refactor(semantic-search): migrate route and schemas to domain structure
 - 4414ba4 docs(audit): log semantic-search domain migration slice
 - a1316c9 refactor(routes): migrate remaining legacy api routes to domain structure
+- f1345e0 docs(audit): log complete legacy-route domain migration
