@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
@@ -17,12 +17,10 @@ from app.models.user import User
 
 router = APIRouter()
 NOT_FOUND_DETAIL = "Not found"
-UNSUPPORTED_ENTITY_DETAIL = "Unsupported entity_type"
 RESOLVE_FLAG_RESPONSES: dict[int | str, dict[str, Any]] = {
     404: {"description": NOT_FOUND_DETAIL}
 }
 RECOMPUTE_RESPONSES: dict[int | str, dict[str, Any]] = {
-    400: {"description": UNSUPPORTED_ENTITY_DETAIL},
     404: {"description": NOT_FOUND_DETAIL},
 }
 
@@ -34,13 +32,15 @@ ENTITY_MODEL_MAP = {
     "shipment": Shipment,
     "deal": Deal,
 }
+DataQualityEntityType = Literal["cooperative", "roaster", "lot", "shipment", "deal"]
+DataQualitySeverity = Literal["info", "warning", "critical"]
 
 
 @router.get("/flags", response_model=list[DataQualityFlagOut])
 def list_flags(
-    entity_type: str | None = None,
+    entity_type: DataQualityEntityType | None = None,
     entity_id: Annotated[int | None, Query(ge=1)] = None,
-    severity: str | None = None,
+    severity: DataQualitySeverity | None = None,
     include_resolved: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=1000)] = 200,
     *,
@@ -81,17 +81,17 @@ def resolve_flag(
 
 @router.post("/recompute/{entity_type}/{entity_id}", responses=RECOMPUTE_RESPONSES)
 def recompute_flags(
-    entity_type: str,
+    entity_type: DataQualityEntityType,
     entity_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
 ):
     model = ENTITY_MODEL_MAP.get(entity_type)
     if not model:
-        raise HTTPException(status_code=400, detail=UNSUPPORTED_ENTITY_DETAIL)
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     model_id_column = getattr(model, "id", None)
     if model_id_column is None:
-        raise HTTPException(status_code=400, detail=UNSUPPORTED_ENTITY_DETAIL)
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     instance = db.query(model).filter(model_id_column == entity_id).first()
     if not instance:
         raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)

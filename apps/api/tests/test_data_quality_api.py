@@ -100,8 +100,7 @@ def test_recompute_flags_success(client, auth_headers, db, monkeypatch):
 
 def test_recompute_flags_invalid_entity_type(client, auth_headers):
     response = client.post("/data-quality/recompute/invalid/1", headers=auth_headers)
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Unsupported entity_type"
+    assert response.status_code == 422
 
 
 def test_recompute_flags_entity_not_found(client, auth_headers):
@@ -127,4 +126,20 @@ def test_data_quality_rejects_non_positive_flag_and_entity_ids(client, auth_head
 def test_data_quality_rejects_non_positive_entity_filter(client, auth_headers):
     response = client.get("/data-quality/flags?entity_id=0", headers=auth_headers)
     assert response.status_code == 422
+
+
+def test_data_quality_rejects_invalid_entity_type_and_severity_filter(
+    client, auth_headers
+):
+    invalid_entity_type = client.get(
+        "/data-quality/flags?entity_type=invalid",
+        headers=auth_headers,
+    )
+    assert invalid_entity_type.status_code == 422
+
+    invalid_severity = client.get(
+        "/data-quality/flags?severity=urgent",
+        headers=auth_headers,
+    )
+    assert invalid_severity.status_code == 422
 
