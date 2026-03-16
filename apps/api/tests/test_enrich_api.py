@@ -84,3 +84,12 @@ def test_enrich_handles_unexpected_errors(client, auth_headers, monkeypatch):
 
     assert response.status_code == 500
     assert response.json()["detail"] == "Enrichment failed"
+
+
+def test_enrich_rejects_non_positive_entity_id(client, auth_headers):
+    response = client.post(
+        "/enrich/cooperative/0",
+        json={"url": "https://example.com", "use_llm": False},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422

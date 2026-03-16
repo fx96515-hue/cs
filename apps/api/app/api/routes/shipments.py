@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -295,7 +295,7 @@ def create_shipment(
     responses=SHIPMENT_ERROR_RESPONSES,
 )
 def get_shipment(
-    shipment_id: int,
+    shipment_id: Annotated[int, Path(ge=1)],
     include_deleted: Annotated[bool, Query()] = False,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -317,7 +317,7 @@ def get_shipment(
     responses=SHIPMENT_ERROR_RESPONSES,
 )
 def update_shipment(
-    shipment_id: int,
+    shipment_id: Annotated[int, Path(ge=1)],
     payload: ShipmentUpdate,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
@@ -383,7 +383,7 @@ def update_shipment(
 
 @router.delete("/{shipment_id}", responses=SHIPMENT_ERROR_RESPONSES)
 def delete_shipment(
-    shipment_id: int,
+    shipment_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -434,7 +434,7 @@ def delete_shipment(
     responses=SHIPMENT_ERROR_RESPONSES,
 )
 def restore_shipment(
-    shipment_id: int,
+    shipment_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -479,7 +479,7 @@ def restore_shipment(
     responses=SHIPMENT_ERROR_RESPONSES,
 )
 def add_tracking_event(
-    shipment_id: int,
+    shipment_id: Annotated[int, Path(ge=1)],
     event: TrackingEventCreate,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],

@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 import structlog
 from sqlalchemy.orm import Session
 
@@ -25,7 +25,7 @@ ENRICH_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
 )
 def enrich(
     entity_type: str,
-    entity_id: int,
+    entity_id: Annotated[int, Path(ge=1)],
     payload: EnrichRequest,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
