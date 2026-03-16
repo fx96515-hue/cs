@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from app.api.routes import data_health as data_health_routes
+from app.domains.health.api import data_health_routes
 
 
 class _DummyRedis:
