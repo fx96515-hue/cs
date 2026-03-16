@@ -91,7 +91,7 @@ except Exception as exc:
 async def startup_seed_data():
     """Seed default regions and demo data on startup if tables are empty."""
     from app.db.session import SessionLocal
-    from app.services.peru_regions import seed_default_regions
+    from app.domains.regions.services.peru_seed import seed_default_regions
     from app.services.seed_peru_regions import seed_peru_regions
     from app.services.seed_demo_data import seed_all_demo_data
     from sqlalchemy import inspect
