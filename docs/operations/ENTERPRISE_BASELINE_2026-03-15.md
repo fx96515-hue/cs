@@ -305,6 +305,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: dashboard error rendering used custom alert markup instead of the shared error-state component.
 - Action: switched to shared `ErrorPanel` usage and corrected a copy typo (`Datenabreichung` -> `Datenanreicherung`) for consistency.
 
+54. Detail pages still had mixed ad-hoc error-state rendering
+- Status: IMPROVED
+- Issue: cooperative, roaster, and lot detail pages used varying custom error alert markup.
+- Action: aligned error-state rendering on those detail pages to shared `ErrorPanel` semantics (including retry wiring where available).
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -432,6 +437,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `65fa6da` `docs(readme): align verification gates with full enterprise checks`
 - `c9a70bd` `chore(docs): flatten nested operations playbooks directory`
 - `e896fbd` `improve(frontend): use shared ErrorPanel on dashboard and fix copy typo`
+- `717a377` `improve(frontend): unify detail-page error states with ErrorPanel`
 
 ## Fortschrittsliste (Taskleiste)
 
