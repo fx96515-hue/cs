@@ -491,3 +491,5 @@ This baseline captures the current technical status before broader hardening/ref
 - pending-commit docs(architecture): add STRUCTURE_BLUEPRINT for full project modularization roadmap
 
 - dd54130 refactor(assistant): move llm provider stack into assistant domain
+
+- 1f821e6 chore(api): remove obsolete legacy route wrapper package
