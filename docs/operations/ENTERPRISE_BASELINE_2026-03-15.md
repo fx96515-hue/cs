@@ -476,6 +476,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Logistics-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Margins-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Data-Quality-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
+- [x] Interne Imports auf kanonische Domain-Pfade konsolidiert (weniger Legacy-Wrapper-Abhaengigkeit)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -534,4 +535,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 377640a docs(audit): log logistics domain migration slice
 - c67901d refactor(margins): migrate module to domain structure with wrappers
 - 8b23974 docs(audit): log margins domain migration slice
-- pending-commit refactor(data-quality): migrate module to domain structure with wrappers
+- 8c2b4cc refactor(data-quality): migrate module to domain structure with wrappers
+- d88e460 docs(audit): log data-quality domain migration slice
+- pending-commit refactor(core): switch internal imports to canonical domain modules
