@@ -325,6 +325,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: compact data-quality widget rendered raw inline `Fehler:` text instead of shared error-state semantics.
 - Action: switched widget error rendering to shared compact `ErrorPanel` with retry hook and normalized loading copy.
 
+58. ML training route/schema layer still lived in legacy flat module paths
+- Status: FIXED
+- Issue: ML training API route + schemas remained outside the domain-first structure and increased split ownership risk.
+- Action: migrated route/schema implementation to `app.domains.ml_training` with compatibility wrappers and updated API test monkeypatch targets to canonical domain paths.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -564,4 +569,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 9649929 docs(audit): log cuppings/enrich/discovery domain migration slice
 - 6d54e4f refactor(health-monitoring): migrate route modules to domain api structure
 - 2f285d5 docs(audit): log health-monitoring domain migration slice
-- pending-commit refactor(ops-scheduler): migrate dashboard route modules to domain api structure
+- df715d0 refactor(ops-scheduler): migrate dashboard route modules to domain api structure
+- 8aacc70 docs(audit): log ops-scheduler domain migration slice
+- a71c06a refactor(ml-training): migrate ml train route and schemas to domain structure
