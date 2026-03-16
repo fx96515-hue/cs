@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`734 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`735 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -265,6 +265,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: ML training trigger/status endpoints accepted broad `model_type` strings and relied on runtime branching for validation.
 - Action: enforced literal model-type boundaries (`freight_cost|coffee_price`) at route/query level and added regression tests for invalid path/query inputs.
 
+46. Quality-alert filters accepted weak free-text entity/severity values
+- Status: FIXED
+- Issue: quality-alert list/anomaly endpoints accepted unconstrained entity-type and severity filter values.
+- Action: enforced bounded entity-type pattern and severity literals (`info|warning|critical`) with regression tests for invalid filters.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -380,6 +385,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `ad961ae` `harden(api): tighten dedup and enrich entity-type boundaries`
 - `96a20ca` `harden(api): constrain data-quality filter and path enums`
 - `b3392a1` `harden(api): constrain ml training model-type boundaries`
+- `fc9b5c0` `harden(api): validate quality-alert filter boundaries`
 
 ## Fortschrittsliste (Taskleiste)
 
