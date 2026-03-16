@@ -39,6 +39,7 @@ AnalystUserDep = Annotated[User, Depends(require_role("admin", "analyst"))]
 
 WS_POLICY_VIOLATION_CODE = 1008
 WS_ALLOWED_ROLES = frozenset({"admin", "analyst", "viewer"})
+WS_AUTH_ERROR_REASON = "Unauthorized"
 
 
 async def _close_ws(websocket: WebSocket, reason: str) -> None:
@@ -67,9 +68,9 @@ def _load_ws_user(user_email: str) -> User | None:
 
 def _ws_auth_rejection_reason(user: User | None) -> str | None:
     if user is None or not getattr(user, "is_active", False):
-        return "Inactive or unknown user"
+        return WS_AUTH_ERROR_REASON
     if getattr(user, "role", None) not in WS_ALLOWED_ROLES:
-        return "Insufficient role"
+        return WS_AUTH_ERROR_REASON
     return None
 
 
@@ -274,13 +275,13 @@ async def websocket_price(
         return
 
     if not token:
-        await _close_ws(websocket, "Missing token")
+        await _close_ws(websocket, WS_AUTH_ERROR_REASON)
         return
 
     try:
         user_email = _resolve_ws_user_email(token)
-    except ValueError as exc:
-        await _close_ws(websocket, str(exc))
+    except ValueError:
+        await _close_ws(websocket, WS_AUTH_ERROR_REASON)
         return
 
     rejection_reason = _ws_auth_rejection_reason(_load_ws_user(user_email))

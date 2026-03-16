@@ -3,6 +3,7 @@
 import pytest
 from app.models.market import MarketObservation
 from datetime import datetime, timezone
+from app.api.routes import market as market_routes
 
 
 def test_list_observations_empty(client, auth_headers, db):
@@ -128,3 +129,27 @@ def test_list_observations_with_limit(client, auth_headers, db):
     assert response.status_code == 200
     data = response.json()
     assert len(data) <= 3
+
+
+def test_ws_auth_rejection_reason_unknown_user_is_sanitized():
+    assert market_routes._ws_auth_rejection_reason(None) == "Unauthorized"
+
+
+def test_ws_auth_rejection_reason_inactive_user_is_sanitized():
+    inactive_user = type("StubUser", (), {"is_active": False, "role": "viewer"})()
+    assert market_routes._ws_auth_rejection_reason(inactive_user) == "Unauthorized"
+
+
+def test_ws_auth_rejection_reason_invalid_role_is_sanitized():
+    invalid_role_user = type("StubUser", (), {"is_active": True, "role": "guest"})()
+    assert market_routes._ws_auth_rejection_reason(invalid_role_user) == "Unauthorized"
+
+
+def test_resolve_ws_user_email_rejects_invalid_token(monkeypatch):
+    def _raise_decode_error(_token: str):
+        raise ValueError("sensitive decode internals")
+
+    monkeypatch.setattr(market_routes, "decode_token", _raise_decode_error)
+
+    with pytest.raises(ValueError, match="Invalid token"):
+        market_routes._resolve_ws_user_email("invalid-token")
