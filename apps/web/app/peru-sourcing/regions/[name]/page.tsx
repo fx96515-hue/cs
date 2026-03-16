@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiFetch } from "../../../../lib/api";
 import { usePeruRegionIntelligence, useCooperatives } from "../../../hooks/usePeruRegions";
 import { ErrorPanel } from "../../../components/AlertError";
+import { PageHeader } from "../../../components/PageHeader";
 
 export default function RegionDetailPage() {
   const params = useParams();
@@ -90,27 +91,28 @@ export default function RegionDetailPage() {
 
   return (
     <div className="content">
-      <header className="pageHeader">
-        <div className="pageHeaderContent">
-          <div className="h1">{region.name}</div>
-          <div className="muted">
-            {region.country} | {region.description || "Kaffeeanbaugebiet"}
-          </div>
-        </div>
-        <div className="pageHeaderActions row gap">
-          <div className={getScoreBadgeClass(region.scores?.quality_consistency)}>
-            Qualitaet: {region.scores?.quality_consistency?.toFixed(0) || "-"}
-          </div>
-          {region.production?.share_pct && (
-            <div className="badge">
-              {region.production.share_pct.toLocaleString("de-DE", { maximumFractionDigits: 1 })}% Marktanteil
+      <PageHeader
+        title={region.name}
+        subtitle={`${region.country} | ${region.description || "Kaffeeanbaugebiet"}`}
+        actions={
+          <>
+            <div className={getScoreBadgeClass(region.scores?.quality_consistency)}>
+              Qualitaet: {region.scores?.quality_consistency?.toFixed(0) || "-"}
             </div>
-          )}
-          <Link href="/peru-sourcing" className="btn">
-            Zurueck
-          </Link>
-        </div>
-      </header>
+            {region.production?.share_pct && (
+              <div className="badge">
+                {region.production.share_pct.toLocaleString("de-DE", {
+                  maximumFractionDigits: 1,
+                })}
+                % Marktanteil
+              </div>
+            )}
+            <Link href="/peru-sourcing" className="btn">
+              Zurueck
+            </Link>
+          </>
+        }
+      />
 
       <div className="gridKpi">
         <div className="panel card">

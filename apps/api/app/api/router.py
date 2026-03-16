@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from app.api.routes import discovery, health, rag_analyst
 from app.domains.assistant.api import chat_routes as assistant
+from app.domains.assistant.api import analyst_routes as rag_analyst
 from app.domains.auth.api import routes as auth
 from app.domains.auto_outreach.api import routes as auto_outreach
 from app.domains.cooperatives.api import routes as cooperatives
@@ -11,6 +11,8 @@ from app.domains.deals.api import routes as deals
 from app.domains.dedup.api import routes as dedup
 from app.domains.enrich.api import routes as enrich
 from app.domains.features.api import routes as features_dashboard
+from app.domains.discovery.api import routes as discovery
+from app.domains.health.api import health_routes as health
 from app.domains.health.api import data_health_routes as data_health
 from app.domains.kb.api import routes as kb
 from app.domains.knowledge_graph.api import routes as knowledge_graph
