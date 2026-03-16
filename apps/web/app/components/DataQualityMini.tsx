@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import Badge from "./Badge";
+import { ErrorPanel } from "./AlertError";
 import { DataQualityFlag } from "../types";
 import { toErrorMessage } from "../utils/error";
 
@@ -97,10 +98,10 @@ export default function DataQualityMini({ title = "Data Quality", limit = 12 }: 
         </label>
       </div>
 
-      {err ? <div className="muted">Fehler: {err}</div> : null}
+      {err ? <ErrorPanel compact message={err} onRetry={() => void load()} /> : null}
 
       {loading ? (
-        <div className="muted">Lädt...</div>
+        <div className="muted">Laedt...</div>
       ) : flags.length === 0 ? (
         <div className="muted">Keine Flags.</div>
       ) : (
