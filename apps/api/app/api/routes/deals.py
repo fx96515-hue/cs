@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -38,9 +38,9 @@ def _apply_value_fallbacks(deal: Deal) -> None:
 
 @router.get("/", response_model=list[DealOut])
 def list_deals(
-    cooperative_id: int | None = None,
-    roaster_id: int | None = None,
-    lot_id: int | None = None,
+    cooperative_id: Annotated[int | None, Query(ge=1)] = None,
+    roaster_id: Annotated[int | None, Query(ge=1)] = None,
+    lot_id: Annotated[int | None, Query(ge=1)] = None,
     status: str | None = None,
     include_deleted: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
@@ -108,7 +108,7 @@ def create_deal(
 
 @router.get("/{deal_id}", response_model=DealOut, responses=NOT_FOUND_RESPONSE)
 def get_deal(
-    deal_id: int,
+    deal_id: Annotated[int, Path(ge=1)],
     include_deleted: Annotated[bool, Query()] = False,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -125,7 +125,7 @@ def get_deal(
 
 @router.patch("/{deal_id}", response_model=DealOut, responses=NOT_FOUND_RESPONSE)
 def update_deal(
-    deal_id: int,
+    deal_id: Annotated[int, Path(ge=1)],
     payload: DealUpdate,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
@@ -177,7 +177,7 @@ def update_deal(
 
 @router.delete("/{deal_id}", responses=NOT_FOUND_RESPONSE)
 def delete_deal(
-    deal_id: int,
+    deal_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -225,7 +225,7 @@ def delete_deal(
     responses=NOT_FOUND_RESPONSE,
 )
 def restore_deal(
-    deal_id: int,
+    deal_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
