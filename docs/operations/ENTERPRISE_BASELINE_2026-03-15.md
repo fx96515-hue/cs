@@ -484,6 +484,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Sources-Modul in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Deals-Modul in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Cuppings/Enrich/Discovery in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
+- [x] Health/Data-Health/Monitoring-Routen in Domain-API-Struktur migriert (mit Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -558,4 +559,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 39f7853 docs(audit): log sources domain migration slice
 - 576a8dd refactor(deals): migrate module to domain structure with wrappers
 - aaddbd6 docs(audit): log deals domain migration slice
-- pending-commit refactor(cuppings-enrich-discovery): migrate modules to domain structure with wrappers
+- 111bf50 refactor(cuppings-enrich-discovery): migrate modules to domain structure with wrappers
+- 9649929 docs(audit): log cuppings/enrich/discovery domain migration slice
+- pending-commit refactor(health-monitoring): migrate health/data-health/monitoring routes to domain structure
