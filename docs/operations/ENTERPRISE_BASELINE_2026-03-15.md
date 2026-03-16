@@ -467,7 +467,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Verbleibende Backend-Routen auf letzte Boundary-Lücken geprüft und geschlossen
 - [x] Frontend-Formular-/Tabellen-/State-Patterns weitergehend konsolidiert (laufend)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschließen
-- [ ] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisieren
+- [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung über alle Gates inkl. Docker-Runtime-Smoketest erneut durchgeführt
 
 ## Next Execution Slice
