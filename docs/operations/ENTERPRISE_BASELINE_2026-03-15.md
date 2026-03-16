@@ -489,3 +489,5 @@ This baseline captures the current technical status before broader hardening/ref
 
 - ce181a2 refactor(assistant): establish domain-first module structure with compatibility wrappers
 - pending-commit docs(architecture): add STRUCTURE_BLUEPRINT for full project modularization roadmap
+
+- dd54130 refactor(assistant): move llm provider stack into assistant domain
