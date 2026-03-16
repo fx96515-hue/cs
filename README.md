@@ -109,20 +109,31 @@ For Windows-first local development, prefer:
 Backend:
 
 ```bash
-pytest apps/api/tests/test_auth.py \
-  apps/api/tests/test_rate_limiting.py \
-  apps/api/tests/test_pr721_dashboard_routes.py \
-  apps/api/tests/test_semantic_search.py \
-  apps/api/tests/test_scheduler_dashboard_routes.py \
-  apps/api/tests/test_market_dashboard_routes.py \
-  apps/api/tests/test_monitoring_dashboard_routes.py -q
+cd apps/api
+python -m pytest -q
+ruff check app tests
+mypy --config-file ../../mypy.ini app
 ```
 
 Frontend:
 
 ```bash
 cd apps/web
+npm run lint
 npm run build
+```
+
+Compose validation:
+
+```bash
+docker compose config -q
+docker compose -f docker-compose.stack.yml config -q
+```
+
+Optional runtime smoke (Windows):
+
+```powershell
+powershell -File scripts/win/smoke.ps1
 ```
 
 ## Architecture Notes
