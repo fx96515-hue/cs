@@ -335,6 +335,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: prediction and feature-management endpoints still lived in flat legacy modules, causing mixed ownership and import drift.
 - Action: migrated prediction routes/schemas and feature-dashboard routes into `app.domains.ml_predictions` and `app.domains.features` with compatibility wrappers retained.
 
+60. Pipeline dashboard route module still lived in legacy API path
+- Status: FIXED
+- Issue: pipeline trigger/status source endpoints remained outside domain ownership and test patches targeted the old wrapper module.
+- Action: migrated pipeline dashboard routes to `app.domains.pipeline.api.routes`, retained wrapper compatibility, and updated trigger tests to patch the canonical domain module.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -498,6 +503,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Ops- und Scheduler-Dashboard-Routen in Domain-API-Struktur migriert (mit Legacy-Kompatibilitaet)
 - [x] ML-Training in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] ML-Predictions und Features-Dashboard in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
+- [x] Pipeline-Dashboard in domain-first Struktur migriert (Route + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -581,3 +587,5 @@ This baseline captures the current technical status before broader hardening/ref
 - a71c06a refactor(ml-training): migrate ml train route and schemas to domain structure
 - 292899c docs(audit): log ml-training domain migration slice
 - 230e77b refactor(ml): migrate predictions and features routes to domain structure
+- f3951f0 docs(audit): log ml predictions and features domain migration slice
+- 0e667ef refactor(pipeline): migrate dashboard routes to domain structure
