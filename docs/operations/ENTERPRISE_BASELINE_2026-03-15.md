@@ -340,6 +340,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: pipeline trigger/status source endpoints remained outside domain ownership and test patches targeted the old wrapper module.
 - Action: migrated pipeline dashboard routes to `app.domains.pipeline.api.routes`, retained wrapper compatibility, and updated trigger tests to patch the canonical domain module.
 
+61. Semantic-search route/schema modules remained in legacy flat locations
+- Status: FIXED
+- Issue: semantic-search API and schemas still lived in legacy modules; tests monkeypatched only wrapper paths.
+- Action: migrated route/schemas to `app.domains.semantic_search`, kept wrappers for compatibility, and moved test patch/import targets to canonical domain modules.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -504,6 +509,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] ML-Training in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] ML-Predictions und Features-Dashboard in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Pipeline-Dashboard in domain-first Struktur migriert (Route + Legacy-Kompatibilitaet)
+- [x] Semantic-Search in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -589,3 +595,5 @@ This baseline captures the current technical status before broader hardening/ref
 - 230e77b refactor(ml): migrate predictions and features routes to domain structure
 - f3951f0 docs(audit): log ml predictions and features domain migration slice
 - 0e667ef refactor(pipeline): migrate dashboard routes to domain structure
+- 0957402 docs(audit): log pipeline domain migration slice
+- d9b774f refactor(semantic-search): migrate route and schemas to domain structure
