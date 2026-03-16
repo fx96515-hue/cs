@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import structlog
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import text
@@ -40,7 +40,7 @@ def _require_search_enabled() -> None:
 @router.get("/semantic", response_model=SemanticSearchResponse)
 async def semantic_search(
     q: Annotated[str, Query(min_length=1, max_length=500)],
-    entity_type: Annotated[str, Query()] = "all",
+    entity_type: Annotated[Literal["all", "cooperative", "roaster"], Query()] = "all",
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),
@@ -118,7 +118,7 @@ async def semantic_search(
 @router.get("/entity/{entity_type}/{entity_id}/similar")
 @router.get("/similar/{entity_type}/{entity_id}")
 async def find_similar_entities(
-    entity_type: str,
+    entity_type: Annotated[Literal["cooperative", "roaster"], Path()],
     entity_id: Annotated[int, Path(ge=1)],
     limit: Annotated[int, Query(ge=1, le=50)] = 5,
     db: Session = Depends(get_db),
@@ -136,9 +136,6 @@ async def find_similar_entities(
     Returns:
         Similar entities with similarity scores
     """
-    if entity_type not in ("cooperative", "roaster"):
-        raise HTTPException(status_code=400, detail="Invalid entity_type")
-
     _require_search_enabled()
 
     # Get entity and check if it has embedding

@@ -81,6 +81,13 @@ class TestSemanticSearch:
         response = client.get("/search/semantic?q=", headers=auth_headers)
         assert response.status_code == 422
 
+    def test_invalid_query_entity_type_returns_422(self, client, auth_headers):
+        response = client.get(
+            "/search/semantic?q=coffee&entity_type=unknown",
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+
     def test_service_unavailable_returns_503(self, client, auth_headers):
         with (
             patch("app.api.routes.semantic_search.EmbeddingService") as mock_cls,
@@ -211,9 +218,9 @@ class TestSemanticSearch:
 class TestSimilarEntities:
     """Tests for GET /search/entity/{type}/{id}/similar."""
 
-    def test_invalid_entity_type_returns_400(self, client, auth_headers):
+    def test_invalid_entity_type_returns_422(self, client, auth_headers):
         response = client.get("/search/entity/unknown/1/similar", headers=auth_headers)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_entity_not_found_returns_404(self, client, auth_headers, db):
         with _search_enabled():
