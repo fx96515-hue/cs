@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -27,7 +27,7 @@ def _utcnow() -> datetime:
 
 @router.get("/", response_model=list[LotOut])
 def list_lots(
-    cooperative_id: int | None = None,
+    cooperative_id: Annotated[int | None, Query(ge=1)] = None,
     include_deleted: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
     *,
@@ -86,7 +86,7 @@ def create_lot(
 
 @router.get("/{lot_id}", response_model=LotOut, responses=NOT_FOUND_RESPONSE)
 def get_lot(
-    lot_id: int,
+    lot_id: Annotated[int, Path(ge=1)],
     include_deleted: Annotated[bool, Query()] = False,
     *,
     db: Annotated[Session, Depends(get_db)],
@@ -103,7 +103,7 @@ def get_lot(
 
 @router.patch("/{lot_id}", response_model=LotOut, responses=NOT_FOUND_RESPONSE)
 def update_lot(
-    lot_id: int,
+    lot_id: Annotated[int, Path(ge=1)],
     payload: LotUpdate,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin", "analyst"))],
@@ -152,7 +152,7 @@ def update_lot(
 
 @router.delete("/{lot_id}", responses=NOT_FOUND_RESPONSE)
 def delete_lot(
-    lot_id: int,
+    lot_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
@@ -194,7 +194,7 @@ def delete_lot(
 
 @router.post("/{lot_id}/restore", responses=NOT_FOUND_RESPONSE)
 def restore_lot(
-    lot_id: int,
+    lot_id: Annotated[int, Path(ge=1)],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(require_role("admin"))],
 ):
