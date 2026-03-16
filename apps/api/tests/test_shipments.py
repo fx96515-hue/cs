@@ -172,6 +172,11 @@ def test_filter_shipments_by_status(client, auth_headers, db):
     assert all(s["status"] == "in_transit" for s in data)
 
 
+def test_filter_shipments_rejects_invalid_status(client, auth_headers):
+    response = client.get("/shipments?status=invalid_status", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_filter_shipments_by_port(client, auth_headers, db):
     """Test filtering shipments by port."""
     shipment1 = Shipment(

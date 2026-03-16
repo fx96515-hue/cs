@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from sqlalchemy.orm import Session
@@ -23,6 +23,9 @@ from app.core.versioning import capture_entity_version
 from app.services.data_quality import recompute_entity_flags, resolve_entity_flags
 
 router = APIRouter()
+ShipmentStatusFilter = Literal[
+    "in_transit", "arrived", "customs", "delivered", "delayed", "pending", "archived"
+]
 
 SHIPMENT_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {"description": "Invalid request"},
@@ -164,7 +167,7 @@ def _build_shipment_list_out(
 
 @router.get("/", response_model=list[ShipmentOut])
 def list_shipments(
-    status: str | None = None,
+    status: ShipmentStatusFilter | None = None,
     origin_port: str | None = None,
     destination_port: str | None = None,
     include_deleted: Annotated[bool, Query()] = False,

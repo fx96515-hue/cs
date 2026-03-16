@@ -1,6 +1,6 @@
 """API routes for ML predictions."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from celery.result import AsyncResult
@@ -39,6 +39,9 @@ from app.workers.celery_app import celery
 
 router = APIRouter()
 MODEL_NOT_FOUND_ERROR = "Model not found"
+MLModelTypeFilter = Literal[
+    "freight_cost", "coffee_price", "freight_prediction", "price_prediction"
+]
 
 
 @router.post("/predict-freight", response_model=FreightPrediction)
@@ -355,7 +358,7 @@ async def get_feature_importance(
 async def list_ml_models(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
-    model_type: str | None = None,
+    model_type: MLModelTypeFilter | None = None,
 ):
     """List all ML models with optional type filter."""
     service = MLModelManagementService(db)

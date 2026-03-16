@@ -200,3 +200,8 @@ def test_ml_model_routes_reject_non_positive_model_id(client, auth_headers):
 
     retrain = client.post("/ml/models/0/retrain", headers=auth_headers)
     assert retrain.status_code == 422
+
+
+def test_ml_models_reject_invalid_model_type_filter(client, auth_headers):
+    response = client.get("/ml/models?model_type=invalid", headers=auth_headers)
+    assert response.status_code == 422
