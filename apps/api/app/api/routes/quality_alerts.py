@@ -1,6 +1,8 @@
 """Quality alerts API routes."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role, get_db
@@ -33,7 +35,7 @@ def list_alerts(
     entity_type: str | None = None,
     severity: str | None = None,
     acknowledged: bool | None = None,
-    limit: int = Query(100, le=500),
+    limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst")),
@@ -61,7 +63,7 @@ def get_summary(
 
 @router.post("/{alert_id}/acknowledge", response_model=QualityAlertOut)
 def acknowledge_alert(
-    alert_id: int,
+    alert_id: Annotated[int, Path(ge=1)],
     payload: AcknowledgeAlertIn,
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst")),
@@ -96,7 +98,7 @@ def list_anomalies(
     entity_type: str | None = None,
     severity: str | None = None,
     acknowledged: bool | None = None,
-    limit: int = Query(100, le=500),
+    limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst")),

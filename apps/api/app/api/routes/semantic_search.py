@@ -5,7 +5,7 @@ from __future__ import annotations
 import structlog
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -119,7 +119,7 @@ async def semantic_search(
 @router.get("/similar/{entity_type}/{entity_id}")
 async def find_similar_entities(
     entity_type: str,
-    entity_id: int,
+    entity_id: Annotated[int, Path(ge=1)],
     limit: Annotated[int, Query(ge=1, le=50)] = 5,
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),

@@ -180,3 +180,23 @@ def test_calc_margin_with_fx_rate(client, auth_headers, db):
     assert response.status_code == 200
     data = response.json()
     assert "outputs" in data
+
+
+def test_margins_reject_non_positive_lot_id(client, auth_headers):
+    payload = {
+        "purchase_price_per_kg": 10.0,
+        "landed_costs_per_kg": 2.0,
+        "yield_factor": 0.84,
+        "roast_and_pack_costs_per_kg": 3.0,
+        "selling_price_per_kg": 20.0,
+        "purchase_currency": "USD",
+        "selling_currency": "EUR",
+    }
+
+    create_response = client.post(
+        "/margins/lots/0/runs", json=payload, headers=auth_headers
+    )
+    assert create_response.status_code == 422
+
+    list_response = client.get("/margins/lots/0/runs", headers=auth_headers)
+    assert list_response.status_code == 422

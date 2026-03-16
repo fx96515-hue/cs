@@ -326,3 +326,7 @@ class TestSimilarEntities:
     def test_unauthenticated_returns_401(self, client):
         response = client.get("/search/entity/cooperative/1/similar")
         assert response.status_code == 401
+
+    def test_non_positive_entity_id_returns_422(self, client, auth_headers):
+        response = client.get("/search/entity/cooperative/0/similar", headers=auth_headers)
+        assert response.status_code == 422

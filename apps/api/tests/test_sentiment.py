@@ -190,6 +190,11 @@ def test_get_sentiment_entity_empty(client, auth_headers, db):
     assert body["total"] == 0
 
 
+def test_get_sentiment_entity_rejects_non_positive_id(client, auth_headers, db):
+    response = client.get("/sentiment/entity/0", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_post_analyze_sentiment(client, auth_headers, db):
     item = NewsItem(
         topic="peru coffee",

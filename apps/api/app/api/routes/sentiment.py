@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_role
@@ -50,7 +52,7 @@ def sentiment_by_region(
 
 @router.get("/entity/{entity_id}", response_model=SentimentTimeSeriesResponse)
 def sentiment_by_entity(
-    entity_id: int,
+    entity_id: Annotated[int, Path(ge=1)],
     limit: int = Query(90, ge=1, le=365),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst", "viewer")),

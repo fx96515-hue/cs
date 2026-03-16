@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -33,7 +33,7 @@ def calc(payload: MarginCalcRequest, _: AnalystPermissionDep):
     responses={404: {"description": "Lot not found"}},
 )
 def calc_and_store_for_lot(
-    lot_id: int,
+    lot_id: Annotated[int, Path(ge=1)],
     payload: MarginCalcRequest,
     db: DbSessionDep,
     _: AnalystPermissionDep,
@@ -56,7 +56,7 @@ def calc_and_store_for_lot(
 
 @router.get("/lots/{lot_id}/runs", response_model=list[MarginRunOut])
 def list_runs(
-    lot_id: int,
+    lot_id: Annotated[int, Path(ge=1)],
     db: DbSessionDep,
     _: ViewerPermissionDep,
     limit: int = Query(50, ge=1, le=500),
