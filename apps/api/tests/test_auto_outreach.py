@@ -236,7 +236,8 @@ def test_create_campaign_masks_generation_errors(db, monkeypatch):
         raise RuntimeError("sensitive stack details should not be exposed")
 
     monkeypatch.setattr(
-        "app.services.auto_outreach.generate_outreach", _raise_generation_error
+        "app.domains.auto_outreach.services.campaigns.generate_outreach",
+        _raise_generation_error,
     )
 
     result = create_campaign(

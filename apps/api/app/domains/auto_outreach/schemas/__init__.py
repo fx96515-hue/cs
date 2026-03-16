@@ -1,0 +1,1 @@
+"""Auto-outreach schema domain package."""
