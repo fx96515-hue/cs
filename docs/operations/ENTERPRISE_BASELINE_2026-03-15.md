@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`719 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`721 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -225,6 +225,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: selected endpoints accepted non-positive path IDs or weak pagination bounds.
 - Action: enforced positive bounds for `lot_id`/`entity_id`/`alert_id` and `limit` where needed, plus added boundary regression tests.
 
+38. Enrichment and shipments routes accepted non-positive path IDs
+- Status: FIXED
+- Issue: enrichment `entity_id` and shipment path IDs lacked explicit positive bounds.
+- Action: enforced positive `Path` boundaries and added API tests for rejected zero IDs.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -330,6 +335,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `130a15e` `harden(api): enforce positive boundaries for quotes quality and transport routes`
 - `fd6ff18` `docs(audit): record multi-route boundary hardening and updated gate total`
 - `da60a36` `harden(api): enforce positive id boundaries for margins search sentiment alerts`
+- `693a990` `docs(audit): capture additional id-boundary hardening tranche`
+- `42bdf9c` `harden(api): enforce positive entity and shipment path ids`
 
 ## Next Execution Slice
 
