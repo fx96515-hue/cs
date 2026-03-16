@@ -3,7 +3,7 @@
 from fastapi.testclient import TestClient
 from starlette.requests import Request
 
-from app.api.routes import auth as auth_routes
+from app.domains.auth.api import routes as auth_routes
 from app.core.config import settings
 
 

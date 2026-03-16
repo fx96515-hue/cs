@@ -3,7 +3,7 @@
 import pytest
 from app.models.market import MarketObservation
 from datetime import datetime, timezone
-from app.api.routes import market as market_routes
+from app.domains.market.api import routes as market_routes
 
 
 def test_list_observations_empty(client, auth_headers, db):

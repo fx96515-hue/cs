@@ -117,7 +117,7 @@ def client(db):
 
     # Also clear the auth-module rate limiter to prevent cross-test contamination
     try:
-        from app.api.routes import auth as auth_module
+        from app.domains.auth.api import routes as auth_module
 
         if hasattr(auth_module, "limiter"):
             _s = auth_module.limiter._storage
