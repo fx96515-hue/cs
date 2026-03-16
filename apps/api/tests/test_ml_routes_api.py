@@ -22,3 +22,15 @@ def test_train_model_runtime_error_is_sanitized(client, auth_headers, monkeypatc
     assert response.status_code == 500
     assert response.json()["detail"] == "Training failed"
 
+
+def test_train_model_rejects_invalid_model_type(client, auth_headers):
+    response = client.post("/ml/train/train/invalid", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_training_status_rejects_invalid_model_type_filter(client, auth_headers):
+    response = client.get(
+        "/ml/train/training-status?model_type=invalid",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422

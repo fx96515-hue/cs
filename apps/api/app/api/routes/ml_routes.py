@@ -1,5 +1,7 @@
 """ML model training and prediction routes."""
 
+from typing import Annotated, Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -19,11 +21,12 @@ from app.services.ml.model_management import MLModelManagementService
 
 
 router = APIRouter()
+MLTrainingModelType = Literal["freight_cost", "coffee_price"]
 
 
 @router.post("/train/{model_type}", response_model=TrainModelOut)
 def train_model(
-    model_type: str,
+    model_type: MLTrainingModelType,
     db: Session = Depends(get_db),
     _=Depends(require_role("admin")),
 ):
@@ -34,13 +37,8 @@ def train_model(
     try:
         if model_type == "freight_cost":
             result = train_freight_model(db)
-        elif model_type == "coffee_price":
-            result = train_price_model(db)
         else:
-            raise HTTPException(
-                status_code=400,
-                detail="model_type must be 'freight_cost' or 'coffee_price'",
-            )
+            result = train_price_model(db)
         return result
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid training request")
@@ -50,7 +48,7 @@ def train_model(
 
 @router.get("/training-status", response_model=list[TrainingStatusOut])
 async def get_training_status(
-    model_type: str | None = None,
+    model_type: Annotated[MLTrainingModelType | None, Query()] = None,
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst")),
 ):
