@@ -10,7 +10,7 @@ def test_enrich_entity_invalid_type(client, auth_headers, db):
 
     response = client.post("/enrich/invalid_type/1", json=payload, headers=auth_headers)
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_enrich_entity_not_found(client, auth_headers, db):

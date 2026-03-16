@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 import structlog
@@ -24,14 +24,12 @@ ENRICH_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     responses=ENRICH_ERROR_RESPONSES,
 )
 def enrich(
-    entity_type: str,
+    entity_type: Literal["cooperative", "roaster"],
     entity_id: Annotated[int, Path(ge=1)],
     payload: EnrichRequest,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
 ):
-    if entity_type not in ("cooperative", "roaster"):
-        raise HTTPException(status_code=400, detail="Invalid entity_type")
     try:
         out = enrich_entity(
             db,

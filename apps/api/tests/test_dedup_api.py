@@ -40,8 +40,7 @@ def test_suggest_duplicates_invalid_entity_type(client, auth_headers, db):
     """Test suggesting duplicates with invalid entity type."""
     response = client.get("/dedup/suggest?entity_type=invalid", headers=auth_headers)
 
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Invalid request"
+    assert response.status_code == 422
 
 
 def test_suggest_duplicates_empty_database(client, auth_headers, db):
@@ -67,6 +66,28 @@ def test_suggest_duplicates_with_custom_threshold(client, auth_headers, db):
     )
 
     assert response.status_code == 200
+
+
+def test_suggest_duplicates_rejects_out_of_range_threshold(client, auth_headers):
+    response = client.get(
+        "/dedup/suggest?entity_type=cooperative&threshold=101",
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+def test_history_rejects_invalid_entity_type(client, auth_headers):
+    response = client.get("/dedup/history?entity_type=invalid", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_merge_rejects_invalid_entity_type(client, auth_headers):
+    response = client.post(
+        "/dedup/merge",
+        json={"entity_type": "invalid", "keep_id": 1, "merge_id": 2},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
 
 
 def test_suggest_duplicates_unauthorized(client, viewer_auth_headers, db):

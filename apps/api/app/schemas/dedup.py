@@ -1,4 +1,7 @@
+from typing import Literal
+
 from pydantic import BaseModel
+from pydantic import Field
 
 
 class DedupPairOut(BaseModel):
@@ -13,9 +16,9 @@ class DedupPairOut(BaseModel):
 class MergeEntitiesIn(BaseModel):
     """Request to merge two entities."""
 
-    entity_type: str
-    keep_id: int
-    merge_id: int
+    entity_type: Literal["cooperative", "roaster"]
+    keep_id: int = Field(ge=1)
+    merge_id: int = Field(ge=1)
 
 
 class MergeResultOut(BaseModel):
