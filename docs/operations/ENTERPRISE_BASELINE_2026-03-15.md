@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`731 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`732 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -255,6 +255,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: dedup query/payload and enrich path parameters accepted broad strings and relied on downstream checks.
 - Action: enforced strict literal entity-type boundaries at API/schema level, bounded dedup threshold (`0..100`), and added regression tests for invalid entity types/thresholds.
 
+44. Data-quality filters/recompute accepted weak free-text values
+- Status: FIXED
+- Issue: data-quality list/recompute endpoints accepted unconstrained `entity_type` and `severity` values.
+- Action: enforced literal-bound query/path contracts for entity types and severities, and added regression tests for invalid filter values.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -368,6 +373,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `1d71cf9` `harden(api): constrain semantic search entity-type inputs`
 - `48030d7` `harden(api): constrain knowledge-graph entity-type boundaries`
 - `ad961ae` `harden(api): tighten dedup and enrich entity-type boundaries`
+- `96a20ca` `harden(api): constrain data-quality filter and path enums`
 
 ## Fortschrittsliste (Taskleiste)
 
