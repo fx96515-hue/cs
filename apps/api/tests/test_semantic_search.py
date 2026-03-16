@@ -22,7 +22,7 @@ def _make_embedding(dims: int = 384) -> list[float]:
 @contextmanager
 def _search_enabled(enabled: bool = True):
     """Context manager: patch SEMANTIC_SEARCH_ENABLED on the route module."""
-    with patch("app.api.routes.semantic_search.settings") as mock_settings:
+    with patch("app.domains.semantic_search.api.routes.settings") as mock_settings:
         mock_settings.SEMANTIC_SEARCH_ENABLED = enabled
         yield mock_settings
 
@@ -90,7 +90,7 @@ class TestSemanticSearch:
 
     def test_service_unavailable_returns_503(self, client, auth_headers):
         with (
-            patch("app.api.routes.semantic_search.EmbeddingService") as mock_cls,
+            patch("app.domains.semantic_search.api.routes.EmbeddingService") as mock_cls,
             _search_enabled(),
         ):
             svc = MagicMock()
@@ -102,7 +102,7 @@ class TestSemanticSearch:
 
     def test_embedding_failure_returns_500(self, client, auth_headers):
         with (
-            patch("app.api.routes.semantic_search.EmbeddingService") as mock_cls,
+            patch("app.domains.semantic_search.api.routes.EmbeddingService") as mock_cls,
             _search_enabled(),
         ):
             svc = MagicMock()
@@ -119,7 +119,7 @@ class TestSemanticSearch:
         db.commit()
 
         with (
-            patch("app.api.routes.semantic_search.EmbeddingService") as mock_cls,
+            patch("app.domains.semantic_search.api.routes.EmbeddingService") as mock_cls,
             _search_enabled(),
         ):
             svc = MagicMock()
@@ -130,13 +130,13 @@ class TestSemanticSearch:
             # Mock the raw SQL result so tests work on SQLite (no pgvector)
             with (
                 patch(
-                    "app.api.routes.semantic_search._search_cooperatives"
+                    "app.domains.semantic_search.api.routes._search_cooperatives"
                 ) as mock_search_coops,
                 patch(
-                    "app.api.routes.semantic_search._search_roasters"
+                    "app.domains.semantic_search.api.routes._search_roasters"
                 ) as mock_search_roasters,
             ):
-                from app.schemas.semantic_search import SemanticSearchResult
+                from app.domains.semantic_search.schemas.semantic_search import SemanticSearchResult
 
                 mock_search_coops.return_value = [
                     SemanticSearchResult(
@@ -164,10 +164,10 @@ class TestSemanticSearch:
     def test_search_cooperative_only(self, client, auth_headers):
         """entity_type=cooperative must not call _search_roasters."""
         with (
-            patch("app.api.routes.semantic_search.EmbeddingService") as mock_cls,
+            patch("app.domains.semantic_search.api.routes.EmbeddingService") as mock_cls,
             _search_enabled(),
-            patch("app.api.routes.semantic_search._search_cooperatives") as mock_coops,
-            patch("app.api.routes.semantic_search._search_roasters") as mock_roasters,
+            patch("app.domains.semantic_search.api.routes._search_cooperatives") as mock_coops,
+            patch("app.domains.semantic_search.api.routes._search_roasters") as mock_roasters,
         ):
             svc = MagicMock()
             svc.is_available.return_value = True
@@ -186,10 +186,10 @@ class TestSemanticSearch:
     def test_search_roaster_only(self, client, auth_headers):
         """entity_type=roaster must not call _search_cooperatives."""
         with (
-            patch("app.api.routes.semantic_search.EmbeddingService") as mock_cls,
+            patch("app.domains.semantic_search.api.routes.EmbeddingService") as mock_cls,
             _search_enabled(),
-            patch("app.api.routes.semantic_search._search_cooperatives") as mock_coops,
-            patch("app.api.routes.semantic_search._search_roasters") as mock_roasters,
+            patch("app.domains.semantic_search.api.routes._search_cooperatives") as mock_coops,
+            patch("app.domains.semantic_search.api.routes._search_roasters") as mock_roasters,
         ):
             svc = MagicMock()
             svc.is_available.return_value = True
@@ -254,9 +254,9 @@ class TestSimilarEntities:
 
         with (
             _search_enabled(),
-            patch("app.api.routes.semantic_search._search_cooperatives") as mock_search,
+            patch("app.domains.semantic_search.api.routes._search_cooperatives") as mock_search,
         ):
-            from app.schemas.semantic_search import SemanticSearchResult
+            from app.domains.semantic_search.schemas.semantic_search import SemanticSearchResult
 
             # Return anchor + neighbor so anchor gets filtered out
             mock_search.return_value = [
@@ -297,7 +297,7 @@ class TestSimilarEntities:
 
         with (
             _search_enabled(),
-            patch("app.api.routes.semantic_search._search_roasters") as mock_search,
+            patch("app.domains.semantic_search.api.routes._search_roasters") as mock_search,
         ):
             mock_search.return_value = []
 
@@ -318,7 +318,7 @@ class TestSimilarEntities:
 
         with (
             _search_enabled(),
-            patch("app.api.routes.semantic_search._search_cooperatives") as mock_search,
+            patch("app.domains.semantic_search.api.routes._search_cooperatives") as mock_search,
         ):
             mock_search.return_value = []
 
