@@ -310,6 +310,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: cooperative, roaster, and lot detail pages used varying custom error alert markup.
 - Action: aligned error-state rendering on those detail pages to shared `ErrorPanel` semantics (including retry wiring where available).
 
+55. List pages still used ad-hoc load-error rendering
+- Status: IMPROVED
+- Issue: shipments and lots list pages used custom inline error alerts for load failures.
+- Action: standardized both list pages to shared `ErrorPanel` compact mode with explicit retry behavior.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -438,6 +443,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `c9a70bd` `chore(docs): flatten nested operations playbooks directory`
 - `e896fbd` `improve(frontend): use shared ErrorPanel on dashboard and fix copy typo`
 - `717a377` `improve(frontend): unify detail-page error states with ErrorPanel`
+- `595cb84` `improve(frontend): standardize list-page load errors with ErrorPanel`
 
 ## Fortschrittsliste (Taskleiste)
 
