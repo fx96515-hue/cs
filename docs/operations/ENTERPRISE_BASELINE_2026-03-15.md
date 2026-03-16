@@ -447,7 +447,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Frontend-Header-/Layout-Konsistenz auf zentralen Seiten verbessert
 - [x] Docker-Kontext und lokale Sicherheitsdefaults gehärtet
 - [x] Verbleibende Backend-Routen auf letzte Boundary-Lücken geprüft und geschlossen
-- [ ] Frontend-Formular-/Tabellen-/State-Patterns vollständig angleichen
+- [x] Frontend-Formular-/Tabellen-/State-Patterns weitergehend konsolidiert (laufend)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschließen
 - [ ] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisieren
 - [x] Abschlussvalidierung über alle Gates inkl. Docker-Runtime-Smoketest erneut durchgeführt
