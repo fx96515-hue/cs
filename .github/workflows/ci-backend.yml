@@ -61,6 +61,11 @@ jobs:
           cd apps/api
           ruff format --check app/ tests/
 
+      - name: Validate Docker Compose Configs
+        run: |
+          docker compose config -q
+          docker compose -f docker-compose.stack.yml config -q
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
