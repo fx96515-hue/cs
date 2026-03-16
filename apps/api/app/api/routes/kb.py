@@ -1,35 +1,8 @@
-from typing import Annotated
+"""Compatibility wrapper for knowledge-base routes.
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+Canonical implementation lives in app.domains.kb.api.routes.
+"""
 
-from app.api.deps import require_role
-from app.db.session import get_db
-from app.models.knowledge_doc import KnowledgeDoc
-from app.schemas.kb import KnowledgeDocOut, KBSeedResponse
-from app.services.kb import seed_default_kb
+from app.domains.kb.api.routes import router
 
-
-router = APIRouter()
-
-
-@router.get("/", response_model=list[KnowledgeDocOut])
-def list_kb(
-    category: str = "logistics",
-    language: str = "de",
-    *,
-    db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-):
-    q = db.query(KnowledgeDoc).filter(
-        KnowledgeDoc.category == category, KnowledgeDoc.language == language
-    )
-    return q.order_by(KnowledgeDoc.title.asc()).all()
-
-
-@router.post("/seed", response_model=KBSeedResponse)
-def seed(
-    db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst"))],
-):
-    return seed_default_kb(db)
+__all__ = ["router"]

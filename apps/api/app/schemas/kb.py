@@ -1,19 +1,8 @@
-from pydantic import BaseModel
+"""Compatibility wrapper for knowledge-base schemas.
 
+Canonical implementation lives in app.domains.kb.schemas.kb.
+"""
 
-class KnowledgeDocOut(BaseModel):
-    id: int
-    category: str
-    key: str
-    title: str
-    language: str
-    content_md: str
+from app.domains.kb.schemas.kb import KBSeedResponse, KnowledgeDocOut
 
-    class Config:
-        from_attributes = True
-
-
-class KBSeedResponse(BaseModel):
-    status: str
-    created: int
-    updated: int
+__all__ = ["KnowledgeDocOut", "KBSeedResponse"]
