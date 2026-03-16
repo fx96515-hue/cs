@@ -315,6 +315,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: shipments and lots list pages used custom inline error alerts for load failures.
 - Action: standardized both list pages to shared `ErrorPanel` compact mode with explicit retry behavior.
 
+56. Operations onboarding docs were inconsistent and partially stale
+- Status: IMPROVED
+- Issue: backend setup doc mixed historical migration notes with outdated claims; docs index had noisy/garbled structure.
+- Action: rewrote `docs/operations/backend-setup.md` as a stable, current quickstart and normalized `docs/README.md` into a clean documentation index with relevant sections.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -444,6 +449,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `e896fbd` `improve(frontend): use shared ErrorPanel on dashboard and fix copy typo`
 - `717a377` `improve(frontend): unify detail-page error states with ErrorPanel`
 - `595cb84` `improve(frontend): standardize list-page load errors with ErrorPanel`
+- `1ab375c` `docs(operations): rewrite backend setup and normalize docs index`
 
 ## Fortschrittsliste (Taskleiste)
 
