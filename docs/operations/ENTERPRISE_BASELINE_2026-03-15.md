@@ -495,3 +495,5 @@ This baseline captures the current technical status before broader hardening/ref
 - 1f821e6 chore(api): remove obsolete legacy route wrapper package
 
 - 71a65d5 improve(frontend): replace legacy /ki links with canonical /assistant route
+
+- 1e3118b refactor(reports): move reports module to domain structure with compatibility wrappers
