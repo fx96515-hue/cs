@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`726 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`728 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -245,6 +245,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: semantic search query/path `entity_type` inputs accepted broad strings and relied on manual runtime checks.
 - Action: enforced strict literal values at API boundary (`all|cooperative|roaster` for search, `cooperative|roaster` for similar routes) and added regression tests.
 
+42. Knowledge-graph routes accepted broad entity-type path values
+- Status: FIXED
+- Issue: multiple knowledge-graph endpoints accepted unconstrained entity-type path input.
+- Action: enforced strict literal entity-type boundaries (`cooperative|roaster|region|certification`) and added regression tests for invalid types.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -356,6 +361,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `8b1b505` `harden(api): validate deals status filter values`
 - `6d5dc4e` `harden(api): tighten news route input boundaries`
 - `1d71cf9` `harden(api): constrain semantic search entity-type inputs`
+- `48030d7` `harden(api): constrain knowledge-graph entity-type boundaries`
 
 ## Fortschrittsliste (Taskleiste)
 
