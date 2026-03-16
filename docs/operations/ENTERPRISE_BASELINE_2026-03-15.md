@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`721 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`722 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -230,6 +230,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: enrichment `entity_id` and shipment path IDs lacked explicit positive bounds.
 - Action: enforced positive `Path` boundaries and added API tests for rejected zero IDs.
 
+39. Deals list accepted unbounded status filter values
+- Status: FIXED
+- Issue: deals `status` query filter allowed arbitrary strings.
+- Action: constrained status query to supported values (`open|in_progress|closed|canceled`) and added API regression test.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -337,6 +342,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `da60a36` `harden(api): enforce positive id boundaries for margins search sentiment alerts`
 - `693a990` `docs(audit): capture additional id-boundary hardening tranche`
 - `42bdf9c` `harden(api): enforce positive entity and shipment path ids`
+- `d08d66d` `docs(audit): record shipment and enrich boundary hardening`
+- `8b1b505` `harden(api): validate deals status filter values`
 
 ## Next Execution Slice
 
