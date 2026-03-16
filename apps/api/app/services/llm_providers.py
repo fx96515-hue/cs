@@ -1,6 +1,7 @@
 """LLM Provider abstraction for multi-provider support.
 
 Supports Ollama (local, no API key), OpenAI, and Groq providers.
+Includes an automatic provider selection mode and deterministic fallback.
 """
 
 from __future__ import annotations
@@ -552,22 +553,55 @@ def get_llm_provider() -> BaseLLMProvider:
     Raises:
         ValueError: If provider is unknown
     """
-    provider = settings.RAG_PROVIDER.lower()
+    configured = settings.RAG_PROVIDER.lower()
 
-    if provider == "ollama":
+    if configured == "auto":
+        # Prefer free cloud inference (Groq) when configured.
+        groq = GroqProvider()
+        if groq.is_available():
+            return groq
+
+        # Otherwise prefer local Ollama to keep costs at zero.
+        ollama = OllamaProvider()
+        if ollama.is_available():
+            return ollama
+
+        log.warning("llm_provider_auto_fallback_enabled")
+        return DeterministicFallbackProvider()
+
+    if configured == "ollama":
         selected: BaseLLMProvider = OllamaProvider()
-    elif provider == "openai":
+    elif configured == "openai":
         selected = OpenAIProvider()
-    elif provider == "groq":
+    elif configured == "groq":
         selected = GroqProvider()
     else:
-        raise ValueError(f"Unknown RAG provider: {provider}")
+        raise ValueError(f"Unknown RAG provider: {configured}")
 
     if selected.is_available():
         return selected
 
     log.warning(
         "llm_provider_fallback_enabled",
-        configured_provider=provider,
+        configured_provider=configured,
     )
     return DeterministicFallbackProvider()
+
+
+def resolve_rag_model(provider_name: str) -> str:
+    """Resolve the model to use for the active provider.
+
+    Priority:
+    1. RAG_LLM_MODEL when explicitly set.
+    2. Provider-specific defaults.
+    """
+    legacy_override = (settings.RAG_LLM_MODEL or "").strip()
+    if legacy_override:
+        return legacy_override
+
+    provider = provider_name.lower()
+    if provider == "groq":
+        return settings.RAG_LLM_MODEL_GROQ
+    if provider == "openai":
+        return settings.RAG_LLM_MODEL_OPENAI
+    return settings.RAG_LLM_MODEL_OLLAMA

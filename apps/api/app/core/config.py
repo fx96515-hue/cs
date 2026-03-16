@@ -118,8 +118,13 @@ class Settings(BaseSettings):
     SENTENCE_TRANSFORMERS_CACHE: str | None = None
 
     # --- RAG AI Analyst (Multi-Provider) ---
-    RAG_PROVIDER: str = "ollama"  # ollama | openai | groq
-    RAG_LLM_MODEL: str = "llama3.1:8b"  # Provider-specific model
+    # "auto" prefers free cloud inference (Groq) when configured, then local Ollama.
+    RAG_PROVIDER: str = "auto"  # auto | ollama | openai | groq
+    # Legacy override used when set; otherwise provider-specific defaults are selected.
+    RAG_LLM_MODEL: str = ""
+    RAG_LLM_MODEL_OLLAMA: str = "llama3.1:8b"
+    RAG_LLM_MODEL_OPENAI: str = "gpt-4o-mini"
+    RAG_LLM_MODEL_GROQ: str = "llama-3.1-8b-instant"
     RAG_EMBEDDING_PROVIDER: str = "openai"  # Separate from LLM provider
     RAG_EMBEDDING_MODEL: str = (
         "text-embedding-3-small"  # Or "nomic-embed-text" for Ollama

@@ -5,6 +5,7 @@ import asyncio
 from app.services.llm_providers import (
     DeterministicFallbackProvider,
     get_llm_provider,
+    resolve_rag_model,
 )
 
 
@@ -31,3 +32,28 @@ def test_deterministic_fallback_provider_returns_content():
     )
     assert isinstance(out["content"], str)
     assert "deterministische" in out["content"].lower()
+
+
+def test_get_llm_provider_auto_prefers_groq(monkeypatch):
+    monkeypatch.setattr("app.services.llm_providers.settings.RAG_PROVIDER", "auto")
+    monkeypatch.setattr(
+        "app.services.llm_providers.GroqProvider.is_available",
+        lambda self: True,
+    )
+    monkeypatch.setattr(
+        "app.services.llm_providers.OllamaProvider.is_available",
+        lambda self: True,
+    )
+
+    provider = get_llm_provider()
+    assert provider.provider_name() == "groq"
+
+
+def test_resolve_rag_model_uses_provider_default_when_no_override(monkeypatch):
+    monkeypatch.setattr("app.services.llm_providers.settings.RAG_LLM_MODEL", "")
+    monkeypatch.setattr(
+        "app.services.llm_providers.settings.RAG_LLM_MODEL_GROQ",
+        "llama-3.1-8b-instant",
+    )
+
+    assert resolve_rag_model("groq") == "llama-3.1-8b-instant"

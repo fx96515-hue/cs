@@ -20,7 +20,11 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.schemas.rag_analyst import RAGSource
 import app.services.embedding as embedding_service
-from app.services.llm_providers import BaseLLMProvider, get_llm_provider
+from app.services.llm_providers import (
+    BaseLLMProvider,
+    get_llm_provider,
+    resolve_rag_model,
+)
 
 log = structlog.get_logger()
 
@@ -32,7 +36,7 @@ class AssistantService:
 
     def __init__(self) -> None:
         self.llm_provider: BaseLLMProvider = get_llm_provider()
-        self.model = settings.RAG_LLM_MODEL
+        self.model = resolve_rag_model(self.llm_provider.provider_name())
         self.temperature = settings.RAG_TEMPERATURE
         self.max_context_entities = settings.RAG_MAX_CONTEXT_ENTITIES
         self.max_history = settings.RAG_MAX_CONVERSATION_HISTORY
