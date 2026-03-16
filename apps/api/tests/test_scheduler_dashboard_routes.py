@@ -31,7 +31,7 @@ def test_scheduler_run_job_endpoint(client, auth_headers, monkeypatch):
         return SimpleNamespace(id="queued-task-123")
 
     monkeypatch.setattr(
-        "app.api.routes.scheduler_dashboard.celery.send_task", fake_send_task
+        "app.domains.scheduler.api.routes.celery.send_task", fake_send_task
     )
 
     response = client.post("/scheduler/jobs/market_refresh_01/run", headers=auth_headers)
@@ -62,7 +62,7 @@ def test_scheduler_task_status_endpoint(client, auth_headers, monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "app.api.routes.scheduler_dashboard.AsyncResult",
+        "app.domains.scheduler.api.routes.AsyncResult",
         _FakeAsyncResult,
     )
 
