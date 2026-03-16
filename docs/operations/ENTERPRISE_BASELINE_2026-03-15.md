@@ -345,6 +345,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: semantic-search API and schemas still lived in legacy modules; tests monkeypatched only wrapper paths.
 - Action: migrated route/schemas to `app.domains.semantic_search`, kept wrappers for compatibility, and moved test patch/import targets to canonical domain modules.
 
+62. Remaining core API route modules still lived in legacy flat route paths
+- Status: FIXED
+- Issue: `auth`, `cooperatives`, `knowledge_graph`, `lots`, `market`, `peru_sourcing`, `roasters`, and `shipments` routes were still owned under `app.api.routes`.
+- Action: migrated all remaining legacy route modules to domain-first locations with compatibility wrappers and updated route-level test imports to canonical domain modules where patching/helper access is required.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -510,6 +515,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] ML-Predictions und Features-Dashboard in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Pipeline-Dashboard in domain-first Struktur migriert (Route + Legacy-Kompatibilitaet)
 - [x] Semantic-Search in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
+- [x] Verbleibende Legacy-Kernrouten vollstaendig in Domain-Struktur migriert (mit Kompatibilitaetswrappern)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -597,3 +603,5 @@ This baseline captures the current technical status before broader hardening/ref
 - 0e667ef refactor(pipeline): migrate dashboard routes to domain structure
 - 0957402 docs(audit): log pipeline domain migration slice
 - d9b774f refactor(semantic-search): migrate route and schemas to domain structure
+- 4414ba4 docs(audit): log semantic-search domain migration slice
+- a1316c9 refactor(routes): migrate remaining legacy api routes to domain structure
