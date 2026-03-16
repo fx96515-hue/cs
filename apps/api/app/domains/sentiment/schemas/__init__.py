@@ -1,0 +1,1 @@
+"""Sentiment schema domain package."""
