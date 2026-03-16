@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -17,6 +17,7 @@ from app.schemas.knowledge_graph import (
 from app.services import knowledge_graph
 
 router = APIRouter()
+GraphEntityType = Literal["cooperative", "roaster", "region", "certification"]
 
 NOT_FOUND_RESPONSES: dict[int | str, dict[str, Any]] = {
     404: {"description": "Entity not found"}
@@ -72,7 +73,7 @@ def get_network(
 
 @router.get("/analysis/{entity_type}/{entity_id}", responses=GRAPH_COMMON_RESPONSES)
 def get_entity_analysis(
-    entity_type: str,
+    entity_type: GraphEntityType,
     entity_id: str,  # Accept str to handle both numeric IDs and string-based IDs (regions, certs)
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
@@ -131,9 +132,9 @@ def get_clusters(
     responses=GRAPH_COMMON_RESPONSES,
 )
 def get_shortest_path(
-    source_type: str,
+    source_type: GraphEntityType,
     source_id: str,  # Accept str to handle both numeric IDs and string-based IDs
-    target_type: str,
+    target_type: GraphEntityType,
     target_id: str,  # Accept str to handle both numeric IDs and string-based IDs
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
@@ -184,7 +185,7 @@ def get_path_by_node_ids(
     responses=GRAPH_COMMON_RESPONSES,
 )
 def get_hidden_connections(
-    entity_type: str,
+    entity_type: GraphEntityType,
     entity_id: str,  # Accept str to handle both numeric IDs and string-based IDs
     max_hops: Annotated[int, Query(ge=2, le=5, description="Maximum hops to search")] = 3,
     *,

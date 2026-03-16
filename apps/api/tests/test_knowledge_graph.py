@@ -347,6 +347,11 @@ def test_api_get_entity_analysis_not_found(client, auth_headers, db):
     assert response.json()["detail"] == "Not found"
 
 
+def test_api_get_entity_analysis_invalid_type_returns_422(client, auth_headers):
+    response = client.get("/graph/analysis/unknown/1", headers=auth_headers)
+    assert response.status_code == 422
+
+
 def test_api_get_communities(client, auth_headers, db):
     """Test GET /graph/communities endpoint."""
     # Create test data with multiple cooperatives
@@ -449,6 +454,11 @@ def test_api_get_hidden_connections_invalid_max_hops(client, auth_headers, db):
         "/graph/hidden-connections/cooperative/1?max_hops=1", headers=auth_headers
     )
     assert response.status_code == 422  # Validation error
+
+
+def test_api_get_hidden_connections_invalid_type_returns_422(client, auth_headers):
+    response = client.get("/graph/hidden-connections/unknown/1", headers=auth_headers)
+    assert response.status_code == 422
 
 
 def test_api_requires_authentication(client, db):
