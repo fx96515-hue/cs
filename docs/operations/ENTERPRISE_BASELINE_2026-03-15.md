@@ -481,6 +481,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Price-Quotes in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Transport-Events in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Weitere interne Region-Imports auf kanonische Domain-Pfade konsolidiert
+- [x] Sources-Modul in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -549,4 +550,6 @@ This baseline captures the current technical status before broader hardening/ref
 - b959761 docs(audit): log price-quotes domain migration slice
 - ab269cb refactor(transport-events): migrate module to domain structure with wrappers
 - e334a9a docs(audit): log transport-events domain migration slice
-- pending-commit refactor(core): move peru-region imports to canonical domain paths
+- 35c7924 refactor(core): switch peru-region imports to domain module
+- 2bb96be docs(audit): log peru-region import consolidation slice
+- pending-commit refactor(sources): migrate module to domain structure with wrappers
