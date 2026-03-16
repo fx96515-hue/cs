@@ -438,10 +438,10 @@ This baseline captures the current technical status before broader hardening/ref
 - [ ] Frontend-Formular-/Tabellen-/State-Patterns vollständig angleichen
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschließen
 - [ ] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisieren
-- [ ] Abschlussvalidierung über alle Gates inkl. Docker-Runtime-Smoketest erneut durchführen
+- [x] Abschlussvalidierung über alle Gates inkl. Docker-Runtime-Smoketest erneut durchgeführt
 
 ## Next Execution Slice
 
 1. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
-2. Execute repository cleanup + docs hardening slices.
-3. Run full final validation across API/Web/Type/Lint/Docker gates including runtime smoke.
+2. Finish repository cleanup and documentation hardening remaining slices.
+3. Keep baseline document synchronized after each incremental change.
