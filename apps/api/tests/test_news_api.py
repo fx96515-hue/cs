@@ -122,3 +122,18 @@ def test_list_news_with_limit(client, auth_headers, db):
     assert response.status_code == 200
     data = response.json()
     assert len(data) <= 3
+
+
+def test_news_refresh_rejects_invalid_country_code(client, auth_headers):
+    response = client.post("/news/refresh?country=PER", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_news_refresh_rejects_non_positive_max_items(client, auth_headers):
+    response = client.post("/news/refresh?max_items=0", headers=auth_headers)
+    assert response.status_code == 422
+
+
+def test_news_list_rejects_empty_topic(client, auth_headers):
+    response = client.get("/news?topic=", headers=auth_headers)
+    assert response.status_code == 422

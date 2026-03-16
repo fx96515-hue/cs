@@ -10,11 +10,16 @@ from app.schemas.news import NewsItemOut, NewsRefreshResponse
 from app.services.news import refresh_news
 
 router = APIRouter()
+ISO2_COUNTRY_PATTERN = r"^[A-Za-z]{2}$"
+
+
+def _normalize_country_code(country: str) -> str:
+    return country.strip().upper()
 
 
 @router.get("/", response_model=list[NewsItemOut])
 def list_news(
-    topic: str = "peru coffee",
+    topic: str = Query("peru coffee", min_length=1, max_length=100),
     limit: int = Query(100, ge=1, le=500),
     days: int = Query(7, ge=1, le=365),
     db: Session = Depends(get_db),
@@ -28,10 +33,15 @@ def list_news(
 
 @router.post("/refresh", response_model=NewsRefreshResponse)
 def refresh(
-    topic: str = "peru coffee",
-    country: str = "PE",
-    max_items: int = 25,
+    topic: str = Query("peru coffee", min_length=1, max_length=100),
+    country: str = Query("PE", pattern=ISO2_COUNTRY_PATTERN),
+    max_items: int = Query(25, ge=1, le=200),
     db: Session = Depends(get_db),
     _=Depends(require_role("admin", "analyst")),
 ):
-    return refresh_news(db, topic=topic, country=country, max_items=max_items)
+    return refresh_news(
+        db,
+        topic=topic,
+        country=_normalize_country_code(country),
+        max_items=max_items,
+    )
