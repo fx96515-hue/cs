@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
+import { ErrorPanel } from "../../components/AlertError";
 import { JsonObject } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -178,11 +179,7 @@ export default function LotDetailPage() {
         </div>
       </header>
 
-      {err ? (
-        <div className="alert bad">
-          <div className="alertText">{err}</div>
-        </div>
-      ) : null}
+      {err ? <ErrorPanel message={err} onRetry={loadAll} /> : null}
 
       {!lot ? (
         <section className="panel">

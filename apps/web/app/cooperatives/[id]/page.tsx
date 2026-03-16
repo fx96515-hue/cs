@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
 import { Breadcrumb } from "../../components/Breadcrumb";
+import { ErrorPanel } from "../../components/AlertError";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
 
@@ -244,7 +245,7 @@ export default function CooperativeDetailsPage() {
       </header>
 
       {msg ? <div className="alert good"><div className="alertText">{msg}</div></div> : null}
-      {err ? <div className="alert bad"><div className="alertText">{err}</div></div> : null}
+      {err ? <ErrorPanel message={err} /> : null}
 
       {data?.deleted_at ? (
         <div className="alert bad">

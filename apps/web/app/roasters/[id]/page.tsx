@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
 import { Breadcrumb } from "../../components/Breadcrumb";
+import { ErrorPanel } from "../../components/AlertError";
 import { useToast } from "../../components/ToastProvider";
 import { DataQualityFlag } from "../../types";
 import { toErrorMessage } from "../../utils/error";
@@ -134,7 +135,7 @@ export default function RoasterDetailPage() {
   if (err) {
     return (
       <div className="content">
-        <div className="alert bad"><div className="alertText">{err}</div></div>
+        <ErrorPanel message={err} />
         <Link className="btn" href="/roasters">
           Zurueck
         </Link>
