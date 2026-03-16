@@ -18,7 +18,7 @@ from app.domains.assistant.schemas.analyst import (
     RAGSource,
 )
 import app.services.embedding as embedding_service
-from app.services.llm_providers import (
+from app.domains.assistant.providers.llm import (
     BaseLLMProvider,
     get_llm_provider,
     resolve_rag_model,
