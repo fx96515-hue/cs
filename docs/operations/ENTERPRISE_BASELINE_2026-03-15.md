@@ -412,7 +412,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Error-Contract-Sanitizing in sicherheitsrelevanten Endpunkten
 - [x] Frontend-Header-/Layout-Konsistenz auf zentralen Seiten verbessert
 - [x] Docker-Kontext und lokale Sicherheitsdefaults gehärtet
-- [ ] Verbleibende Backend-Routen auf letzte Boundary-Lücken prüfen und schließen
+- [x] Verbleibende Backend-Routen auf letzte Boundary-Lücken geprüft und geschlossen
 - [ ] Frontend-Formular-/Tabellen-/State-Patterns vollständig angleichen
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschließen
 - [ ] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisieren
@@ -420,6 +420,6 @@ This baseline captures the current technical status before broader hardening/ref
 
 ## Next Execution Slice
 
-1. Finish remaining backend boundary/error-contract hardening with tight regression tests.
-2. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
-3. Execute repository cleanup + docs hardening slices and rerun full-gate validation.
+1. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
+2. Execute repository cleanup + docs hardening slices.
+3. Run full final validation across API/Web/Type/Lint/Docker gates including runtime smoke.
