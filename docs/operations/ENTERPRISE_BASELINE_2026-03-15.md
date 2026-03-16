@@ -472,6 +472,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Knowledge-Base (`kb`) in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Dedup-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Sentiment-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
+- [x] Quality-Alerts in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -522,4 +523,6 @@ This baseline captures the current technical status before broader hardening/ref
 - cbd1bf0 docs(audit): log kb domain migration slice
 - a2147d1 refactor(dedup): migrate module to domain structure with wrappers
 - 2186530 docs(audit): log dedup domain migration slice
-- pending-commit refactor(sentiment): migrate module to domain structure with wrappers
+- 0350e36 refactor(sentiment): migrate module to domain structure with wrappers
+- f806b91 docs(audit): log sentiment domain migration slice
+- pending-commit refactor(quality-alerts): migrate module to domain structure with wrappers
