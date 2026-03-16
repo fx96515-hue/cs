@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`708 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`714 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -215,6 +215,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: deals detail/mutation routes and list filters accepted non-positive IDs.
 - Action: enforced positive bounds (`Path(ge=1)`, `Query(ge=1)`) and added dedicated API boundary tests.
 
+36. Price quotes, data quality, and transport event routes had incomplete positive-boundary enforcement
+- Status: FIXED
+- Issue: multiple list/detail/mutation routes accepted non-positive path or filter IDs.
+- Action: enforced positive `Path`/`Query` bounds across `price_quotes`, `data_quality`, and `transport_events` routes with regression tests.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -316,6 +321,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `e4ba9d0` `docs(dev): align local frontend setup to npm workflow`
 - `94bba5b` `docs(audit): finalize latest gate results and lot-boundary hardening`
 - `58fc382` `harden(api): enforce positive deal ids and filter bounds`
+- `8af79d9` `docs(audit): record deal-boundary hardening and new gate total`
+- `130a15e` `harden(api): enforce positive boundaries for quotes quality and transport routes`
 
 ## Next Execution Slice
 
