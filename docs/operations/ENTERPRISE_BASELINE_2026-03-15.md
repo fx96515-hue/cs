@@ -1,4 +1,4 @@
-# Enterprise Baseline Audit (2026-03-15)
+﻿# Enterprise Baseline Audit (2026-03-15)
 
 ## Scope
 
@@ -459,19 +459,26 @@ This baseline captures the current technical status before broader hardening/ref
 
 ## Fortschrittsliste (Taskleiste)
 
-- [x] Baseline-Gates grün validiert (API/Typing/Lint/Web-Build/Docker-Config)
-- [x] Kritische Input-Boundary-Härtung für Kern-API-Routen (mehrere Slices)
+- [x] Baseline-Gates grÃ¼n validiert (API/Typing/Lint/Web-Build/Docker-Config)
+- [x] Kritische Input-Boundary-HÃ¤rtung fÃ¼r Kern-API-Routen (mehrere Slices)
 - [x] Error-Contract-Sanitizing in sicherheitsrelevanten Endpunkten
 - [x] Frontend-Header-/Layout-Konsistenz auf zentralen Seiten verbessert
-- [x] Docker-Kontext und lokale Sicherheitsdefaults gehärtet
-- [x] Verbleibende Backend-Routen auf letzte Boundary-Lücken geprüft und geschlossen
+- [x] Docker-Kontext und lokale Sicherheitsdefaults gehÃ¤rtet
+- [x] Verbleibende Backend-Routen auf letzte Boundary-LÃ¼cken geprÃ¼ft und geschlossen
 - [x] Frontend-Formular-/Tabellen-/State-Patterns weitergehend konsolidiert (laufend)
-- [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschließen
+- [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
-- [x] Abschlussvalidierung über alle Gates inkl. Docker-Runtime-Smoketest erneut durchgeführt
+- [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
 
 ## Next Execution Slice
 
 1. Complete frontend consistency sweep for shared table/form/state behavior without visual redesign.
 2. Finish repository cleanup and documentation hardening remaining slices.
 3. Keep baseline document synchronized after each incremental change.
+
+
+## Latest Slice (2026-03-16)
+
+- Commit: `44e00a5` `chore(encoding): normalize mojibake strings and validation script output`
+- Scope: reports, knowledge-base seed text, outreach templates, alembic seed region naming, enterprise validation script output/syntax.
+- Validation: `ruff check app tests` PASS, `mypy --config-file ../../mypy.ini app` PASS, `pytest apps/api/tests -q` PASS (737 passed, 3 skipped).
