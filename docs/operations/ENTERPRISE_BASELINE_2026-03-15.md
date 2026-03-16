@@ -295,6 +295,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: top-level verification docs referenced only a narrow backend test subset and missed key type/lint/compose checks.
 - Action: updated README verification section to include full backend test/lint/type commands, frontend lint/build, compose validation, and Windows smoke command.
 
+52. Operations playbook folder had an avoidable nested directory layer
+- Status: IMPROVED
+- Issue: `docs/operations/playbooks/playbooks/` introduced unnecessary nesting and reduced discoverability.
+- Action: flattened playbook location to `docs/operations/playbooks/enterprise-smoke.md`.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -420,6 +425,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `f017da9` `docs(audit): update taskleiste after backend boundary completion`
 - `6352020` `improve(frontend): standardize remaining page action container semantics`
 - `65fa6da` `docs(readme): align verification gates with full enterprise checks`
+- `c9a70bd` `chore(docs): flatten nested operations playbooks directory`
 
 ## Fortschrittsliste (Taskleiste)
 
