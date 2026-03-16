@@ -285,6 +285,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: generic backup suffixes and local `.worktrees` folder were not explicitly ignored by root ignore rules.
 - Action: extended `.gitignore` and `.dockerignore` with `.worktrees/`, `*.bak`, and `*.old` to keep local noise out of status/build contexts.
 
+50. Remaining action-container semantics drifted on analyst/KI/sentiment pages
+- Status: IMPROVED
+- Issue: some pages still used `pageActions` where shared action-container semantics had already moved to `pageHeaderActions`.
+- Action: aligned remaining header/filter action containers to shared `pageHeaderActions` semantics without changing visual direction.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -404,6 +409,11 @@ This baseline captures the current technical status before broader hardening/ref
 - `ee1fda4` `improve(frontend): align report detail header and error panel patterns`
 - `895fb2a` `harden(api): constrain shipment and ml model-type query filters`
 - `0f6ea21` `chore(repo): ignore local worktrees and generic backup artifacts`
+- `ab8ac9e` `docs(audit): track report detail consistency slice`
+- `008cb10` `docs(audit): record shipment and ml filter hardening`
+- `e993ea4` `docs(audit): record repo-ignore hygiene improvements`
+- `f017da9` `docs(audit): update taskleiste after backend boundary completion`
+- `6352020` `improve(frontend): standardize remaining page action container semantics`
 
 ## Fortschrittsliste (Taskleiste)
 
