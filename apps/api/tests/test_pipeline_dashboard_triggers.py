@@ -1,4 +1,4 @@
-from app.api.routes import pipeline_dashboard as pipeline_routes
+from app.domains.pipeline.api import routes as pipeline_routes
 
 
 class _DummyRedis:
