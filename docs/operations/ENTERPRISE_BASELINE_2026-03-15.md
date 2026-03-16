@@ -320,6 +320,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: backend setup doc mixed historical migration notes with outdated claims; docs index had noisy/garbled structure.
 - Action: rewrote `docs/operations/backend-setup.md` as a stable, current quickstart and normalized `docs/README.md` into a clean documentation index with relevant sections.
 
+57. Data-quality mini widget still used ad-hoc inline error text
+- Status: IMPROVED
+- Issue: compact data-quality widget rendered raw inline `Fehler:` text instead of shared error-state semantics.
+- Action: switched widget error rendering to shared compact `ErrorPanel` with retry hook and normalized loading copy.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -450,6 +455,7 @@ This baseline captures the current technical status before broader hardening/ref
 - `717a377` `improve(frontend): unify detail-page error states with ErrorPanel`
 - `595cb84` `improve(frontend): standardize list-page load errors with ErrorPanel`
 - `1ab375c` `docs(operations): rewrite backend setup and normalize docs index`
+- `fa80e21` `improve(frontend): unify mini quality widget error state`
 
 ## Fortschrittsliste (Taskleiste)
 
