@@ -469,6 +469,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Assistant-/Reports-/Outreach-/News-Module in domain-first Struktur migriert (mit Legacy-Kompatibilitaet)
 - [x] Assistant-Provider auf Cloud-First/Freemium-Ready erweitert (OpenRouter -> Groq -> Ollama in `auto`)
 - [x] Auto-Outreach in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
+- [x] Knowledge-Base (`kb`) in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -513,4 +514,6 @@ This baseline captures the current technical status before broader hardening/ref
 
 - 989cef6 chore(frontend): remove redundant ErrorPanel component
 - 92ccdcd improve(assistant): add OpenRouter cloud provider support and auto cloud-first fallback order
-- pending-commit refactor(auto-outreach): move module into domain-first structure with compatibility wrappers
+- 5ae2294 refactor(auto-outreach): move module into domain-first structure with compatibility wrappers
+- 6358025 docs(audit): log auto-outreach domain migration slice
+- pending-commit refactor(kb): migrate knowledge-base module to domain structure with wrappers
