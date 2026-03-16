@@ -97,10 +97,13 @@ async def get_status(
 def _provider_error(provider: str) -> str:
     messages: dict[str, str] = {
         "ollama": (
-            "Assistant nicht verfügbar. Starte Ollama: `ollama serve` "
+            "Assistant nicht verfuegbar. Starte Ollama: `ollama serve` "
             "und lade ein Modell: `ollama pull llama3.1:8b`"
         ),
-        "openai": "Assistant nicht verfügbar. OPENAI_API_KEY ist nicht konfiguriert.",
-        "groq": "Assistant nicht verfügbar. GROQ_API_KEY ist nicht konfiguriert.",
+        "openrouter": (
+            "Assistant nicht verfuegbar. OPENROUTER_API_KEY ist nicht konfiguriert."
+        ),
+        "openai": "Assistant nicht verfuegbar. OPENAI_API_KEY ist nicht konfiguriert.",
+        "groq": "Assistant nicht verfuegbar. GROQ_API_KEY ist nicht konfiguriert.",
     }
-    return messages.get(provider, "Assistant nicht verfügbar.")
+    return messages.get(provider, "Assistant nicht verfuegbar.")

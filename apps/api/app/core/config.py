@@ -118,10 +118,12 @@ class Settings(BaseSettings):
     SENTENCE_TRANSFORMERS_CACHE: str | None = None
 
     # --- RAG AI Analyst (Multi-Provider) ---
-    # "auto" prefers free cloud inference (Groq) when configured, then local Ollama.
-    RAG_PROVIDER: str = "auto"  # auto | ollama | openai | groq
+    # "auto" prefers free cloud inference (OpenRouter free-tier/Groq) when configured,
+    # then local Ollama.
+    RAG_PROVIDER: str = "auto"  # auto | openrouter | ollama | openai | groq
     # Legacy override used when set; otherwise provider-specific defaults are selected.
     RAG_LLM_MODEL: str = ""
+    RAG_LLM_MODEL_OPENROUTER: str = "meta-llama/llama-3.3-8b-instruct:free"
     RAG_LLM_MODEL_OLLAMA: str = "llama3.1:8b"
     RAG_LLM_MODEL_OPENAI: str = "gpt-4o-mini"
     RAG_LLM_MODEL_GROQ: str = "llama-3.1-8b-instant"
@@ -138,6 +140,9 @@ class Settings(BaseSettings):
 
     # --- Groq (optional cloud provider) ---
     GROQ_API_KEY: str | None = None
+    # --- OpenRouter (optional cloud provider; supports free-tier models) ---
+    OPENROUTER_API_KEY: str | None = None
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1/chat/completions"
 
     # --- Machine Learning ---
     # Model type to use for training: "random_forest" or "xgboost"

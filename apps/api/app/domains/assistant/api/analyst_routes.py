@@ -63,22 +63,27 @@ async def ask_analyst(
         # Provider-specific error messages
         if provider == "ollama":
             error_msg = (
-                "RAG AI Analyst ist nicht verfügbar. "
+                "RAG AI Analyst ist nicht verfuegbar. "
                 "Ollama ist nicht gestartet. "
                 "Starte Ollama mit: `ollama serve` und lade ein Modell: `ollama pull llama3.1:8b`"
             )
+        elif provider == "openrouter":
+            error_msg = (
+                "RAG AI Analyst ist nicht verfuegbar. "
+                "OPENROUTER_API_KEY ist nicht konfiguriert."
+            )
         elif provider == "openai":
             error_msg = (
-                "RAG AI Analyst ist nicht verfügbar. "
+                "RAG AI Analyst ist nicht verfuegbar. "
                 "OPENAI_API_KEY ist nicht konfiguriert."
             )
         elif provider == "groq":
             error_msg = (
-                "RAG AI Analyst ist nicht verfügbar. "
+                "RAG AI Analyst ist nicht verfuegbar. "
                 "GROQ_API_KEY ist nicht konfiguriert."
             )
         else:
-            error_msg = "RAG AI Analyst ist nicht verfügbar."
+            error_msg = "RAG AI Analyst ist nicht verfuegbar."
 
         raise HTTPException(
             status_code=503,

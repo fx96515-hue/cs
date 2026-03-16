@@ -467,6 +467,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Verbleibende Backend-Routen auf letzte Boundary-LÃ¼cken geprÃ¼ft und geschlossen
 - [x] Frontend-Formular-/Tabellen-/State-Patterns weitergehend konsolidiert (laufend)
 - [x] Assistant-/Reports-/Outreach-/News-Module in domain-first Struktur migriert (mit Legacy-Kompatibilitaet)
+- [x] Assistant-Provider auf Cloud-First/Freemium-Ready erweitert (OpenRouter -> Groq -> Ollama in `auto`)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -509,4 +510,5 @@ This baseline captures the current technical status before broader hardening/ref
 - b938a50 refactor(news): migrate news module to domain structure with wrappers
 - 42d9f03 docs(audit): record news domain migration slice
 
-- pending-commit improve(frontend): remove redundant ErrorPanel component and keep shared AlertError alias as single source of truth
+- 989cef6 chore(frontend): remove redundant ErrorPanel component
+- pending-commit improve(assistant): add OpenRouter cloud provider support and auto cloud-first fallback order

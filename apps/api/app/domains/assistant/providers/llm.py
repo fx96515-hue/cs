@@ -346,6 +346,113 @@ class OpenAIProvider(BaseLLMProvider):
         return "openai"
 
 
+class OpenRouterProvider(BaseLLMProvider):
+    """OpenRouter provider - supports cloud-hosted free-tier models."""
+
+    def __init__(self) -> None:
+        self.api_key = settings.OPENROUTER_API_KEY
+        self.base_url = settings.OPENROUTER_BASE_URL
+        self.timeout = 60.0
+
+    async def chat_completion(
+        self, messages: list[dict], temperature: float, model: str
+    ) -> dict:
+        if not self.is_available():
+            raise ValueError("OpenRouter API key not configured")
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self.base_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "temperature": temperature,
+                    },
+                    timeout=self.timeout,
+                )
+                response.raise_for_status()
+                data = response.json()
+                if inspect.isawaitable(data):
+                    data = await data
+
+                content = data["choices"][0]["message"]["content"]
+                tokens_used = data.get("usage", {}).get("total_tokens")
+
+                log.info(
+                    "openrouter_chat_completion",
+                    model=model,
+                    tokens=tokens_used,
+                    content_length=len(content),
+                )
+                return {"content": content, "tokens_used": tokens_used}
+        except httpx.HTTPStatusError as e:
+            log.error(
+                "openrouter_api_error",
+                status_code=e.response.status_code,
+                error=str(e),
+            )
+            raise RuntimeError(f"OpenRouter API error: {e.response.status_code}")
+        except Exception as e:
+            log.error("openrouter_chat_completion_failed", error=str(e))
+            raise
+
+    async def stream_chat_completion(
+        self, messages: list[dict], temperature: float, model: str
+    ) -> AsyncIterator[str]:
+        if not self.is_available():
+            raise ValueError("OpenRouter API key not configured")
+
+        try:
+            async with httpx.AsyncClient() as client:
+                async with client.stream(
+                    "POST",
+                    self.base_url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "temperature": temperature,
+                        "stream": True,
+                    },
+                    timeout=self.timeout,
+                ) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if not line.startswith("data: "):
+                            continue
+                        payload = line[6:]
+                        if payload.strip() == "[DONE]":
+                            break
+                        try:
+                            data = json.loads(payload)
+                            chunk = (
+                                data.get("choices", [{}])[0]
+                                .get("delta", {})
+                                .get("content", "")
+                            )
+                            if chunk:
+                                yield chunk
+                        except (json.JSONDecodeError, IndexError):
+                            continue
+        except Exception as e:
+            log.error("openrouter_stream_failed", error=str(e))
+            raise
+
+    def is_available(self) -> bool:
+        return self.api_key is not None and len(self.api_key.strip()) > 0
+
+    def provider_name(self) -> str:
+        return "openrouter"
+
+
 class GroqProvider(BaseLLMProvider):
     """Groq provider - free API key, very fast inference."""
 
@@ -556,7 +663,12 @@ def get_llm_provider() -> BaseLLMProvider:
     configured = settings.RAG_PROVIDER.lower()
 
     if configured == "auto":
-        # Prefer free cloud inference (Groq) when configured.
+        # Prefer free cloud inference (OpenRouter free-tier) when configured.
+        openrouter = OpenRouterProvider()
+        if openrouter.is_available():
+            return openrouter
+
+        # Otherwise prefer Groq free cloud inference.
         groq = GroqProvider()
         if groq.is_available():
             return groq
@@ -571,6 +683,8 @@ def get_llm_provider() -> BaseLLMProvider:
 
     if configured == "ollama":
         selected: BaseLLMProvider = OllamaProvider()
+    elif configured == "openrouter":
+        selected = OpenRouterProvider()
     elif configured == "openai":
         selected = OpenAIProvider()
     elif configured == "groq":
@@ -600,6 +714,8 @@ def resolve_rag_model(provider_name: str) -> str:
         return legacy_override
 
     provider = provider_name.lower()
+    if provider == "openrouter":
+        return settings.RAG_LLM_MODEL_OPENROUTER
     if provider == "groq":
         return settings.RAG_LLM_MODEL_GROQ
     if provider == "openai":

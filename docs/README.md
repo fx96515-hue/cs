@@ -24,6 +24,7 @@ Developer and feature guides.
 - `guides/semantic-search-guide.md`
 - `guides/knowledge-graph-guide.md`
 - `guides/peru-sourcing-intelligence.md`
+- `guides/assistant-provider-selection.md`
 
 ### Operations
 

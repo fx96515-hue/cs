@@ -9,6 +9,7 @@ from app.domains.assistant.providers.llm import (
     GroqProvider,
     OllamaProvider,
     OpenAIProvider,
+    OpenRouterProvider,
     get_llm_provider,
     resolve_rag_model,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "BaseLLMProvider",
     "OllamaProvider",
     "OpenAIProvider",
+    "OpenRouterProvider",
     "GroqProvider",
     "DeterministicFallbackProvider",
     "get_llm_provider",
