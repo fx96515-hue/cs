@@ -330,6 +330,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: ML training API route + schemas remained outside the domain-first structure and increased split ownership risk.
 - Action: migrated route/schema implementation to `app.domains.ml_training` with compatibility wrappers and updated API test monkeypatch targets to canonical domain paths.
 
+59. ML prediction and feature-dashboard APIs remained in legacy route/schema locations
+- Status: FIXED
+- Issue: prediction and feature-management endpoints still lived in flat legacy modules, causing mixed ownership and import drift.
+- Action: migrated prediction routes/schemas and feature-dashboard routes into `app.domains.ml_predictions` and `app.domains.features` with compatibility wrappers retained.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -491,6 +496,8 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Cuppings/Enrich/Discovery in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [x] Health/Data-Health/Monitoring-Routen in Domain-API-Struktur migriert (mit Legacy-Kompatibilitaet)
 - [x] Ops- und Scheduler-Dashboard-Routen in Domain-API-Struktur migriert (mit Legacy-Kompatibilitaet)
+- [x] ML-Training in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
+- [x] ML-Predictions und Features-Dashboard in domain-first Struktur migriert (Route/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -572,3 +579,5 @@ This baseline captures the current technical status before broader hardening/ref
 - df715d0 refactor(ops-scheduler): migrate dashboard route modules to domain api structure
 - 8aacc70 docs(audit): log ops-scheduler domain migration slice
 - a71c06a refactor(ml-training): migrate ml train route and schemas to domain structure
+- 292899c docs(audit): log ml-training domain migration slice
+- 230e77b refactor(ml): migrate predictions and features routes to domain structure
