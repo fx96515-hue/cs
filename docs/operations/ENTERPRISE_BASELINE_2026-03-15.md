@@ -475,6 +475,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Quality-Alerts in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Logistics-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Margins-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
+- [x] Data-Quality-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -531,4 +532,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 007f86c docs(audit): log quality-alerts domain migration slice
 - d7fd68f refactor(logistics): migrate module to domain structure with wrappers
 - 377640a docs(audit): log logistics domain migration slice
-- pending-commit refactor(margins): migrate module to domain structure with wrappers
+- c67901d refactor(margins): migrate module to domain structure with wrappers
+- 8b23974 docs(audit): log margins domain migration slice
+- pending-commit refactor(data-quality): migrate module to domain structure with wrappers
