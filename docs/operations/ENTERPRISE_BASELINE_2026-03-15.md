@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`700 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`704 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -200,6 +200,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: ML model detail/retrain/feature-importance routes lacked explicit positive ID bounds.
 - Action: enforced `model_id >= 1` path validation and added regression tests for rejected zero IDs.
 
+33. Market websocket auth rejection reasons exposed unnecessary detail variants
+- Status: FIXED
+- Issue: websocket auth could return different rejection reason strings (`Missing token`, role/account hints).
+- Action: standardized auth-related websocket close reasons to `Unauthorized` and added route-level regression tests for sanitized helper behavior.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -294,6 +299,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `d5c74db` `improve(frontend): align detail and intelligence pages to shared header pattern`
 - `6c2aae5` `docs(audit): record additional frontend header harmonization`
 - `18bde8f` `harden(api): enforce positive ml model ids on model routes`
+- `cd884bc` `docs(audit): record ml model-id boundary hardening`
+- `f0fb942` `harden(api): sanitize market websocket auth rejection reasons`
 
 ## Next Execution Slice
 
