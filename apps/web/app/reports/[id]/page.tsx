@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 
 import { apiFetch } from "../../../lib/api";
 import Badge from "../../components/Badge";
+import { ErrorPanel } from "../../components/AlertError";
 import { toErrorMessage } from "../../utils/error";
 
 type Report = {
@@ -44,20 +45,16 @@ export default function ReportDetailPage() {
   return (
     <div className="content">
       <header className="pageHeader">
-        <div>
+        <div className="pageHeaderContent">
           <h1 className="h1">{report?.title || `Report #${id}`}</h1>
           <p className="subtitle">Detailansicht des generierten Tages-/Systemberichts.</p>
         </div>
-        <div className="pageActions">
+        <div className="pageHeaderActions">
           <Link className="btn" href="/reports">Zurueck zu Berichten</Link>
         </div>
       </header>
 
-      {err ? (
-        <div className="alert bad">
-          <div className="alertText">{err}</div>
-        </div>
-      ) : null}
+      {err ? <ErrorPanel message={err} /> : null}
 
       <section className="panel">
         <div className="panelHeader">
