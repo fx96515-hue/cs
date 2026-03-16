@@ -471,6 +471,7 @@ This baseline captures the current technical status before broader hardening/ref
 - [x] Auto-Outreach in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Knowledge-Base (`kb`) in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [x] Dedup-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
+- [x] Sentiment-Modul in domain-first Struktur migriert (Route/Service/Schema + Legacy-Kompatibilitaet)
 - [ ] Repo-Cleanup-Phase (tote Dateien, Skript-Konsolidierung, Ignore-Feinschliff) abschlieÃŸen
 - [x] Dokumentationsphase (`README`, Dev-Runbook, Architekturentscheidungen) finalisiert
 - [x] Abschlussvalidierung Ã¼ber alle Gates inkl. Docker-Runtime-Smoketest erneut durchgefÃ¼hrt
@@ -519,4 +520,6 @@ This baseline captures the current technical status before broader hardening/ref
 - 6358025 docs(audit): log auto-outreach domain migration slice
 - 22fd77e refactor(kb): migrate knowledge-base module to domain structure with wrappers
 - cbd1bf0 docs(audit): log kb domain migration slice
-- pending-commit refactor(dedup): migrate module to domain structure with wrappers
+- a2147d1 refactor(dedup): migrate module to domain structure with wrappers
+- 2186530 docs(audit): log dedup domain migration slice
+- pending-commit refactor(sentiment): migrate module to domain structure with wrappers
