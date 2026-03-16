@@ -27,12 +27,9 @@ git checkout -b main origin/v0/fx96515-hue-57428183
 ## 2. Abhängigkeiten installieren
 
 ```bash
-# pnpm ist der Package-Manager dieses Projekts
-npm install -g pnpm
-
 # Alle Frontend-Abhängigkeiten installieren
 cd apps/web
-pnpm install
+npm install
 ```
 
 ---
@@ -52,7 +49,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ```bash
 cd apps/web
-pnpm dev
+npm run dev
 # → http://localhost:3000
 ```
 
@@ -259,7 +256,7 @@ git pull origin main
 git pull origin v0/fx96515-hue-57428183  # v0-Updates holen falls vorhanden
 
 # Frontend starten (Terminal 1)
-cd apps/web && pnpm dev
+cd apps/web && npm run dev
 
 # Backend starten (Terminal 2)
 cd apps/api && uv run uvicorn app.main:app --reload
@@ -280,12 +277,12 @@ git push origin feature/mein-branch
 
 | Problem | Lösung |
 |---|---|
-| `pnpm: command not found` | `npm install -g pnpm` |
-| `Module not found: lib/api` | `pnpm install` im `apps/web` Verzeichnis |
+| `npm: command not found` | Node.js LTS installieren und Shell neu starten |
+| `Module not found: lib/api` | `npm install` im `apps/web` Verzeichnis |
 | Frontend zeigt Demo-Banner | Backend läuft nicht oder `.env.local` fehlt |
 | `CORS error` im Browser | Backend: `allow_credentials=True`, Origin `http://localhost:3000` |
 | `401 Unauthorized` überall | Cookie `Secure=false` für lokale HTTP-Entwicklung setzen |
-| TypeScript-Fehler in `services/` | `pnpm tsc --noEmit` für detaillierte Fehlerliste |
+| TypeScript-Fehler in `services/` | `npm run build` oder `npx tsc --noEmit` für detaillierte Fehlerliste |
 | Git-Konflikt beim Merge | Frontend-Dateien bevorzugen v0-Stand, Backend-Dateien deinen Stand |
 
 ---
@@ -294,7 +291,7 @@ git push origin feature/mein-branch
 
 ```
 1. git clone → git checkout v0-Branch
-2. pnpm install → .env.local erstellen → pnpm dev
+2. npm install → .env.local erstellen → npm run dev
 3. Demo-Login testen (ohne Backend)
 4. Backend: /auth/login implementieren (Roadbook Schritt 1)
 5. Echten Login testen
