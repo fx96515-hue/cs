@@ -11,7 +11,7 @@ This baseline captures the current technical status before broader hardening/ref
 
 - `docker compose config -q`: PASS
 - `docker compose -f docker-compose.stack.yml config -q`: PASS
-- `apps/api`: `pytest -q`: PASS (`714 passed, 3 skipped`)
+- `apps/api`: `pytest -q`: PASS (`719 passed, 3 skipped`)
 - `apps/api`: `ruff check app tests`: PASS
 - `apps/api`: `mypy --config-file ../../mypy.ini app`: PASS
 - `apps/web`: `npm run lint`: PASS
@@ -220,6 +220,11 @@ This baseline captures the current technical status before broader hardening/ref
 - Issue: multiple list/detail/mutation routes accepted non-positive path or filter IDs.
 - Action: enforced positive `Path`/`Query` bounds across `price_quotes`, `data_quality`, and `transport_events` routes with regression tests.
 
+37. Margins, semantic search, sentiment, and quality-alert routes had remaining weak ID boundaries
+- Status: FIXED
+- Issue: selected endpoints accepted non-positive path IDs or weak pagination bounds.
+- Action: enforced positive bounds for `lot_id`/`entity_id`/`alert_id` and `limit` where needed, plus added boundary regression tests.
+
 ## High-Priority Findings
 
 1. Local security scan noise / temporary artifacts
@@ -323,6 +328,8 @@ This baseline captures the current technical status before broader hardening/ref
 - `58fc382` `harden(api): enforce positive deal ids and filter bounds`
 - `8af79d9` `docs(audit): record deal-boundary hardening and new gate total`
 - `130a15e` `harden(api): enforce positive boundaries for quotes quality and transport routes`
+- `fd6ff18` `docs(audit): record multi-route boundary hardening and updated gate total`
+- `da60a36` `harden(api): enforce positive id boundaries for margins search sentiment alerts`
 
 ## Next Execution Slice
 
