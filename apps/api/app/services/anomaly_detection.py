@@ -191,7 +191,7 @@ def detect_price_anomalies(
         mean = float(np.mean(baseline_values))
         std = float(np.std(baseline_values))
 
-        if std == 0.0:
+        if np.isclose(std, 0.0):
             continue
 
         z = abs((latest_value - mean) / std)
