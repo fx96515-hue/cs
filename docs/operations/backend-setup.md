@@ -93,6 +93,29 @@ Migration failures:
 3. If local state is broken, recreate local volumes only when appropriate:
    `docker compose down -v && docker compose up -d --build`
 
+## Repo and Docker Cleanup
+
+Use the maintenance script for repeatable local cleanup:
+
+```powershell
+# show what would be removed
+powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup_local_artifacts.ps1
+
+# apply local repo artifact cleanup
+powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup_local_artifacts.ps1 -Apply
+
+# apply cleanup including Docker image/cache prune
+powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup_local_artifacts.ps1 -Apply -DockerPrune
+```
+
+Equivalent `make` targets:
+
+```bash
+make cleanup-local
+make cleanup-local-apply
+make cleanup-local-docker
+```
+
 ## Related Docs
 
 - `README.md`

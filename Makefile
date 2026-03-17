@@ -2,7 +2,8 @@ PYTHON ?= python3
 ENTERPRISE_COMPOSE ?= infra/deploy/docker-compose.enterprise.yml
 
 .PHONY: help up up-full down logs status migrate bootstrap smoke smoke-win \
-        start-enterprise stop-enterprise enterprise-logs enterprise-status enterprise-restart
+        start-enterprise stop-enterprise enterprise-logs enterprise-status enterprise-restart \
+        cleanup-local cleanup-local-apply cleanup-local-docker
 
 help:
 	@echo "CoffeeStudio Platform — common targets"
@@ -78,3 +79,15 @@ enterprise-status:
 enterprise-restart:
 	$(MAKE) stop-enterprise
 	$(MAKE) start-enterprise
+
+# -----------------------
+# Local hygiene / cleanup
+# -----------------------
+cleanup-local:
+	powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup_local_artifacts.ps1
+
+cleanup-local-apply:
+	powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup_local_artifacts.ps1 -Apply
+
+cleanup-local-docker:
+	powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup_local_artifacts.ps1 -Apply -DockerPrune
