@@ -122,6 +122,28 @@ class CooperativeSourcingAnalyzer:
         max_age = timedelta(days=settings.SOURCING_ANALYSIS_STALE_DAYS)
         return datetime.now(timezone.utc) - cached_at > max_age
 
+    @staticmethod
+    def _score_from_thresholds(
+        value: float | int,
+        thresholds: list[tuple[float, int]],
+        default_score: int,
+    ) -> int:
+        for threshold, score in thresholds:
+            if value >= threshold:
+                return score
+        return default_score
+
+    @staticmethod
+    def _label_from_thresholds(
+        value: float,
+        thresholds: list[tuple[float, str]],
+        default_label: str,
+    ) -> str:
+        for threshold, label in thresholds:
+            if value >= threshold:
+                return label
+        return default_label
+
     def check_supply_capacity(self, coop: Cooperative) -> dict[str, Any]:
         """
         Evaluate supply capacity (100-point scale).
@@ -139,90 +161,47 @@ class CooperativeSourcingAnalyzer:
         Returns:
             Dictionary with score breakdown
         """
-        score = 0.0
-        breakdown = {}
-
         op_data = coop.operational_data or {}
-
-        # Volume score (30 points)
         volume_kg = op_data.get("annual_volume_kg", 0)
-        if volume_kg >= 100000:
-            volume_score = 30
-        elif volume_kg >= 50000:
-            volume_score = 25
-        elif volume_kg >= 25000:
-            volume_score = 20
-        elif volume_kg >= 10000:
-            volume_score = 15
-        else:
-            volume_score = 5
-        score += volume_score
-        breakdown["volume"] = {"score": volume_score, "volume_kg": volume_kg}
-
-        # Farmer count (20 points)
         farmer_count = op_data.get("farmer_count", 0)
-        if farmer_count >= 500:
-            farmer_score = 20
-        elif farmer_count >= 200:
-            farmer_score = 17
-        elif farmer_count >= 100:
-            farmer_score = 14
-        elif farmer_count >= 50:
-            farmer_score = 10
-        else:
-            farmer_score = 5
-        score += farmer_score
-        breakdown["farmers"] = {"score": farmer_score, "count": farmer_count}
-
-        # Storage capacity (20 points)
         storage_kg = op_data.get("storage_capacity_kg", 0)
-        if storage_kg >= 200000:
-            storage_score = 20
-        elif storage_kg >= 100000:
-            storage_score = 17
-        elif storage_kg >= 50000:
-            storage_score = 14
-        elif storage_kg >= 25000:
-            storage_score = 10
-        else:
-            storage_score = 5
-        score += storage_score
-        breakdown["storage"] = {"score": storage_score, "capacity_kg": storage_kg}
-
-        # Processing facilities (15 points)
         facilities = op_data.get("processing_facilities", [])
-        facility_score = 0
-        if "wet_mill" in facilities:
-            facility_score += 8
-        if "dry_mill" in facilities:
-            facility_score += 7
-        score += facility_score
-        breakdown["facilities"] = {"score": facility_score, "types": facilities}
-
-        # Export experience (15 points)
         years_exporting = op_data.get("years_exporting", 0)
-        if years_exporting >= 10:
-            experience_score = 15
-        elif years_exporting >= 5:
-            experience_score = 12
-        elif years_exporting >= 3:
-            experience_score = 9
-        elif years_exporting >= 1:
-            experience_score = 6
-        else:
-            experience_score = 2
-        score += experience_score
-        breakdown["experience"] = {"score": experience_score, "years": years_exporting}
+        volume_score = self._score_from_thresholds(
+            volume_kg, [(100000, 30), (50000, 25), (25000, 20), (10000, 15)], 5
+        )
+        farmer_score = self._score_from_thresholds(
+            farmer_count, [(500, 20), (200, 17), (100, 14), (50, 10)], 5
+        )
+        storage_score = self._score_from_thresholds(
+            storage_kg, [(200000, 20), (100000, 17), (50000, 14), (25000, 10)], 5
+        )
+        facility_score = (8 if "wet_mill" in facilities else 0) + (
+            7 if "dry_mill" in facilities else 0
+        )
+        experience_score = self._score_from_thresholds(
+            years_exporting, [(10, 15), (5, 12), (3, 9), (1, 6)], 2
+        )
+
+        score = float(
+            volume_score + farmer_score + storage_score + facility_score + experience_score
+        )
+        breakdown = {
+            "volume": {"score": volume_score, "volume_kg": volume_kg},
+            "farmers": {"score": farmer_score, "count": farmer_count},
+            "storage": {"score": storage_score, "capacity_kg": storage_kg},
+            "facilities": {"score": facility_score, "types": facilities},
+            "experience": {"score": experience_score, "years": years_exporting},
+        }
+        assessment = self._label_from_thresholds(
+            score, [(75, "strong"), (50, "adequate")], "limited"
+        )
 
         return {
             "score": round(score, 2),
             "max_score": 100,
             "breakdown": breakdown,
-            "assessment": "strong"
-            if score >= 75
-            else "adequate"
-            if score >= 50
-            else "limited",
+            "assessment": assessment,
         }
 
     def check_export_readiness(self, coop: Cooperative) -> dict[str, Any]:
@@ -242,79 +221,49 @@ class CooperativeSourcingAnalyzer:
         Returns:
             Dictionary with score breakdown
         """
-        score = 0.0
-        breakdown = {}
-
         export_data = coop.export_readiness or {}
-
-        # Export license (25 points)
         has_license = export_data.get("has_export_license", False)
         license_expiry = export_data.get("license_expiry_date")
-        if has_license and license_expiry:
-            license_score = 25
-        elif has_license:
-            license_score = 20
-        else:
-            license_score = 0
-        score += license_score
-        breakdown["license"] = {
-            "score": license_score,
-            "valid": has_license,
-            "expiry": license_expiry,
-        }
-
-        # SENASA registration (25 points)
         senasa_registered = export_data.get("senasa_registered", False)
         senasa_score = 25 if senasa_registered else 0
-        score += senasa_score
-        breakdown["senasa"] = {"score": senasa_score, "registered": senasa_registered}
-
-        # Certifications (25 points)
         cert_list = export_data.get("certifications", [])
         cert_count = len(cert_list)
-        if cert_count >= 3:
-            cert_score = 25
-        elif cert_count == 2:
-            cert_score = 20
-        elif cert_count == 1:
-            cert_score = 15
-        else:
-            cert_score = 5
-        score += cert_score
-        breakdown["certifications"] = {
-            "score": cert_score,
-            "count": cert_count,
-            "list": cert_list,
-        }
-
-        # Customs history (15 points)
         customs_issues = export_data.get("customs_issues_count", 0)
-        if customs_issues == 0:
-            customs_score = 15
-        elif customs_issues <= 2:
-            customs_score = 10
-        elif customs_issues <= 5:
-            customs_score = 5
-        else:
-            customs_score = 0
-        score += customs_score
-        breakdown["customs"] = {"score": customs_score, "issues": customs_issues}
-
-        # Document coordinator (10 points)
         has_coordinator = export_data.get("has_document_coordinator", False)
+        license_score = 25 if has_license and license_expiry else 20 if has_license else 0
+        cert_score = {3: 25, 2: 20, 1: 15}.get(min(cert_count, 3), 5)
+        customs_score = (
+            15 if customs_issues == 0 else 10 if customs_issues <= 2 else 5 if customs_issues <= 5 else 0
+        )
         coordinator_score = 10 if has_coordinator else 0
-        score += coordinator_score
-        breakdown["coordinator"] = {"score": coordinator_score, "has": has_coordinator}
+
+        score = float(
+            license_score + senasa_score + cert_score + customs_score + coordinator_score
+        )
+        breakdown = {
+            "license": {
+                "score": license_score,
+                "valid": has_license,
+                "expiry": license_expiry,
+            },
+            "senasa": {"score": senasa_score, "registered": senasa_registered},
+            "certifications": {
+                "score": cert_score,
+                "count": cert_count,
+                "list": cert_list,
+            },
+            "customs": {"score": customs_score, "issues": customs_issues},
+            "coordinator": {"score": coordinator_score, "has": has_coordinator},
+        }
+        assessment = self._label_from_thresholds(
+            score, [(75, "ready"), (50, "partially_ready")], "not_ready"
+        )
 
         return {
             "score": round(score, 2),
             "max_score": 100,
             "breakdown": breakdown,
-            "assessment": "ready"
-            if score >= 75
-            else "partially_ready"
-            if score >= 50
-            else "not_ready",
+            "assessment": assessment,
         }
 
     def assess_communication_quality(self, coop: Cooperative) -> dict[str, Any]:
@@ -334,87 +283,54 @@ class CooperativeSourcingAnalyzer:
         Returns:
             Dictionary with score breakdown
         """
-        score = 0.0
-        breakdown = {}
-
         comm_data = coop.communication_metrics or {}
         digital_data = coop.digital_footprint or {}
-
-        # Response time (25 points)
         avg_response_hours = comm_data.get(
             "avg_response_hours", MAX_RESPONSE_TIME_HOURS
         )
-        if avg_response_hours <= 24:
-            response_score = 25
-        elif avg_response_hours <= 48:
-            response_score = 20
-        elif avg_response_hours <= 72:
-            response_score = 10
-        else:
-            response_score = 5
-        score += response_score
-        breakdown["response_time"] = {
-            "score": response_score,
-            "avg_hours": avg_response_hours,
-        }
-
-        # Languages (25 points)
         languages = comm_data.get("languages", [])
-        lang_score = 5  # Base for Spanish
-        if "english" in [lang.lower() for lang in languages]:
-            lang_score += 15
-        if "german" in [lang.lower() for lang in languages]:
-            lang_score += 10
-        score += lang_score
-        breakdown["languages"] = {"score": lang_score, "list": languages}
-
-        # Digital presence (20 points)
-        digital_score = 0
-        if digital_data.get("has_website"):
-            digital_score += 8
-        if digital_data.get("has_facebook"):
-            digital_score += 4
-        if digital_data.get("has_instagram"):
-            digital_score += 4
-        if digital_data.get("has_whatsapp"):
-            digital_score += 4
-        score += digital_score
-        breakdown["digital_presence"] = {
-            "score": digital_score,
-            "channels": digital_data,
-        }
-
-        # Documentation quality (15 points)
-        doc_score = 0
-        if digital_data.get("has_photos"):
-            doc_score += 8
-        if digital_data.get("has_cupping_scores"):
-            doc_score += 7
-        score += doc_score
-        breakdown["documentation"] = {"score": doc_score}
-
-        # Meeting reliability (15 points)
         missed_meetings = comm_data.get("missed_meetings", 0)
-        if missed_meetings == 0:
-            meeting_score = 15
-        elif missed_meetings <= 1:
-            meeting_score = 12
-        elif missed_meetings <= 3:
-            meeting_score = 8
-        else:
-            meeting_score = 3
-        score += meeting_score
-        breakdown["meetings"] = {"score": meeting_score, "missed": missed_meetings}
+        response_score = (
+            25
+            if avg_response_hours <= 24
+            else 20
+            if avg_response_hours <= 48
+            else 10
+            if avg_response_hours <= 72
+            else 5
+        )
+        language_set = {str(lang).lower() for lang in languages}
+        lang_score = 5 + (15 if "english" in language_set else 0) + (
+            10 if "german" in language_set else 0
+        )
+        digital_score = (
+            (8 if digital_data.get("has_website") else 0)
+            + (4 if digital_data.get("has_facebook") else 0)
+            + (4 if digital_data.get("has_instagram") else 0)
+            + (4 if digital_data.get("has_whatsapp") else 0)
+        )
+        doc_score = (8 if digital_data.get("has_photos") else 0) + (
+            7 if digital_data.get("has_cupping_scores") else 0
+        )
+        meeting_score = 15 if missed_meetings == 0 else 12 if missed_meetings <= 1 else 8 if missed_meetings <= 3 else 3
+
+        score = float(response_score + lang_score + digital_score + doc_score + meeting_score)
+        breakdown = {
+            "response_time": {"score": response_score, "avg_hours": avg_response_hours},
+            "languages": {"score": lang_score, "list": languages},
+            "digital_presence": {"score": digital_score, "channels": digital_data},
+            "documentation": {"score": doc_score},
+            "meetings": {"score": meeting_score, "missed": missed_meetings},
+        }
+        assessment = self._label_from_thresholds(
+            score, [(80, "excellent"), (60, "good")], "needs_improvement"
+        )
 
         return {
             "score": round(score, 2),
             "max_score": 100,
             "breakdown": breakdown,
-            "assessment": "excellent"
-            if score >= 80
-            else "good"
-            if score >= 60
-            else "needs_improvement",
+            "assessment": assessment,
         }
 
     def benchmark_pricing(self, coop: Cooperative) -> dict[str, Any]:
@@ -497,106 +413,52 @@ class CooperativeSourcingAnalyzer:
         Returns:
             Dictionary with risk breakdown
         """
-        total_risk = 0.0
-        breakdown = {}
-
-        # Financial risk (max 25 points)
         fin_data = coop.financial_data or {}
         annual_revenue = fin_data.get("annual_revenue_usd", 0)
-        if annual_revenue < 50000:
-            fin_risk = 25
-        elif annual_revenue < 100000:
-            fin_risk = 20
-        elif annual_revenue < 250000:
-            fin_risk = 15
-        elif annual_revenue < 500000:
-            fin_risk = 10
-        else:
-            fin_risk = 5
-        total_risk += fin_risk
-        breakdown["financial"] = {"risk_score": fin_risk, "revenue": annual_revenue}
-
-        # Quality risk (max 20 points)
         quality_score = coop.quality_score or 50
-        if quality_score >= 80:
-            qual_risk = 5
-        elif quality_score >= 70:
-            qual_risk = 10
-        elif quality_score >= 60:
-            qual_risk = 15
-        else:
-            qual_risk = 20
-        total_risk += qual_risk
-        breakdown["quality"] = {"risk_score": qual_risk, "quality_score": quality_score}
-
-        # Delivery risk (max 25 points)
         export_data = coop.export_readiness or {}
         op_data = coop.operational_data or {}
         years_exp = op_data.get("years_exporting", 0)
         customs_issues = export_data.get("customs_issues_count", 0)
-
-        delivery_risk = 25  # Start with maximum risk
-        # Reduce risk based on export experience
-        if years_exp >= 5:
-            delivery_risk -= 10
-        elif years_exp >= 2:
-            delivery_risk -= 5
-
-        # Add risk for customs issues (2 points per issue, max 10 additional points)
-        delivery_risk += min(10, customs_issues * 2)
-        delivery_risk = max(0, min(25, delivery_risk))
-
-        total_risk += delivery_risk
-        breakdown["delivery"] = {
-            "risk_score": delivery_risk,
-            "years_exp": years_exp,
-            "customs_issues": customs_issues,
-        }
-
-        # Geographic risk (max 15 points)
-        # Based on altitude and region logistics
-        geo_risk = 10  # Default moderate risk
-        if coop.altitude_m:
-            if coop.altitude_m > 2000:
-                geo_risk = 15
-            elif coop.altitude_m > 1500:
-                geo_risk = 10
-            else:
-                geo_risk = 5
-        total_risk += geo_risk
-        breakdown["geographic"] = {
-            "risk_score": geo_risk,
-            "altitude_m": coop.altitude_m,
-        }
-
-        # Communication risk (max 15 points)
         comm_data = coop.communication_metrics or {}
         avg_response = comm_data.get("avg_response_hours", MAX_RESPONSE_TIME_HOURS)
         missed_meetings = comm_data.get("missed_meetings", 0)
+        fin_risk = 25 if annual_revenue < 50000 else 20 if annual_revenue < 100000 else 15 if annual_revenue < 250000 else 10 if annual_revenue < 500000 else 5
+        qual_risk = 5 if quality_score >= 80 else 10 if quality_score >= 70 else 15 if quality_score >= 60 else 20
+        base_delivery_risk = 15 if years_exp >= 5 else 20 if years_exp >= 2 else 25
+        delivery_risk = max(0, min(25, base_delivery_risk + min(10, customs_issues * 2)))
+        geo_risk = (
+            15
+            if coop.altitude_m and coop.altitude_m > 2000
+            else 10
+            if coop.altitude_m and coop.altitude_m > 1500
+            else 5
+            if coop.altitude_m
+            else 10
+        )
+        comm_risk = min(
+            15,
+            (10 if avg_response > 72 else 5 if avg_response > 48 else 0)
+            + min(5, missed_meetings),
+        )
 
-        comm_risk = 0
-        if avg_response > 72:
-            comm_risk += 10
-        elif avg_response > 48:
-            comm_risk += 5
-
-        comm_risk += min(5, missed_meetings)
-        comm_risk = min(15, comm_risk)
-
-        total_risk += comm_risk
-        breakdown["communication"] = {
-            "risk_score": comm_risk,
-            "avg_response_hours": avg_response,
-            "missed_meetings": missed_meetings,
+        total_risk = float(fin_risk + qual_risk + delivery_risk + geo_risk + comm_risk)
+        breakdown = {
+            "financial": {"risk_score": fin_risk, "revenue": annual_revenue},
+            "quality": {"risk_score": qual_risk, "quality_score": quality_score},
+            "delivery": {
+                "risk_score": delivery_risk,
+                "years_exp": years_exp,
+                "customs_issues": customs_issues,
+            },
+            "geographic": {"risk_score": geo_risk, "altitude_m": coop.altitude_m},
+            "communication": {
+                "risk_score": comm_risk,
+                "avg_response_hours": avg_response,
+                "missed_meetings": missed_meetings,
+            },
         }
-
-        # Overall assessment
-        if total_risk < 30:
-            assessment = "low"
-        elif total_risk < 50:
-            assessment = "moderate"
-        else:
-            assessment = "high"
+        assessment = "low" if total_risk < 30 else "moderate" if total_risk < 50 else "high"
 
         return {
             "total_risk_score": round(total_risk, 2),
