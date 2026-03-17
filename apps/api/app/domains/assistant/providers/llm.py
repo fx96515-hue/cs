@@ -17,6 +17,9 @@ import httpx
 from app.core.config import settings
 
 log = structlog.get_logger()
+JSON_CONTENT_TYPE = "application/json"
+SSE_DATA_PREFIX = "data: "
+SSE_DONE_MARKER = "[DONE]"
 
 
 class BaseLLMProvider(ABC):
@@ -241,7 +244,7 @@ class OpenAIProvider(BaseLLMProvider):
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+                        "Content-Type": JSON_CONTENT_TYPE,
                     },
                     json={
                         "model": model,
@@ -301,7 +304,7 @@ class OpenAIProvider(BaseLLMProvider):
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+                        "Content-Type": JSON_CONTENT_TYPE,
                     },
                     json={
                         "model": model,
@@ -313,10 +316,10 @@ class OpenAIProvider(BaseLLMProvider):
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
-                        if not line.startswith("data: "):
+                        if not line.startswith(SSE_DATA_PREFIX):
                             continue
-                        payload = line[6:]
-                        if payload.strip() == "[DONE]":
+                        payload = line[len(SSE_DATA_PREFIX) :]
+                        if payload.strip() == SSE_DONE_MARKER:
                             break
                         try:
                             data = json.loads(payload)
@@ -366,7 +369,7 @@ class OpenRouterProvider(BaseLLMProvider):
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+                        "Content-Type": JSON_CONTENT_TYPE,
                     },
                     json={
                         "model": model,
@@ -414,7 +417,7 @@ class OpenRouterProvider(BaseLLMProvider):
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+                        "Content-Type": JSON_CONTENT_TYPE,
                     },
                     json={
                         "model": model,
@@ -426,10 +429,10 @@ class OpenRouterProvider(BaseLLMProvider):
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
-                        if not line.startswith("data: "):
+                        if not line.startswith(SSE_DATA_PREFIX):
                             continue
-                        payload = line[6:]
-                        if payload.strip() == "[DONE]":
+                        payload = line[len(SSE_DATA_PREFIX) :]
+                        if payload.strip() == SSE_DONE_MARKER:
                             break
                         try:
                             data = json.loads(payload)
@@ -486,7 +489,7 @@ class GroqProvider(BaseLLMProvider):
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+                        "Content-Type": JSON_CONTENT_TYPE,
                     },
                     json={
                         "model": model,
@@ -546,7 +549,7 @@ class GroqProvider(BaseLLMProvider):
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+                        "Content-Type": JSON_CONTENT_TYPE,
                     },
                     json={
                         "model": model,
@@ -558,10 +561,10 @@ class GroqProvider(BaseLLMProvider):
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
-                        if not line.startswith("data: "):
+                        if not line.startswith(SSE_DATA_PREFIX):
                             continue
-                        payload = line[6:]
-                        if payload.strip() == "[DONE]":
+                        payload = line[len(SSE_DATA_PREFIX) :]
+                        if payload.strip() == SSE_DONE_MARKER:
                             break
                         try:
                             data = json.loads(payload)
@@ -594,7 +597,7 @@ class GroqProvider(BaseLLMProvider):
 class DeterministicFallbackProvider(BaseLLMProvider):
     """Local fallback provider that produces deterministic summaries."""
 
-    def _build_fallback_response(self, messages: list[dict]) -> str:
+    def _extract_prompt_parts(self, messages: list[dict]) -> tuple[str, str]:
         user_message = ""
         system_prompt = ""
 
@@ -604,7 +607,9 @@ class DeterministicFallbackProvider(BaseLLMProvider):
                 system_prompt = str(message.get("content") or "")
             if role == "user":
                 user_message = str(message.get("content") or "")
+        return user_message, system_prompt
 
+    def _extract_context_lines(self, system_prompt: str) -> list[str]:
         context_lines: list[str] = []
         for raw_line in system_prompt.splitlines():
             line = raw_line.strip()
@@ -614,6 +619,11 @@ class DeterministicFallbackProvider(BaseLLMProvider):
                 context_lines.append(line)
             if len(context_lines) >= 10:
                 break
+        return context_lines
+
+    def _build_fallback_response(self, messages: list[dict]) -> str:
+        user_message, system_prompt = self._extract_prompt_parts(messages)
+        context_lines = self._extract_context_lines(system_prompt)
 
         answer_lines = [
             "Der konfigurierte KI-Provider ist derzeit nicht erreichbar.",
@@ -721,3 +731,4 @@ def resolve_rag_model(provider_name: str) -> str:
     if provider == "openai":
         return settings.RAG_LLM_MODEL_OPENAI
     return settings.RAG_LLM_MODEL_OLLAMA
+

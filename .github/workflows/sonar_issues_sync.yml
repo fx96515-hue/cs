@@ -25,9 +25,9 @@ jobs:
           if [ -z "${{ secrets.SONAR_TOKEN }}" ] || [ -z "${{ vars.SONAR_PROJECT_KEY }}" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "reason=missing SONAR_TOKEN or SONAR_PROJECT_KEY" >> "$GITHUB_OUTPUT"
-          elif [ "${{ vars.SONAR_ISSUE_SYNC_ENABLED }}" != "true" ]; then
+          elif [ "${{ vars.SONAR_ISSUE_SYNC_ENABLED }}" = "false" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "reason=SONAR_ISSUE_SYNC_ENABLED is not true" >> "$GITHUB_OUTPUT"
+            echo "reason=SONAR_ISSUE_SYNC_ENABLED is false" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=true" >> "$GITHUB_OUTPUT"
             echo "reason=ok" >> "$GITHUB_OUTPUT"
