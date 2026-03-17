@@ -35,7 +35,7 @@ MLTrainingModelType = Literal["freight_cost", "coffee_price"]
 def train_model(
     model_type: MLTrainingModelType,
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[object, Depends(require_role("admin"))],
+    _: Annotated[None, Depends(require_role("admin"))],
 ):
     """Trigger model training.
 
@@ -56,7 +56,7 @@ def train_model(
 @router.get("/training-status", response_model=list[TrainingStatusOut])
 async def get_training_status(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[object, Depends(require_role("admin", "analyst"))],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
     model_type: Annotated[MLTrainingModelType | None, Query()] = None,
 ):
     """Get training pipeline status."""
@@ -68,7 +68,7 @@ async def get_training_status(
 @router.get("/optimal-purchase-timing", response_model=PurchaseTimingOut)
 def optimal_purchase_timing(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[object, Depends(require_role("admin", "analyst"))],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
     origin_region: str | None = None,
     target_quantity_kg: float | None = None,
 ):
@@ -82,7 +82,7 @@ def optimal_purchase_timing(
 @router.get("/price-forecast", response_model=PriceForecastOut)
 def price_forecast(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[object, Depends(require_role("admin", "analyst"))],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
     origin_region: str | None = None,
     days: int = Query(30, ge=1, le=90),
 ):

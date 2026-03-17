@@ -216,23 +216,39 @@ def _build_region_to_coops(cooperatives: list[Cooperative]) -> dict[str, list[st
     return region_to_coops
 
 
+def _roaster_trade_targets(
+    graph: nx.Graph, roaster_id: str, region_to_coops: dict[str, list[str]]
+) -> list[str]:
+    targets: list[str] = []
+    for region_id, coop_ids in region_to_coops.items():
+        if not graph.has_node(region_id):
+            continue
+        if not graph.has_edge(roaster_id, region_id):
+            continue
+        targets.extend(coop_id for coop_id in coop_ids if graph.has_node(coop_id))
+    return targets
+
+
+def _add_roaster_trade_edges_for_targets(
+    graph: nx.Graph, roaster_id: str, coop_ids: list[str]
+) -> None:
+    for coop_id in coop_ids:
+        graph.add_edge(
+            roaster_id,
+            coop_id,
+            edge_type="TRADES_WITH",
+            weight=0.8,
+        )
+
+
 def _add_roaster_coop_trade_edges(graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]) -> None:
     region_to_coops = _build_region_to_coops(cooperatives)
     for roaster in roasters:
         if not roaster.peru_focus:
             continue
         roaster_id = f"roaster_{roaster.id}"
-        for region_id, coop_ids in region_to_coops.items():
-            if not graph.has_node(region_id) or not graph.has_edge(roaster_id, region_id):
-                continue
-            for coop_id in coop_ids:
-                if graph.has_node(coop_id):
-                    graph.add_edge(
-                        roaster_id,
-                        coop_id,
-                        edge_type="TRADES_WITH",
-                        weight=0.8,
-                    )
+        targets = _roaster_trade_targets(graph, roaster_id, region_to_coops)
+        _add_roaster_trade_edges_for_targets(graph, roaster_id, targets)
 
 
 def build_graph(db: Session) -> nx.Graph:

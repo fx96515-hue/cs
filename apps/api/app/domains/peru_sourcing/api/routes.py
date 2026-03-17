@@ -29,10 +29,11 @@ from app.services.seed_peru_regions import seed_peru_regions
 router = APIRouter()
 DbSessionDep = Annotated[Session, Depends(get_db)]
 ViewerPermissionDep = Annotated[
-    object, Depends(require_role("admin", "analyst", "viewer"))
+    None, Depends(require_role("admin", "analyst", "viewer"))
 ]
-AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
-AdminPermissionDep = Annotated[object, Depends(require_role("admin"))]
+AnalystPermissionDep = Annotated[None, Depends(require_role("admin", "analyst"))]
+AdminPermissionDep = Annotated[None, Depends(require_role("admin"))]
+NOT_FOUND_DETAIL = "Not found"
 
 
 @router.get("/regions", response_model=list[RegionBasicResponse])
@@ -85,7 +86,7 @@ def get_region_intelligence(
     if not intelligence:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Not found",
+            detail=NOT_FOUND_DETAIL,
         )
 
     return intelligence
@@ -118,7 +119,7 @@ def get_cooperative_sourcing_analysis(
         analysis = analyzer.analyze_for_sourcing(coop_id, force_refresh=False)
         return analysis
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_DETAIL)
 
 
 @router.post("/cooperatives/{coop_id}/analyze", response_model=SourcingAnalysisResponse)
@@ -152,7 +153,7 @@ def analyze_cooperative_for_sourcing(
         analysis = analyzer.analyze_for_sourcing(coop_id, force_refresh=force_refresh)
         return analysis
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_DETAIL)
 
 
 @router.post("/regions/refresh")

@@ -22,8 +22,8 @@ anomalies_router = APIRouter()
 ENTITY_TYPE_PATTERN = r"^[a-z][a-z0-9_]{1,31}$"
 AlertSeverity = Literal["info", "warning", "critical"]
 DbSessionDep = Annotated[Session, Depends(get_db)]
-AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
-AdminPermissionDep = Annotated[object, Depends(require_role("admin"))]
+AnalystPermissionDep = Annotated[None, Depends(require_role("admin", "analyst"))]
+AdminPermissionDep = Annotated[None, Depends(require_role("admin"))]
 
 
 def _require_anomaly_detection_enabled() -> None:

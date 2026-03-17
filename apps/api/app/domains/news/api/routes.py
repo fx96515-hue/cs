@@ -21,7 +21,7 @@ def _normalize_country_code(country: str) -> str:
 @router.get("/", response_model=list[NewsItemOut])
 def list_news(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[object, Depends(require_role("admin", "analyst", "viewer"))],
+    _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
     topic: str = Query("peru coffee", min_length=1, max_length=100),
     limit: int = Query(100, ge=1, le=500),
     days: int = Query(7, ge=1, le=365),
@@ -35,7 +35,7 @@ def list_news(
 @router.post("/refresh", response_model=NewsRefreshResponse)
 def refresh(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[object, Depends(require_role("admin", "analyst"))],
+    _: Annotated[None, Depends(require_role("admin", "analyst"))],
     topic: str = Query("peru coffee", min_length=1, max_length=100),
     country: str = Query("PE", pattern=ISO2_COUNTRY_PATTERN),
     max_items: int = Query(25, ge=1, le=200),
