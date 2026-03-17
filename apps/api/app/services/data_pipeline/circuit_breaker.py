@@ -171,12 +171,8 @@ class CircuitBreaker:
             threshold=self.failure_threshold,
         )
 
-        # Check if we should open the circuit
-        if state == CircuitState.HALF_OPEN:
-            # Failed during recovery test, go back to OPEN
-            self._set_state(CircuitState.OPEN)
-        elif failures_int >= self.failure_threshold:
-            # Too many failures, open circuit
+        # Open the circuit either on failed recovery probes or repeated failures.
+        if state == CircuitState.HALF_OPEN or failures_int >= self.failure_threshold:
             self._set_state(CircuitState.OPEN)
 
     def get_status(self) -> dict:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import structlog
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import text
@@ -41,7 +41,14 @@ def _require_search_enabled() -> None:
         )
 
 
-@router.get("/semantic", response_model=SemanticSearchResponse)
+@router.get(
+    "/semantic",
+    response_model=SemanticSearchResponse,
+    responses={
+        500: {"description": "Embedding generation failed"},
+        503: {"description": "Semantic search feature unavailable"},
+    },
+)
 async def semantic_search(
     q: Annotated[str, Query(min_length=1, max_length=500)],
     db: DbSessionDep,
@@ -119,8 +126,20 @@ async def semantic_search(
     )
 
 
-@router.get("/entity/{entity_type}/{entity_id}/similar")
-@router.get("/similar/{entity_type}/{entity_id}")
+SIMILAR_ENTITY_RESPONSES: dict[int | str, dict[str, Any]] = {
+    404: {"description": "Entity not found or embedding missing"},
+    503: {"description": "Semantic search feature unavailable"},
+}
+
+
+@router.get(
+    "/entity/{entity_type}/{entity_id}/similar",
+    responses=SIMILAR_ENTITY_RESPONSES,
+)
+@router.get(
+    "/similar/{entity_type}/{entity_id}",
+    responses=SIMILAR_ENTITY_RESPONSES,
+)
 async def find_similar_entities(
     entity_type: Annotated[Literal["cooperative", "roaster"], Path()],
     entity_id: Annotated[int, Path(ge=1)],

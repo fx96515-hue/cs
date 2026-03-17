@@ -97,8 +97,8 @@ def detect_score_anomalies(db: Session) -> list[QualityAlert]:
 
     clf = IsolationForest(contamination=0.05, random_state=42, n_estimators=100)
     clf.fit(X)
-    preds = clf.predict(X)  # -1 = outlier, 1 = inlier
-    scores = clf.score_samples(X)  # lower = more anomalous
+    preds = clf.predict(X)
+    scores = clf.score_samples(X)
 
     alerts: list[QualityAlert] = []
     for idx, pred in enumerate(preds):
@@ -108,7 +108,6 @@ def detect_score_anomalies(db: Session) -> list[QualityAlert]:
         entity_type, entity_id, q, r, e = entities[idx]
         anomaly_score = float(scores[idx])
 
-        # Skip if an open anomaly alert already exists for this entity
         if _existing_unacknowledged(
             db, entity_type, entity_id, "score_anomaly", "scores"
         ):

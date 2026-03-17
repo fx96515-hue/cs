@@ -109,8 +109,8 @@ def detect_certification_changes(
     alerts = []
 
     # Parse certification strings (comma-separated)
-    old_set = set(c.strip().lower() for c in (old_certs or "").split(",") if c.strip())
-    new_set = set(c.strip().lower() for c in (new_certs or "").split(",") if c.strip())
+    old_set = {c.strip().lower() for c in (old_certs or "").split(",") if c.strip()}
+    new_set = {c.strip().lower() for c in (new_certs or "").split(",") if c.strip()}
 
     # New certifications
     added = new_set - old_set
