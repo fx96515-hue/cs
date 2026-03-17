@@ -268,6 +268,62 @@ jobs:
               });
             }
         continue-on-error: true
+
+      - name: Auto-close stale production alert issues
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const apiStatus = "${{ steps.api_health.outputs.status }}";
+            const shouldClose =
+              "${{ steps.check_config.outputs.is_configured }}" !== "true" ||
+              apiStatus === "success" ||
+              apiStatus === "skipped";
+            if (!shouldClose) {
+              core.info("Keeping production-alert issues open because API is currently unhealthy.");
+              return;
+            }
+
+            const issues = await github.paginate(
+              github.rest.issues.listForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: "open",
+                labels: "production-alert",
+                per_page: 100,
+              }
+            );
+
+            if (issues.length === 0) {
+              core.info("No open production-alert issues to close.");
+              return;
+            }
+
+            const reason =
+              "${{ steps.check_config.outputs.is_configured }}" !== "true"
+                ? "Monitoring target is currently not configured/reachable via DNS."
+                : "Latest monitoring run reports API health as success.";
+
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body:
+                  "Auto-closed by monitoring workflow. " +
+                  reason +
+                  ` Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: "closed",
+              });
+            }
+        continue-on-error: true
       
       - name: Notify Team on Failure
         if: steps.check_config.outputs.is_configured == 'true' && steps.api_health.outputs.status == 'failure' && env.HAS_SLACK == 'true'
