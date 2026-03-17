@@ -18,6 +18,13 @@ OutreachStatus = Literal["pending", "sent", "responded", "follow_up_needed"]
 log = structlog.get_logger(__name__)
 
 
+def _days_since(created_at: datetime) -> int:
+    """Return full days since timestamp while preserving naive/aware semantics."""
+    if created_at.tzinfo is None:
+        return (datetime.now() - created_at).days
+    return (datetime.now(timezone.utc) - created_at).days
+
+
 def select_top_candidates(
     db: Session,
     *,
@@ -266,12 +273,8 @@ def get_outreach_suggestions(
         if not recent_outreach:
             should_suggest = True
         else:
-            # Handle both timezone-aware and naive datetimes
             created_at = recent_outreach.created_at
-            if created_at.tzinfo is None:
-                days_since = (datetime.utcnow() - created_at).days
-            else:
-                days_since = (datetime.now(timezone.utc) - created_at).days
+            days_since = _days_since(created_at)
             should_suggest = days_since > 30
 
         if should_suggest:
@@ -342,7 +345,7 @@ def get_entity_outreach_status(
         created_at = latest_event.created_at
         if created_at.tzinfo is None:
             # If created_at is naive, use naive datetime for comparison
-            days_since = (datetime.utcnow() - created_at).days
+            days_since = _days_since(created_at)
         else:
             # If created_at is aware, use aware datetime for comparison
             days_since = (datetime.now(timezone.utc) - created_at).days

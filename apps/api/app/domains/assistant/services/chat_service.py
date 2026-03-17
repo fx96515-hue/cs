@@ -227,69 +227,87 @@ class AssistantService:
     # System prompt
     # ------------------------------------------------------------------
 
-    def _build_system_prompt(self, context: list[dict]) -> str:
-        """Build system prompt with CoffeeStudio domain knowledge and retrieved context."""
-        prompt = (
-            "Du bist der CoffeeStudio KI-Assistent – ein Experte für Spezialitätenkaffee-Handel, "
-            "Rohkaffee-Sourcing, Kooperativen in Peru und internationale Röstereien.\n\n"
+    def _base_prompt(self) -> str:
+        return (
+            "Du bist der CoffeeStudio KI-Assistent - ein Experte fuer Spezialitaetenkaffee-Handel, "
+            "Rohkaffee-Sourcing, Kooperativen in Peru und internationale Roestereien.\n\n"
             "RICHTLINIEN:\n"
-            "- Antworte präzise und auf Basis der bereitgestellten Daten.\n"
+            "- Antworte praezise und auf Basis der bereitgestellten Daten.\n"
             "- Nenne stets die Quellen (Name + ID) in deiner Antwort, wenn du Entities verwendest.\n"
-            "- Wenn Daten fehlen, sage das klar – erfinde keine Details.\n"
-            "- Primärsprache: Deutsch (auf Wunsch auch Englisch).\n"
+            "- Wenn Daten fehlen, sage das klar - erfinde keine Details.\n"
+            "- Primaersprache: Deutsch (auf Wunsch auch Englisch).\n"
         )
 
-        if not context:
-            prompt += (
-                "\nAktuell sind keine spezifischen Quelldaten verfügbar. "
-                "Nutze nur allgemeines Kaffee-Wissen und weise darauf hin.\n"
-            )
-            return prompt
-
-        prompt += "\n\n=== VERFÜGBARE DATEN ===\n"
-
+    def _render_coops(self, context: list[dict]) -> str:
         coops = [c for c in context if c["entity_type"] == "cooperative"]
-        if coops:
-            prompt += "\n## Kooperativen:\n"
-            for c in coops:
-                prompt += f"\n**{c['name']}** (ID: {c['entity_id']})\n"
-                if c.get("region"):
-                    prompt += f"- Region: {c['region']}\n"
-                if c.get("certifications"):
-                    prompt += f"- Zertifizierungen: {c['certifications']}\n"
-                if c.get("varieties"):
-                    prompt += f"- Sorten: {c['varieties']}\n"
-                if c.get("altitude_m"):
-                    prompt += f"- Höhe: {c['altitude_m']}m\n"
+        if not coops:
+            return ""
 
+        section = "\n## Kooperativen:\n"
+        for coop in coops:
+            section += f"\n**{coop['name']}** (ID: {coop['entity_id']})\n"
+            if coop.get("region"):
+                section += f"- Region: {coop['region']}\n"
+            if coop.get("certifications"):
+                section += f"- Zertifizierungen: {coop['certifications']}\n"
+            if coop.get("varieties"):
+                section += f"- Sorten: {coop['varieties']}\n"
+            if coop.get("altitude_m"):
+                section += f"- Hoehe: {coop['altitude_m']}m\n"
+        return section
+
+    def _render_roasters(self, context: list[dict]) -> str:
         roasters = [r for r in context if r["entity_type"] == "roaster"]
-        if roasters:
-            prompt += "\n## Röstereien:\n"
-            for r in roasters:
-                prompt += f"\n**{r['name']}** (ID: {r['entity_id']})\n"
-                if r.get("city"):
-                    prompt += f"- Stadt: {r['city']}\n"
-                if r.get("peru_focus"):
-                    prompt += "- Peru-Fokus: Ja\n"
-                if r.get("specialty_focus"):
-                    prompt += "- Specialty-Fokus: Ja\n"
-                if r.get("price_position"):
-                    prompt += f"- Preispositionierung: {r['price_position']}\n"
+        if not roasters:
+            return ""
 
+        section = "\n## Roestereien:\n"
+        for roaster in roasters:
+            section += f"\n**{roaster['name']}** (ID: {roaster['entity_id']})\n"
+            if roaster.get("city"):
+                section += f"- Stadt: {roaster['city']}\n"
+            if roaster.get("peru_focus"):
+                section += "- Peru-Fokus: Ja\n"
+            if roaster.get("specialty_focus"):
+                section += "- Specialty-Fokus: Ja\n"
+            if roaster.get("price_position"):
+                section += f"- Preispositionierung: {roaster['price_position']}\n"
+        return section
+
+    def _render_news(self, context: list[dict]) -> str:
         news_items = [n for n in context if n["entity_type"] == "news"]
-        if news_items:
-            prompt += "\n## Aktuelle News:\n"
-            for n in news_items:
-                prompt += f"\n- **{n['name']}**"
-                if n.get("published_at"):
-                    prompt += f" ({n['published_at'][:10]})"
-                if n.get("snippet"):
-                    prompt += f"\n  {n['snippet']}"
-                prompt += "\n"
+        if not news_items:
+            return ""
 
-        prompt += "\n=== ENDE DER DATEN ===\n"
-        return prompt
+        section = "\n## Aktuelle News:\n"
+        for item in news_items:
+            section += f"\n- **{item['name']}**"
+            if item.get("published_at"):
+                section += f" ({item['published_at'][:10]})"
+            if item.get("snippet"):
+                section += f"\n  {item['snippet']}"
+            section += "\n"
+        return section
 
+    def _build_system_prompt(self, context: list[dict]) -> str:
+        """Build system prompt with CoffeeStudio domain knowledge and retrieved context."""
+        prompt = self._base_prompt()
+        if not context:
+            return (
+                prompt
+                + "\nAktuell sind keine spezifischen Quelldaten verfuegbar. "
+                + "Nutze nur allgemeines Kaffee-Wissen und weise darauf hin.\n"
+            )
+
+        parts = [
+            prompt,
+            "\n\n=== VERFUEGBARE DATEN ===\n",
+            self._render_coops(context),
+            self._render_roasters(context),
+            self._render_news(context),
+            "\n=== ENDE DER DATEN ===\n",
+        ]
+        return "".join(parts)
     # ------------------------------------------------------------------
     # Streaming chat
     # ------------------------------------------------------------------

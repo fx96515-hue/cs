@@ -43,6 +43,75 @@ def _score(a_name: str | None, b_name: str | None) -> float:
     )
 
 
+def _load_entities(db: Session, entity_type: str) -> list[Cooperative] | list[Roaster]:
+    if entity_type == "cooperative":
+        return db.query(Cooperative).all()
+    return db.query(Roaster).all()
+
+
+def _group_by_domain(items: list[Cooperative] | list[Roaster]) -> tuple[dict[str, list[Any]], list[Any]]:
+    by_domain: dict[str, list[Any]] = {}
+    no_domain: list[Any] = []
+    for item in items:
+        dom = _domain(getattr(item, "website", None))
+        if dom:
+            by_domain.setdefault(dom, []).append(item)
+        else:
+            no_domain.append(item)
+    return by_domain, no_domain
+
+
+def _domain_pairs(by_domain: dict[str, list[Any]]) -> list[DedupPair]:
+    pairs: list[DedupPair] = []
+    for dom, group in by_domain.items():
+        if len(group) < 2:
+            continue
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                a, b = group[i], group[j]
+                s = _score(a.name, b.name)
+                pairs.append(
+                    DedupPair(a.id, b.id, a.name, b.name, max(s, 98.0), f"same_domain:{dom}")
+                )
+    return pairs
+
+
+def _name_pairs(no_domain: list[Any], threshold: float) -> list[DedupPair]:
+    pairs: list[DedupPair] = []
+    buckets: dict[str, list[Any]] = {}
+    for item in no_domain:
+        key = (item.name or "").strip()[:1].lower() or "_"
+        buckets.setdefault(key, []).append(item)
+
+    for group in buckets.values():
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                a, b = group[i], group[j]
+                s = _score(a.name, b.name)
+                if s >= threshold:
+                    pairs.append(DedupPair(a.id, b.id, a.name, b.name, s, "name_similarity"))
+    return pairs
+
+
+def _limit_pairs(pairs: list[DedupPair], limit_pairs: int) -> list[DedupPair]:
+    pairs.sort(key=lambda p: p.score, reverse=True)
+    return pairs[: max(0, min(limit_pairs, 500))]
+
+
+def _serialize_pairs(pairs: list[DedupPair]) -> list[dict[str, Any]]:
+    return [
+        {
+            "a_id": p.a_id,
+            "b_id": p.b_id,
+            "a_name": p.a_name,
+            "b_name": p.b_name,
+            "score": p.score,
+            "reason": p.reason,
+        }
+        for p in pairs
+    ]
+
+
 def suggest_duplicates(
     db: Session,
     *,
@@ -57,69 +126,137 @@ def suggest_duplicates(
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
 
-    items_list: list[Cooperative] | list[Roaster]
+    items = _load_entities(db, entity_type)
+    by_domain, no_domain = _group_by_domain(items)
+    pairs = _domain_pairs(by_domain) + _name_pairs(no_domain, threshold)
+    return _serialize_pairs(_limit_pairs(pairs, limit_pairs))
+
+
+def _load_merge_pair(
+    db: Session, *, entity_type: str, keep_id: int, merge_id: int
+) -> tuple[Cooperative | Roaster, Cooperative | Roaster]:
+    keep_entity: Cooperative | Roaster | None
+    merge_entity: Cooperative | Roaster | None
     if entity_type == "cooperative":
-        items_list = db.query(Cooperative).all()
+        keep_entity = db.get(Cooperative, keep_id)
+        merge_entity = db.get(Cooperative, merge_id)
     else:
-        items_list = db.query(Roaster).all()
-    # group by domain when possible (strong signal)
-    by_domain: dict[str, list[Any]] = {}
-    no_domain: list[Any] = []
-    for it in items_list:
-        dom = _domain(getattr(it, "website", None))
-        if dom:
-            by_domain.setdefault(dom, []).append(it)
-        else:
-            no_domain.append(it)
+        keep_entity = db.get(Roaster, keep_id)
+        merge_entity = db.get(Roaster, merge_id)
+    if not keep_entity or not merge_entity:
+        raise ValueError("One or both entities not found")
+    return keep_entity, merge_entity
 
-    pairs: list[DedupPair] = []
 
-    # Domain-based duplicates (same domain)
-    for dom, group in by_domain.items():
-        if len(group) < 2:
-            continue
-        for i in range(len(group)):
-            for j in range(i + 1, len(group)):
-                a, b = group[i], group[j]
-                s = _score(a.name, b.name)
-                pairs.append(
-                    DedupPair(
-                        a.id, b.id, a.name, b.name, max(s, 98.0), f"same_domain:{dom}"
-                    )
-                )
+def _create_merge_info(merge_id: int, merge_name: str) -> dict[str, Any]:
+    return {
+        "merged_from_id": merge_id,
+        "merged_from_name": merge_name,
+        "merged_at": datetime.now().isoformat(),
+    }
 
-    # Name-based duplicates (simple blocking by first letter)
-    buckets: dict[str, list[Any]] = {}
-    for it in no_domain:
-        k = (it.name or "").strip()[:1].lower() or "_"
-        buckets.setdefault(k, []).append(it)
 
-    for _, group in buckets.items():
-        n = len(group)
-        for i in range(n):
-            for j in range(i + 1, n):
-                a, b = group[i], group[j]
-                s = _score(a.name, b.name)
-                if s >= threshold:
-                    pairs.append(
-                        DedupPair(a.id, b.id, a.name, b.name, s, "name_similarity")
-                    )
+def _create_name_alias(
+    db: Session, *, entity_type: str, keep_id: int, merge_name: str
+) -> None:
+    db.add(
+        EntityAlias(
+            entity_type=entity_type,
+            entity_id=keep_id,
+            alias=merge_name,
+            kind="name",
+            observed_at=datetime.now(),
+        )
+    )
 
-    # sort + cut
-    pairs.sort(key=lambda p: p.score, reverse=True)
-    pairs = pairs[: max(0, min(limit_pairs, 500))]
 
-    return [
-        {
-            "a_id": p.a_id,
-            "b_id": p.b_id,
-            "a_name": p.a_name,
-            "b_name": p.b_name,
-            "score": p.score,
-            "reason": p.reason,
-        }
-        for p in pairs
+def _merge_nullable_fields(keep_entity: Cooperative | Roaster, merge_entity: Cooperative | Roaster) -> list[str]:
+    fields_to_merge = [
+        "region",
+        "altitude_m",
+        "varieties",
+        "certifications",
+        "contact_email",
+        "website",
+        "notes",
     ]
+    merged_fields: list[str] = []
+    for field in fields_to_merge:
+        keep_val = getattr(keep_entity, field, None)
+        merge_val = getattr(merge_entity, field, None)
+        if merge_val and not keep_val:
+            setattr(keep_entity, field, merge_val)
+            merged_fields.append(field)
+    return merged_fields
+
+
+def _merge_score_fields(keep_entity: Cooperative | Roaster, merge_entity: Cooperative | Roaster) -> list[str]:
+    score_fields = [
+        "quality_score",
+        "reliability_score",
+        "economics_score",
+        "total_score",
+    ]
+    merged_fields: list[str] = []
+    for field in score_fields:
+        keep_val = getattr(keep_entity, field, None) or 0
+        merge_val = getattr(merge_entity, field, None) or 0
+        if merge_val > keep_val and hasattr(keep_entity, field):
+            setattr(keep_entity, field, merge_val)
+            merged_fields.append(field)
+    return merged_fields
+
+
+def _append_merge_meta(entity: Cooperative | Roaster, merge_info: dict[str, Any]) -> None:
+    keep_meta = entity.meta or {}
+    keep_meta["merge_history"] = keep_meta.get("merge_history", [])
+    keep_meta["merge_history"].append(merge_info)
+    entity.meta = keep_meta
+
+
+def _archive_merged_entity(entity: Cooperative | Roaster, keep_id: int, merged_at: str) -> None:
+    entity.status = "archived"
+    merge_meta = entity.meta or {}
+    merge_meta["merged_into_id"] = keep_id
+    merge_meta["merged_at"] = merged_at
+    entity.meta = merge_meta
+
+
+def _record_merge_events(
+    db: Session,
+    *,
+    entity_type: str,
+    keep_id: int,
+    merge_id: int,
+    keep_name: str,
+    merge_name: str,
+    merged_fields: list[str],
+) -> None:
+    db.add(
+        EntityEvent(
+            entity_type=entity_type,
+            entity_id=keep_id,
+            event_type="entity_merged",
+            payload={
+                "action": "kept",
+                "merged_from_id": merge_id,
+                "merged_from_name": merge_name,
+                "merged_fields": merged_fields,
+            },
+        )
+    )
+    db.add(
+        EntityEvent(
+            entity_type=entity_type,
+            entity_id=merge_id,
+            event_type="entity_merged",
+            payload={
+                "action": "merged_into",
+                "merged_into_id": keep_id,
+                "merged_into_name": keep_name,
+            },
+        )
+    )
 
 
 def merge_entities(
@@ -143,112 +280,28 @@ def merge_entities(
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
 
-    keep_entity: Cooperative | Roaster | None
-    merge_entity: Cooperative | Roaster | None
-    if entity_type == "cooperative":
-        keep_entity = db.get(Cooperative, keep_id)
-        merge_entity = db.get(Cooperative, merge_id)
-    else:
-        keep_entity = db.get(Roaster, keep_id)
-        merge_entity = db.get(Roaster, merge_id)
-
-    if not keep_entity or not merge_entity:
-        raise ValueError("One or both entities not found")
-
     if keep_id == merge_id:
         raise ValueError("Cannot merge entity with itself")
-
-    # Store merge info
-    merge_info = {
-        "merged_from_id": merge_id,
-        "merged_from_name": merge_entity.name,
-        "merged_at": datetime.now().isoformat(),
-    }
-
-    # Create alias for merged entity name
-    db.add(
-        EntityAlias(
-            entity_type=entity_type,
-            entity_id=keep_id,
-            alias=merge_entity.name,
-            kind="name",
-            observed_at=datetime.now(),
-        )
+    keep_entity, merge_entity = _load_merge_pair(
+        db, entity_type=entity_type, keep_id=keep_id, merge_id=merge_id
     )
 
-    # Merge fields: keep non-null values from merge_entity if keep_entity has null
-    fields_to_merge = [
-        "region",
-        "altitude_m",
-        "varieties",
-        "certifications",
-        "contact_email",
-        "website",
-        "notes",
-    ]
-
-    merged_fields = []
-    for field in fields_to_merge:
-        keep_val = getattr(keep_entity, field, None)
-        merge_val = getattr(merge_entity, field, None)
-
-        if merge_val and not keep_val:
-            setattr(keep_entity, field, merge_val)
-            merged_fields.append(field)
-
-    # Merge scores: keep higher scores
-    score_fields = [
-        "quality_score",
-        "reliability_score",
-        "economics_score",
-        "total_score",
-    ]
-    for field in score_fields:
-        # Use getattr with default None to handle fields that don't exist
-        keep_val = getattr(keep_entity, field, None) or 0
-        merge_val = getattr(merge_entity, field, None) or 0
-        if merge_val > keep_val and hasattr(keep_entity, field):
-            setattr(keep_entity, field, merge_val)
-            merged_fields.append(field)
-
-    # Update meta with merge info
-    keep_meta = keep_entity.meta or {}
-    keep_meta["merge_history"] = keep_meta.get("merge_history", [])
-    keep_meta["merge_history"].append(merge_info)
-    keep_entity.meta = keep_meta
-
-    # Deactivate merged entity
-    merge_entity.status = "archived"
-    merge_meta = merge_entity.meta or {}
-    merge_meta["merged_into_id"] = keep_id
-    merge_meta["merged_at"] = merge_info["merged_at"]
-    merge_entity.meta = merge_meta
-
-    # Create event records
-    db.add(
-        EntityEvent(
-            entity_type=entity_type,
-            entity_id=keep_id,
-            event_type="entity_merged",
-            payload={
-                "action": "kept",
-                "merged_from_id": merge_id,
-                "merged_from_name": merge_entity.name,
-                "merged_fields": merged_fields,
-            },
-        )
+    merge_info = _create_merge_info(merge_id, merge_entity.name)
+    _create_name_alias(
+        db, entity_type=entity_type, keep_id=keep_id, merge_name=merge_entity.name
     )
-    db.add(
-        EntityEvent(
-            entity_type=entity_type,
-            entity_id=merge_id,
-            event_type="entity_merged",
-            payload={
-                "action": "merged_into",
-                "merged_into_id": keep_id,
-                "merged_into_name": keep_entity.name,
-            },
-        )
+    merged_fields = _merge_nullable_fields(keep_entity, merge_entity)
+    merged_fields.extend(_merge_score_fields(keep_entity, merge_entity))
+    _append_merge_meta(keep_entity, merge_info)
+    _archive_merged_entity(merge_entity, keep_id, merge_info["merged_at"])
+    _record_merge_events(
+        db,
+        entity_type=entity_type,
+        keep_id=keep_id,
+        merge_id=merge_id,
+        keep_name=keep_entity.name,
+        merge_name=merge_entity.name,
+        merged_fields=merged_fields,
     )
 
     db.commit()

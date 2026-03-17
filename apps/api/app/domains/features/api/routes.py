@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Sequence
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path as PathParam, UploadFile
 from sqlalchemy import func, select
@@ -59,7 +59,7 @@ def _catalog_payload() -> list[dict[str, Any]]:
                         "type": "numeric",
                         "importance": 0.0,
                         "coverage": 0.0,
-                        "lastComputed": datetime.utcnow().isoformat(),
+                        "lastComputed": datetime.now(timezone.utc).isoformat(),
                     }
                     for feature_name in feature_names
                 ],
@@ -99,6 +99,86 @@ def _load_feature_importance(model: MLModel) -> dict[str, float]:
         return {}
 
 
+def _extract_fallback_features(raw_features: Any) -> list[str]:
+    if isinstance(raw_features, list):
+        return [str(feature) for feature in raw_features]
+    if isinstance(raw_features, dict):
+        return [str(feature) for feature in raw_features.keys()]
+    return []
+
+
+def _normalize_importances(
+    importances: dict[str, float], fallback_features: list[str]
+) -> dict[str, float]:
+    if importances or not fallback_features:
+        return importances
+    equal_weight = round(1 / max(len(fallback_features), 1), 4)
+    return {feature: equal_weight for feature in fallback_features}
+
+
+def _append_model_importances(
+    grouped: dict[str, list[dict[str, Any]]], model: MLModel
+) -> None:
+    importances = _normalize_importances(
+        _load_feature_importance(model),
+        _extract_fallback_features(model.features_used),
+    )
+    for feature_name, importance in importances.items():
+        category = _feature_category(feature_name)
+        grouped[category].append(
+            {
+                "name": feature_name,
+                "description": _feature_description(feature_name),
+                "type": "numeric",
+                "importance": float(importance),
+                "coverage": 100.0 if model.training_data_count > 0 else 0.0,
+                "lastComputed": model.training_date.isoformat(),
+            }
+        )
+
+
+def _quality_label(score: float) -> str:
+    if score >= 90:
+        return "excellent"
+    if score >= 75:
+        return "good"
+    if score >= 50:
+        return "fair"
+    return "poor"
+
+
+def _count_total_model_features(db: Session) -> int:
+    total = 0
+    for model in db.execute(select(MLModel.features_used)).all():
+        raw: Any = model[0]
+        if isinstance(raw, list):
+            total += len(raw)
+        elif isinstance(raw, dict):
+            total += len(raw.keys())
+    return total
+
+
+def _quality_reports(
+    freight_rows: Sequence[Sequence[Any]],
+    price_rows: Sequence[Sequence[Any]],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    freight_quality = QualityReport.generate_report(
+        [
+            {
+                "delay_hours": max((transit_days or 0) * 24 - 24, 0),
+                "speed_knots": 20,
+            }
+            for _, transit_days in freight_rows
+        ],
+        "freight",
+    )
+    price_quality = QualityReport.generate_report(
+        [{"price": price_usd_per_lb or price_usd_per_kg} for price_usd_per_kg, price_usd_per_lb in price_rows],
+        "price",
+    )
+    return freight_quality, price_quality
+
+
 @router.get("/importance")
 def features_importance(
     db: Annotated[Session, Depends(get_db)],
@@ -116,33 +196,8 @@ def features_importance(
         "Preis-Features": [],
         "Cross-Features": [],
     }
-
     for model in models:
-        importances = _load_feature_importance(model)
-        raw_features: Any = model.features_used
-        if isinstance(raw_features, list):
-            fallback_features = [str(feature) for feature in raw_features]
-        elif isinstance(raw_features, dict):
-            fallback_features = [str(feature) for feature in raw_features.keys()]
-        else:
-            fallback_features = []
-
-        if not importances and fallback_features:
-            equal_weight = round(1 / max(len(fallback_features), 1), 4)
-            importances = {feature: equal_weight for feature in fallback_features}
-
-        for feature_name, importance in importances.items():
-            category = _feature_category(feature_name)
-            grouped[category].append(
-                {
-                    "name": feature_name,
-                    "description": _feature_description(feature_name),
-                    "type": "numeric",
-                    "importance": float(importance),
-                    "coverage": 100.0 if model.training_data_count > 0 else 0.0,
-                    "lastComputed": model.training_date.isoformat(),
-                }
-            )
+        _append_model_importances(grouped, model)
 
     payload: list[dict[str, Any]] = []
     for category, features in grouped.items():
@@ -178,13 +233,7 @@ def features_quality_report(
     price_count = db.execute(select(func.count()).select_from(CoffeePriceHistory)).scalar_one()
 
     latest_training = db.execute(select(func.max(MLModel.training_date))).scalar_one()
-    total_features = 0
-    for model in db.execute(select(MLModel.features_used)).all():
-        raw: Any = model[0]
-        if isinstance(raw, list):
-            total_features += len(raw)
-        elif isinstance(raw, dict):
-            total_features += len(raw.keys())
+    total_features = _count_total_model_features(db)
 
     freight_rows = list(
         db.execute(
@@ -203,20 +252,7 @@ def features_quality_report(
         ).all()
     )
     total_records = int(freight_count or 0) + int(price_count or 0)
-    freight_quality = QualityReport.generate_report(
-        [
-            {
-                "delay_hours": max((transit_days or 0) * 24 - 24, 0),
-                "speed_knots": 20,
-            }
-            for _, transit_days in freight_rows
-        ],
-        "freight",
-    )
-    price_quality = QualityReport.generate_report(
-        [{"price": price_usd_per_lb or price_usd_per_kg} for price_usd_per_kg, price_usd_per_lb in price_rows],
-        "price",
-    )
+    freight_quality, price_quality = _quality_reports(freight_rows, price_rows)
     avg_quality_score = round(
         ((freight_quality["quality_score"] + price_quality["quality_score"]) / 2) * 100,
         2,
@@ -228,19 +264,11 @@ def features_quality_report(
         "avgCoverage": avg_quality_score if total_records > 0 else 0.0,
         "avgImportance": round(1 / max(total_features, 1), 4) if total_features else 0.0,
         "missingDataPoints": missing_data_points,
-        "lastUpdate": latest_training.isoformat() if latest_training else datetime.utcnow().isoformat(),
+        "lastUpdate": latest_training.isoformat() if latest_training else datetime.now(timezone.utc).isoformat(),
         "modelsTracked": int(model_count or 0),
         "trainingRecords": total_records,
         "catalogFeatures": catalog_feature_count,
-        "qualityLabel": (
-            "excellent"
-            if avg_quality_score >= 90
-            else "good"
-            if avg_quality_score >= 75
-            else "fair"
-            if avg_quality_score >= 50
-            else "poor"
-        ),
+        "qualityLabel": _quality_label(avg_quality_score),
         "anomaliesDetected": int(freight_quality["anomaly_count"]) + int(price_quality["anomaly_count"]),
     }
 
