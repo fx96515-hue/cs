@@ -27,11 +27,18 @@ from app.services.seed_peru_regions import seed_peru_regions
 
 
 router = APIRouter()
+DbSessionDep = Annotated[Session, Depends(get_db)]
+ViewerPermissionDep = Annotated[
+    object, Depends(require_role("admin", "analyst", "viewer"))
+]
+AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
+AdminPermissionDep = Annotated[object, Depends(require_role("admin"))]
 
 
 @router.get("/regions", response_model=list[RegionBasicResponse])
 def list_peru_regions(
-    db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst", "viewer"))
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
 ):
     """
     List all Peru coffee regions with basic information.
@@ -59,8 +66,8 @@ def list_peru_regions(
 )
 def get_region_intelligence(
     region_name: Annotated[str, Path(min_length=1, max_length=120)],
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
 ):
     """
     Get comprehensive intelligence for a specific Peru region.
@@ -89,8 +96,8 @@ def get_region_intelligence(
 )
 def get_cooperative_sourcing_analysis(
     coop_id: Annotated[int, Path(ge=1)],
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
 ):
     """
     Get sourcing analysis for a cooperative (uses cached results if available).
@@ -117,9 +124,9 @@ def get_cooperative_sourcing_analysis(
 @router.post("/cooperatives/{coop_id}/analyze", response_model=SourcingAnalysisResponse)
 def analyze_cooperative_for_sourcing(
     coop_id: Annotated[int, Path(ge=1)],
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
     request: AnalyzeCooperativeRequest | None = None,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
 ):
     """
     Perform fresh sourcing analysis for a cooperative.
@@ -151,8 +158,8 @@ def analyze_cooperative_for_sourcing(
 @router.post("/regions/refresh")
 def refresh_region_data(
     request: RefreshRegionRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """
     Refresh region data from external sources.
@@ -170,7 +177,7 @@ def refresh_region_data(
 
 
 @router.post("/regions/seed")
-def seed_regions(db: Session = Depends(get_db), _=Depends(require_role("admin"))):
+def seed_regions(db: DbSessionDep, _: AdminPermissionDep):
     """
     Seed database with Peru region data.
 
