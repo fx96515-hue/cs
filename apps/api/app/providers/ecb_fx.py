@@ -22,74 +22,96 @@ class FxQuote:
     raw_text: str
 
 
+def _normalize_currency(value: str) -> str:
+    return value.upper().strip()
+
+
+def _fetch_xml(timeout_s: float) -> Optional[str]:
+    try:
+        response = httpx.get(ECB_DAILY_XML, timeout=timeout_s)
+        response.raise_for_status()
+        return response.text
+    except Exception:
+        return None
+
+
+def _parse_xml(xml_text: str) -> Optional[ET.Element]:
+    try:
+        return ET.fromstring(xml_text)
+    except Exception:
+        return None
+
+
+def _find_time_cube(root: ET.Element) -> Optional[ET.Element]:
+    for node in root.iter():
+        if node.tag.endswith("Cube") and "time" in node.attrib:
+            return node
+    return None
+
+
+def _parse_observed_at(time_value: Optional[str]) -> datetime:
+    if not time_value:
+        return datetime.now(timezone.utc)
+    try:
+        return datetime.fromisoformat(time_value).replace(tzinfo=timezone.utc)
+    except Exception:
+        return datetime.now(timezone.utc)
+
+
+def _extract_rates(time_node: ET.Element) -> dict[str, float]:
+    rates: dict[str, float] = {}
+    for node in time_node:
+        if not node.tag.endswith("Cube"):
+            continue
+        currency = node.attrib.get("currency")
+        rate_value = node.attrib.get("rate")
+        if not currency or not rate_value:
+            continue
+        try:
+            rates[currency.upper()] = float(rate_value)
+        except Exception:
+            continue
+    return rates
+
+
+def _eur_to_rate(currency: str, rates: dict[str, float]) -> Optional[float]:
+    if currency == "EUR":
+        return 1.0
+    return rates.get(currency)
+
+
 def fetch_ecb_fx(base: str, quote: str, timeout_s: float = 20.0) -> Optional[FxQuote]:
     """Fetch FX reference rate from ECB daily XML.
 
     ECB provides rates with base EUR (1 EUR = X QUOTE). If you ask for
     USD->EUR we invert the EUR->USD rate.
     """
-    base = base.upper().strip()
-    quote = quote.upper().strip()
+    base = _normalize_currency(base)
+    quote = _normalize_currency(quote)
     if base == quote:
         return None
 
-    try:
-        r = httpx.get(ECB_DAILY_XML, timeout=timeout_s)
-        r.raise_for_status()
-        xml_text = r.text
-    except Exception:
+    xml_text = _fetch_xml(timeout_s)
+    if xml_text is None:
         return None
 
-    try:
-        root = ET.fromstring(xml_text)
-    except Exception:
+    root = _parse_xml(xml_text)
+    if root is None:
         return None
 
-    # XML uses namespaces; simplest is to search by suffix.
-    time_node = None
-    for n in root.iter():
-        if n.tag.endswith("Cube") and "time" in n.attrib:
-            time_node = n
-            break
+    time_node = _find_time_cube(root)
     if time_node is None:
         return None
 
-    dt_str = time_node.attrib.get("time")
-    if not dt_str:
-        observed_at = datetime.now(timezone.utc)
-    else:
-        try:
-            observed_at = datetime.fromisoformat(dt_str).replace(tzinfo=timezone.utc)
-        except Exception:
-            observed_at = datetime.now(timezone.utc)
+    observed_at = _parse_observed_at(time_node.attrib.get("time"))
+    rates = _extract_rates(time_node)
 
-    # collect rates: quote_ccy -> rate (EUR base)
-    rates: dict[str, float] = {}
-    for n in time_node:
-        if not n.tag.endswith("Cube"):
-            continue
-        ccy = n.attrib.get("currency")
-        rate = n.attrib.get("rate")
-        if not ccy or not rate:
-            continue
-        try:
-            rates[ccy.upper()] = float(rate)
-        except Exception:
-            continue
-
-    # ECB does not include EUR as a currency node; it's the implicit base.
-    def eur_to(ccy: str) -> Optional[float]:
-        if ccy == "EUR":
-            return 1.0
-        return rates.get(ccy)
-
-    eur_to_base = eur_to(base)
-    eur_to_quote = eur_to(quote)
+    eur_to_base = _eur_to_rate(base, rates)
+    eur_to_quote = _eur_to_rate(quote, rates)
     if eur_to_base is None or eur_to_quote is None:
         return None
 
-    # Convert base->quote via EUR: (EUR->quote) / (EUR->base)
-    rate_value: float = eur_to_quote / eur_to_base
+    rate_value = eur_to_quote / eur_to_base
 
     return FxQuote(
         base=base,

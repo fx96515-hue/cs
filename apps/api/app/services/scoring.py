@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -45,6 +45,101 @@ def _get_latest_observation(db: Session, key: str) -> Optional[MarketObservation
     )
 
 
+def _compute_quality(coop: Cooperative, meta: dict, reasons: list[str]) -> Optional[float]:
+    if coop.quality_score is not None:
+        reasons.append("Qualitaet: quality_score Feld gesetzt")
+        return _clamp(float(coop.quality_score))
+
+    sca_score = meta.get("sca_score")
+    if isinstance(sca_score, (int, float)):
+        reasons.append("Qualitaet: SCA Score aus meta.sca_score")
+        return _map_sca_to_score(float(sca_score))
+
+    return None
+
+
+def _compute_reliability(coop: Cooperative, meta: dict, reasons: list[str]) -> Optional[float]:
+    if coop.reliability_score is not None:
+        reasons.append("Zuverlaessigkeit: reliability_score Feld gesetzt")
+        return _clamp(float(coop.reliability_score))
+
+    reliability = meta.get("reliability")
+    if isinstance(reliability, (int, float)):
+        reasons.append("Zuverlaessigkeit: meta.reliability")
+        return _clamp(float(reliability))
+
+    return None
+
+
+def _compute_economics(db: Session, coop: Cooperative, meta: dict, reasons: list[str]) -> Optional[float]:
+    if coop.economics_score is not None:
+        reasons.append("Wirtschaftlichkeit: economics_score Feld gesetzt")
+        return _clamp(float(coop.economics_score))
+
+    fob = meta.get("fob_usd_per_kg")
+    if not isinstance(fob, (int, float)):
+        return None
+
+    obs = _get_latest_observation(db, "COFFEE_C:USD_LB")
+    if obs and obs.value > 0:
+        ref_usd_per_kg = float(obs.value) / 0.453592
+        ratio = float(fob) / ref_usd_per_kg
+        reasons.append(
+            f"Wirtschaftlichkeit: FOB vs Referenz (FOB {fob:.2f} USD/kg; Ref ~{ref_usd_per_kg:.2f} USD/kg)"
+        )
+        return _clamp(50.0 + (1.0 - ratio) * 83.0)
+
+    reasons.append("Wirtschaftlichkeit: FOB vorhanden, aber keine COFFEE_C Referenz -> neutral")
+    return 50.0
+
+
+def _compute_confidence(
+    coop: Cooperative,
+    quality: Optional[float],
+    reliability: Optional[float],
+    economics: Optional[float],
+) -> float:
+    signals = 0
+    if quality is not None:
+        signals += 1
+    if reliability is not None:
+        signals += 1
+    if economics is not None:
+        signals += 1
+    if coop.contact_email or coop.website:
+        signals += 1
+    if coop.region or coop.altitude_m is not None:
+        signals += 1
+    return max(0.0, min(1.0, signals / 5))
+
+
+def _compute_total(
+    quality: Optional[float],
+    reliability: Optional[float],
+    economics: Optional[float],
+    confidence: float,
+) -> Optional[float]:
+    if quality is not None and reliability is not None and economics is not None:
+        return _clamp(
+            quality * DEFAULT_WEIGHTS["quality"]
+            + reliability * DEFAULT_WEIGHTS["reliability"]
+            + economics * DEFAULT_WEIGHTS["economics"]
+        )
+
+    dims: list[Tuple[str, Optional[float]]] = [
+        ("quality", quality),
+        ("reliability", reliability),
+        ("economics", economics),
+    ]
+    present = [(key, value) for (key, value) in dims if value is not None]
+    if not present:
+        return None
+
+    weight_sum = sum(DEFAULT_WEIGHTS[key] for key, _ in present)
+    base = sum(value * DEFAULT_WEIGHTS[key] for key, value in present) / weight_sum
+    return _clamp(base * (0.5 + 0.5 * confidence))
+
+
 def compute_cooperative_score(db: Session, coop: Cooperative) -> ScoreBreakdown:
     """Compute score using available hard fields + optional meta hints.
 
@@ -54,97 +149,19 @@ def compute_cooperative_score(db: Session, coop: Cooperative) -> ScoreBreakdown:
     """
 
     reasons: list[str] = []
-
-    # --- Quality ---
-    q = None
     meta = coop.meta or {}
-    if coop.quality_score is not None:
-        q = _clamp(float(coop.quality_score))
-        reasons.append("Qualität: quality_score Feld gesetzt")
-    elif isinstance(meta.get("sca_score"), (int, float)):
-        q = _map_sca_to_score(float(meta["sca_score"]))
-        reasons.append("Qualität: SCA Score aus meta.sca_score")
 
-    # --- Reliability ---
-    r = None
-    if coop.reliability_score is not None:
-        r = _clamp(float(coop.reliability_score))
-        reasons.append("Zuverlässigkeit: reliability_score Feld gesetzt")
-    elif isinstance(meta.get("reliability"), (int, float)):
-        r = _clamp(float(meta["reliability"]))
-        reasons.append("Zuverlässigkeit: meta.reliability")
+    quality = _compute_quality(coop, meta, reasons)
+    reliability = _compute_reliability(coop, meta, reasons)
+    economics = _compute_economics(db, coop, meta, reasons)
 
-    # --- Economics ---
-    e = None
-    if coop.economics_score is not None:
-        e = _clamp(float(coop.economics_score))
-        reasons.append("Wirtschaftlichkeit: economics_score Feld gesetzt")
-    else:
-        fob = meta.get("fob_usd_per_kg")
-        if isinstance(fob, (int, float)):
-            # Use coffee 'C' as a crude proxy: COFFEE_C:USD_LB => convert to USD/kg (1 lb=0.453592)
-            obs = _get_latest_observation(db, "COFFEE_C:USD_LB")
-            if obs and obs.value > 0:
-                ref_usd_per_kg = float(obs.value) / 0.453592
-                # cheaper than reference improves score; more expensive reduces.
-                # ratio 0.7 => +25; ratio 1.3 => -25
-                ratio = float(fob) / ref_usd_per_kg
-                e = _clamp(50.0 + (1.0 - ratio) * 83.0)
-                reasons.append(
-                    f"Wirtschaftlichkeit: FOB vs Referenz (FOB {fob:.2f} USD/kg; Ref ~{ref_usd_per_kg:.2f} USD/kg)"
-                )
-            else:
-                # without reference, we stay conservative-neutral
-                e = 50.0
-                reasons.append(
-                    "Wirtschaftlichkeit: FOB vorhanden, aber keine COFFEE_C Referenz -> neutral"
-                )
-
-    # --- Confidence ---
-    # Hard signals:
-    #  - quality, reliability, economics
-    #  - contact channel (email or website)
-    #  - region/altitude metadata
-    signals = 0
-    possible = 5
-    if q is not None:
-        signals += 1
-    if r is not None:
-        signals += 1
-    if e is not None:
-        signals += 1
-    if coop.contact_email or coop.website:
-        signals += 1
-    if coop.region or coop.altitude_m is not None:
-        signals += 1
-
-    confidence = max(0.0, min(1.0, signals / possible))
-
-    # --- Total ---
-    total = None
-    if q is not None and r is not None and e is not None:
-        total = _clamp(
-            q * DEFAULT_WEIGHTS["quality"]
-            + r * DEFAULT_WEIGHTS["reliability"]
-            + e * DEFAULT_WEIGHTS["economics"]
-        )
-    else:
-        # If incomplete: compute using available dimensions but down-weight via confidence
-        dims: list[Tuple[str, Optional[float]]] = [
-            ("quality", q),
-            ("reliability", r),
-            ("economics", e),
-        ]
-        present = [(k, v) for (k, v) in dims if v is not None]
-        if present:
-            w_sum = sum(DEFAULT_WEIGHTS[k] for k, _ in present)
-            base = sum(v * DEFAULT_WEIGHTS[k] for k, v in present) / w_sum
-            total = _clamp(base * (0.5 + 0.5 * confidence))
+    confidence = _compute_confidence(coop, quality, reliability, economics)
+    total = _compute_total(quality, reliability, economics, confidence)
 
     return ScoreBreakdown(
-        quality=q,
-        reliability=r,
-        economics=e,
+        quality=quality,
+        reliability=reliability,
+        economics=economics,
         total=total,
         confidence=confidence,
         reasons=reasons,
