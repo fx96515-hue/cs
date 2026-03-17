@@ -1,5 +1,6 @@
 """Standardized error handling for the application."""
 
+import asyncio
 from typing import Any, Dict, List, Union
 
 from fastapi import Request, status
@@ -11,6 +12,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+
+async def _yield_control() -> None:
+    """Keep async handlers awaitable while doing synchronous work."""
+    await asyncio.sleep(0)
 
 
 class ErrorResponse:
@@ -46,10 +52,11 @@ class ErrorResponse:
         return JSONResponse(status_code=status_code, content=content)
 
 
-def validation_exception_handler(
+async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     """Handle Pydantic validation errors."""
+    await _yield_control()
     logger.warning("validation_error", path=request.url.path, errors=exc.errors())
 
     # Ensure all error details are JSON serializable
@@ -70,10 +77,11 @@ def validation_exception_handler(
     )
 
 
-def http_exception_handler(
+async def http_exception_handler(
     request: Request, exc: StarletteHTTPException
 ) -> JSONResponse:
     """Handle HTTP exceptions."""
+    await _yield_control()
     logger.warning(
         "http_exception",
         path=request.url.path,
@@ -89,10 +97,11 @@ def http_exception_handler(
     )
 
 
-def integrity_error_handler(
+async def integrity_error_handler(
     request: Request, exc: IntegrityError
 ) -> JSONResponse:
     """Handle database integrity errors."""
+    await _yield_control()
     logger.error("integrity_error", path=request.url.path, error=str(exc))
 
     # Parse the error to provide user-friendly message
@@ -112,10 +121,11 @@ def integrity_error_handler(
     )
 
 
-def operational_error_handler(
+async def operational_error_handler(
     request: Request, exc: OperationalError
 ) -> JSONResponse:
     """Handle database operational errors."""
+    await _yield_control()
     logger.error("operational_error", path=request.url.path, error=str(exc))
 
     return ErrorResponse.format_error(
@@ -125,8 +135,9 @@ def operational_error_handler(
     )
 
 
-def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions."""
+    await _yield_control()
     logger.error(
         "unexpected_error", path=request.url.path, error=str(exc), exc_info=True
     )
