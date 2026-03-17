@@ -112,7 +112,7 @@ def list_observations(
     db: DbSessionDep,
     _: ViewerPermissionDep,
     key: str | None = None,
-    limit: int = Query(200, ge=1, le=500),
+    limit: Annotated[int, Query(ge=1, le=500)] = 200,
 ):
     q = db.query(MarketObservation)
     if key:
@@ -184,7 +184,7 @@ def series(
     key: str,
     db: DbSessionDep,
     _: ViewerPermissionDep,
-    limit: int = Query(365, ge=1, le=500),
+    limit: Annotated[int, Query(ge=1, le=500)] = 365,
 ):
     """Return a time series for one key (newest -> oldest)."""
     rows = (

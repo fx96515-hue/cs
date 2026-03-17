@@ -77,24 +77,29 @@ def _apply_doc_update(existing: KnowledgeDoc, doc: dict[str, Any]) -> None:
     existing.sources = doc.get("sources")
 
 
+def _seed_doc(db: Session, doc: dict[str, Any]) -> tuple[int, int]:
+    language = doc.get("language", "de")
+    if _insert_doc_postgres(db, doc, language):
+        return 1, 0
+
+    existing = _load_existing_doc(db, doc, language)
+    if not existing:
+        db.add(KnowledgeDoc(**{**doc, "language": language}))
+        return 1, 0
+
+    if _doc_has_changes(existing, doc):
+        _apply_doc_update(existing, doc)
+        return 0, 1
+    return 0, 0
+
+
 def seed_default_kb(db: Session) -> dict[str, Any]:
     created = 0
     updated = 0
     for doc in DEFAULT_DOCS:
-        language = doc.get("language", "de")
-        if _insert_doc_postgres(db, doc, language):
-            created += 1
-            continue
-
-        existing = _load_existing_doc(db, doc, language)
-        if not existing:
-            db.add(KnowledgeDoc(**{**doc, "language": language}))
-            created += 1
-            continue
-
-        if _doc_has_changes(existing, doc):
-            _apply_doc_update(existing, doc)
-            updated += 1
+        created_delta, updated_delta = _seed_doc(db, doc)
+        created += created_delta
+        updated += updated_delta
 
     db.commit()
     return {"status": "ok", "created": created, "updated": updated}
