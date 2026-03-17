@@ -13,11 +13,18 @@ from app.domains.sources.schemas.source import SourceCreate, SourceOut, SourceUp
 from app.core.audit import AuditLogger
 
 router = APIRouter()
+DbSessionDep = Annotated[Session, Depends(get_db)]
+ViewerPermissionDep = Annotated[
+    object, Depends(require_role("admin", "analyst", "viewer"))
+]
+AnalystUserDep = Annotated[User, Depends(require_role("admin", "analyst"))]
+AdminUserDep = Annotated[User, Depends(require_role("admin"))]
 
 
 @router.get("/", response_model=list[SourceOut])
 def list_sources(
-    db: Session = Depends(get_db), _=Depends(require_role("admin", "analyst", "viewer"))
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
 ):
     return db.query(Source).order_by(Source.name.asc()).all()
 
@@ -27,8 +34,8 @@ def create_source(
     payload: SourceCreate,
     request: Request,
     response: Response,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    user: AnalystUserDep,
 ):
     existing = find_existing_by_fields(
         db,
@@ -61,8 +68,8 @@ def create_source(
 @router.get("/{source_id}", response_model=SourceOut)
 def get_source(
     source_id: Annotated[int, Path(ge=1)],
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
 ):
     s = db.query(Source).filter(Source.id == source_id).first()
     if not s:
@@ -74,8 +81,8 @@ def get_source(
 def update_source(
     source_id: Annotated[int, Path(ge=1)],
     payload: SourceUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    user: AnalystUserDep,
 ):
     s = db.query(Source).filter(Source.id == source_id).first()
     if not s:
@@ -105,8 +112,8 @@ def update_source(
 @router.delete("/{source_id}")
 def delete_source(
     source_id: Annotated[int, Path(ge=1)],
-    db: Session = Depends(get_db),
-    user: User = Depends(require_role("admin")),
+    db: DbSessionDep,
+    user: AdminUserDep,
 ):
     s = db.query(Source).filter(Source.id == source_id).first()
     if not s:

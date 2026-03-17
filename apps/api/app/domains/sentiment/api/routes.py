@@ -22,6 +22,11 @@ from app.domains.sentiment.services.analysis import (
 )
 
 router = APIRouter()
+DbSessionDep = Annotated[Session, Depends(get_db)]
+ViewerPermissionDep = Annotated[
+    object, Depends(require_role("admin", "analyst", "viewer"))
+]
+AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
 
 
 def _require_sentiment_enabled() -> None:
@@ -36,9 +41,9 @@ def _require_sentiment_enabled() -> None:
 @router.get("/{region}", response_model=SentimentTimeSeriesResponse)
 def sentiment_by_region(
     region: str,
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
     limit: int = Query(90, ge=1, le=365),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Return sentiment time series for a region."""
     _require_sentiment_enabled()
@@ -53,9 +58,9 @@ def sentiment_by_region(
 @router.get("/entity/{entity_id}", response_model=SentimentTimeSeriesResponse)
 def sentiment_by_entity(
     entity_id: Annotated[int, Path(ge=1)],
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
     limit: int = Query(90, ge=1, le=365),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Return sentiment time series for a specific entity."""
     _require_sentiment_enabled()
@@ -69,8 +74,8 @@ def sentiment_by_entity(
 
 @router.post("/analyze", response_model=SentimentAnalyzeResponse)
 def run_sentiment_analysis(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """Manually trigger sentiment analysis on unscored news items."""
     _require_sentiment_enabled()
