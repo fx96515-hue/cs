@@ -6,8 +6,10 @@ try:
     from pgvector.sqlalchemy import Vector
 except Exception:  # pragma: no cover - fallback for test environments without pgvector
 
-    def Vector(dim: int):
+    def _pgvector_fallback(_: int):
         return JSON
+
+    Vector = _pgvector_fallback
 
 
 from app.db.session import Base

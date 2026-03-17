@@ -14,6 +14,8 @@ from app.models.cooperative import Cooperative
 from app.models.roaster import Roaster
 from app.models.market import MarketObservation
 
+CERT_ORGANIC_FAIR_TRADE = "Organic, Fair Trade"
+CERT_ORGANIC_FAIR_TRADE_RA = "Organic, Fair Trade, Rainforest Alliance"
 
 # Demo cooperatives data - realistic Peru coffee cooperatives
 DEMO_COOPERATIVES = [
@@ -22,7 +24,7 @@ DEMO_COOPERATIVES = [
         "region": "Cajamarca",
         "altitude_m": 1600,
         "varieties": "Caturra, Bourbon, Typica",
-        "certifications": "Organic, Fair Trade, Rainforest Alliance",
+        "certifications": CERT_ORGANIC_FAIR_TRADE_RA,
         "contact_email": "info@cafrontera.com",
         "website": "https://www.cafrontera.com",
         "status": "active",
@@ -60,7 +62,7 @@ DEMO_COOPERATIVES = [
         "region": "Cusco",
         "altitude_m": 1800,
         "varieties": "Bourbon, Typica, Caturra",
-        "certifications": "Organic, Fair Trade",
+        "certifications": CERT_ORGANIC_FAIR_TRADE,
         "contact_email": "info@solycafe.com",
         "website": "https://www.solycafe.com",
         "status": "active",
@@ -98,7 +100,7 @@ DEMO_COOPERATIVES = [
         "region": "Junín",
         "altitude_m": 1400,
         "varieties": "Caturra, Catimor, Bourbon",
-        "certifications": "Organic, Fair Trade",
+        "certifications": CERT_ORGANIC_FAIR_TRADE,
         "contact_email": "exportaciones@cacpangoa.com.pe",
         "website": "https://www.cacpangoa.com.pe",
         "status": "active",
@@ -117,7 +119,7 @@ DEMO_COOPERATIVES = [
         "region": "Cusco",
         "altitude_m": 1650,
         "varieties": "Typica, Bourbon, Caturra",
-        "certifications": "Organic, Fair Trade, Rainforest Alliance",
+        "certifications": CERT_ORGANIC_FAIR_TRADE_RA,
         "contact_email": "info@huadquina.org",
         "website": "https://www.huadquina.org",
         "status": "active",
@@ -136,7 +138,7 @@ DEMO_COOPERATIVES = [
         "region": "San Martín",
         "altitude_m": 1300,
         "varieties": "Caturra, Catimor",
-        "certifications": "Organic, Fair Trade",
+        "certifications": CERT_ORGANIC_FAIR_TRADE,
         "contact_email": "incahuasi@gmail.com",
         "website": None,
         "status": "active",
@@ -155,7 +157,7 @@ DEMO_COOPERATIVES = [
         "region": "Amazonas",
         "altitude_m": 1550,
         "varieties": "Caturra, Bourbon, Catimor",
-        "certifications": "Organic, Fair Trade",
+        "certifications": CERT_ORGANIC_FAIR_TRADE,
         "contact_email": "cecocafen@cecocafen.com.pe",
         "website": "https://www.cecocafen.com.pe",
         "status": "active",
@@ -194,7 +196,7 @@ DEMO_COOPERATIVES = [
         "region": "Huila",
         "altitude_m": 1900,
         "varieties": "Caturra, Castillo, Geisha",
-        "certifications": "Organic, Fair Trade, Rainforest Alliance",
+        "certifications": CERT_ORGANIC_FAIR_TRADE_RA,
         "contact_email": "exportaciones@cafehuila.com.co",
         "website": "https://www.cafehuila.com.co",
         "status": "active",
@@ -213,7 +215,7 @@ DEMO_COOPERATIVES = [
         "region": "Nariño",
         "altitude_m": 2100,
         "varieties": "Caturra, Colombia, Typica",
-        "certifications": "Organic, Fair Trade",
+        "certifications": CERT_ORGANIC_FAIR_TRADE,
         "contact_email": "info@coopcafenariño.com.co",
         "website": None,
         "status": "active",
@@ -271,7 +273,7 @@ DEMO_COOPERATIVES = [
         "region": "Oromia",
         "altitude_m": 1850,
         "varieties": "Heirloom Ethiopian, Jimma",
-        "certifications": "Organic, Fair Trade",
+        "certifications": CERT_ORGANIC_FAIR_TRADE,
         "contact_email": "info@oromiacoffeeunion.org",
         "website": "https://www.oromiacoffeeunion.org",
         "status": "active",
@@ -640,3 +642,4 @@ def seed_all_demo_data(db: Session) -> dict[str, Any]:
         "roasters": roasters_result,
         "market": market_result,
     }
+
