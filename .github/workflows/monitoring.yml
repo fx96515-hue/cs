@@ -274,9 +274,11 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
+            const apiStatus = "${{ steps.api_health.outputs.status }}";
             const shouldClose =
               "${{ steps.check_config.outputs.is_configured }}" !== "true" ||
-              "${{ steps.api_health.outputs.status }}" === "success";
+              apiStatus === "success" ||
+              apiStatus === "skipped";
             if (!shouldClose) {
               core.info("Keeping production-alert issues open because API is currently unhealthy.");
               return;
