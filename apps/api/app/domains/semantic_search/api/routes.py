@@ -26,6 +26,10 @@ EmbeddingService = embedding_service.EmbeddingService
 
 router = APIRouter(prefix="/search", tags=["semantic-search"])
 log = structlog.get_logger()
+DbSessionDep = Annotated[Session, Depends(get_db)]
+ViewerPermissionDep = Annotated[
+    object, Depends(require_role("admin", "analyst", "viewer"))
+]
 
 
 def _require_search_enabled() -> None:
@@ -40,10 +44,10 @@ def _require_search_enabled() -> None:
 @router.get("/semantic", response_model=SemanticSearchResponse)
 async def semantic_search(
     q: Annotated[str, Query(min_length=1, max_length=500)],
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
     entity_type: Annotated[Literal["all", "cooperative", "roaster"], Query()] = "all",
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Search for entities using semantic similarity.
 
@@ -120,9 +124,9 @@ async def semantic_search(
 async def find_similar_entities(
     entity_type: Annotated[Literal["cooperative", "roaster"], Path()],
     entity_id: Annotated[int, Path(ge=1)],
+    db: DbSessionDep,
+    _: ViewerPermissionDep,
     limit: Annotated[int, Query(ge=1, le=50)] = 5,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
 ):
     """Find similar entities based on embedding similarity.
 

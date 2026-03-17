@@ -40,6 +40,7 @@ xgboost-cpu>=2.0.0
 # Uses sentence-transformers/all-MiniLM-L6-v2 (384 dims) by default.
 # torch is pulled in transitively; CPU wheels are sufficient (no GPU required).
 sentence-transformers>=2.7.0
+filelock>=3.20.3
 
 # pgvector for semantic search
 pgvector>=0.3.0

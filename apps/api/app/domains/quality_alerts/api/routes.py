@@ -21,6 +21,9 @@ router = APIRouter()
 anomalies_router = APIRouter()
 ENTITY_TYPE_PATTERN = r"^[a-z][a-z0-9_]{1,31}$"
 AlertSeverity = Literal["info", "warning", "critical"]
+DbSessionDep = Annotated[Session, Depends(get_db)]
+AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
+AdminPermissionDep = Annotated[object, Depends(require_role("admin"))]
 
 
 def _require_anomaly_detection_enabled() -> None:
@@ -34,13 +37,13 @@ def _require_anomaly_detection_enabled() -> None:
 
 @router.get("", response_model=list[QualityAlertOut])
 def list_alerts(
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
     entity_type: Annotated[str | None, Query(pattern=ENTITY_TYPE_PATTERN)] = None,
     severity: AlertSeverity | None = None,
     acknowledged: bool | None = None,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
 ):
     """List quality alerts with optional filters."""
     alerts = quality_alerts.get_alerts(
@@ -56,8 +59,8 @@ def list_alerts(
 
 @router.get("/summary", response_model=AlertSummaryOut)
 def get_summary(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """Get alert summary statistics."""
     return quality_alerts.get_alert_summary(db)
@@ -67,8 +70,8 @@ def get_summary(
 def acknowledge_alert(
     alert_id: Annotated[int, Path(ge=1)],
     payload: AcknowledgeAlertIn,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """Acknowledge an alert."""
     alert = quality_alerts.acknowledge_alert(
@@ -81,9 +84,9 @@ def acknowledge_alert(
 
 @router.post("/check-now", response_model=CheckAlertsOut)
 def check_now(
+    db: DbSessionDep,
+    _: AdminPermissionDep,
     threshold: float = Query(5.0, ge=0.0, le=100.0),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
 ):
     """Manually trigger alert check."""
     result = quality_alerts.check_all_entities(db, threshold=threshold)
@@ -97,13 +100,13 @@ def check_now(
 
 @anomalies_router.get("", response_model=list[QualityAlertOut])
 def list_anomalies(
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
     entity_type: Annotated[str | None, Query(pattern=ENTITY_TYPE_PATTERN)] = None,
     severity: AlertSeverity | None = None,
     acknowledged: bool | None = None,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
 ):
     """List anomaly alerts (Isolation Forest score anomalies and Z-Score price anomalies)."""
     _require_anomaly_detection_enabled()
@@ -123,8 +126,8 @@ def list_anomalies(
 
 @anomalies_router.post("/scan", response_model=AnomalyScanOut)
 def run_scan(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin")),
+    db: DbSessionDep,
+    _: AdminPermissionDep,
 ):
     """Manually trigger anomaly scan (Isolation Forest + Z-Score)."""
     _require_anomaly_detection_enabled()

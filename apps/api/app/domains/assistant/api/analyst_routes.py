@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import structlog
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from slowapi import Limiter
@@ -30,8 +32,8 @@ limiter = Limiter(key_func=get_remote_address)
 async def ask_analyst(
     request: Request,
     question: RAGQuestion,
-    db: Session = Depends(get_db),
-    auth_info: dict = Depends(require_auth),
+    db: Annotated[Session, Depends(get_db)],
+    auth_info: Annotated[dict, Depends(require_auth)],
 ):
     """Ask the RAG AI Analyst a question.
 
@@ -128,7 +130,7 @@ async def ask_analyst(
 
 @router.get("/status", response_model=RAGStatusResponse)
 async def get_status(
-    _: dict = Depends(require_auth),
+    _: Annotated[dict, Depends(require_auth)],
 ):
     """Get status of RAG AI Analyst service.
 

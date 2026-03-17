@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,11 +12,15 @@ from app.domains.outreach.services.generator import generate_outreach
 router = APIRouter()
 
 
-@router.post("/generate", response_model=OutreachResponse)
+@router.post(
+    "/generate",
+    response_model=OutreachResponse,
+    responses={400: {"description": "Invalid request"}},
+)
 def generate(
     payload: OutreachRequest,
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst", "viewer")),
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[object, Depends(require_role("admin", "analyst", "viewer"))],
 ):
     try:
         return generate_outreach(

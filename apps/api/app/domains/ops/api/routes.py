@@ -1,5 +1,7 @@
 """Operations dashboard API routes."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -12,12 +14,14 @@ from app.domains.quality_alerts.services.alerts import get_alert_summary
 
 
 router = APIRouter()
+DbSessionDep = Annotated[Session, Depends(get_db)]
+AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
 
 
 @router.get("/overview")
 def get_overview(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """Get system health overview."""
     # Entity counts
@@ -75,8 +79,8 @@ def get_overview(
 
 @router.get("/entity-health")
 def get_entity_health(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """Get per-entity health scores with trend data."""
     # Get cooperatives with scores
@@ -131,8 +135,8 @@ def get_entity_health(
 
 @router.get("/pipeline-status")
 def get_pipeline_status(
-    db: Session = Depends(get_db),
-    _=Depends(require_role("admin", "analyst")),
+    db: DbSessionDep,
+    _: AnalystPermissionDep,
 ):
     """Get data pipeline status."""
     # This is a simplified implementation
