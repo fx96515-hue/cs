@@ -98,6 +98,114 @@ def _upsert_news_items(
     return created, updated
 
 
+def _already_seen(url: str | None, stored_urls: set[str]) -> bool:
+    if not url or url in stored_urls:
+        return True
+    stored_urls.add(url)
+    return False
+
+
+def _refresh_from_perplexity(
+    db: Session,
+    *,
+    topic: str,
+    country: str | None,
+    max_items: int,
+    now: datetime,
+    stored_urls: set[str],
+) -> tuple[int, int, list[str], bool]:
+    created = 0
+    updated = 0
+    errors: list[str] = []
+    provider_used = False
+    client = PerplexityClient()
+
+    try:
+        queries = [f"{topic} {query_suffix}" for query_suffix in DEFAULT_NEWS_QUERIES]
+        for query_text in queries:
+            if created + updated >= max_items:
+                break
+            try:
+                raw_results = client.search(
+                    query_text,
+                    max_results=min(10, max_items),
+                    country=country or "DE",
+                    max_tokens_per_page=384,
+                )
+                results = [
+                    {
+                        "title": _coerce_result_field(item, "title"),
+                        "url": _coerce_result_field(item, "url"),
+                        "snippet": _coerce_result_field(item, "snippet"),
+                        "published_at": _coerce_result_field(item, "published_date"),
+                    }
+                    for item in raw_results
+                    if not _already_seen(_coerce_result_field(item, "url"), stored_urls)
+                ]
+                c, u = _upsert_news_items(
+                    db,
+                    topic=topic,
+                    country=country,
+                    provider="perplexity",
+                    query=query_text,
+                    results=results,
+                    max_items=max_items - (created + updated),
+                    now=now,
+                )
+                created += c
+                updated += u
+            except Exception:
+                db.rollback()
+                errors.append(f"perplexity query failed: {query_text}")
+
+        provider_used = bool(created or updated)
+        return created, updated, errors, provider_used
+    finally:
+        client.close()
+
+
+def _refresh_from_google_rss(
+    db: Session,
+    *,
+    topic: str,
+    country: str | None,
+    max_items: int,
+    now: datetime,
+    already_created: int,
+    already_updated: int,
+    stored_urls: set[str],
+) -> tuple[int, int, list[str], bool]:
+    remaining = max_items - (already_created + already_updated)
+    if remaining <= 0:
+        return 0, 0, [], False
+
+    try:
+        query = quote_plus(topic)
+        rss_results = [
+            item
+            for item in _fetch_google_news_rss(
+                topic,
+                country=country,
+                max_items=max_items,
+            )
+            if not _already_seen(item.get("url"), stored_urls)
+        ]
+        created, updated = _upsert_news_items(
+            db,
+            topic=topic,
+            country=country,
+            provider="google_news_rss",
+            query=query,
+            results=rss_results,
+            max_items=remaining,
+            now=now,
+        )
+        return created, updated, [], bool(created or updated)
+    except Exception:
+        db.rollback()
+        return 0, 0, ["google_news_rss failed"], False
+
+
 def _fetch_google_news_rss(
     topic: str,
     *,
@@ -161,95 +269,41 @@ def refresh_news(
     provider_used: str | None = None
     stored_urls: set[str] = set()
 
-    def _sanitize_error(message: str) -> str:
-        # Keep client-facing errors generic; full exception details stay in server logs.
-        return message
-
-    def _already_seen(url: str | None) -> bool:
-        if not url or url in stored_urls:
-            return True
-        stored_urls.add(url)
-        return False
-
     if settings.PERPLEXITY_API_KEY:
-        client = PerplexityClient()
-        try:
-            queries = [f"{topic} {q}" for q in DEFAULT_NEWS_QUERIES]
-            providers_attempted.append("perplexity")
-
-            for q in queries:
-                if created + updated >= max_items:
-                    break
-                try:
-                    raw_results = client.search(
-                        q,
-                        max_results=min(10, max_items),
-                        country=country or "DE",
-                        max_tokens_per_page=384,
-                    )
-                    results = [
-                        {
-                            "title": _coerce_result_field(item, "title"),
-                            "url": _coerce_result_field(item, "url"),
-                            "snippet": _coerce_result_field(item, "snippet"),
-                            "published_at": _coerce_result_field(item, "published_date"),
-                        }
-                        for item in raw_results
-                        if not _already_seen(_coerce_result_field(item, "url"))
-                    ]
-                    c, u = _upsert_news_items(
-                        db,
-                        topic=topic,
-                        country=country,
-                        provider="perplexity",
-                        query=q,
-                        results=results,
-                        max_items=max_items - (created + updated),
-                        now=now,
-                    )
-                    created += c
-                    updated += u
-                except Exception:
-                    db.rollback()
-                    errors.append(_sanitize_error(f"perplexity query failed: {q}"))
-
-            if created or updated:
-                provider_used = "perplexity"
-        finally:
-            client.close()
+        providers_attempted.append("perplexity")
+        p_created, p_updated, p_errors, p_used = _refresh_from_perplexity(
+            db,
+            topic=topic,
+            country=country,
+            max_items=max_items,
+            now=now,
+            stored_urls=stored_urls,
+        )
+        created += p_created
+        updated += p_updated
+        errors.extend(p_errors)
+        if p_used:
+            provider_used = "perplexity"
     else:
         errors.append("perplexity unavailable: PERPLEXITY_API_KEY not set")
 
     if created + updated < max_items:
-        try:
-            providers_attempted.append("google_news_rss")
-            query = quote_plus(topic)
-            rss_results = [
-                item
-                for item in _fetch_google_news_rss(
-                    topic,
-                    country=country,
-                    max_items=max_items,
-                )
-                if not _already_seen(item.get("url"))
-            ]
-            c, u = _upsert_news_items(
-                db,
-                topic=topic,
-                country=country,
-                provider="google_news_rss",
-                query=query,
-                results=rss_results,
-                max_items=max_items - (created + updated),
-                now=now,
-            )
-            created += c
-            updated += u
-            if (c or u) and provider_used is None:
-                provider_used = "google_news_rss"
-        except Exception:
-            db.rollback()
-            errors.append(_sanitize_error("google_news_rss failed"))
+        providers_attempted.append("google_news_rss")
+        r_created, r_updated, r_errors, r_used = _refresh_from_google_rss(
+            db,
+            topic=topic,
+            country=country,
+            max_items=max_items,
+            now=now,
+            already_created=created,
+            already_updated=updated,
+            stored_urls=stored_urls,
+        )
+        created += r_created
+        updated += r_updated
+        errors.extend(r_errors)
+        if r_used and provider_used is None:
+            provider_used = "google_news_rss"
 
     status = "ok" if (created or updated) else "failed"
     return {
