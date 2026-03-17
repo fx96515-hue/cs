@@ -3,7 +3,7 @@
 # =============================================================================
 # Build stage: Install dependencies
 # =============================================================================
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-trixie AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir \
 # =============================================================================
 # Runtime stage: Minimal production image (MUST be slim, NOT alpine)
 # =============================================================================
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-trixie AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
