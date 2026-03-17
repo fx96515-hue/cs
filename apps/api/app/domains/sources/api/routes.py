@@ -15,10 +15,11 @@ from app.core.audit import AuditLogger
 router = APIRouter()
 DbSessionDep = Annotated[Session, Depends(get_db)]
 ViewerPermissionDep = Annotated[
-    object, Depends(require_role("admin", "analyst", "viewer"))
+    None, Depends(require_role("admin", "analyst", "viewer"))
 ]
 AnalystUserDep = Annotated[User, Depends(require_role("admin", "analyst"))]
 AdminUserDep = Annotated[User, Depends(require_role("admin"))]
+NOT_FOUND_DETAIL = "Not found"
 
 
 @router.get("/", response_model=list[SourceOut])
@@ -73,7 +74,7 @@ def get_source(
 ):
     s = db.query(Source).filter(Source.id == source_id).first()
     if not s:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
     return s
 
 
@@ -86,7 +87,7 @@ def update_source(
 ):
     s = db.query(Source).filter(Source.id == source_id).first()
     if not s:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture old data for audit log
     old_data = {k: getattr(s, k) for k in payload.model_dump(exclude_unset=True).keys()}
@@ -117,7 +118,7 @@ def delete_source(
 ):
     s = db.query(Source).filter(Source.id == source_id).first()
     if not s:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
     # Capture data before deletion for audit log
     entity_data = {

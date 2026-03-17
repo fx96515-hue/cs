@@ -2,7 +2,7 @@
 
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from fastapi.responses import StreamingResponse
@@ -10,6 +10,12 @@ from fastapi.responses import StreamingResponse
 
 class DataExporter:
     """Export data to various formats."""
+    CREATED_AT_HEADER = "Created At"
+    UPDATED_AT_HEADER = "Updated At"
+
+    @staticmethod
+    def _timestamp_suffix() -> str:
+        return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     @staticmethod
     def to_csv(
@@ -81,14 +87,12 @@ class DataExporter:
                     "Economics Score": coop.economics_score or "",
                     "Total Score": coop.total_score or "",
                     "Confidence": coop.confidence or "",
-                    "Created At": coop.created_at,
-                    "Updated At": coop.updated_at,
+                    DataExporter.CREATED_AT_HEADER: coop.created_at,
+                    DataExporter.UPDATED_AT_HEADER: coop.updated_at,
                 }
             )
 
-        filename = (
-            f"cooperatives_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
-        )
+        filename = f"cooperatives_export_{DataExporter._timestamp_suffix()}.csv"
         return DataExporter.to_csv(data, filename)
 
     @staticmethod
@@ -110,12 +114,12 @@ class DataExporter:
                     "Next Action": roaster.next_action or "",
                     "Total Score": roaster.total_score or "",
                     "Confidence": roaster.confidence or "",
-                    "Created At": roaster.created_at,
-                    "Updated At": roaster.updated_at,
+                    DataExporter.CREATED_AT_HEADER: roaster.created_at,
+                    DataExporter.UPDATED_AT_HEADER: roaster.updated_at,
                 }
             )
 
-        filename = f"roasters_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+        filename = f"roasters_export_{DataExporter._timestamp_suffix()}.csv"
         return DataExporter.to_csv(data, filename)
 
     @staticmethod
@@ -138,10 +142,10 @@ class DataExporter:
                     "Processing Method": lot.processing_method or "",
                     "Altitude (masl)": lot.altitude_masl or "",
                     "Notes": lot.notes or "",
-                    "Created At": lot.created_at,
-                    "Updated At": lot.updated_at,
+                    DataExporter.CREATED_AT_HEADER: lot.created_at,
+                    DataExporter.UPDATED_AT_HEADER: lot.updated_at,
                 }
             )
 
-        filename = f"lots_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+        filename = f"lots_export_{DataExporter._timestamp_suffix()}.csv"
         return DataExporter.to_csv(data, filename)
