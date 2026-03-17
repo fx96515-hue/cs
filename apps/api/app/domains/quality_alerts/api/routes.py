@@ -66,7 +66,11 @@ def get_summary(
     return quality_alerts.get_alert_summary(db)
 
 
-@router.post("/{alert_id}/acknowledge", response_model=QualityAlertOut)
+@router.post(
+    "/{alert_id}/acknowledge",
+    response_model=QualityAlertOut,
+    responses={404: {"description": "Alert not found"}},
+)
 def acknowledge_alert(
     alert_id: Annotated[int, Path(ge=1)],
     payload: AcknowledgeAlertIn,
@@ -98,7 +102,11 @@ def check_now(
 # ---------------------------------------------------------------------------
 
 
-@anomalies_router.get("", response_model=list[QualityAlertOut])
+@anomalies_router.get(
+    "",
+    response_model=list[QualityAlertOut],
+    responses={503: {"description": "Anomaly detection feature is disabled"}},
+)
 def list_anomalies(
     db: DbSessionDep,
     _: AnalystPermissionDep,
@@ -124,7 +132,11 @@ def list_anomalies(
     return alerts
 
 
-@anomalies_router.post("/scan", response_model=AnomalyScanOut)
+@anomalies_router.post(
+    "/scan",
+    response_model=AnomalyScanOut,
+    responses={503: {"description": "Anomaly detection feature is disabled"}},
+)
 def run_scan(
     db: DbSessionDep,
     _: AdminPermissionDep,

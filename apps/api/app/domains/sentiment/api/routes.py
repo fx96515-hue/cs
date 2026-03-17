@@ -38,7 +38,11 @@ def _require_sentiment_enabled() -> None:
         )
 
 
-@router.get("/{region}", response_model=SentimentTimeSeriesResponse)
+@router.get(
+    "/{region}",
+    response_model=SentimentTimeSeriesResponse,
+    responses={503: {"description": "Sentiment feature is disabled"}},
+)
 def sentiment_by_region(
     region: str,
     db: DbSessionDep,
@@ -55,7 +59,11 @@ def sentiment_by_region(
     )
 
 
-@router.get("/entity/{entity_id}", response_model=SentimentTimeSeriesResponse)
+@router.get(
+    "/entity/{entity_id}",
+    response_model=SentimentTimeSeriesResponse,
+    responses={503: {"description": "Sentiment feature is disabled"}},
+)
 def sentiment_by_entity(
     entity_id: Annotated[int, Path(ge=1)],
     db: DbSessionDep,
@@ -72,7 +80,11 @@ def sentiment_by_entity(
     )
 
 
-@router.post("/analyze", response_model=SentimentAnalyzeResponse)
+@router.post(
+    "/analyze",
+    response_model=SentimentAnalyzeResponse,
+    responses={503: {"description": "Sentiment feature is disabled"}},
+)
 def run_sentiment_analysis(
     db: DbSessionDep,
     _: AnalystPermissionDep,
