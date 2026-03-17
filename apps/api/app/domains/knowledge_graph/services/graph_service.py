@@ -27,6 +27,10 @@ _graph_cache: dict[str, tuple[nx.Graph, float]] = {}
 CACHE_TTL = 300  # 5 minutes
 
 
+def _count_sort_key(item: tuple[str, int]) -> int:
+    return item[1]
+
+
 def _region_node_id(region_name: str) -> str:
     return f"region_{region_name.lower().replace(' ', '_')}"
 
@@ -181,8 +185,8 @@ def _add_similar_coop_edges(graph: nx.Graph, cooperatives: list[Cooperative]) ->
                 continue
             if not coop1.certifications or not coop2.certifications:
                 continue
-            certs1 = set(c.strip() for c in coop1.certifications.split(","))
-            certs2 = set(c.strip() for c in coop2.certifications.split(","))
+            certs1 = {c.strip() for c in coop1.certifications.split(",")}
+            certs2 = {c.strip() for c in coop2.certifications.split(",")}
             if certs1 & certs2:
                 graph.add_edge(
                     f"cooperative_{coop1.id}",
@@ -287,7 +291,7 @@ def get_network_data(db: Session, node_types: str = "all") -> NetworkData:
 
     # Filter by node types if specified
     if node_types != "all":
-        type_filter = set(t.strip() for t in node_types.split(","))
+        type_filter = {t.strip() for t in node_types.split(",")}
         nodes_to_keep = [
             n for n, data in G.nodes(data=True) if data["node_type"] in type_filter
         ]
@@ -437,24 +441,25 @@ def get_communities(db: Session) -> list[Community]:
             node_types[node_type] = node_types.get(node_type, 0) + 1
 
             # Collect common attributes (e.g., regions, certifications)
-            if node_type == "region":
-                common_attrs[node_data["label"]] = (
-                    common_attrs.get(node_data["label"], 0) + 1
-                )
-            elif node_type == "certification":
+            if node_type in {"region", "certification"}:
                 common_attrs[node_data["label"]] = (
                     common_attrs.get(node_data["label"], 0) + 1
                 )
 
         # Determine dominant node type
         dominant_type = (
-            max(node_types, key=lambda k: node_types[k]) if node_types else "unknown"
+            max(node_types.items(), key=_count_sort_key)[0] if node_types else "unknown"
         )
 
         # Get most common attributes (sorted by frequency, descending)
-        common_attributes = sorted(
-            common_attrs.keys(), key=lambda k: common_attrs[k], reverse=True
-        )[:5]
+        common_attributes = [
+            key
+            for key, _ in sorted(
+                common_attrs.items(),
+                key=_count_sort_key,
+                reverse=True,
+            )[:5]
+        ]
 
         result.append(
             Community(

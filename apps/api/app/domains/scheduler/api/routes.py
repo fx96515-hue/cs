@@ -120,7 +120,10 @@ def scheduler_summary(_: ViewerPermissionDep):
     }
 
 
-@router.post("/jobs/{job_id}/run")
+@router.post(
+    "/jobs/{job_id}/run",
+    responses={404: {"description": "Unknown scheduler job"}},
+)
 def run_scheduler_job(
     job_id: Annotated[
         str,

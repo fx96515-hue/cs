@@ -189,7 +189,10 @@ def trigger_intelligence_refresh(
         redis_client.close()
 
 
-@router.post("/reset-circuit/{provider}")
+@router.post(
+    "/reset-circuit/{provider}",
+    responses={404: {"description": "Unknown provider"}},
+)
 def reset_circuit_breaker(
     provider: Annotated[
         str,

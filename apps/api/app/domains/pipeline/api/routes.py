@@ -212,7 +212,10 @@ def trigger_all_sources(
         redis_client.close()
 
 
-@router.post("/trigger/{source_name}")
+@router.post(
+    "/trigger/{source_name}",
+    responses={404: {"description": "Unknown pipeline source"}},
+)
 def trigger_single_source(
     source_name: Annotated[
         str,

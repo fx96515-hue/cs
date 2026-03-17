@@ -46,7 +46,7 @@ class ErrorResponse:
         return JSONResponse(status_code=status_code, content=content)
 
 
-async def validation_exception_handler(
+def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     """Handle Pydantic validation errors."""
@@ -70,7 +70,7 @@ async def validation_exception_handler(
     )
 
 
-async def http_exception_handler(
+def http_exception_handler(
     request: Request, exc: StarletteHTTPException
 ) -> JSONResponse:
     """Handle HTTP exceptions."""
@@ -89,7 +89,7 @@ async def http_exception_handler(
     )
 
 
-async def integrity_error_handler(
+def integrity_error_handler(
     request: Request, exc: IntegrityError
 ) -> JSONResponse:
     """Handle database integrity errors."""
@@ -112,7 +112,7 @@ async def integrity_error_handler(
     )
 
 
-async def operational_error_handler(
+def operational_error_handler(
     request: Request, exc: OperationalError
 ) -> JSONResponse:
     """Handle database operational errors."""
@@ -125,7 +125,7 @@ async def operational_error_handler(
     )
 
 
-async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions."""
     logger.error(
         "unexpected_error", path=request.url.path, error=str(exc), exc_info=True

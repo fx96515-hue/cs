@@ -113,7 +113,7 @@ def _normalize_importances(
     if importances or not fallback_features:
         return importances
     equal_weight = round(1 / max(len(fallback_features), 1), 4)
-    return {feature: equal_weight for feature in fallback_features}
+    return dict.fromkeys(fallback_features, equal_weight)
 
 
 def _append_model_importances(
@@ -364,7 +364,10 @@ async def _import_price(
     }
 
 
-@router.post("/bulk-import")
+@router.post(
+    "/bulk-import",
+    responses={400: {"description": "Invalid or unsupported CSV payload"}},
+)
 async def features_bulk_import(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin"))],
@@ -390,7 +393,10 @@ async def features_bulk_import(
     )
 
 
-@router.get("/import-template/{data_type}")
+@router.get(
+    "/import-template/{data_type}",
+    responses={404: {"description": "Template type not found"}},
+)
 def features_import_template(
     data_type: Annotated[
         str,
