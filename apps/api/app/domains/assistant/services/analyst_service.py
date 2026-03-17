@@ -27,6 +27,10 @@ from app.domains.assistant.providers.llm import (
 log = structlog.get_logger()
 
 
+class RAGServiceUnavailableError(RuntimeError):
+    """Raised when the configured RAG provider is unavailable."""
+
+
 class RAGAnalystService:
     """RAG-based AI analyst for coffee sourcing intelligence."""
 
@@ -79,7 +83,7 @@ class RAGAnalystService:
                 provider=provider_name,
                 reason="provider_not_available",
             )
-            raise Exception(
+            raise RAGServiceUnavailableError(
                 f"RAG service not available: {provider_name} provider is not configured or unreachable"
             )
 

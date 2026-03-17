@@ -159,13 +159,12 @@ def test_loopback_detector_rejects_remote_hosts():
     assert auth_routes._is_loopback_request(req) is False
 
 
-def test_rate_limit_headers_present():
-    """Test that rate limit headers are present in responses."""
-    # This test documents the expected behavior
-    # SlowAPI should add X-RateLimit-* headers
-    # Note: Headers might not always be present depending on SlowAPI config
-    # This is a documentation test
-    assert True  # Placeholder for header validation
+def test_rate_limit_headers_present(client: TestClient):
+    """Responses should contain standard HTTP headers even with rate limiting middleware."""
+    response = client.get("/health")
+    # Even if auth fails, the response should still be a valid HTTP response shape.
+    assert response.status_code in [200, 401, 404, 405, 429]
+    assert "content-type" in response.headers
 
 
 def test_authenticated_vs_unauthenticated_rate_limits(client: TestClient, auth_headers):
@@ -206,13 +205,9 @@ def test_rate_limit_does_not_block_legitimate_use(client: TestClient, auth_heade
 
 def test_rate_limit_per_endpoint():
     """Test that different endpoints can have different rate limits."""
-    # Document that:
-    # - /api/auth/login: 5/minute
-    # - /api/auth/dev/bootstrap: 10/hour
-    # - Global default: 200/minute
-
-    # This is validated by the individual endpoint tests above
-    assert True  # Documentation test
+    route_paths = {route.path for route in auth_routes.router.routes}
+    assert "/login" in route_paths
+    assert "/dev/bootstrap" in route_paths
 
 
 def test_rate_limit_recovery(client: TestClient):
@@ -221,7 +216,6 @@ def test_rate_limit_recovery(client: TestClient):
     # For a 1-minute window, we'd need to wait 60+ seconds
     # Skipping actual wait in unit tests, but documenting the behavior
 
-    # Rate limits should reset after:
-    # - 1 minute for per-minute limits
-    # - 1 hour for per-hour limits
-    assert True  # Documentation test
+    # We verify the limiter is configured; time-window behavior is covered by integration tests.
+    assert auth_routes.limiter is not None
+    assert callable(getattr(auth_routes.limiter, "limit", None))
