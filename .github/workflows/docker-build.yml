@@ -250,7 +250,9 @@ jobs:
           image-ref: ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ github.ref_name }}
           format: 'sarif'
           output: 'trivy-${{ matrix.image }}-results.sarif'
+          scanners: 'vuln'
           severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
           exit-code: '0'
           cache: false
         continue-on-error: true
@@ -265,23 +267,9 @@ jobs:
           }
           EOF
 
-      - name: Check SARIF upload eligibility
-        id: sarif_check
-        run: |
-          FILE="trivy-${{ matrix.image }}-results.sarif"
-          if [ ! -f "$FILE" ]; then
-            echo "upload=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if grep -Eq '"runs"[[:space:]]*:[[:space:]]*\[[[:space:]]*\]' "$FILE"; then
-            echo "upload=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "upload=true" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Upload Trivy results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-${{ matrix.image }}-results.sarif'
           category: 'trivy-${{ matrix.image }}-pushed'
-        if: always() && steps.sarif_check.outputs.upload == 'true'
+        if: always() && hashFiles('trivy-*.sarif') != ''

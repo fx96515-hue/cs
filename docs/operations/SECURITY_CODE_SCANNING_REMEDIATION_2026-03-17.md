@@ -33,3 +33,12 @@ CodeQL flagged this pattern as `py/polluting-import`.
 - Re-check open alerts:
   - `gh api /repos/fx96515-hue/cs/code-scanning/alerts?state=open&per_page=100 --paginate`
 - If any wrapper-related CodeQL alerts remain, patch remaining files in the same non-breaking pattern.
+
+## Trivy Alert Hygiene Update
+- Workflow updated in `.github/workflows/docker-build.yml`:
+  - Keep scan scope actionable with `severity: CRITICAL,HIGH`.
+  - Add `ignore-unfixed: true` and `scanners: vuln`.
+  - Always upload SARIF (including empty runs), so stale alerts are closed correctly on GitHub Security.
+
+### Why this matters
+If empty SARIF results are not uploaded, historical alerts in the same category can stay open even when the latest scan has no actionable findings.
