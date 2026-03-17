@@ -1,8 +1,9 @@
 """Input validation middleware for request sanitization."""
 
+import json
 import re
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -78,66 +79,85 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
                 return False
         return True
 
+    @staticmethod
+    def _client_host(request: Request) -> str:
+        return request.client.host if request.client else "unknown"
+
+    @staticmethod
+    def _is_write_method(request: Request) -> bool:
+        return request.method in {"POST", "PUT", "PATCH"}
+
+    @staticmethod
+    def _is_json_request(request: Request) -> bool:
+        return "application/json" in request.headers.get("content-type", "")
+
+    @staticmethod
+    def _parse_content_length(request: Request) -> Optional[int]:
+        content_length = request.headers.get("content-length")
+        if not content_length:
+            return None
+        return int(content_length)
+
+    @staticmethod
+    def _payload_too_large_response(content_size: int, host: str) -> Response:
+        logger.warning(f"Request body too large: {content_size} bytes from {host}")
+        from app.core.error_handlers import ErrorResponse
+
+        return ErrorResponse.format_error(
+            error_code="REQUEST_TOO_LARGE",
+            message=f"Request body too large. Maximum size is {MAX_REQUEST_BODY_SIZE} bytes.",
+            status_code=413,
+        )
+
+    @staticmethod
+    def _malicious_input_response(host: str, path: str) -> Response:
+        logger.warning(f"Malicious input detected from {host} to {path}")
+        from app.core.error_handlers import ErrorResponse
+
+        return ErrorResponse.format_error(
+            error_code="MALICIOUS_INPUT",
+            message="Invalid input detected. Request contains potentially malicious content.",
+            status_code=400,
+            detail=[{"msg": "Invalid characters in request body"}],
+        )
+
+    async def _validate_json_body(self, request: Request) -> Optional[Response]:
+        host = self._client_host(request)
+        body_bytes = await request.body()
+
+        if len(body_bytes) > MAX_REQUEST_BODY_SIZE:
+            return self._payload_too_large_response(len(body_bytes), host)
+
+        if not body_bytes:
+            return None
+
+        try:
+            body = json.loads(body_bytes)
+        except Exception:
+            # If JSON parsing fails, let FastAPI handle it.
+            return None
+
+        if isinstance(body, dict) and not self._validate_dict(body):
+            return self._malicious_input_response(host, request.url.path)
+        return None
+
     async def dispatch(self, request: Request, call_next: Any) -> Response:
         """Validate request data."""
-        # Skip validation for GET requests (query params handled by FastAPI)
-        if request.method in ["POST", "PUT", "PATCH"]:
-            try:
-                # Check Content-Length header for body size limit
-                content_length = request.headers.get("content-length")
-                if content_length and int(content_length) > MAX_REQUEST_BODY_SIZE:
-                    logger.warning(
-                        f"Request body too large: {content_length} bytes from {request.client.host if request.client else 'unknown'}"
-                    )
-                    from app.core.error_handlers import ErrorResponse
+        if not self._is_write_method(request):
+            return await call_next(request)
 
-                    return ErrorResponse.format_error(
-                        error_code="REQUEST_TOO_LARGE",
-                        message=f"Request body too large. Maximum size is {MAX_REQUEST_BODY_SIZE} bytes.",
-                        status_code=413,
-                    )
+        try:
+            host = self._client_host(request)
+            content_length = self._parse_content_length(request)
+            if content_length and content_length > MAX_REQUEST_BODY_SIZE:
+                return self._payload_too_large_response(content_length, host)
 
-                if "application/json" in request.headers.get("content-type", ""):
-                    # Read the body as bytes to avoid consuming the stream
-                    body_bytes = await request.body()
+            if self._is_json_request(request):
+                validation_response = await self._validate_json_body(request)
+                if validation_response is not None:
+                    return validation_response
+        except Exception:
+            # If we can't read or validate safely, let FastAPI handle the request.
+            pass
 
-                    # Double-check actual body size
-                    if len(body_bytes) > MAX_REQUEST_BODY_SIZE:
-                        logger.warning(
-                            f"Request body too large: {len(body_bytes)} bytes from {request.client.host if request.client else 'unknown'}"
-                        )
-                        from app.core.error_handlers import ErrorResponse
-
-                        return ErrorResponse.format_error(
-                            error_code="REQUEST_TOO_LARGE",
-                            message=f"Request body too large. Maximum size is {MAX_REQUEST_BODY_SIZE} bytes.",
-                            status_code=413,
-                        )
-
-                    if body_bytes:
-                        try:
-                            body = __import__("json").loads(body_bytes)
-                            if not self._validate_dict(body):
-                                logger.warning(
-                                    f"Malicious input detected from {request.client.host if request.client else 'unknown'} "
-                                    f"to {request.url.path}"
-                                )
-                                from app.core.error_handlers import ErrorResponse
-
-                                return ErrorResponse.format_error(
-                                    error_code="MALICIOUS_INPUT",
-                                    message="Invalid input detected. Request contains potentially malicious content.",
-                                    status_code=400,
-                                    detail=[
-                                        {"msg": "Invalid characters in request body"}
-                                    ],
-                                )
-                        except Exception:
-                            # If JSON parsing fails, let FastAPI handle it
-                            pass
-            except Exception:
-                # If we can't read the body, let FastAPI handle it
-                pass
-
-        response: Response = await call_next(request)
-        return response
+        return await call_next(request)
