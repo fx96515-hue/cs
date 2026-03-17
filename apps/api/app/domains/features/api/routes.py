@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Annotated, Any
@@ -59,7 +59,7 @@ def _catalog_payload() -> list[dict[str, Any]]:
                         "type": "numeric",
                         "importance": 0.0,
                         "coverage": 0.0,
-                        "lastComputed": datetime.utcnow().isoformat(),
+                        "lastComputed": datetime.now(timezone.utc).isoformat(),
                     }
                     for feature_name in feature_names
                 ],
@@ -228,7 +228,7 @@ def features_quality_report(
         "avgCoverage": avg_quality_score if total_records > 0 else 0.0,
         "avgImportance": round(1 / max(total_features, 1), 4) if total_features else 0.0,
         "missingDataPoints": missing_data_points,
-        "lastUpdate": latest_training.isoformat() if latest_training else datetime.utcnow().isoformat(),
+        "lastUpdate": latest_training.isoformat() if latest_training else datetime.now(timezone.utc).isoformat(),
         "modelsTracked": int(model_count or 0),
         "trainingRecords": total_records,
         "catalogFeatures": catalog_feature_count,

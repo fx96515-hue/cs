@@ -29,7 +29,7 @@ router = APIRouter()
 def suggest(
     entity_type: Annotated[Literal["cooperative", "roaster"], Query()],
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    _: Annotated[object, Depends(require_role("admin", "analyst"))],
     threshold: Annotated[float, Query(ge=0, le=100)] = 90.0,
     limit: int = Query(50, ge=1, le=200),
 ):
@@ -49,7 +49,7 @@ def suggest(
 def merge(
     payload: MergeEntitiesIn,
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin"))],
+    _: Annotated[object, Depends(require_role("admin"))],
 ):
     """Merge two entities."""
     try:
@@ -68,7 +68,7 @@ def merge(
 def history(
     entity_type: Annotated[Literal["cooperative", "roaster"], Query()],
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[None, Depends(require_role("admin", "analyst"))],
+    _: Annotated[object, Depends(require_role("admin", "analyst"))],
     limit: int = Query(50, ge=1, le=200),
 ):
     """View merge history."""
