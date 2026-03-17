@@ -117,34 +117,37 @@ def _validate_public_http_url(url: str) -> str:
         raise ValueError("empty url")
 
     parsed = urlparse(normalized)
-    if parsed.scheme not in {"http", "https"}:
-        raise ValueError("unsupported URL scheme")
-    if not parsed.hostname:
-        raise ValueError("invalid URL: missing host")
+    _validate_url_parts(parsed)
 
+    assert parsed.hostname is not None  # guarded by _validate_url_parts
     hostname = parsed.hostname.lower()
     if not _is_allowed_host(hostname):
         raise ValueError("URL host is not allowed")
 
-    # Optionally restrict ports to typical HTTP(S) ports. If no port is given,
-    # httpx will use defaults based on the scheme.
+    _validate_resolved_ips(parsed.hostname)
+
+    return normalized
+
+
+def _validate_url_parts(parsed: Any) -> None:
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("unsupported URL scheme")
+    if not parsed.hostname:
+        raise ValueError("invalid URL: missing host")
     if parsed.port is not None and parsed.port not in (80, 443):
         raise ValueError("unsupported URL port")
 
+
+def _validate_resolved_ips(hostname: str) -> None:
     try:
-        addrinfo_list = socket.getaddrinfo(parsed.hostname, None)
+        addrinfo_list = socket.getaddrinfo(hostname, None)
     except OSError:
         raise ValueError("unable to resolve host")
 
     for family, _, _, _, sockaddr in addrinfo_list:
-        ip_str = None
-        if family == socket.AF_INET:
-            ip_str = sockaddr[0]
-        elif family == socket.AF_INET6:
-            ip_str = sockaddr[0]
-        if not ip_str:
+        if family not in (socket.AF_INET, socket.AF_INET6):
             continue
-        ip = ipaddress.ip_address(ip_str)
+        ip = ipaddress.ip_address(sockaddr[0])
         if (
             ip.is_loopback
             or ip.is_private
@@ -154,8 +157,6 @@ def _validate_public_http_url(url: str) -> str:
             or ip.is_unspecified
         ):
             raise ValueError("URL host resolves to a disallowed IP address")
-
-    return normalized
 
 
 def fetch_text(url: str, timeout_seconds: int = 25) -> tuple[str, dict[str, Any]]:
@@ -740,6 +741,129 @@ def _extract_structured_with_llm(
     return data if isinstance(data, dict) else {}
 
 
+def _load_entity(db: Session, entity_type: str, entity_id: int) -> Cooperative | Roaster | None:
+    if entity_type == "cooperative":
+        return db.get(Cooperative, entity_id)
+    return db.get(Roaster, entity_id)
+
+
+def _persist_web_extract(
+    db: Session,
+    *,
+    entity_type: str,
+    entity_id: int,
+    now: datetime,
+    text: str,
+    meta: dict[str, Any],
+    content_hash: str,
+    extracted: dict[str, Any],
+    final_url: str,
+) -> WebExtract:
+    stmt = select(WebExtract).where(
+        WebExtract.entity_type == entity_type,
+        WebExtract.entity_id == entity_id,
+        WebExtract.url == final_url,
+    )
+    web_extract = db.scalar(stmt)
+    if not web_extract:
+        web_extract = WebExtract(entity_type=entity_type, entity_id=entity_id, url=final_url)
+        db.add(web_extract)
+
+    web_extract.status = "ok"
+    web_extract.retrieved_at = now
+    web_extract.content_text = text
+    web_extract.content_hash = content_hash
+    web_extract.meta = meta
+    web_extract.extracted_json = extracted or None
+
+    try:
+        db.commit()
+    except Exception as commit_exc:
+        from sqlalchemy.exc import IntegrityError
+
+        db.rollback()
+        if isinstance(commit_exc, IntegrityError) or isinstance(commit_exc.__cause__, IntegrityError):
+            web_extract = db.scalar(stmt)
+            if not web_extract:
+                raise
+        else:
+            raise
+
+    assert web_extract is not None
+    db.refresh(web_extract)
+    return web_extract
+
+
+def _apply_entity_updates(
+    db: Session,
+    entity: Cooperative | Roaster,
+    extracted: dict[str, Any],
+    now: datetime,
+) -> list[str]:
+    if not extracted:
+        return []
+
+    updated_fields: list[str] = []
+    if isinstance(entity, Cooperative):
+        updated_fields.extend(_apply_cooperative_updates(entity, extracted))
+    elif isinstance(entity, Roaster):
+        updated_fields.extend(_apply_roaster_updates(entity, extracted))
+    updated_fields.extend(_apply_common_updates(entity, extracted, now))
+    db.add(entity)
+    return updated_fields
+
+
+def _record_enrichment_failure(
+    db: Session,
+    *,
+    entity_type: str,
+    entity_id: int,
+    target_url: str,
+    now: datetime,
+    error_payload: dict[str, Any],
+) -> None:
+    try:
+        db.add(
+            EntityEvent(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                event_type="enrich_exception",
+                payload=error_payload,
+            )
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    try:
+        failed_extract = WebExtract(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            url=target_url,
+            status="failed",
+            retrieved_at=now,
+            meta=error_payload,
+        )
+        db.add(failed_extract)
+        db.add(
+            EntityEvent(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                event_type="enrich_failed",
+                payload={"url": target_url, **error_payload},
+            )
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        stmt_retry = select(WebExtract).where(
+            WebExtract.entity_type == entity_type,
+            WebExtract.entity_id == entity_id,
+            WebExtract.url == target_url,
+        )
+        db.scalar(stmt_retry)
+
+
 def enrich_entity(
     db: Session,
     *,
@@ -751,11 +875,7 @@ def enrich_entity(
     if entity_type not in {"cooperative", "roaster"}:
         raise ValueError("entity_type must be cooperative|roaster")
 
-    entity = (
-        db.get(Cooperative, entity_id)
-        if entity_type == "cooperative"
-        else db.get(Roaster, entity_id)
-    )
+    entity = _load_entity(db, entity_type, entity_id)
     if not entity:
         raise ValueError("entity not found")
 
@@ -771,24 +891,6 @@ def enrich_entity(
         # meta["final_url"] has already been validated in fetch_text.
         final_url = meta.get("final_url") or target_url
 
-        # IMPORTANT: stmt must be a SQLAlchemy select(), never a plain string
-        stmt = select(WebExtract).where(
-            WebExtract.entity_type == entity_type,
-            WebExtract.entity_id == entity_id,
-            WebExtract.url == final_url,
-        )
-        we = db.scalar(stmt)
-
-        if not we:
-            we = WebExtract(entity_type=entity_type, entity_id=entity_id, url=final_url)
-            db.add(we)
-
-        we.status = "ok"
-        we.retrieved_at = now
-        we.content_text = text
-        we.content_hash = chash
-        we.meta = meta
-
         extracted: dict[str, Any] = {}
         if use_llm and settings.PERPLEXITY_API_KEY:
             client = PerplexityClient()
@@ -799,42 +901,19 @@ def enrich_entity(
             finally:
                 client.close()
 
-        we.extracted_json = extracted or None
-        try:
-            db.commit()
-        except Exception as commit_exc:
-            # Handle possible race/unique constraint on web_extracts insert: try to
-            # rollback and load existing record instead of failing with 409.
-            from sqlalchemy.exc import IntegrityError
+        we = _persist_web_extract(
+            db,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            now=now,
+            text=text,
+            meta=meta,
+            content_hash=chash,
+            extracted=extracted,
+            final_url=final_url,
+        )
 
-            db.rollback()
-            if isinstance(commit_exc, IntegrityError) or isinstance(
-                commit_exc.__cause__, IntegrityError
-            ):
-                # Try to fetch the existing web extract created by a concurrent
-                # request and continue.
-                stmt_retry = select(WebExtract).where(
-                    WebExtract.entity_type == entity_type,
-                    WebExtract.entity_id == entity_id,
-                    WebExtract.url == final_url,
-                )
-                _ = db.scalar(stmt_retry)
-                if we is None:
-                    # If still missing, re-raise the original exception.
-                    raise
-            else:
-                raise
-
-        db.refresh(we)
-
-        updated_fields: list[str] = []
-        if extracted:
-            if isinstance(entity, Cooperative):
-                updated_fields.extend(_apply_cooperative_updates(entity, extracted))
-            elif isinstance(entity, Roaster):
-                updated_fields.extend(_apply_roaster_updates(entity, extracted))
-            updated_fields.extend(_apply_common_updates(entity, extracted, now))
-            db.add(entity)
+        updated_fields = _apply_entity_updates(db, entity, extracted, now)
 
         db.add(
             EntityEvent(
@@ -860,54 +939,14 @@ def enrich_entity(
         error_type = type(e).__name__
         safe_error = "Enrichment failed"
         error_payload = {"error": "enrichment_failed", "error_type": error_type}
-        try:
-            db.add(
-                EntityEvent(
-                    entity_type=entity_type,
-                    entity_id=entity_id,
-                    event_type="enrich_exception",
-                    payload=error_payload,
-                )
-            )
-            db.commit()
-        except Exception:
-            db.rollback()
-
-        # Record a failed web extract but defend against duplicate inserts.
-        try:
-            we = WebExtract(
-                entity_type=entity_type,
-                entity_id=entity_id,
-                url=target_url,
-                status="failed",
-                retrieved_at=now,
-                meta=error_payload,
-            )
-            db.add(we)
-            db.add(
-                EntityEvent(
-                    entity_type=entity_type,
-                    entity_id=entity_id,
-                    event_type="enrich_failed",
-                    payload={"url": target_url, **error_payload},
-                )
-            )
-            try:
-                db.commit()
-            except Exception:
-                # If commit fails due to UNIQUE constraint, rollback and return
-                # the existing web extract (if any) to avoid raising 409 to callers.
-                db.rollback()
-                stmt_retry = select(WebExtract).where(
-                    WebExtract.entity_type == entity_type,
-                    WebExtract.entity_id == entity_id,
-                    WebExtract.url == target_url,
-                )
-                db.scalar(stmt_retry)
-        except Exception:
-            # If even recording the failed extract fails, swallow to preserve
-            # original error path and return failure payload below.
-            pass
+        _record_enrichment_failure(
+            db,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            target_url=target_url,
+            now=now,
+            error_payload=error_payload,
+        )
 
         return {
             "status": "failed",
