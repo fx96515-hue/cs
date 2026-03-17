@@ -17,9 +17,9 @@ from app.domains.margins.services.calculator import calc_margin
 
 router = APIRouter()
 DbSessionDep = Annotated[Session, Depends(get_db)]
-AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
+AnalystPermissionDep = Annotated[None, Depends(require_role("admin", "analyst"))]
 ViewerPermissionDep = Annotated[
-    object, Depends(require_role("admin", "analyst", "viewer"))
+    None, Depends(require_role("admin", "analyst", "viewer"))
 ]
 
 

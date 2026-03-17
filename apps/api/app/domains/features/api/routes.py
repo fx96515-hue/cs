@@ -293,11 +293,82 @@ def _parse_csv_records(content: str) -> list[dict[str, str]]:
     ]
 
 
+def _build_freight_row_payload(row: dict[str, str]) -> dict[str, Any]:
+    return {
+        "route": row["route"],
+        "origin_port": row["origin_port"],
+        "destination_port": row["destination_port"],
+        "carrier": row["carrier"],
+        "container_type": row["container_type"],
+        "weight_kg": int(row["weight_kg"]),
+        "freight_cost_usd": float(row["freight_cost_usd"]),
+        "transit_days": int(row["transit_days"]),
+        "departure_date": row["departure_date"],
+        "arrival_date": row["arrival_date"],
+        "season": row["season"],
+        "fuel_price_index": float(row["fuel_price_index"]) if row.get("fuel_price_index") else None,
+        "port_congestion_score": float(row["port_congestion_score"]) if row.get("port_congestion_score") else None,
+    }
+
+
+def _build_price_row_payload(row: dict[str, str]) -> dict[str, Any]:
+    return {
+        "date": row["date"],
+        "origin_country": row["origin_country"],
+        "origin_region": row["origin_region"],
+        "variety": row["variety"],
+        "process_method": row["process_method"],
+        "quality_grade": row["quality_grade"],
+        "cupping_score": float(row["cupping_score"]) if row.get("cupping_score") else None,
+        "certifications": [part.strip() for part in row.get("certifications", "").split(",") if part.strip()],
+        "price_usd_per_kg": float(row["price_usd_per_kg"]),
+        "price_usd_per_lb": float(row["price_usd_per_lb"]),
+        "ice_c_price_usd_per_lb": float(row["ice_c_price_usd_per_lb"]),
+        "differential_usd_per_lb": float(row["differential_usd_per_lb"]),
+        "market_source": row["market_source"],
+    }
+
+
+def _validate_import(validation: dict[str, Any]) -> None:
+    if validation["valid_rows"] == 0:
+        raise HTTPException(status_code=400, detail=validation["errors"] or ["CSV validation failed"])
+
+
+async def _import_freight(
+    service: DataCollectionService, content: str, rows: list[dict[str, str]]
+) -> dict[str, Any]:
+    validation = BulkImportManager.import_data(content, "freight")
+    _validate_import(validation)
+    payload = [_build_freight_row_payload(row) for row in rows]
+    imported = await service.import_freight_data(payload)
+    return {
+        "status": "success",
+        "recordsImported": int(imported or 0),
+        "dataset": "freight",
+        "validation": _safe_validation_summary(validation),
+    }
+
+
+async def _import_price(
+    service: DataCollectionService, content: str, rows: list[dict[str, str]]
+) -> dict[str, Any]:
+    validation = BulkImportManager.import_data(content, "price")
+    _validate_import(validation)
+    payload = [_build_price_row_payload(row) for row in rows]
+    imported = await service.import_price_data(payload)
+    return {
+        "status": "success",
+        "recordsImported": int(imported or 0),
+        "dataset": "price",
+        "validation": _safe_validation_summary(validation),
+    }
+
+
 @router.post("/bulk-import")
 async def features_bulk_import(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin"))],
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File(...)],
 ):
     content = (await file.read()).decode("utf-8-sig")
     rows = _parse_csv_records(content)
@@ -308,66 +379,10 @@ async def features_bulk_import(
     headers = {header.lower() for header in rows[0].keys()}
 
     if "freight_cost_usd" in headers:
-        validation = BulkImportManager.import_data(content, "freight")
-        if validation["valid_rows"] == 0:
-            raise HTTPException(status_code=400, detail=validation["errors"] or ["CSV validation failed"])
-        payload = []
-        for row in rows:
-            payload.append(
-                {
-                    "route": row["route"],
-                    "origin_port": row["origin_port"],
-                    "destination_port": row["destination_port"],
-                    "carrier": row["carrier"],
-                    "container_type": row["container_type"],
-                    "weight_kg": int(row["weight_kg"]),
-                    "freight_cost_usd": float(row["freight_cost_usd"]),
-                    "transit_days": int(row["transit_days"]),
-                    "departure_date": row["departure_date"],
-                    "arrival_date": row["arrival_date"],
-                    "season": row["season"],
-                    "fuel_price_index": float(row["fuel_price_index"]) if row.get("fuel_price_index") else None,
-                    "port_congestion_score": float(row["port_congestion_score"]) if row.get("port_congestion_score") else None,
-                }
-            )
-        imported = await service.import_freight_data(payload)
-        return {
-            "status": "success",
-            "recordsImported": int(imported or 0),
-            "dataset": "freight",
-            "validation": _safe_validation_summary(validation),
-        }
+        return await _import_freight(service, content, rows)
 
     if "price_usd_per_kg" in headers:
-        validation = BulkImportManager.import_data(content, "price")
-        if validation["valid_rows"] == 0:
-            raise HTTPException(status_code=400, detail=validation["errors"] or ["CSV validation failed"])
-        payload = []
-        for row in rows:
-            payload.append(
-                {
-                    "date": row["date"],
-                    "origin_country": row["origin_country"],
-                    "origin_region": row["origin_region"],
-                    "variety": row["variety"],
-                    "process_method": row["process_method"],
-                    "quality_grade": row["quality_grade"],
-                    "cupping_score": float(row["cupping_score"]) if row.get("cupping_score") else None,
-                    "certifications": [part.strip() for part in row.get("certifications", "").split(",") if part.strip()],
-                    "price_usd_per_kg": float(row["price_usd_per_kg"]),
-                    "price_usd_per_lb": float(row["price_usd_per_lb"]),
-                    "ice_c_price_usd_per_lb": float(row["ice_c_price_usd_per_lb"]),
-                    "differential_usd_per_lb": float(row["differential_usd_per_lb"]),
-                    "market_source": row["market_source"],
-                }
-            )
-        imported = await service.import_price_data(payload)
-        return {
-            "status": "success",
-            "recordsImported": int(imported or 0),
-            "dataset": "price",
-            "validation": _safe_validation_summary(validation),
-        }
+        return await _import_price(service, content, rows)
 
     raise HTTPException(
         status_code=400,
