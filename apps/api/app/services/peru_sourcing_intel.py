@@ -125,6 +125,56 @@ class PeruRegionIntelService:
             },
         }
 
+    @staticmethod
+    def _score_elevation(elevation_min_m: float | None, elevation_max_m: float | None) -> float:
+        if not elevation_min_m or not elevation_max_m:
+            return 0.0
+        avg_elevation = (elevation_min_m + elevation_max_m) / 2
+        if 1200 <= avg_elevation <= 2000:
+            return 30.0
+        if 1000 <= avg_elevation < 1200 or 2000 < avg_elevation <= 2200:
+            return 25.0
+        if 800 <= avg_elevation < 1000 or 2200 < avg_elevation <= 2400:
+            return 20.0
+        return 10.0
+
+    @staticmethod
+    def _score_temperature(avg_temperature_c: float | None) -> float:
+        if not avg_temperature_c:
+            return 0.0
+        if 18 <= avg_temperature_c <= 22:
+            return 20.0
+        if 16 <= avg_temperature_c < 18 or 22 < avg_temperature_c <= 24:
+            return 15.0
+        if 14 <= avg_temperature_c < 16 or 24 < avg_temperature_c <= 26:
+            return 10.0
+        return 5.0
+
+    @staticmethod
+    def _score_rainfall(rainfall_mm: float | None) -> float:
+        if not rainfall_mm:
+            return 0.0
+        if 1500 <= rainfall_mm <= 2500:
+            return 20.0
+        if 1200 <= rainfall_mm < 1500 or 2500 < rainfall_mm <= 3000:
+            return 15.0
+        if 1000 <= rainfall_mm < 1200 or 3000 < rainfall_mm <= 3500:
+            return 10.0
+        return 5.0
+
+    @staticmethod
+    def _score_soil(soil_type: str | None) -> float:
+        if not soil_type:
+            return 0.0
+        soil_lower = soil_type.lower()
+        if any(term in soil_lower for term in ["volcanic", "loam", "rich"]):
+            return 30.0
+        if any(term in soil_lower for term in ["clay", "sandy loam"]):
+            return 25.0
+        if "sandy" in soil_lower:
+            return 15.0
+        return 20.0
+
     def calculate_growing_conditions_score(self, region: Region) -> float:
         """
         Calculate growing conditions score (0-100).
@@ -141,64 +191,10 @@ class PeruRegionIntelService:
             Score from 0-100
         """
         score = 0.0
-
-        # Elevation score (30 points)
-        if region.elevation_min_m and region.elevation_max_m:
-            avg_elevation = (region.elevation_min_m + region.elevation_max_m) / 2
-            if 1200 <= avg_elevation <= 2000:
-                score += 30
-            elif 1000 <= avg_elevation < 1200 or 2000 < avg_elevation <= 2200:
-                score += 25
-            elif 800 <= avg_elevation < 1000 or 2200 < avg_elevation <= 2400:
-                score += 20
-            else:
-                score += 10
-
-        # Climate score (40 points)
-        climate_points = 0
-
-        # Temperature (20 points of climate)
-        if region.avg_temperature_c:
-            if 18 <= region.avg_temperature_c <= 22:
-                climate_points += 20
-            elif (
-                16 <= region.avg_temperature_c < 18
-                or 22 < region.avg_temperature_c <= 24
-            ):
-                climate_points += 15
-            elif (
-                14 <= region.avg_temperature_c < 16
-                or 24 < region.avg_temperature_c <= 26
-            ):
-                climate_points += 10
-            else:
-                climate_points += 5
-
-        # Rainfall (20 points of climate)
-        if region.rainfall_mm:
-            if 1500 <= region.rainfall_mm <= 2500:
-                climate_points += 20
-            elif 1200 <= region.rainfall_mm < 1500 or 2500 < region.rainfall_mm <= 3000:
-                climate_points += 15
-            elif 1000 <= region.rainfall_mm < 1200 or 3000 < region.rainfall_mm <= 3500:
-                climate_points += 10
-            else:
-                climate_points += 5
-
-        score += climate_points
-
-        # Soil score (30 points)
-        if region.soil_type:
-            soil_lower = region.soil_type.lower()
-            if any(term in soil_lower for term in ["volcanic", "loam", "rich"]):
-                score += 30
-            elif any(term in soil_lower for term in ["clay", "sandy loam"]):
-                score += 25
-            elif "sandy" in soil_lower:
-                score += 15
-            else:
-                score += 20  # neutral/unknown
-
+        score += self._score_elevation(region.elevation_min_m, region.elevation_max_m)
+        score += self._score_temperature(region.avg_temperature_c)
+        score += self._score_rainfall(region.rainfall_mm)
+        score += self._score_soil(region.soil_type)
         return round(score, 2)
 
     def refresh_region_data(self, region_name: str) -> dict[str, Any]:
