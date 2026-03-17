@@ -135,6 +135,8 @@ def suggest_duplicates(
 def _load_merge_pair(
     db: Session, *, entity_type: str, keep_id: int, merge_id: int
 ) -> tuple[Cooperative | Roaster, Cooperative | Roaster]:
+    keep_entity: Cooperative | Roaster | None
+    merge_entity: Cooperative | Roaster | None
     if entity_type == "cooperative":
         keep_entity = db.get(Cooperative, keep_id)
         merge_entity = db.get(Cooperative, merge_id)

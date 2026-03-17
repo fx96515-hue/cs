@@ -4,7 +4,7 @@ import csv
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Sequence
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path as PathParam, UploadFile
 from sqlalchemy import func, select
@@ -159,8 +159,8 @@ def _count_total_model_features(db: Session) -> int:
 
 
 def _quality_reports(
-    freight_rows: list[tuple[Any, Any]],
-    price_rows: list[tuple[Any, Any]],
+    freight_rows: Sequence[Sequence[Any]],
+    price_rows: Sequence[Sequence[Any]],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     freight_quality = QualityReport.generate_report(
         [
