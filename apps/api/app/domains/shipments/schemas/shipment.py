@@ -152,28 +152,28 @@ class TrackingEventCreate(BaseModel):
 
 class ShipmentOut(BaseModel):
     id: int
-    lot_id: Optional[int]
+    lot_id: Optional[int] = None
     lot_ids: Optional[List[int]] = None
-    cooperative_id: Optional[int]
-    roaster_id: Optional[int]
+    cooperative_id: Optional[int] = None
+    roaster_id: Optional[int] = None
     container_number: str
     bill_of_lading: str
     weight_kg: float
     container_type: str
     origin_port: str
     destination_port: str
-    current_location: Optional[str]
-    departure_date: Optional[str]
-    estimated_arrival: Optional[str]
-    actual_arrival: Optional[str]
+    current_location: Optional[str] = None
+    departure_date: Optional[str] = None
+    estimated_arrival: Optional[str] = None
+    actual_arrival: Optional[str] = None
     departure_at: Optional[datetime] = None
     estimated_arrival_at: Optional[datetime] = None
     actual_arrival_at: Optional[datetime] = None
     status: str
-    status_updated_at: Optional[str]
+    status_updated_at: Optional[str] = None
     delay_hours: int
     tracking_events: Optional[List[TrackingEvent]] = None
-    notes: Optional[str]
+    notes: Optional[str] = None
     deleted_at: Optional[datetime] = None
 
     class Config:

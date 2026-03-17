@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.models.user import User
 
 logger = structlog.get_logger(__name__)
+AUTH_FAILED_DETAIL = "Authentifizierung fehlgeschlagen"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
@@ -25,7 +26,7 @@ def _extract_access_token(request: Request, bearer_token: str | None) -> str:
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Authentifizierung fehlgeschlagen",
+        detail=AUTH_FAILED_DETAIL,
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -46,7 +47,7 @@ def get_current_user(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentifizierung fehlgeschlagen",  # Generic message to prevent info disclosure
+            detail=AUTH_FAILED_DETAIL,  # Generic message to prevent info disclosure
             headers={"WWW-Authenticate": "Bearer"},
         )
     except InvalidTokenError as e:
@@ -57,7 +58,7 @@ def get_current_user(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentifizierung fehlgeschlagen",  # Generic message to prevent info disclosure
+            detail=AUTH_FAILED_DETAIL,  # Generic message to prevent info disclosure
             headers={"WWW-Authenticate": "Bearer"},
         )
     except HTTPException:
@@ -121,3 +122,5 @@ def require_auth(user: User = Depends(get_current_user)) -> dict:
     a dict instead of User object for endpoints using _: dict = Depends(require_auth).
     """
     return {"user": user, "email": user.email, "role": user.role}
+
+

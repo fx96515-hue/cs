@@ -46,7 +46,9 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         self.sql_patterns = [
             re.compile(p, re.IGNORECASE) for p in self.SQL_INJECTION_PATTERNS
         ]
-        self.xss_patterns = [re.compile(p, re.IGNORECASE) for p in self.XSS_PATTERNS]
+        self.compiled_xss_patterns = [
+            re.compile(p, re.IGNORECASE) for p in self.XSS_PATTERNS
+        ]
 
     def _check_sql_injection(self, value: str) -> bool:
         """Check if string contains SQL injection patterns."""
@@ -54,7 +56,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
 
     def _check_xss(self, value: str) -> bool:
         """Check if string contains XSS patterns."""
-        return any(pattern.search(value) for pattern in self.xss_patterns)
+        return any(pattern.search(value) for pattern in self.compiled_xss_patterns)
 
     def _validate_value(self, value: Any) -> bool:
         """Validate a single value."""
