@@ -57,6 +57,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Keep runtime pip patched as well (Trivy scans base interpreter site-packages).
+RUN python -m pip install --no-cache-dir --upgrade pip==26.0.1
+
 WORKDIR /app
 
 # Copy virtual environment from builder
