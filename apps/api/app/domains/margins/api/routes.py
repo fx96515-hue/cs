@@ -63,7 +63,7 @@ def list_runs(
     lot_id: Annotated[int, Path(ge=1)],
     db: DbSessionDep,
     _: ViewerPermissionDep,
-    limit: int = Query(50, ge=1, le=500),
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
 ):
     return (
         db.query(MarginRun)
