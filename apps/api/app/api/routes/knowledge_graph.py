@@ -1,9 +1,13 @@
-"""Compatibility wrapper for knowledge_graph routes.
+﻿"""Compatibility wrapper for knowledge_graph routes.
 
 Canonical implementation lives in app.domains.knowledge_graph.api.routes.
 """
 
-from app.domains.knowledge_graph.api.routes import *  # noqa: F401,F403
-from app.domains.knowledge_graph.api.routes import router
+import importlib
 
-__all__ = ["router"]
+_canonical = importlib.import_module("app.domains.knowledge_graph.api.routes")
+
+__all__ = [name for name in dir(_canonical) if not name.startswith("_")]
+
+for _name in __all__:
+    globals()[_name] = getattr(_canonical, _name)

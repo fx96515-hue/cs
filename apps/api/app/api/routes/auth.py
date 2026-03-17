@@ -1,9 +1,13 @@
-"""Compatibility wrapper for auth routes.
+﻿"""Compatibility wrapper for auth routes.
 
 Canonical implementation lives in app.domains.auth.api.routes.
 """
 
-from app.domains.auth.api.routes import *  # noqa: F401,F403
-from app.domains.auth.api.routes import router
+import importlib
 
-__all__ = ["router"]
+_canonical = importlib.import_module("app.domains.auth.api.routes")
+
+__all__ = [name for name in dir(_canonical) if not name.startswith("_")]
+
+for _name in __all__:
+    globals()[_name] = getattr(_canonical, _name)

@@ -1,6 +1,13 @@
-"""Compatibility wrapper for lot schemas.
+﻿"""Compatibility wrapper for lot schemas.
 
 Canonical implementation lives in app.domains.lots.schemas.lot.
 """
 
-from app.domains.lots.schemas.lot import *  # noqa: F401,F403
+import importlib
+
+_canonical = importlib.import_module("app.domains.lots.schemas.lot")
+
+__all__ = [name for name in dir(_canonical) if not name.startswith("_")]
+
+for _name in __all__:
+    globals()[_name] = getattr(_canonical, _name)

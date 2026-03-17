@@ -1,9 +1,13 @@
-"""Compatibility wrapper for market routes.
+﻿"""Compatibility wrapper for market routes.
 
 Canonical implementation lives in app.domains.market.api.routes.
 """
 
-from app.domains.market.api.routes import *  # noqa: F401,F403
-from app.domains.market.api.routes import router
+import importlib
 
-__all__ = ["router"]
+_canonical = importlib.import_module("app.domains.market.api.routes")
+
+__all__ = [name for name in dir(_canonical) if not name.startswith("_")]
+
+for _name in __all__:
+    globals()[_name] = getattr(_canonical, _name)
