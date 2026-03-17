@@ -29,6 +29,7 @@ GRAPH_COMMON_RESPONSES: dict[int | str, dict[str, Any]] = {
     **NOT_FOUND_RESPONSES,
     **GRAPH_DISABLED_RESPONSES,
 }
+NOT_FOUND_DETAIL = "Not found"
 
 
 def _require_graph_enabled() -> None:
@@ -58,10 +59,12 @@ def _parse_node_id(node_id: str) -> tuple[str, int | str]:
 
 @router.get("/network", responses=GRAPH_DISABLED_RESPONSES)
 def get_network(
-    node_types: str = Query(
-        "all",
-        description="Filter by node types: cooperative, roaster, region, certification",
-    ),
+    node_types: Annotated[
+        str,
+        Query(
+            description="Filter by node types: cooperative, roaster, region, certification",
+        ),
+    ] = "all",
     *,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
@@ -89,7 +92,7 @@ def get_entity_analysis(
             parsed_id = entity_id
         return graph_service.get_entity_analysis(db, entity_type, parsed_id)
     except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
 
 @router.get("/entity/{node_id}/connections", responses=GRAPH_COMMON_RESPONSES)
@@ -104,7 +107,7 @@ def get_entity_connections(
         entity_type, parsed_id = _parse_node_id(node_id)
         return graph_service.get_entity_analysis(db, entity_type, parsed_id)
     except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
 
 @router.get("/communities", responses=GRAPH_DISABLED_RESPONSES)
@@ -158,7 +161,7 @@ def get_shortest_path(
             db, source_type, parsed_source_id, target_type, parsed_target_id
         )
     except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
 
 @router.get("/path/{from_id}/{to_id}", responses=GRAPH_COMMON_RESPONSES)
@@ -177,7 +180,7 @@ def get_path_by_node_ids(
             db, source_type, parsed_source_id, target_type, parsed_target_id
         )
     except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)
 
 
 @router.get(
@@ -205,4 +208,4 @@ def get_hidden_connections(
             db, entity_type, parsed_id, max_hops
         )
     except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_DETAIL)

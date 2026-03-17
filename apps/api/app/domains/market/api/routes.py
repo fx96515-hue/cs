@@ -33,9 +33,9 @@ router = APIRouter()
 
 DbSessionDep = Annotated[Session, Depends(get_db)]
 ViewerPermissionDep = Annotated[
-    object, Depends(require_role("admin", "analyst", "viewer"))
+    None, Depends(require_role("admin", "analyst", "viewer"))
 ]
-AnalystPermissionDep = Annotated[object, Depends(require_role("admin", "analyst"))]
+AnalystPermissionDep = Annotated[None, Depends(require_role("admin", "analyst"))]
 AnalystUserDep = Annotated[User, Depends(require_role("admin", "analyst"))]
 
 WS_POLICY_VIOLATION_CODE = 1008

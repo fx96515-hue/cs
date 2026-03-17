@@ -41,45 +41,60 @@ DEFAULT_DOCS: list[dict[str, Any]] = [
 ]
 
 
+def _insert_doc_postgres(db: Session, doc: dict[str, Any], language: str) -> bool:
+    if not db.bind or db.bind.dialect.name != "postgresql":
+        return False
+    insert_stmt = (
+        pg_insert(KnowledgeDoc)
+        .values(**{**doc, "language": language})
+        .on_conflict_do_nothing(constraint="uq_kb_cat_key_lang")
+        .returning(KnowledgeDoc.id)
+    )
+    inserted_id = db.execute(insert_stmt).scalar_one_or_none()
+    return inserted_id is not None
+
+
+def _load_existing_doc(db: Session, doc: dict[str, Any], language: str) -> KnowledgeDoc | None:
+    stmt = select(KnowledgeDoc).where(
+        KnowledgeDoc.category == doc["category"],
+        KnowledgeDoc.key == doc["key"],
+        KnowledgeDoc.language == language,
+    )
+    return db.execute(stmt).scalar_one_or_none()
+
+
+def _doc_has_changes(existing: KnowledgeDoc, doc: dict[str, Any]) -> bool:
+    return (
+        existing.content_md != doc["content_md"]
+        or existing.title != doc["title"]
+        or (existing.sources or {}) != (doc.get("sources") or {})
+    )
+
+
+def _apply_doc_update(existing: KnowledgeDoc, doc: dict[str, Any]) -> None:
+    existing.title = doc["title"]
+    existing.content_md = doc["content_md"]
+    existing.sources = doc.get("sources")
+
+
 def seed_default_kb(db: Session) -> dict[str, Any]:
     created = 0
     updated = 0
-    for d in DEFAULT_DOCS:
-        lang = d.get("language", "de")
-
-        # Postgres: conflict-safe insert (idempotent under concurrency)
-        if db.bind and db.bind.dialect.name == "postgresql":
-            insert_stmt = (
-                pg_insert(KnowledgeDoc)
-                .values(**{**d, "language": lang})
-                .on_conflict_do_nothing(constraint="uq_kb_cat_key_lang")
-                .returning(KnowledgeDoc.id)
-            )
-            inserted_id = db.execute(insert_stmt).scalar_one_or_none()
-            if inserted_id is not None:
-                created += 1
-                continue
-
-        # Fallback / post-insert: fetch and update if changed
-        stmt = select(KnowledgeDoc).where(
-            KnowledgeDoc.category == d["category"],
-            KnowledgeDoc.key == d["key"],
-            KnowledgeDoc.language == lang,
-        )
-        existing = db.execute(stmt).scalar_one_or_none()
-        if not existing:
-            db.add(KnowledgeDoc(**{**d, "language": lang}))
+    for doc in DEFAULT_DOCS:
+        language = doc.get("language", "de")
+        if _insert_doc_postgres(db, doc, language):
             created += 1
-        else:
-            if (
-                existing.content_md != d["content_md"]
-                or existing.title != d["title"]
-                or (existing.sources or {}) != (d.get("sources") or {})
-            ):
-                existing.title = d["title"]
-                existing.content_md = d["content_md"]
-                existing.sources = d.get("sources")
-                updated += 1
+            continue
+
+        existing = _load_existing_doc(db, doc, language)
+        if not existing:
+            db.add(KnowledgeDoc(**{**doc, "language": language}))
+            created += 1
+            continue
+
+        if _doc_has_changes(existing, doc):
+            _apply_doc_update(existing, doc)
+            updated += 1
 
     db.commit()
     return {"status": "ok", "created": created, "updated": updated}

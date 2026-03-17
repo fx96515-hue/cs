@@ -27,6 +27,14 @@ _graph_cache: dict[str, tuple[nx.Graph, float]] = {}
 CACHE_TTL = 300  # 5 minutes
 
 
+def _region_node_id(region_name: str) -> str:
+    return f"region_{region_name.lower().replace(' ', '_')}"
+
+
+def _cert_node_id(cert_name: str) -> str:
+    return f"certification_{cert_name.lower().replace(' ', '_')}"
+
+
 def _get_or_build_graph(db: Session) -> nx.Graph:
     """Return cached graph or build new one."""
     cache_key = "main_graph"
@@ -44,20 +52,10 @@ def _get_or_build_graph(db: Session) -> nx.Graph:
     return graph
 
 
-def build_graph(db: Session) -> nx.Graph:
-    """Build the knowledge graph from database entities."""
-    G = nx.Graph()
-
-    # Fetch all entities
-    cooperatives = db.query(Cooperative).all()
-    roasters = db.query(Roaster).all()
-    regions = db.query(Region).all()
-
-    # Add nodes for cooperatives
+def _add_cooperative_nodes(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
     for coop in cooperatives:
-        node_id = f"cooperative_{coop.id}"
-        G.add_node(
-            node_id,
+        graph.add_node(
+            f"cooperative_{coop.id}",
             label=coop.name,
             node_type="cooperative",
             properties={
@@ -70,11 +68,11 @@ def build_graph(db: Session) -> nx.Graph:
             },
         )
 
-    # Add nodes for roasters
+
+def _add_roaster_nodes(graph: nx.Graph, roasters: list[Roaster]) -> None:
     for roaster in roasters:
-        node_id = f"roaster_{roaster.id}"
-        G.add_node(
-            node_id,
+        graph.add_node(
+            f"roaster_{roaster.id}",
             label=roaster.name,
             node_type="roaster",
             properties={
@@ -87,11 +85,11 @@ def build_graph(db: Session) -> nx.Graph:
             },
         )
 
-    # Add nodes for regions
+
+def _add_region_nodes(graph: nx.Graph, regions: list[Region]) -> None:
     for region in regions:
-        node_id = f"region_{region.name.lower().replace(' ', '_')}"
-        G.add_node(
-            node_id,
+        graph.add_node(
+            _region_node_id(region.name),
             label=region.name,
             node_type="region",
             properties={
@@ -102,152 +100,169 @@ def build_graph(db: Session) -> nx.Graph:
             },
         )
 
-    # Also add region nodes from cooperative.region strings if not already present.
-    # This ensures region nodes exist even when no Region model row was created.
+
+def _ensure_region_nodes_from_coops(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
     for coop in cooperatives:
-        if coop.region:
-            region_node_id = f"region_{coop.region.lower().replace(' ', '_')}"
-            if not G.has_node(region_node_id):
-                G.add_node(
-                    region_node_id,
-                    label=coop.region,
-                    node_type="region",
-                    properties={
-                        "id": coop.region.lower(),
-                        "country": None,
-                        "production_share_pct": None,
-                        "quality_consistency_score": None,
-                    },
+        if not coop.region:
+            continue
+        region_id = _region_node_id(coop.region)
+        if graph.has_node(region_id):
+            continue
+        graph.add_node(
+            region_id,
+            label=coop.region,
+            node_type="region",
+            properties={
+                "id": coop.region.lower(),
+                "country": None,
+                "production_share_pct": None,
+                "quality_consistency_score": None,
+            },
+        )
+
+
+def _collect_certifications(cooperatives: list[Cooperative]) -> set[str]:
+    certifications: set[str] = set()
+    for coop in cooperatives:
+        if not coop.certifications:
+            continue
+        certifications.update(c.strip() for c in coop.certifications.split(",") if c.strip())
+    return certifications
+
+
+def _add_certification_nodes(graph: nx.Graph, certifications: set[str]) -> None:
+    for cert in certifications:
+        graph.add_node(
+            _cert_node_id(cert),
+            label=cert,
+            node_type="certification",
+            properties={"name": cert},
+        )
+
+
+def _add_coop_region_edges(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
+    for coop in cooperatives:
+        if not coop.region:
+            continue
+        coop_id = f"cooperative_{coop.id}"
+        region_id = _region_node_id(coop.region)
+        if graph.has_node(region_id):
+            graph.add_edge(coop_id, region_id, edge_type="LOCATED_IN", weight=1.0)
+
+
+def _add_coop_cert_edges(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
+    for coop in cooperatives:
+        if not coop.certifications:
+            continue
+        coop_id = f"cooperative_{coop.id}"
+        for cert in (c.strip() for c in coop.certifications.split(",")):
+            if not cert:
+                continue
+            cert_id = _cert_node_id(cert)
+            if graph.has_node(cert_id):
+                graph.add_edge(coop_id, cert_id, edge_type="HAS_CERTIFICATION", weight=1.0)
+
+
+def _add_roaster_region_edges(graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]) -> None:
+    unique_region_ids = {_region_node_id(coop.region) for coop in cooperatives if coop.region}
+    for roaster in roasters:
+        if not roaster.peru_focus:
+            continue
+        roaster_id = f"roaster_{roaster.id}"
+        for region_id in unique_region_ids:
+            if graph.has_node(region_id):
+                graph.add_edge(roaster_id, region_id, edge_type="SOURCES_FROM", weight=1.0)
+
+
+def _add_similar_coop_edges(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
+    for i, coop1 in enumerate(cooperatives):
+        for coop2 in cooperatives[i + 1 :]:
+            if not coop1.region or coop1.region != coop2.region:
+                continue
+            if not coop1.certifications or not coop2.certifications:
+                continue
+            certs1 = set(c.strip() for c in coop1.certifications.split(","))
+            certs2 = set(c.strip() for c in coop2.certifications.split(","))
+            if certs1 & certs2:
+                graph.add_edge(
+                    f"cooperative_{coop1.id}",
+                    f"cooperative_{coop2.id}",
+                    edge_type="SIMILAR_PROFILE",
+                    weight=0.7,
                 )
 
-    # Collect unique certifications
-    certifications_set: set[str] = set()
-    for coop in cooperatives:
-        if coop.certifications:
-            certs = [c.strip() for c in coop.certifications.split(",")]
-            certifications_set.update(certs)
 
-    # Add nodes for certifications
-    for cert in certifications_set:
-        if cert:
-            node_id = f"certification_{cert.lower().replace(' ', '_')}"
-            G.add_node(
-                node_id,
-                label=cert,
-                node_type="certification",
-                properties={"name": cert},
+def _add_similar_roaster_edges(graph: nx.Graph, roasters: list[Roaster]) -> None:
+    for i, roaster1 in enumerate(roasters):
+        for roaster2 in roasters[i + 1 :]:
+            if not roaster1.city or roaster1.city != roaster2.city:
+                continue
+            if not roaster1.price_position or roaster1.price_position != roaster2.price_position:
+                continue
+            graph.add_edge(
+                f"roaster_{roaster1.id}",
+                f"roaster_{roaster2.id}",
+                edge_type="SIMILAR_PROFILE",
+                weight=0.7,
             )
 
-    # Add edges: cooperative -> region (LOCATED_IN)
-    for coop in cooperatives:
-        if coop.region:
-            coop_id = f"cooperative_{coop.id}"
-            region_id = f"region_{coop.region.lower().replace(' ', '_')}"
-            if G.has_node(region_id):
-                G.add_edge(coop_id, region_id, edge_type="LOCATED_IN", weight=1.0)
 
-    # Add edges: cooperative -> certification (HAS_CERTIFICATION)
-    for coop in cooperatives:
-        if coop.certifications:
-            coop_id = f"cooperative_{coop.id}"
-            certs = [c.strip() for c in coop.certifications.split(",")]
-            for cert in certs:
-                if cert:
-                    cert_id = f"certification_{cert.lower().replace(' ', '_')}"
-                    if G.has_node(cert_id):
-                        G.add_edge(
-                            coop_id, cert_id, edge_type="HAS_CERTIFICATION", weight=1.0
-                        )
-
-    # Add edges: roaster -> region (SOURCES_FROM)
-    # NOTE: This creates a SOURCES_FROM edge from every Peru-focused roaster to every region
-    # that has cooperatives. This is an ASSUMPTION that roasters with Peru focus might source
-    # from any Peru region. In a production system, this should be based on actual sourcing
-    # relationships tracked in the database.
-    # Optimization: Collect unique regions first to avoid redundant iteration
-    unique_region_ids = {
-        f"region_{coop.region.lower().replace(' ', '_')}"
-        for coop in cooperatives
-        if coop.region
-    }
-    for roaster in roasters:
-        if roaster.peru_focus:
-            roaster_id = f"roaster_{roaster.id}"
-            for region_id in unique_region_ids:
-                if G.has_node(region_id):
-                    G.add_edge(
-                        roaster_id, region_id, edge_type="SOURCES_FROM", weight=1.0
-                    )
-
-    # Add edges: cooperative -> cooperative (SIMILAR_PROFILE)
-    # Similar if they share region and at least one certification
-    coop_list = list(cooperatives)
-    for i, coop1 in enumerate(coop_list):
-        for coop2 in coop_list[i + 1 :]:
-            if coop1.region and coop2.region and coop1.region == coop2.region:
-                # Check if they share certifications
-                if coop1.certifications and coop2.certifications:
-                    certs1 = set(c.strip() for c in coop1.certifications.split(","))
-                    certs2 = set(c.strip() for c in coop2.certifications.split(","))
-                    if certs1 & certs2:  # Intersection
-                        coop1_id = f"cooperative_{coop1.id}"
-                        coop2_id = f"cooperative_{coop2.id}"
-                        G.add_edge(
-                            coop1_id,
-                            coop2_id,
-                            edge_type="SIMILAR_PROFILE",
-                            weight=0.7,
-                        )
-
-    # Add edges: roaster -> roaster (SIMILAR_PROFILE)
-    # Similar if they have same city and price position
-    roaster_list = list(roasters)
-    for i, r1 in enumerate(roaster_list):
-        for r2 in roaster_list[i + 1 :]:
-            if (
-                r1.city
-                and r2.city
-                and r1.city == r2.city
-                and r1.price_position
-                and r2.price_position
-                and r1.price_position == r2.price_position
-            ):
-                r1_id = f"roaster_{r1.id}"
-                r2_id = f"roaster_{r2.id}"
-                G.add_edge(r1_id, r2_id, edge_type="SIMILAR_PROFILE", weight=0.7)
-
-    # Add edges: roaster -> cooperative (TRADES_WITH)
-    # A roaster trades with cooperatives located in regions it sources from.
-    # Build a lookup: region_node_id -> list of cooperative node IDs
+def _build_region_to_coops(cooperatives: list[Cooperative]) -> dict[str, list[str]]:
     region_to_coops: dict[str, list[str]] = {}
     for coop in cooperatives:
-        if coop.region:
-            region_node_id = f"region_{coop.region.lower().replace(' ', '_')}"
-            region_to_coops.setdefault(region_node_id, []).append(
-                f"cooperative_{coop.id}"
-            )
+        if not coop.region:
+            continue
+        region_to_coops.setdefault(_region_node_id(coop.region), []).append(f"cooperative_{coop.id}")
+    return region_to_coops
 
+
+def _add_roaster_coop_trade_edges(graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]) -> None:
+    region_to_coops = _build_region_to_coops(cooperatives)
     for roaster in roasters:
-        if roaster.peru_focus:
-            roaster_id = f"roaster_{roaster.id}"
-            for region_id, coop_ids in region_to_coops.items():
-                if G.has_node(region_id) and G.has_edge(roaster_id, region_id):
-                    for coop_id in coop_ids:
-                        if G.has_node(coop_id):
-                            G.add_edge(
-                                roaster_id,
-                                coop_id,
-                                edge_type="TRADES_WITH",
-                                weight=0.8,
-                            )
+        if not roaster.peru_focus:
+            continue
+        roaster_id = f"roaster_{roaster.id}"
+        for region_id, coop_ids in region_to_coops.items():
+            if not graph.has_node(region_id) or not graph.has_edge(roaster_id, region_id):
+                continue
+            for coop_id in coop_ids:
+                if graph.has_node(coop_id):
+                    graph.add_edge(
+                        roaster_id,
+                        coop_id,
+                        edge_type="TRADES_WITH",
+                        weight=0.8,
+                    )
+
+
+def build_graph(db: Session) -> nx.Graph:
+    """Build the knowledge graph from database entities."""
+    graph = nx.Graph()
+
+    # Fetch all entities
+    cooperatives = db.query(Cooperative).all()
+    roasters = db.query(Roaster).all()
+    regions = db.query(Region).all()
+
+    _add_cooperative_nodes(graph, cooperatives)
+    _add_roaster_nodes(graph, roasters)
+    _add_region_nodes(graph, regions)
+    _ensure_region_nodes_from_coops(graph, cooperatives)
+    _add_certification_nodes(graph, _collect_certifications(cooperatives))
+    _add_coop_region_edges(graph, cooperatives)
+    _add_coop_cert_edges(graph, cooperatives)
+    _add_roaster_region_edges(graph, roasters, cooperatives)
+    _add_similar_coop_edges(graph, cooperatives)
+    _add_similar_roaster_edges(graph, roasters)
+    _add_roaster_coop_trade_edges(graph, roasters, cooperatives)
 
     logger.info(
         "knowledge_graph.graph_built",
-        nodes=G.number_of_nodes(),
-        edges=G.number_of_edges(),
+        nodes=graph.number_of_nodes(),
+        edges=graph.number_of_edges(),
     )
 
-    return G
+    return graph
 
 
 def get_network_data(db: Session, node_types: str = "all") -> NetworkData:
