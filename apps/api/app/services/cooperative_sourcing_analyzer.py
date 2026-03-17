@@ -144,6 +144,119 @@ class CooperativeSourcingAnalyzer:
                 return label
         return default_label
 
+    @staticmethod
+    def _license_score(has_license: bool, license_expiry: Any) -> int:
+        if has_license and license_expiry:
+            return 25
+        if has_license:
+            return 20
+        return 0
+
+    @staticmethod
+    def _certification_score(cert_count: int) -> int:
+        if cert_count >= 3:
+            return 25
+        if cert_count == 2:
+            return 20
+        if cert_count == 1:
+            return 15
+        return 5
+
+    @staticmethod
+    def _customs_score(customs_issues: int) -> int:
+        if customs_issues == 0:
+            return 15
+        if customs_issues <= 2:
+            return 10
+        if customs_issues <= 5:
+            return 5
+        return 0
+
+    @staticmethod
+    def _response_score(avg_response_hours: float | int) -> int:
+        if avg_response_hours <= 24:
+            return 25
+        if avg_response_hours <= 48:
+            return 20
+        if avg_response_hours <= 72:
+            return 10
+        return 5
+
+    @staticmethod
+    def _meeting_score(missed_meetings: int) -> int:
+        if missed_meetings == 0:
+            return 15
+        if missed_meetings <= 1:
+            return 12
+        if missed_meetings <= 3:
+            return 8
+        return 3
+
+    @staticmethod
+    def _pricing_assessment(competitiveness_score: float) -> str:
+        if competitiveness_score >= 70:
+            return "competitive"
+        if competitiveness_score >= 50:
+            return "market_rate"
+        return "expensive"
+
+    @staticmethod
+    def _financial_risk_score(annual_revenue: float | int) -> int:
+        if annual_revenue < 50000:
+            return 25
+        if annual_revenue < 100000:
+            return 20
+        if annual_revenue < 250000:
+            return 15
+        if annual_revenue < 500000:
+            return 10
+        return 5
+
+    @staticmethod
+    def _quality_risk_score(quality_score: float) -> int:
+        if quality_score >= 80:
+            return 5
+        if quality_score >= 70:
+            return 10
+        if quality_score >= 60:
+            return 15
+        return 20
+
+    @staticmethod
+    def _base_delivery_risk(years_exp: float | int) -> int:
+        if years_exp >= 5:
+            return 15
+        if years_exp >= 2:
+            return 20
+        return 25
+
+    @staticmethod
+    def _geographic_risk_score(altitude_m: float | int | None) -> int:
+        if altitude_m is None:
+            return 10
+        if altitude_m > 2000:
+            return 15
+        if altitude_m > 1500:
+            return 10
+        return 5
+
+    @staticmethod
+    def _communication_risk_score(avg_response: float | int, missed_meetings: int) -> int:
+        response_risk = 0
+        if avg_response > 72:
+            response_risk = 10
+        elif avg_response > 48:
+            response_risk = 5
+        return min(15, response_risk + min(5, missed_meetings))
+
+    @staticmethod
+    def _risk_assessment(total_risk: float) -> str:
+        if total_risk < 30:
+            return "low"
+        if total_risk < 50:
+            return "moderate"
+        return "high"
+
     def check_supply_capacity(self, coop: Cooperative) -> dict[str, Any]:
         """
         Evaluate supply capacity (100-point scale).
@@ -230,11 +343,9 @@ class CooperativeSourcingAnalyzer:
         cert_count = len(cert_list)
         customs_issues = export_data.get("customs_issues_count", 0)
         has_coordinator = export_data.get("has_document_coordinator", False)
-        license_score = 25 if has_license and license_expiry else 20 if has_license else 0
-        cert_score = {3: 25, 2: 20, 1: 15}.get(min(cert_count, 3), 5)
-        customs_score = (
-            15 if customs_issues == 0 else 10 if customs_issues <= 2 else 5 if customs_issues <= 5 else 0
-        )
+        license_score = self._license_score(has_license, license_expiry)
+        cert_score = self._certification_score(cert_count)
+        customs_score = self._customs_score(customs_issues)
         coordinator_score = 10 if has_coordinator else 0
 
         score = float(
@@ -290,15 +401,7 @@ class CooperativeSourcingAnalyzer:
         )
         languages = comm_data.get("languages", [])
         missed_meetings = comm_data.get("missed_meetings", 0)
-        response_score = (
-            25
-            if avg_response_hours <= 24
-            else 20
-            if avg_response_hours <= 48
-            else 10
-            if avg_response_hours <= 72
-            else 5
-        )
+        response_score = self._response_score(avg_response_hours)
         language_set = {str(lang).lower() for lang in languages}
         lang_score = 5 + (15 if "english" in language_set else 0) + (
             10 if "german" in language_set else 0
@@ -312,7 +415,7 @@ class CooperativeSourcingAnalyzer:
         doc_score = (8 if digital_data.get("has_photos") else 0) + (
             7 if digital_data.get("has_cupping_scores") else 0
         )
-        meeting_score = 15 if missed_meetings == 0 else 12 if missed_meetings <= 1 else 8 if missed_meetings <= 3 else 3
+        meeting_score = self._meeting_score(missed_meetings)
 
         score = float(response_score + lang_score + digital_score + doc_score + meeting_score)
         breakdown = {
@@ -387,11 +490,7 @@ class CooperativeSourcingAnalyzer:
             "benchmark_price": benchmark_price,
             "benchmark_source": benchmark_source,
             "price_difference_pct": round(price_diff_pct, 2),
-            "assessment": "competitive"
-            if competitiveness_score >= 70
-            else "market_rate"
-            if competitiveness_score >= 50
-            else "expensive",
+            "assessment": self._pricing_assessment(competitiveness_score),
         }
 
     def calculate_sourcing_risk(self, coop: Cooperative) -> dict[str, Any]:
@@ -423,24 +522,12 @@ class CooperativeSourcingAnalyzer:
         comm_data = coop.communication_metrics or {}
         avg_response = comm_data.get("avg_response_hours", MAX_RESPONSE_TIME_HOURS)
         missed_meetings = comm_data.get("missed_meetings", 0)
-        fin_risk = 25 if annual_revenue < 50000 else 20 if annual_revenue < 100000 else 15 if annual_revenue < 250000 else 10 if annual_revenue < 500000 else 5
-        qual_risk = 5 if quality_score >= 80 else 10 if quality_score >= 70 else 15 if quality_score >= 60 else 20
-        base_delivery_risk = 15 if years_exp >= 5 else 20 if years_exp >= 2 else 25
+        fin_risk = self._financial_risk_score(annual_revenue)
+        qual_risk = self._quality_risk_score(quality_score)
+        base_delivery_risk = self._base_delivery_risk(years_exp)
         delivery_risk = max(0, min(25, base_delivery_risk + min(10, customs_issues * 2)))
-        geo_risk = (
-            15
-            if coop.altitude_m and coop.altitude_m > 2000
-            else 10
-            if coop.altitude_m and coop.altitude_m > 1500
-            else 5
-            if coop.altitude_m
-            else 10
-        )
-        comm_risk = min(
-            15,
-            (10 if avg_response > 72 else 5 if avg_response > 48 else 0)
-            + min(5, missed_meetings),
-        )
+        geo_risk = self._geographic_risk_score(coop.altitude_m)
+        comm_risk = self._communication_risk_score(avg_response, missed_meetings)
 
         total_risk = float(fin_risk + qual_risk + delivery_risk + geo_risk + comm_risk)
         breakdown = {
@@ -458,7 +545,7 @@ class CooperativeSourcingAnalyzer:
                 "missed_meetings": missed_meetings,
             },
         }
-        assessment = "low" if total_risk < 30 else "moderate" if total_risk < 50 else "high"
+        assessment = self._risk_assessment(total_risk)
 
         return {
             "total_risk_score": round(total_risk, 2),
