@@ -261,72 +261,76 @@ class RAGAnalystService:
         context.sort(key=lambda x: x["similarity_score"], reverse=True)
         return context[: self.max_context_entities]
 
+    def _build_no_context_prompt(self, base_prompt: str) -> str:
+        return (
+            base_prompt
+            + "\nAktuell sind keine spezifischen Daten verfuegbar.\n"
+            + "\n"
+            + "Zusaetzliche Richtlinien fuer diese Situation:\n"
+            + "- Erklaere ausdruecklich, dass du fuer diese Antwort keine konkreten Quellen/Entities zur Verfuegung hast.\n"
+            + "- Nenne keine Entity-Namen oder -IDs und erfinde keine Quellen.\n"
+            + "- Du darfst nur allgemeines Wissen ueber Kaffee-Sourcing nutzen und musst klar machen, dass es sich um allgemeine Informationen ohne konkrete Quellenangabe handelt.\n"
+        )
+
+    def _render_coops(self, context: list[dict]) -> str:
+        coops = [c for c in context if c["entity_type"] == "cooperative"]
+        if not coops:
+            return ""
+
+        section = "\n## Kooperativen:\n"
+        for coop in coops:
+            section += f"\n**{coop['name']}** (ID: {coop['entity_id']})\n"
+            if coop.get("region"):
+                section += f"- Region: {coop['region']}\n"
+            if coop.get("certifications"):
+                section += f"- Zertifizierungen: {coop['certifications']}\n"
+            if coop.get("varieties"):
+                section += f"- Sorten: {coop['varieties']}\n"
+            if coop.get("altitude_m"):
+                section += f"- Hoehe: {coop['altitude_m']}m\n"
+        return section
+
+    def _render_roasters(self, context: list[dict]) -> str:
+        roasters = [r for r in context if r["entity_type"] == "roaster"]
+        if not roasters:
+            return ""
+
+        section = "\n## Roestereien:\n"
+        for roaster in roasters:
+            section += f"\n**{roaster['name']}** (ID: {roaster['entity_id']})\n"
+            if roaster.get("city"):
+                section += f"- Stadt: {roaster['city']}\n"
+            if roaster.get("peru_focus"):
+                section += "- Peru-Fokus: Ja\n"
+            if roaster.get("specialty_focus"):
+                section += "- Specialty-Fokus: Ja\n"
+            if roaster.get("price_position"):
+                section += f"- Preispositionierung: {roaster['price_position']}\n"
+        return section
+
     def _build_system_prompt(self, context: list[dict]) -> str:
-        """Build system prompt with retrieved context.
+        """Build system prompt with retrieved context."""
+        base_prompt = """Du bist ein KI-Assistent fuer Kaffee-Sourcing und Spezialitaetenkaffee-Handel.
+Du hilfst dabei, Informationen ueber Kooperativen, Roestereien, Marktdaten und Sourcing-Moeglichkeiten zu finden und zu analysieren.
 
-        Args:
-            context: List of context entities
-
-        Returns:
-            System prompt string
-        """
-        base_prompt = """Du bist ein KI-Assistent für Kaffee-Sourcing und Spezialitätenkaffee-Handel.
-Du hilfst dabei, Informationen über Kooperativen, Röstereien, Marktdaten und Sourcing-Möglichkeiten zu finden und zu analysieren.
-
-Du sprichst primär Deutsch, kannst aber auch auf Englisch antworten wenn gewünscht.
+Du sprichst primaer Deutsch, kannst aber auch auf Englisch antworten wenn gewuenscht.
 
 WICHTIGE RICHTLINIEN:
-- Beantworte Fragen präzise und auf Basis der bereitgestellten Daten
+- Beantworte Fragen praezise und auf Basis der bereitgestellten Daten
 - Nenne, falls vorhanden, die Quellen (Namen und IDs der Entities) in deiner Antwort
-- Wenn Daten fehlen oder unvollständig sind, sage das klar
+- Wenn Daten fehlen oder unvollstaendig sind, sage das klar
 - Erfinde keine spezifischen Details zu Entities und gib nichts als aus den Quelldaten stammend aus, wenn es dort nicht vorkommt
 - Sei hilfsbereit und professionell
 """
 
         if not context:
-            base_prompt += (
-                "\nAktuell sind keine spezifischen Daten verfügbar.\n"
-                "\n"
-                "Zusätzliche Richtlinien für diese Situation:\n"
-                "- Erkläre ausdrücklich, dass du für diese Antwort keine konkreten Quellen/Entities zur Verfügung hast.\n"
-                "- Nenne keine Entity-Namen oder -IDs und erfinde keine Quellen.\n"
-                "- Du darfst nur allgemeines Wissen über Kaffee-Sourcing nutzen und musst klar machen, dass es sich um allgemeine Informationen ohne konkrete Quellenangabe handelt.\n"
-            )
-            return base_prompt
+            return self._build_no_context_prompt(base_prompt)
 
-        base_prompt += "\n\n=== VERFÜGBARE DATEN ===\n"
-
-        # Add cooperatives
-        coops = [c for c in context if c["entity_type"] == "cooperative"]
-        if coops:
-            base_prompt += "\n## Kooperativen:\n"
-            for coop in coops:
-                base_prompt += f"\n**{coop['name']}** (ID: {coop['entity_id']})\n"
-                if coop.get("region"):
-                    base_prompt += f"- Region: {coop['region']}\n"
-                if coop.get("certifications"):
-                    base_prompt += f"- Zertifizierungen: {coop['certifications']}\n"
-                if coop.get("varieties"):
-                    base_prompt += f"- Sorten: {coop['varieties']}\n"
-                if coop.get("altitude_m"):
-                    base_prompt += f"- Höhe: {coop['altitude_m']}m\n"
-
-        # Add roasters
-        roasters = [r for r in context if r["entity_type"] == "roaster"]
-        if roasters:
-            base_prompt += "\n## Röstereien:\n"
-            for roaster in roasters:
-                base_prompt += f"\n**{roaster['name']}** (ID: {roaster['entity_id']})\n"
-                if roaster.get("city"):
-                    base_prompt += f"- Stadt: {roaster['city']}\n"
-                if roaster.get("peru_focus"):
-                    base_prompt += "- Peru-Fokus: Ja\n"
-                if roaster.get("specialty_focus"):
-                    base_prompt += "- Specialty-Fokus: Ja\n"
-                if roaster.get("price_position"):
-                    base_prompt += (
-                        f"- Preispositionierung: {roaster['price_position']}\n"
-                    )
-
-        base_prompt += "\n=== ENDE DER DATEN ===\n"
-        return base_prompt
+        sections = [
+            base_prompt,
+            "\n\n=== VERFUEGBARE DATEN ===\n",
+            self._render_coops(context),
+            self._render_roasters(context),
+            "\n=== ENDE DER DATEN ===\n",
+        ]
+        return "".join(sections)
