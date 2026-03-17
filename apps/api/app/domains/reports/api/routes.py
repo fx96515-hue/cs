@@ -11,7 +11,7 @@ from app.domains.reports.schemas.report import ReportOut
 router = APIRouter()
 DbSessionDep = Annotated[Session, Depends(get_db)]
 ViewerPermissionDep = Annotated[
-    object, Depends(require_role("admin", "analyst", "viewer"))
+    None, Depends(require_role("admin", "analyst", "viewer"))
 ]
 
 
@@ -19,7 +19,7 @@ ViewerPermissionDep = Annotated[
 def list_reports(
     db: DbSessionDep,
     _: ViewerPermissionDep,
-    limit: int = Query(30, ge=1, le=200),
+    limit: Annotated[int, Query(ge=1, le=200)] = 30,
 ):
     return db.query(Report).order_by(Report.report_at.desc()).limit(limit).all()
 
