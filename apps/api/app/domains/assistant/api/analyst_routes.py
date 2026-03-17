@@ -27,7 +27,15 @@ log = structlog.get_logger()
 limiter = Limiter(key_func=get_remote_address)
 
 
-@router.post("/ask", response_model=RAGResponse)
+@router.post(
+    "/ask",
+    response_model=RAGResponse,
+    responses={
+        400: {"description": "Invalid request payload"},
+        500: {"description": "Internal server error during answer generation"},
+        503: {"description": "RAG provider unavailable or not configured"},
+    },
+)
 @limiter.limit("20/minute")
 async def ask_analyst(
     request: Request,

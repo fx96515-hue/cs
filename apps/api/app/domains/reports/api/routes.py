@@ -24,7 +24,11 @@ def list_reports(
     return db.query(Report).order_by(Report.report_at.desc()).limit(limit).all()
 
 
-@router.get("/{report_id}", response_model=ReportOut)
+@router.get(
+    "/{report_id}",
+    response_model=ReportOut,
+    responses={404: {"description": "Report not found"}},
+)
 def get_report(
     report_id: Annotated[int, Path(ge=1)],
     db: DbSessionDep,
