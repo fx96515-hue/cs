@@ -66,7 +66,11 @@ def create_source(
     return s
 
 
-@router.get("/{source_id}", response_model=SourceOut)
+@router.get(
+    "/{source_id}",
+    response_model=SourceOut,
+    responses={404: {"description": "Source not found"}},
+)
 def get_source(
     source_id: Annotated[int, Path(ge=1)],
     db: DbSessionDep,
@@ -78,7 +82,11 @@ def get_source(
     return s
 
 
-@router.patch("/{source_id}", response_model=SourceOut)
+@router.patch(
+    "/{source_id}",
+    response_model=SourceOut,
+    responses={404: {"description": "Source not found"}},
+)
 def update_source(
     source_id: Annotated[int, Path(ge=1)],
     payload: SourceUpdate,
@@ -110,7 +118,10 @@ def update_source(
     return s
 
 
-@router.delete("/{source_id}")
+@router.delete(
+    "/{source_id}",
+    responses={404: {"description": "Source not found"}},
+)
 def delete_source(
     source_id: Annotated[int, Path(ge=1)],
     db: DbSessionDep,

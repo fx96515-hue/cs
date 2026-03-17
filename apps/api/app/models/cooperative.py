@@ -6,8 +6,10 @@ try:
     from pgvector.sqlalchemy import Vector
 except Exception:  # pragma: no cover - fallback for test environments without pgvector
     # Lightweight fallback: represent vector column as a JSON/list of floats for tests
-    def Vector(dim: int):
+    def _pgvector_fallback(_: int):
         return JSON
+
+    Vector = _pgvector_fallback
 
 
 from app.db.session import Base
