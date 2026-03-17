@@ -122,7 +122,7 @@ async def get_freight_cost_trend(
     route: str,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    months_back: int = Query(12, ge=1, le=120),
+    months_back: Annotated[int, Query(ge=1, le=120)] = 12,
 ):
     """Get historical freight cost trend for a route."""
     service = FreightPredictionService(db)
@@ -229,7 +229,9 @@ async def calculate_optimal_purchase_timing(
 @router.get("/tasks/{task_id}", response_model=AsyncTaskStatus)
 async def ml_task_status(
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],
-    task_id: str = Path(min_length=8, max_length=100, pattern=r"^[A-Za-z0-9._:-]+$"),
+    task_id: Annotated[
+        str, Path(min_length=8, max_length=100, pattern=r"^[A-Za-z0-9._:-]+$")
+    ],
 ):
     """Check async ML task status."""
     res = AsyncResult(task_id, app=celery)

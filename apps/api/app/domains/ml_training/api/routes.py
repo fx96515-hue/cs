@@ -84,7 +84,7 @@ def price_forecast(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst"))],
     origin_region: str | None = None,
-    days: int = Query(30, ge=1, le=90),
+    days: Annotated[int, Query(ge=1, le=90)] = 30,
 ):
     """Get price forecast for next N days."""
     result = get_price_forecast(db, origin_region=origin_region, days_ahead=days)

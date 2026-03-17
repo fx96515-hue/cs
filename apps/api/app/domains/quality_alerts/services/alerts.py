@@ -11,6 +11,8 @@ from app.models.quality_alert import QualityAlert
 from app.models.cooperative import Cooperative
 from app.models.roaster import Roaster
 
+COFFEE_C_USD_LB_KEY = "COFFEE_C:USD_LB"
+
 
 def detect_score_changes(
     db: Session,
@@ -343,7 +345,7 @@ def detect_price_volatility(
     latest_obs = (
         db.query(MarketObservation)
         .filter(
-            MarketObservation.key == "COFFEE_C:USD_LB",
+            MarketObservation.key == COFFEE_C_USD_LB_KEY,
             MarketObservation.observed_at >= since,
         )
         .order_by(MarketObservation.observed_at.desc())
@@ -354,7 +356,7 @@ def detect_price_volatility(
     oldest_obs = (
         db.query(MarketObservation)
         .filter(
-            MarketObservation.key == "COFFEE_C:USD_LB",
+            MarketObservation.key == COFFEE_C_USD_LB_KEY,
             MarketObservation.observed_at >= since,
         )
         .order_by(MarketObservation.observed_at.asc())
@@ -388,7 +390,7 @@ def detect_price_volatility(
         entity_type="market",
         entity_id=0,
         alert_type="price_volatility",
-        field_name="COFFEE_C:USD_LB",
+        field_name=COFFEE_C_USD_LB_KEY,
         old_value=old_price,
         new_value=new_price,
         change_amount=change_pct,

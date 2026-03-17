@@ -42,8 +42,8 @@ def list_alerts(
     entity_type: Annotated[str | None, Query(pattern=ENTITY_TYPE_PATTERN)] = None,
     severity: AlertSeverity | None = None,
     acknowledged: bool | None = None,
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """List quality alerts with optional filters."""
     alerts = quality_alerts.get_alerts(
@@ -86,7 +86,7 @@ def acknowledge_alert(
 def check_now(
     db: DbSessionDep,
     _: AdminPermissionDep,
-    threshold: float = Query(5.0, ge=0.0, le=100.0),
+    threshold: Annotated[float, Query(ge=0.0, le=100.0)] = 5.0,
 ):
     """Manually trigger alert check."""
     result = quality_alerts.check_all_entities(db, threshold=threshold)
@@ -105,8 +105,8 @@ def list_anomalies(
     entity_type: Annotated[str | None, Query(pattern=ENTITY_TYPE_PATTERN)] = None,
     severity: AlertSeverity | None = None,
     acknowledged: bool | None = None,
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ):
     """List anomaly alerts (Isolation Forest score anomalies and Z-Score price anomalies)."""
     _require_anomaly_detection_enabled()
