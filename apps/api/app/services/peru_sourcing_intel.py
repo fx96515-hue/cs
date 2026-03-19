@@ -126,7 +126,9 @@ class PeruRegionIntelService:
         }
 
     @staticmethod
-    def _score_elevation(elevation_min_m: float | None, elevation_max_m: float | None) -> float:
+    def _score_elevation(
+        elevation_min_m: float | None, elevation_max_m: float | None
+    ) -> float:
         if not elevation_min_m or not elevation_max_m:
             return 0.0
         avg_elevation = (elevation_min_m + elevation_max_m) / 2

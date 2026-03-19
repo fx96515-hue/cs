@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for LLM provider selection.
+"""Compatibility wrapper for LLM provider selection.
 
 Canonical implementation lives in app.domains.assistant.providers.llm.
 """

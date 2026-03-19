@@ -54,7 +54,9 @@ def _create_deals_table(inspector: sa.engine.reflection.Inspector) -> None:
         sa.Column("cooperative_id", sa.Integer(), nullable=True),
         sa.Column("roaster_id", sa.Integer(), nullable=True),
         sa.Column("lot_id", sa.Integer(), nullable=True),
-        sa.Column("status", sa.String(length=32), nullable=False, server_default="open"),
+        sa.Column(
+            "status", sa.String(length=32), nullable=False, server_default="open"
+        ),
         sa.Column("incoterm", sa.String(length=16), nullable=True),
         sa.Column("price_per_kg", sa.Float(), nullable=True),
         sa.Column("currency", sa.String(length=8), nullable=True),
@@ -109,7 +111,9 @@ def _create_price_quotes_table(inspector: sa.engine.reflection.Inspector) -> Non
         sa.Column("deal_id", sa.Integer(), nullable=True),
         sa.Column("source_id", sa.Integer(), nullable=True),
         sa.Column("price_per_kg", sa.Float(), nullable=False),
-        sa.Column("currency", sa.String(length=8), nullable=False, server_default="USD"),
+        sa.Column(
+            "currency", sa.String(length=8), nullable=False, server_default="USD"
+        ),
         sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("confidence", sa.Float(), nullable=True),
         sa.Column("notes", sa.String(length=500), nullable=True),
@@ -185,7 +189,9 @@ def _ensure_shipment_columns(inspector: sa.engine.reflection.Inspector) -> None:
             )
 
 
-def _ensure_entity_evidence_constraint(inspector: sa.engine.reflection.Inspector) -> None:
+def _ensure_entity_evidence_constraint(
+    inspector: sa.engine.reflection.Inspector,
+) -> None:
     if "entity_evidence" not in inspector.get_table_names():
         return
 

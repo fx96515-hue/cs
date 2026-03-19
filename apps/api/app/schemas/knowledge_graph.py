@@ -1,11 +1,13 @@
-﻿"""Compatibility wrapper for knowledge_graph schemas.
+"""Compatibility wrapper for knowledge_graph schemas.
 
 Canonical implementation lives in app.domains.knowledge_graph.schemas.knowledge_graph.
 """
 
 import importlib
 
-_canonical = importlib.import_module("app.domains.knowledge_graph.schemas.knowledge_graph")
+_canonical = importlib.import_module(
+    "app.domains.knowledge_graph.schemas.knowledge_graph"
+)
 
 __all__ = [name for name in dir(_canonical) if not name.startswith("_")]
 

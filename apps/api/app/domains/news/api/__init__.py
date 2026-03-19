@@ -1,1 +1,1 @@
-﻿"""News domain API."""
+"""News domain API."""

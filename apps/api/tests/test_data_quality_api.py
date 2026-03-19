@@ -113,7 +113,9 @@ def test_recompute_flags_entity_not_found(client, auth_headers):
 
 
 def test_data_quality_rejects_non_positive_flag_and_entity_ids(client, auth_headers):
-    resolve_response = client.post("/data-quality/flags/0/resolve", headers=auth_headers)
+    resolve_response = client.post(
+        "/data-quality/flags/0/resolve", headers=auth_headers
+    )
     assert resolve_response.status_code == 422
 
     recompute_response = client.post(
@@ -142,4 +144,3 @@ def test_data_quality_rejects_invalid_entity_type_and_severity_filter(
         headers=auth_headers,
     )
     assert invalid_severity.status_code == 422
-

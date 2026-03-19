@@ -79,7 +79,9 @@ def test_generate_outreach_with_llm_refinement(db):
 
     with (
         patch("app.domains.outreach.services.generator.settings") as mock_settings,
-        patch("app.domains.outreach.services.generator.PerplexityClient") as mock_client_class,
+        patch(
+            "app.domains.outreach.services.generator.PerplexityClient"
+        ) as mock_client_class,
     ):
         mock_settings.PERPLEXITY_API_KEY = "test_key"
         mock_client = MagicMock()

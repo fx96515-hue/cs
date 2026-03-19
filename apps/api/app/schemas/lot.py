@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for lot schemas.
+"""Compatibility wrapper for lot schemas.
 
 Canonical implementation lives in app.domains.lots.schemas.lot.
 """

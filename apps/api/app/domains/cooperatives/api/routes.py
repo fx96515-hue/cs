@@ -11,13 +11,20 @@ from app.api.response_utils import apply_create_status
 from app.db.session import get_db
 from app.models.cooperative import Cooperative
 from app.models.user import User
-from app.domains.cooperatives.schemas.cooperative import CooperativeCreate, CooperativeOut, CooperativeUpdate
+from app.domains.cooperatives.schemas.cooperative import (
+    CooperativeCreate,
+    CooperativeOut,
+    CooperativeUpdate,
+)
 from app.services.discovery import backfill_missing_cooperative_data
 from app.services.scoring import recompute_and_persist_cooperative
 from app.core.export import DataExporter
 from app.core.audit import AuditLogger
 from app.core.versioning import capture_entity_version
-from app.domains.data_quality.services.flags import recompute_entity_flags, resolve_entity_flags
+from app.domains.data_quality.services.flags import (
+    recompute_entity_flags,
+    resolve_entity_flags,
+)
 from app.core.config import settings
 
 router = APIRouter()

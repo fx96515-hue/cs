@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for assistant chat routes.
+"""Compatibility wrapper for assistant chat routes.
 
 Canonical implementation lives in app.domains.assistant.api.chat_routes.
 """

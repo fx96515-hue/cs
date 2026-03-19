@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for news routes.
+"""Compatibility wrapper for news routes.
 
 Canonical implementation lives in app.domains.news.api.routes.
 """

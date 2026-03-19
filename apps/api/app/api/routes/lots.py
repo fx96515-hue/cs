@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for lots routes.
+"""Compatibility wrapper for lots routes.
 
 Canonical implementation lives in app.domains.lots.api.routes.
 """

@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for market routes.
+"""Compatibility wrapper for market routes.
 
 Canonical implementation lives in app.domains.market.api.routes.
 """

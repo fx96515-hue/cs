@@ -1,1 +1,1 @@
-﻿"""Assistant domain provider adapters."""
+"""Assistant domain provider adapters."""

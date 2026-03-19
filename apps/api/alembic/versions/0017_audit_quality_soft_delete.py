@@ -49,7 +49,10 @@ def upgrade() -> None:
             "ix_audit_logs_entity_id", "audit_logs", ["entity_id"], unique=False
         )
         op.create_index(
-            "ix_audit_logs_entity", "audit_logs", ["entity_type", "entity_id"], unique=False
+            "ix_audit_logs_entity",
+            "audit_logs",
+            ["entity_type", "entity_id"],
+            unique=False,
         )
 
     if "entity_versions" not in inspector.get_table_names():
@@ -94,7 +97,9 @@ def upgrade() -> None:
             sa.Column("entity_id", sa.Integer(), nullable=False),
             sa.Column("field_name", sa.String(length=128), nullable=True),
             sa.Column("issue_type", sa.String(length=64), nullable=False),
-            sa.Column("severity", sa.String(length=16), nullable=False, server_default="info"),
+            sa.Column(
+                "severity", sa.String(length=16), nullable=False, server_default="info"
+            ),
             sa.Column("message", sa.String(length=512), nullable=True),
             sa.Column("confidence", sa.Float(), nullable=True),
             sa.Column("detected_at", sa.DateTime(timezone=True), nullable=False),
@@ -161,9 +166,7 @@ def downgrade() -> None:
 
     if "data_quality_flags" in inspector.get_table_names():
         op.drop_index("ix_data_quality_flags_entity", table_name="data_quality_flags")
-        op.drop_index(
-            "ix_data_quality_flags_severity", table_name="data_quality_flags"
-        )
+        op.drop_index("ix_data_quality_flags_severity", table_name="data_quality_flags")
         op.drop_index(
             "ix_data_quality_flags_issue_type", table_name="data_quality_flags"
         )

@@ -1,1 +1,1 @@
-﻿"""Reports domain."""
+"""Reports domain."""

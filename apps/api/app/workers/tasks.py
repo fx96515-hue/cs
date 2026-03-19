@@ -155,7 +155,9 @@ def refresh_intelligence():
         # Lightweight cooperative data-gap backfill from search results.
         # Safe fallback: only fills missing fields, does not overwrite non-empty values.
         try:
-            backfill_result = backfill_missing_cooperative_data(db, limit=15, dry_run=False)
+            backfill_result = backfill_missing_cooperative_data(
+                db, limit=15, dry_run=False
+            )
             result["cooperative_backfill"] = backfill_result
             log.info("cooperative_backfill_after_intel_refresh", **backfill_result)
         except Exception as e:

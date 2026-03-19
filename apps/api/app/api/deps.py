@@ -122,5 +122,3 @@ def require_auth(user: User = Depends(get_current_user)) -> dict:
     a dict instead of User object for endpoints using _: dict = Depends(require_auth).
     """
     return {"user": user, "email": user.email, "role": user.role}
-
-

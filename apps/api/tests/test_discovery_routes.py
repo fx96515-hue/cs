@@ -46,7 +46,9 @@ def test_discovery_seed_status_failure_is_sanitized(client, auth_headers, monkey
     assert payload["error"] == "Discovery task failed"
 
 
-def test_discovery_seed_status_includes_progress_info(client, auth_headers, monkeypatch):
+def test_discovery_seed_status_includes_progress_info(
+    client, auth_headers, monkeypatch
+):
     class _Result:
         state = "STARTED"
         result = None
@@ -82,7 +84,9 @@ def test_discovery_seed_normalizes_country_filter(client, auth_headers, monkeypa
         captured_kwargs.update(kwargs)
         return type("Task", (), {"id": "task-123"})()
 
-    monkeypatch.setattr("app.domains.discovery.api.routes.celery.send_task", _fake_send_task)
+    monkeypatch.setattr(
+        "app.domains.discovery.api.routes.celery.send_task", _fake_send_task
+    )
 
     response = client.post(
         "/discovery/seed",
@@ -97,7 +101,11 @@ def test_discovery_seed_normalizes_country_filter(client, auth_headers, monkeypa
 def test_discovery_seed_rejects_invalid_country_filter(client, auth_headers):
     response = client.post(
         "/discovery/seed",
-        json={"entity_type": "cooperative", "max_entities": 10, "country_filter": "PER"},
+        json={
+            "entity_type": "cooperative",
+            "max_entities": 10,
+            "country_filter": "PER",
+        },
         headers=auth_headers,
     )
     assert response.status_code == 422

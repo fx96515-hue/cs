@@ -1,1 +1,1 @@
-﻿"""News domain schemas."""
+"""News domain schemas."""

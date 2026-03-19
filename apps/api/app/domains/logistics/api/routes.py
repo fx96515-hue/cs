@@ -5,7 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
 from app.db.session import get_db
-from app.domains.logistics.schemas.logistics import LandedCostRequest, LandedCostResponse
+from app.domains.logistics.schemas.logistics import (
+    LandedCostRequest,
+    LandedCostResponse,
+)
 from app.domains.logistics.services.costs import calc_landed_cost
 
 

@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for knowledge_graph routes.
+"""Compatibility wrapper for knowledge_graph routes.
 
 Canonical implementation lives in app.domains.knowledge_graph.api.routes.
 """

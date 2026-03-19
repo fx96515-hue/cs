@@ -1,1 +1,1 @@
-﻿"""Outreach domain schemas."""
+"""Outreach domain schemas."""

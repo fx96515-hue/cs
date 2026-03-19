@@ -1,1 +1,1 @@
-﻿"""News domain."""
+"""News domain."""

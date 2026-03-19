@@ -731,4 +731,3 @@ def resolve_rag_model(provider_name: str) -> str:
     if provider == "openai":
         return settings.RAG_LLM_MODEL_OPENAI
     return settings.RAG_LLM_MODEL_OLLAMA
-

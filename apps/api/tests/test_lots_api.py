@@ -178,7 +178,9 @@ def test_lots_reject_non_positive_path_ids(client, auth_headers):
     response_get = client.get("/lots/0", headers=auth_headers)
     assert response_get.status_code == 422
 
-    response_patch = client.patch("/lots/0", json={"varieties": "Bourbon"}, headers=auth_headers)
+    response_patch = client.patch(
+        "/lots/0", json={"varieties": "Bourbon"}, headers=auth_headers
+    )
     assert response_patch.status_code == 422
 
     response_delete = client.delete("/lots/0", headers=auth_headers)

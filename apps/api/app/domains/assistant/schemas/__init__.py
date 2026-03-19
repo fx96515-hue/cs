@@ -1,1 +1,1 @@
-﻿"""Assistant domain schemas."""
+"""Assistant domain schemas."""

@@ -115,4 +115,3 @@ def test_price_quotes_reject_non_positive_filters(client, auth_headers):
 
     response_source = client.get("/price-quotes/?source_id=0", headers=auth_headers)
     assert response_source.status_code == 422
-

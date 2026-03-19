@@ -21,7 +21,10 @@ from app.services.knowledge_graph import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_cooperative(id: int, name: str, region: str | None, certifications: str | None):
+
+def _make_cooperative(
+    id: int, name: str, region: str | None, certifications: str | None
+):
     coop = MagicMock()
     coop.id = id
     coop.name = name
@@ -33,7 +36,9 @@ def _make_cooperative(id: int, name: str, region: str | None, certifications: st
     return coop
 
 
-def _make_roaster(id: int, name: str, city: str, peru_focus: bool, price_position: str | None = None):
+def _make_roaster(
+    id: int, name: str, city: str, peru_focus: bool, price_position: str | None = None
+):
     roaster = MagicMock()
     roaster.id = id
     roaster.name = name
@@ -83,6 +88,7 @@ def _make_query(model, cooperatives, roasters, regions):
 # ---------------------------------------------------------------------------
 # build_graph
 # ---------------------------------------------------------------------------
+
 
 class TestBuildGraph:
     def test_empty_db_returns_empty_graph(self):
@@ -137,7 +143,10 @@ class TestBuildGraph:
         db = _make_db(cooperatives=coops)
         G = build_graph(db)
         assert G.has_edge("cooperative_1", "certification_organic")
-        assert G["cooperative_1"]["certification_organic"]["edge_type"] == "HAS_CERTIFICATION"
+        assert (
+            G["cooperative_1"]["certification_organic"]["edge_type"]
+            == "HAS_CERTIFICATION"
+        )
 
     def test_sources_from_edge_for_peru_focused_roaster(self):
         coops = [_make_cooperative(1, "Coop A", "Cajamarca", None)]
@@ -217,6 +226,7 @@ class TestBuildGraph:
 # get_network_data
 # ---------------------------------------------------------------------------
 
+
 class TestGetNetworkData:
     def setup_method(self):
         invalidate_cache()
@@ -242,6 +252,7 @@ class TestGetNetworkData:
 # get_entity_analysis
 # ---------------------------------------------------------------------------
 
+
 class TestGetEntityAnalysis:
     def setup_method(self):
         invalidate_cache()
@@ -263,6 +274,7 @@ class TestGetEntityAnalysis:
 # ---------------------------------------------------------------------------
 # get_shortest_path
 # ---------------------------------------------------------------------------
+
 
 class TestGetShortestPath:
     def setup_method(self):
@@ -298,6 +310,7 @@ class TestGetShortestPath:
 # get_hidden_connections
 # ---------------------------------------------------------------------------
 
+
 class TestGetHiddenConnections:
     def setup_method(self):
         invalidate_cache()
@@ -321,6 +334,7 @@ class TestGetHiddenConnections:
 # ---------------------------------------------------------------------------
 # invalidate_cache
 # ---------------------------------------------------------------------------
+
 
 class TestInvalidateCache:
     def test_cache_invalidated(self):

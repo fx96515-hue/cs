@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for roasters routes.
+"""Compatibility wrapper for roasters routes.
 
 Canonical implementation lives in app.domains.roasters.api.routes.
 """

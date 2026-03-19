@@ -87,9 +87,7 @@ class TestEmbeddingService:
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_response = AsyncMock()
-            mock_response.json.return_value = {
-                "data": [{"embedding": mock_embedding}]
-            }
+            mock_response.json.return_value = {"data": [{"embedding": mock_embedding}]}
             mock_response.raise_for_status = MagicMock()
 
             mock_client.return_value.__aenter__.return_value.post = AsyncMock(

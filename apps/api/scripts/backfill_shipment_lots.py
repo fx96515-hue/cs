@@ -20,11 +20,7 @@ def _exists(db: Session, shipment_id: int, lot_id: int) -> bool:
 def main() -> None:
     db = SessionLocal()
     try:
-        shipments = (
-            db.query(Shipment)
-            .filter(Shipment.lot_id.isnot(None))
-            .all()
-        )
+        shipments = db.query(Shipment).filter(Shipment.lot_id.isnot(None)).all()
         created = 0
         for shipment in shipments:
             lot_id = shipment.lot_id

@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for auth routes.
+"""Compatibility wrapper for auth routes.
 
 Canonical implementation lives in app.domains.auth.api.routes.
 """

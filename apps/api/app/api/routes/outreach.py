@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for outreach API routes.
+"""Compatibility wrapper for outreach API routes.
 
 Canonical implementation lives in app.domains.outreach.api.routes.
 """

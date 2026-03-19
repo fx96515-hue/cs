@@ -32,9 +32,7 @@ def _find_or_create_region(db, name: str, country: str) -> Region:
         return region
 
     peru_match = (
-        db.query(PeruRegion)
-        .filter(func.lower(PeruRegion.name) == name.lower())
-        .first()
+        db.query(PeruRegion).filter(func.lower(PeruRegion.name) == name.lower()).first()
     )
     if peru_match and country.lower() == "peru":
         name = peru_match.name

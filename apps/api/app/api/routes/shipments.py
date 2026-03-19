@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for shipments routes.
+"""Compatibility wrapper for shipments routes.
 
 Canonical implementation lives in app.domains.shipments.api.routes.
 """

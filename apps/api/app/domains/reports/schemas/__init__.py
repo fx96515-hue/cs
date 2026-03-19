@@ -1,1 +1,1 @@
-﻿"""Reports domain schemas."""
+"""Reports domain schemas."""

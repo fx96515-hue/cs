@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for peru_sourcing routes.
+"""Compatibility wrapper for peru_sourcing routes.
 
 Canonical implementation lives in app.domains.peru_sourcing.api.routes.
 """

@@ -741,7 +741,9 @@ def _extract_structured_with_llm(
     return data if isinstance(data, dict) else {}
 
 
-def _load_entity(db: Session, entity_type: str, entity_id: int) -> Cooperative | Roaster | None:
+def _load_entity(
+    db: Session, entity_type: str, entity_id: int
+) -> Cooperative | Roaster | None:
     if entity_type == "cooperative":
         return db.get(Cooperative, entity_id)
     return db.get(Roaster, entity_id)
@@ -766,7 +768,9 @@ def _persist_web_extract(
     )
     web_extract = db.scalar(stmt)
     if not web_extract:
-        web_extract = WebExtract(entity_type=entity_type, entity_id=entity_id, url=final_url)
+        web_extract = WebExtract(
+            entity_type=entity_type, entity_id=entity_id, url=final_url
+        )
         db.add(web_extract)
 
     web_extract.status = "ok"
@@ -782,7 +786,9 @@ def _persist_web_extract(
         from sqlalchemy.exc import IntegrityError
 
         db.rollback()
-        if isinstance(commit_exc, IntegrityError) or isinstance(commit_exc.__cause__, IntegrityError):
+        if isinstance(commit_exc, IntegrityError) or isinstance(
+            commit_exc.__cause__, IntegrityError
+        ):
             web_extract = db.scalar(stmt)
             if not web_extract:
                 raise

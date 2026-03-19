@@ -15,16 +15,16 @@ branch_labels = None
 depends_on = None
 
 
-def _table_exists(
-    inspector: sa.engine.reflection.Inspector, table_name: str
-) -> bool:
+def _table_exists(inspector: sa.engine.reflection.Inspector, table_name: str) -> bool:
     return table_name in inspector.get_table_names()
 
 
 def _index_exists(
     inspector: sa.engine.reflection.Inspector, table_name: str, index_name: str
 ) -> bool:
-    return any(index["name"] == index_name for index in inspector.get_indexes(table_name))
+    return any(
+        index["name"] == index_name for index in inspector.get_indexes(table_name)
+    )
 
 
 def _create_weather_agronomic_data(
@@ -37,7 +37,9 @@ def _create_weather_agronomic_data(
         "weather_agronomic_data",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("region", sa.String(length=128), nullable=False),
-        sa.Column("country", sa.String(length=64), nullable=False, server_default="Peru"),
+        sa.Column(
+            "country", sa.String(length=64), nullable=False, server_default="Peru"
+        ),
         sa.Column("latitude", sa.Float(), nullable=False),
         sa.Column("longitude", sa.Float(), nullable=False),
         sa.Column("altitude_m", sa.Integer(), nullable=True),
@@ -57,7 +59,9 @@ def _create_weather_agronomic_data(
         sa.Column("frost_risk", sa.Float(), nullable=True),
         sa.Column("drought_stress", sa.Float(), nullable=True),
         sa.Column("source", sa.String(length=64), nullable=False),
-        sa.Column("source_id", sa.Integer(), sa.ForeignKey("sources.id"), nullable=True),
+        sa.Column(
+            "source_id", sa.Integer(), sa.ForeignKey("sources.id"), nullable=True
+        ),
         sa.Column("raw_data", sa.JSON(), nullable=True),
         sa.Column(
             "created_at",
@@ -156,7 +160,9 @@ def _create_shipment_api_events(
     op.create_table(
         "shipment_api_events",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("shipment_id", sa.Integer(), sa.ForeignKey("shipments.id"), nullable=True),
+        sa.Column(
+            "shipment_id", sa.Integer(), sa.ForeignKey("shipments.id"), nullable=True
+        ),
         sa.Column("vessel_imo", sa.String(length=16), nullable=True),
         sa.Column("vessel_mmsi", sa.String(length=16), nullable=True),
         sa.Column("vessel_name", sa.String(length=128), nullable=True),
@@ -341,14 +347,20 @@ def _create_source_health_metrics(
         sa.Column("metric_date", sa.Date(), nullable=False),
         sa.Column("metric_hour", sa.Integer(), nullable=True),
         sa.Column("requests_total", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("requests_successful", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column(
+            "requests_successful", sa.Integer(), nullable=False, server_default="0"
+        ),
         sa.Column("requests_failed", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("latency_min_ms", sa.Integer(), nullable=True),
         sa.Column("latency_max_ms", sa.Integer(), nullable=True),
         sa.Column("latency_avg_ms", sa.Integer(), nullable=True),
         sa.Column("latency_p95_ms", sa.Integer(), nullable=True),
-        sa.Column("records_collected", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("records_validated", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column(
+            "records_collected", sa.Integer(), nullable=False, server_default="0"
+        ),
+        sa.Column(
+            "records_validated", sa.Integer(), nullable=False, server_default="0"
+        ),
         sa.Column("records_rejected", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("error_types", sa.JSON(), nullable=True),
         sa.Column("last_error_message", sa.String(length=512), nullable=True),
@@ -358,7 +370,9 @@ def _create_source_health_metrics(
             nullable=False,
             server_default="closed",
         ),
-        sa.Column("circuit_breaker_trips", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column(
+            "circuit_breaker_trips", sa.Integer(), nullable=False, server_default="0"
+        ),
         sa.Column("data_quality_score", sa.Float(), nullable=True),
         sa.Column("missing_fields_pct", sa.Float(), nullable=True),
         sa.Column("outliers_detected", sa.Integer(), nullable=True),
@@ -412,7 +426,9 @@ def upgrade() -> None:
 def _drop_index_if_exists(
     inspector: sa.engine.reflection.Inspector, table_name: str, index_name: str
 ) -> None:
-    if _table_exists(inspector, table_name) and _index_exists(inspector, table_name, index_name):
+    if _table_exists(inspector, table_name) and _index_exists(
+        inspector, table_name, index_name
+    ):
         op.drop_index(index_name, table_name=table_name)
 
 
@@ -432,16 +448,30 @@ def downgrade() -> None:
     if _table_exists(inspector, "source_health_metrics"):
         op.drop_table("source_health_metrics")
 
-    _drop_index_if_exists(inspector, "data_lineage_log", "ix_data_lineage_log_action_time")
-    _drop_index_if_exists(inspector, "data_lineage_log", "ix_data_lineage_log_record_id")
-    _drop_index_if_exists(inspector, "data_lineage_log", "ix_data_lineage_log_table_name")
+    _drop_index_if_exists(
+        inspector, "data_lineage_log", "ix_data_lineage_log_action_time"
+    )
+    _drop_index_if_exists(
+        inspector, "data_lineage_log", "ix_data_lineage_log_record_id"
+    )
+    _drop_index_if_exists(
+        inspector, "data_lineage_log", "ix_data_lineage_log_table_name"
+    )
     if _table_exists(inspector, "data_lineage_log"):
         op.drop_table("data_lineage_log")
 
-    _drop_index_if_exists(inspector, "ml_features_cache", "ix_ml_features_cache_set_date")
-    _drop_index_if_exists(inspector, "ml_features_cache", "ix_ml_features_cache_feature_date")
-    _drop_index_if_exists(inspector, "ml_features_cache", "ix_ml_features_cache_entity_id")
-    _drop_index_if_exists(inspector, "ml_features_cache", "ix_ml_features_cache_feature_set")
+    _drop_index_if_exists(
+        inspector, "ml_features_cache", "ix_ml_features_cache_set_date"
+    )
+    _drop_index_if_exists(
+        inspector, "ml_features_cache", "ix_ml_features_cache_feature_date"
+    )
+    _drop_index_if_exists(
+        inspector, "ml_features_cache", "ix_ml_features_cache_entity_id"
+    )
+    _drop_index_if_exists(
+        inspector, "ml_features_cache", "ix_ml_features_cache_feature_set"
+    )
     if _table_exists(inspector, "ml_features_cache"):
         op.drop_table("ml_features_cache")
 

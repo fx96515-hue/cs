@@ -24,7 +24,9 @@ class CreateCampaignIn(BaseModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str) -> str:
-        return validate_text_field(value, field_name="Kampagnenname", required=True, max_length=120)
+        return validate_text_field(
+            value, field_name="Kampagnenname", required=True, max_length=120
+        )
 
     @field_validator("region", "certification")
     @classmethod

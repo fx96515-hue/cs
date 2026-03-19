@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for news refresh service.
+"""Compatibility wrapper for news refresh service.
 
 Canonical implementation lives in app.domains.news.services.refresh.
 """

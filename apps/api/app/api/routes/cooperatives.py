@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for cooperatives routes.
+"""Compatibility wrapper for cooperatives routes.
 
 Canonical implementation lives in app.domains.cooperatives.api.routes.
 """

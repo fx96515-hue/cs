@@ -1,1 +1,1 @@
-﻿"""Assistant domain (chat + analyst)."""
+"""Assistant domain (chat + analyst)."""

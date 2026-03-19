@@ -462,4 +462,3 @@ async def import_price_data(
         )
     except Exception:
         raise HTTPException(status_code=400, detail="Import failed")
-

@@ -48,4 +48,3 @@ def test_latest_observation_without_source_stays_none(db):
 
     assert result is not None
     assert result["source"] is None
-

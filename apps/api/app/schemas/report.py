@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for report schema.
+"""Compatibility wrapper for report schema.
 
 Canonical implementation lives in app.domains.reports.schemas.report.
 """

@@ -344,7 +344,9 @@ class DataPipelineOrchestrator:
 
         status = (
             "success"
-            if results["fx_rates"] and results["coffee_prices"] and results["freight_rates"]
+            if results["fx_rates"]
+            and results["coffee_prices"]
+            and results["freight_rates"]
             else "partial"
             if any(results.values())
             else "failed"
@@ -412,9 +414,19 @@ class DataPipelineOrchestrator:
         completed_at = datetime.now(timezone.utc)
         duration = (completed_at - started_at).total_seconds()
 
-        weather_ok = bool(results["peru_weather"] and results["peru_weather"].get("success"))
-        news_ok = bool(results["news"] and results["news"].get("status") in {"ok", "success"})
-        status = "success" if weather_ok and news_ok else "partial" if weather_ok or news_ok else "failed"
+        weather_ok = bool(
+            results["peru_weather"] and results["peru_weather"].get("success")
+        )
+        news_ok = bool(
+            results["news"] and results["news"].get("status") in {"ok", "success"}
+        )
+        status = (
+            "success"
+            if weather_ok and news_ok
+            else "partial"
+            if weather_ok or news_ok
+            else "failed"
+        )
 
         log.info(
             "intelligence_pipeline_complete",

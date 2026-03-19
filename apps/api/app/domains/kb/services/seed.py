@@ -54,7 +54,9 @@ def _insert_doc_postgres(db: Session, doc: dict[str, Any], language: str) -> boo
     return inserted_id is not None
 
 
-def _load_existing_doc(db: Session, doc: dict[str, Any], language: str) -> KnowledgeDoc | None:
+def _load_existing_doc(
+    db: Session, doc: dict[str, Any], language: str
+) -> KnowledgeDoc | None:
     stmt = select(KnowledgeDoc).where(
         KnowledgeDoc.category == doc["category"],
         KnowledgeDoc.key == doc["key"],

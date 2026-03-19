@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for RAG analyst routes.
+"""Compatibility wrapper for RAG analyst routes.
 
 Canonical implementation lives in app.domains.assistant.api.analyst_routes.
 """

@@ -5,8 +5,6 @@ Revises: 0020_full_stack_data_models, 0021_add_sentiment_scores_table
 Create Date: 2026-03-14
 """
 
-from alembic import op
-
 revision = "0022_merge_0020_0021_heads"
 down_revision = ("0020_full_stack_data_models", "0021_add_sentiment_scores_table")
 branch_labels = None

@@ -141,7 +141,9 @@ class PriceFeatureEngine:
     @staticmethod
     def compute_drought_stress(soil_moisture: float, precip_mm: float) -> float:
         moisture_factor = 1.0 - soil_moisture if soil_moisture is not None else 0.5
-        precip_factor = max(0.0, 1.0 - (precip_mm / 50)) if precip_mm is not None else 0.5
+        precip_factor = (
+            max(0.0, 1.0 - (precip_mm / 50)) if precip_mm is not None else 0.5
+        )
         return round((moisture_factor * 0.6) + (precip_factor * 0.4), 4)
 
     @staticmethod
@@ -164,7 +166,9 @@ class PriceFeatureEngine:
             "exchange_rate_impact_eur_pen": float(record.get("fx_eur_pen", 3.95)),
             "ice_futures_correlation": 0.92,
             "global_coffee_stock_level": float(record.get("global_stocks_bags", 78)),
-            "peru_production_forecast": float(record.get("peru_prod_forecast_tons", 420000)),
+            "peru_production_forecast": float(
+                record.get("peru_prod_forecast_tons", 420000)
+            ),
             "frost_risk_index": PriceFeatureEngine.compute_frost_risk(
                 float(record.get("temp_min", 15))
             ),
@@ -191,7 +195,9 @@ class CrossFeatureEngine:
     """Generate cross-domain features."""
 
     @staticmethod
-    def compute_freight_to_price_ratio(freight_cost: float, coffee_price: float) -> float:
+    def compute_freight_to_price_ratio(
+        freight_cost: float, coffee_price: float
+    ) -> float:
         if coffee_price <= 0:
             return 0.0
         return round(freight_cost / coffee_price, 4)
@@ -225,7 +231,9 @@ class CrossFeatureEngine:
             "month_of_year": float(month),
             "quarter": float(quarter),
             "is_harvest_season": 1.0 if month in [6, 7, 8, 9] else 0.0,
-            "days_since_season_start": float((now - datetime(now.year, 6, 1)).days % 365),
+            "days_since_season_start": float(
+                (now - datetime(now.year, 6, 1)).days % 365
+            ),
             "is_weekend": 1.0 if now.weekday() >= 5 else 0.0,
         }
 
@@ -247,7 +255,9 @@ class CrossFeatureEngine:
                 landed_cost,
             ),
             "region_reputation_score": float(record.get("region_reputation", 0.88)),
-            "buyer_roaster_preference_index": float(record.get("buyer_preference", 0.75)),
+            "buyer_roaster_preference_index": float(
+                record.get("buyer_preference", 0.75)
+            ),
             "supply_chain_efficiency": float(record.get("supply_efficiency", 0.82)),
         }
         features.update(CrossFeatureEngine.generate_temporal_features())
@@ -258,7 +268,9 @@ class FeatureEngineer:
     """Main feature engineering orchestrator."""
 
     @staticmethod
-    def generate_all_features(record: dict, record_type: str = "price") -> dict[str, float]:
+    def generate_all_features(
+        record: dict, record_type: str = "price"
+    ) -> dict[str, float]:
         features: dict[str, float] = {}
         if record_type == "freight":
             features.update(FreightFeatureEngine.generate_all_freight_features(record))

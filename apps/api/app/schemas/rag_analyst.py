@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for RAG analyst schemas.
+"""Compatibility wrapper for RAG analyst schemas.
 
 Canonical implementation lives in app.domains.assistant.schemas.analyst.
 """

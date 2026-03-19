@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for reports routes.
+"""Compatibility wrapper for reports routes.
 
 Canonical implementation lives in app.domains.reports.api.routes.
 """

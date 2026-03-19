@@ -1,1 +1,1 @@
-﻿"""Domain-oriented modules for business capabilities."""
+"""Domain-oriented modules for business capabilities."""
