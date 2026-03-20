@@ -31,7 +31,7 @@ jobs:
       url: https://coffeestudio.example.com
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.version || github.ref }}
       
