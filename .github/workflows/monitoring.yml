@@ -327,7 +327,7 @@ jobs:
       
       - name: Notify Team on Failure
         if: steps.check_config.outputs.is_configured == 'true' && steps.api_health.outputs.status == 'failure' && env.HAS_SLACK == 'true'
-        uses: slackapi/slack-github-action@v2
+        uses: slackapi/slack-github-action@v3
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK }}
           payload: |

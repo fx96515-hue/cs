@@ -169,7 +169,7 @@ jobs:
       
       - name: Notify Team
         if: always() && env.HAS_SLACK == 'true'
-        uses: slackapi/slack-github-action@v2
+        uses: slackapi/slack-github-action@v3
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK }}
           payload: |
