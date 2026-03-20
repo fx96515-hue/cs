@@ -21,7 +21,7 @@ jobs:
       url: https://staging.coffeestudio.example.com
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Create Deployment
         id: deployment

@@ -18,7 +18,7 @@ jobs:
       contents: read
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -51,7 +51,7 @@ jobs:
       packages: read
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Run Trivy Filesystem Scan
         run: |
@@ -120,7 +120,7 @@ jobs:
       packages: read
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Build Backend Docker Image
         run: |
@@ -194,7 +194,7 @@ jobs:
       packages: read
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Build Frontend Docker Image
         id: build_frontend
@@ -272,7 +272,7 @@ jobs:
       contents: read
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Run Snyk to check for vulnerabilities (Backend)
         uses: snyk/actions/python-3.10@v1.0.0
@@ -304,7 +304,7 @@ jobs:
         language: ['python', 'javascript-typescript']
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -328,7 +328,7 @@ jobs:
       security-events: write
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Set up Python
         uses: actions/setup-python@v6
