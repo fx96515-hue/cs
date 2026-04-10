@@ -89,7 +89,7 @@ jobs:
       - name: Build Sonar arguments
         if: steps.sonar_config.outputs.enabled == 'true'
         id: sonar_args
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
