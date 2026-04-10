@@ -225,7 +225,7 @@ jobs:
       
       - name: Create Issue on Critical Failure
         if: steps.check_config.outputs.is_configured == 'true' && steps.api_health.outputs.status == 'failure'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const title = '🚨 Production Health Check Failed';
@@ -271,7 +271,7 @@ jobs:
 
       - name: Auto-close stale production alert issues
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const apiStatus = "${{ steps.api_health.outputs.status }}";

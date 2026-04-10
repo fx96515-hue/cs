@@ -98,7 +98,7 @@ jobs:
 
       - name: Comment Preview URL
         if: steps.vercel_config.outputs.enabled == 'true' && github.event_name == 'pull_request' && steps.deploy_preview.outputs.url != ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.issues.createComment({
