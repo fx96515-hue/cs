@@ -119,7 +119,9 @@ def get_cooperative_sourcing_analysis(
         analysis = analyzer.analyze_for_sourcing(coop_id, force_refresh=False)
         return analysis
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_DETAIL)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_DETAIL
+        )
 
 
 @router.post("/cooperatives/{coop_id}/analyze", response_model=SourcingAnalysisResponse)
@@ -153,7 +155,9 @@ def analyze_cooperative_for_sourcing(
         analysis = analyzer.analyze_for_sourcing(coop_id, force_refresh=force_refresh)
         return analysis
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_DETAIL)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_DETAIL
+        )
 
 
 @router.post("/regions/refresh")

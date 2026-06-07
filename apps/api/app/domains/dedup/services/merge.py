@@ -49,7 +49,9 @@ def _load_entities(db: Session, entity_type: str) -> list[Cooperative] | list[Ro
     return db.query(Roaster).all()
 
 
-def _group_by_domain(items: list[Cooperative] | list[Roaster]) -> tuple[dict[str, list[Any]], list[Any]]:
+def _group_by_domain(
+    items: list[Cooperative] | list[Roaster],
+) -> tuple[dict[str, list[Any]], list[Any]]:
     by_domain: dict[str, list[Any]] = {}
     no_domain: list[Any] = []
     for item in items:
@@ -71,7 +73,9 @@ def _domain_pairs(by_domain: dict[str, list[Any]]) -> list[DedupPair]:
                 a, b = group[i], group[j]
                 s = _score(a.name, b.name)
                 pairs.append(
-                    DedupPair(a.id, b.id, a.name, b.name, max(s, 98.0), f"same_domain:{dom}")
+                    DedupPair(
+                        a.id, b.id, a.name, b.name, max(s, 98.0), f"same_domain:{dom}"
+                    )
                 )
     return pairs
 
@@ -89,7 +93,9 @@ def _name_pairs(no_domain: list[Any], threshold: float) -> list[DedupPair]:
                 a, b = group[i], group[j]
                 s = _score(a.name, b.name)
                 if s >= threshold:
-                    pairs.append(DedupPair(a.id, b.id, a.name, b.name, s, "name_similarity"))
+                    pairs.append(
+                        DedupPair(a.id, b.id, a.name, b.name, s, "name_similarity")
+                    )
     return pairs
 
 
@@ -170,7 +176,9 @@ def _create_name_alias(
     )
 
 
-def _merge_nullable_fields(keep_entity: Cooperative | Roaster, merge_entity: Cooperative | Roaster) -> list[str]:
+def _merge_nullable_fields(
+    keep_entity: Cooperative | Roaster, merge_entity: Cooperative | Roaster
+) -> list[str]:
     fields_to_merge = [
         "region",
         "altitude_m",
@@ -190,7 +198,9 @@ def _merge_nullable_fields(keep_entity: Cooperative | Roaster, merge_entity: Coo
     return merged_fields
 
 
-def _merge_score_fields(keep_entity: Cooperative | Roaster, merge_entity: Cooperative | Roaster) -> list[str]:
+def _merge_score_fields(
+    keep_entity: Cooperative | Roaster, merge_entity: Cooperative | Roaster
+) -> list[str]:
     score_fields = [
         "quality_score",
         "reliability_score",
@@ -207,14 +217,18 @@ def _merge_score_fields(keep_entity: Cooperative | Roaster, merge_entity: Cooper
     return merged_fields
 
 
-def _append_merge_meta(entity: Cooperative | Roaster, merge_info: dict[str, Any]) -> None:
+def _append_merge_meta(
+    entity: Cooperative | Roaster, merge_info: dict[str, Any]
+) -> None:
     keep_meta = entity.meta or {}
     keep_meta["merge_history"] = keep_meta.get("merge_history", [])
     keep_meta["merge_history"].append(merge_info)
     entity.meta = keep_meta
 
 
-def _archive_merged_entity(entity: Cooperative | Roaster, keep_id: int, merged_at: str) -> None:
+def _archive_merged_entity(
+    entity: Cooperative | Roaster, keep_id: int, merged_at: str
+) -> None:
     entity.status = "archived"
     merge_meta = entity.meta or {}
     merge_meta["merged_into_id"] = keep_id

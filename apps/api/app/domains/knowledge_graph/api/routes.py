@@ -190,7 +190,9 @@ def get_path_by_node_ids(
 def get_hidden_connections(
     entity_type: GraphEntityType,
     entity_id: str,  # Accept str to handle both numeric IDs and string-based IDs
-    max_hops: Annotated[int, Query(ge=2, le=5, description="Maximum hops to search")] = 3,
+    max_hops: Annotated[
+        int, Query(ge=2, le=5, description="Maximum hops to search")
+    ] = 3,
     *,
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[None, Depends(require_role("admin", "analyst", "viewer"))],

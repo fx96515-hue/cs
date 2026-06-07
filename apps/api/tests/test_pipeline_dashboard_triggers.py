@@ -63,4 +63,3 @@ def test_trigger_unknown_source_returns_404(client, auth_headers, monkeypatch):
 def test_trigger_source_rejects_invalid_characters(client, auth_headers):
     response = client.post("/pipeline/trigger/market@news", headers=auth_headers)
     assert response.status_code == 422
-

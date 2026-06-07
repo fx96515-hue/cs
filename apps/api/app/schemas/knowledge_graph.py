@@ -5,7 +5,9 @@ Canonical implementation lives in app.domains.knowledge_graph.schemas.knowledge_
 
 import importlib
 
-_canonical = importlib.import_module("app.domains.knowledge_graph.schemas.knowledge_graph")
+_canonical = importlib.import_module(
+    "app.domains.knowledge_graph.schemas.knowledge_graph"
+)
 
 __all__ = [name for name in dir(_canonical) if not name.startswith("_")]
 

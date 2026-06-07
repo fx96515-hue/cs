@@ -64,7 +64,11 @@ class MarineTrafficProvider:
     @staticmethod
     def fetch_port_catalog() -> list[dict[str, str]]:
         return [
-            {"port_code": code, "port_name": payload["name"], "country": payload["country"]}
+            {
+                "port_code": code,
+                "port_name": payload["name"],
+                "country": payload["country"],
+            }
             for code, payload in MarineTrafficProvider.PORTS.items()
         ]
 
@@ -85,7 +89,8 @@ class ShippingProvider:
     def to_shipment_event(position_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "vessel_imo": position_data.get("vessel_imo"),
-            "vessel_mmsi": position_data.get("mmsi") or position_data.get("vessel_mmsi"),
+            "vessel_mmsi": position_data.get("mmsi")
+            or position_data.get("vessel_mmsi"),
             "vessel_name": position_data.get("vessel_name"),
             "vessel_type": position_data.get("vessel_type"),
             "latitude": position_data.get("latitude"),
@@ -93,7 +98,8 @@ class ShippingProvider:
             "speed_knots": position_data.get("speed_knots"),
             "course": position_data.get("course"),
             "event_type": position_data.get("event_type", "position_update"),
-            "event_time": position_data.get("timestamp") or position_data.get("event_time"),
+            "event_time": position_data.get("timestamp")
+            or position_data.get("event_time"),
             "source": position_data.get("source", "shipping-provider"),
             "raw_data": position_data,
         }

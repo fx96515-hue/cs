@@ -5,7 +5,9 @@ def test_deals_reject_non_positive_path_ids(client, auth_headers):
     response_get = client.get("/deals/0", headers=auth_headers)
     assert response_get.status_code == 422
 
-    response_patch = client.patch("/deals/0", json={"status": "open"}, headers=auth_headers)
+    response_patch = client.patch(
+        "/deals/0", json={"status": "open"}, headers=auth_headers
+    )
     assert response_patch.status_code == 422
 
     response_delete = client.delete("/deals/0", headers=auth_headers)
