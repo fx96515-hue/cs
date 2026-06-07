@@ -1,4 +1,4 @@
-﻿# CoffeeStudio Struktur-Blueprint (Enterprise)
+# CoffeeStudio Struktur-Blueprint (Enterprise)
 
 ## Ist-Zustand (Kurz)
 - API ist technisch stabil, aber historisch schichtenorientiert (`api/routes`, `services`, `schemas`) mit wachsender Querschnittslogik.

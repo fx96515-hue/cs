@@ -12,7 +12,10 @@ from app.db.session import get_db
 from app.models.lot import Lot
 from app.models.user import User
 from app.domains.lots.schemas.lot import LotCreate, LotOut, LotUpdate
-from app.domains.data_quality.services.flags import recompute_entity_flags, resolve_entity_flags
+from app.domains.data_quality.services.flags import (
+    recompute_entity_flags,
+    resolve_entity_flags,
+)
 
 router = APIRouter()
 NOT_FOUND_DETAIL = "Not found"

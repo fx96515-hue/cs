@@ -105,7 +105,9 @@ def _add_region_nodes(graph: nx.Graph, regions: list[Region]) -> None:
         )
 
 
-def _ensure_region_nodes_from_coops(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
+def _ensure_region_nodes_from_coops(
+    graph: nx.Graph, cooperatives: list[Cooperative]
+) -> None:
     for coop in cooperatives:
         if not coop.region:
             continue
@@ -130,7 +132,9 @@ def _collect_certifications(cooperatives: list[Cooperative]) -> set[str]:
     for coop in cooperatives:
         if not coop.certifications:
             continue
-        certifications.update(c.strip() for c in coop.certifications.split(",") if c.strip())
+        certifications.update(
+            c.strip() for c in coop.certifications.split(",") if c.strip()
+        )
     return certifications
 
 
@@ -164,18 +168,26 @@ def _add_coop_cert_edges(graph: nx.Graph, cooperatives: list[Cooperative]) -> No
                 continue
             cert_id = _cert_node_id(cert)
             if graph.has_node(cert_id):
-                graph.add_edge(coop_id, cert_id, edge_type="HAS_CERTIFICATION", weight=1.0)
+                graph.add_edge(
+                    coop_id, cert_id, edge_type="HAS_CERTIFICATION", weight=1.0
+                )
 
 
-def _add_roaster_region_edges(graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]) -> None:
-    unique_region_ids = {_region_node_id(coop.region) for coop in cooperatives if coop.region}
+def _add_roaster_region_edges(
+    graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]
+) -> None:
+    unique_region_ids = {
+        _region_node_id(coop.region) for coop in cooperatives if coop.region
+    }
     for roaster in roasters:
         if not roaster.peru_focus:
             continue
         roaster_id = f"roaster_{roaster.id}"
         for region_id in unique_region_ids:
             if graph.has_node(region_id):
-                graph.add_edge(roaster_id, region_id, edge_type="SOURCES_FROM", weight=1.0)
+                graph.add_edge(
+                    roaster_id, region_id, edge_type="SOURCES_FROM", weight=1.0
+                )
 
 
 def _add_similar_coop_edges(graph: nx.Graph, cooperatives: list[Cooperative]) -> None:
@@ -201,7 +213,10 @@ def _add_similar_roaster_edges(graph: nx.Graph, roasters: list[Roaster]) -> None
         for roaster2 in roasters[i + 1 :]:
             if not roaster1.city or roaster1.city != roaster2.city:
                 continue
-            if not roaster1.price_position or roaster1.price_position != roaster2.price_position:
+            if (
+                not roaster1.price_position
+                or roaster1.price_position != roaster2.price_position
+            ):
                 continue
             graph.add_edge(
                 f"roaster_{roaster1.id}",
@@ -216,7 +231,9 @@ def _build_region_to_coops(cooperatives: list[Cooperative]) -> dict[str, list[st
     for coop in cooperatives:
         if not coop.region:
             continue
-        region_to_coops.setdefault(_region_node_id(coop.region), []).append(f"cooperative_{coop.id}")
+        region_to_coops.setdefault(_region_node_id(coop.region), []).append(
+            f"cooperative_{coop.id}"
+        )
     return region_to_coops
 
 
@@ -245,7 +262,9 @@ def _add_roaster_trade_edges_for_targets(
         )
 
 
-def _add_roaster_coop_trade_edges(graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]) -> None:
+def _add_roaster_coop_trade_edges(
+    graph: nx.Graph, roasters: list[Roaster], cooperatives: list[Cooperative]
+) -> None:
     region_to_coops = _build_region_to_coops(cooperatives)
     for roaster in roasters:
         if not roaster.peru_focus:

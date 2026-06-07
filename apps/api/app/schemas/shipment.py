@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for shipment schemas.
+"""Compatibility wrapper for shipment schemas.
 
 Canonical implementation lives in app.domains.shipments.schemas.shipment.
 """

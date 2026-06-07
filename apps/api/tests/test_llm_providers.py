@@ -53,7 +53,9 @@ def test_get_llm_provider_auto_prefers_openrouter(monkeypatch):
     assert provider.provider_name() == "openrouter"
 
 
-def test_get_llm_provider_auto_falls_back_to_groq_when_openrouter_unavailable(monkeypatch):
+def test_get_llm_provider_auto_falls_back_to_groq_when_openrouter_unavailable(
+    monkeypatch,
+):
     monkeypatch.setattr("app.services.llm_providers.settings.RAG_PROVIDER", "auto")
     monkeypatch.setattr(
         "app.services.llm_providers.OpenRouterProvider.is_available",
@@ -89,7 +91,4 @@ def test_resolve_rag_model_uses_openrouter_default(monkeypatch):
         "meta-llama/llama-3.3-8b-instruct:free",
     )
 
-    assert (
-        resolve_rag_model("openrouter")
-        == "meta-llama/llama-3.3-8b-instruct:free"
-    )
+    assert resolve_rag_model("openrouter") == "meta-llama/llama-3.3-8b-instruct:free"

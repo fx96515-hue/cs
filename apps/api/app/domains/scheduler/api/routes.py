@@ -55,7 +55,9 @@ def _humanize_cron(minute: str, hour: str) -> str:
     if minute == "*" and hour == "*":
         return "Fortlaufend"
     if "," in hour:
-        hours = ", ".join(f"{int(value):02d}:{int(minute):02d}" for value in hour.split(","))
+        hours = ", ".join(
+            f"{int(value):02d}:{int(minute):02d}" for value in hour.split(",")
+        )
         return f"Mehrfach taeglich: {hours}"
     if minute == "0" and hour != "*":
         return f"Taeglich um {int(hour):02d}:00"

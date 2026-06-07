@@ -1,4 +1,4 @@
-﻿# CoffeeStudio (Option D) – Windows Quickstart (PowerShell)
+# CoffeeStudio (Option D) – Windows Quickstart (PowerShell)
 
 ## Voraussetzungen
 - **Docker Desktop** (WSL2 / Linux containers)

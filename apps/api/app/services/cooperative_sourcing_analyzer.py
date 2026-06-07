@@ -241,7 +241,9 @@ class CooperativeSourcingAnalyzer:
         return 5
 
     @staticmethod
-    def _communication_risk_score(avg_response: float | int, missed_meetings: int) -> int:
+    def _communication_risk_score(
+        avg_response: float | int, missed_meetings: int
+    ) -> int:
         response_risk = 0
         if avg_response > 72:
             response_risk = 10
@@ -297,7 +299,11 @@ class CooperativeSourcingAnalyzer:
         )
 
         score = float(
-            volume_score + farmer_score + storage_score + facility_score + experience_score
+            volume_score
+            + farmer_score
+            + storage_score
+            + facility_score
+            + experience_score
         )
         breakdown = {
             "volume": {"score": volume_score, "volume_kg": volume_kg},
@@ -349,7 +355,11 @@ class CooperativeSourcingAnalyzer:
         coordinator_score = 10 if has_coordinator else 0
 
         score = float(
-            license_score + senasa_score + cert_score + customs_score + coordinator_score
+            license_score
+            + senasa_score
+            + cert_score
+            + customs_score
+            + coordinator_score
         )
         breakdown = {
             "license": {
@@ -403,8 +413,10 @@ class CooperativeSourcingAnalyzer:
         missed_meetings = comm_data.get("missed_meetings", 0)
         response_score = self._response_score(avg_response_hours)
         language_set = {str(lang).lower() for lang in languages}
-        lang_score = 5 + (15 if "english" in language_set else 0) + (
-            10 if "german" in language_set else 0
+        lang_score = (
+            5
+            + (15 if "english" in language_set else 0)
+            + (10 if "german" in language_set else 0)
         )
         digital_score = (
             (8 if digital_data.get("has_website") else 0)
@@ -417,7 +429,9 @@ class CooperativeSourcingAnalyzer:
         )
         meeting_score = self._meeting_score(missed_meetings)
 
-        score = float(response_score + lang_score + digital_score + doc_score + meeting_score)
+        score = float(
+            response_score + lang_score + digital_score + doc_score + meeting_score
+        )
         breakdown = {
             "response_time": {"score": response_score, "avg_hours": avg_response_hours},
             "languages": {"score": lang_score, "list": languages},
@@ -525,7 +539,9 @@ class CooperativeSourcingAnalyzer:
         fin_risk = self._financial_risk_score(annual_revenue)
         qual_risk = self._quality_risk_score(quality_score)
         base_delivery_risk = self._base_delivery_risk(years_exp)
-        delivery_risk = max(0, min(25, base_delivery_risk + min(10, customs_issues * 2)))
+        delivery_risk = max(
+            0, min(25, base_delivery_risk + min(10, customs_issues * 2))
+        )
         geo_risk = self._geographic_risk_score(coop.altitude_m)
         comm_risk = self._communication_risk_score(avg_response, missed_meetings)
 

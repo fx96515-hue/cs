@@ -192,11 +192,15 @@ def test_audit_logging_on_crud_operations(client, auth_headers, db, test_user, c
     assert delete_response.status_code == 200
 
 
-def test_backfill_missing_cooperatives_without_provider(client, auth_headers, monkeypatch):
+def test_backfill_missing_cooperatives_without_provider(
+    client, auth_headers, monkeypatch
+):
     """Backfill endpoint should return a clear error when no provider is configured."""
     monkeypatch.delenv("PERPLEXITY_API_KEY", raising=False)
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
-    response = client.post("/cooperatives/backfill-missing?limit=5", headers=auth_headers)
+    response = client.post(
+        "/cooperatives/backfill-missing?limit=5", headers=auth_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "failed"
@@ -206,5 +210,7 @@ def test_backfill_missing_cooperatives_without_provider(client, auth_headers, mo
 
 def test_backfill_single_cooperative_not_found(client, auth_headers):
     """Single cooperative backfill should return 404 for unknown IDs."""
-    response = client.post("/cooperatives/999999/backfill-missing", headers=auth_headers)
+    response = client.post(
+        "/cooperatives/999999/backfill-missing", headers=auth_headers
+    )
     assert response.status_code == 404

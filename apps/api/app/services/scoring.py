@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -45,7 +45,9 @@ def _get_latest_observation(db: Session, key: str) -> Optional[MarketObservation
     )
 
 
-def _compute_quality(coop: Cooperative, meta: dict, reasons: list[str]) -> Optional[float]:
+def _compute_quality(
+    coop: Cooperative, meta: dict, reasons: list[str]
+) -> Optional[float]:
     if coop.quality_score is not None:
         reasons.append("Qualitaet: quality_score Feld gesetzt")
         return _clamp(float(coop.quality_score))
@@ -58,7 +60,9 @@ def _compute_quality(coop: Cooperative, meta: dict, reasons: list[str]) -> Optio
     return None
 
 
-def _compute_reliability(coop: Cooperative, meta: dict, reasons: list[str]) -> Optional[float]:
+def _compute_reliability(
+    coop: Cooperative, meta: dict, reasons: list[str]
+) -> Optional[float]:
     if coop.reliability_score is not None:
         reasons.append("Zuverlaessigkeit: reliability_score Feld gesetzt")
         return _clamp(float(coop.reliability_score))
@@ -71,7 +75,9 @@ def _compute_reliability(coop: Cooperative, meta: dict, reasons: list[str]) -> O
     return None
 
 
-def _compute_economics(db: Session, coop: Cooperative, meta: dict, reasons: list[str]) -> Optional[float]:
+def _compute_economics(
+    db: Session, coop: Cooperative, meta: dict, reasons: list[str]
+) -> Optional[float]:
     if coop.economics_score is not None:
         reasons.append("Wirtschaftlichkeit: economics_score Feld gesetzt")
         return _clamp(float(coop.economics_score))
@@ -89,7 +95,9 @@ def _compute_economics(db: Session, coop: Cooperative, meta: dict, reasons: list
         )
         return _clamp(50.0 + (1.0 - ratio) * 83.0)
 
-    reasons.append("Wirtschaftlichkeit: FOB vorhanden, aber keine COFFEE_C Referenz -> neutral")
+    reasons.append(
+        "Wirtschaftlichkeit: FOB vorhanden, aber keine COFFEE_C Referenz -> neutral"
+    )
     return 50.0
 
 

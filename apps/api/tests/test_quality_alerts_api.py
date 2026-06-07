@@ -19,7 +19,9 @@ def test_quality_alerts_rejects_non_positive_limit(client, auth_headers):
 
 
 def test_quality_alerts_reject_invalid_entity_type_and_severity(client, auth_headers):
-    invalid_entity_type = client.get("/alerts?entity_type=INVALID", headers=auth_headers)
+    invalid_entity_type = client.get(
+        "/alerts?entity_type=INVALID", headers=auth_headers
+    )
     assert invalid_entity_type.status_code == 422
 
     invalid_severity = client.get("/alerts?severity=urgent", headers=auth_headers)

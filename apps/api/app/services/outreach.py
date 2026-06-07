@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for outreach service.
+"""Compatibility wrapper for outreach service.
 
 Canonical implementation lives in app.domains.outreach.services.generator.
 """

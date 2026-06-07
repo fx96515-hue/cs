@@ -34,7 +34,9 @@ def test_scheduler_run_job_endpoint(client, auth_headers, monkeypatch):
         "app.domains.scheduler.api.routes.celery.send_task", fake_send_task
     )
 
-    response = client.post("/scheduler/jobs/market_refresh_01/run", headers=auth_headers)
+    response = client.post(
+        "/scheduler/jobs/market_refresh_01/run", headers=auth_headers
+    )
     assert response.status_code == 200
     assert response.json()["task_id"] == "queued-task-123"
     assert calls[0]["task_name"] == "app.workers.tasks.refresh_market"

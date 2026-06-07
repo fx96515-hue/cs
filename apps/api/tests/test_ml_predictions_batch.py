@@ -77,7 +77,9 @@ def test_import_freight_data_error_is_sanitized(client, auth_headers, monkeypatc
         }
     ]
 
-    response = client.post("/ml/data/import-freight", json=payload, headers=auth_headers)
+    response = client.post(
+        "/ml/data/import-freight", json=payload, headers=auth_headers
+    )
     assert response.status_code == 400
     assert response.json()["detail"] == "Import failed"
 

@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for RAG analyst service.
+"""Compatibility wrapper for RAG analyst service.
 
 Canonical implementation lives in app.domains.assistant.services.analyst_service.
 """

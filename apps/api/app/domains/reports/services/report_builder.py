@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -69,7 +69,9 @@ def _get_roasters_snapshot(db: Session) -> List[Roaster]:
     )
 
 
-def _append_market_section(lines: List[str], latest: Dict[str, Optional[MarketObservation]]) -> None:
+def _append_market_section(
+    lines: List[str], latest: Dict[str, Optional[MarketObservation]]
+) -> None:
     lines.append("## Markt & Preise")
     lines.append(f"- USD->EUR: {_fmt_obs(latest.get('FX:USD_EUR'))}")
     lines.append(f"- Coffee C (USD/lb): {_fmt_obs(latest.get('COFFEE_C:USD_LB'))}")
@@ -123,7 +125,9 @@ def _append_actions_section(lines: List[str]) -> None:
     lines.append(
         "- 1) Fehlende Marktdaten ergaenzen (FX/C-Preis/Fracht) -> verbessert Margenberechnungen"
     )
-    lines.append("- 2) Top-3 Kooperativen: Kontaktdaten verifizieren + Muster/Lots anfragen")
+    lines.append(
+        "- 2) Top-3 Kooperativen: Kontaktdaten verifizieren + Muster/Lots anfragen"
+    )
     lines.append(
         "- 3) 3-5 passende Roester identifizieren und Gespraech anbahnen (Peru-/Direct-Trade-Fokus)"
     )

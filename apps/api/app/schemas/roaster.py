@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for roaster schemas.
+"""Compatibility wrapper for roaster schemas.
 
 Canonical implementation lives in app.domains.roasters.schemas.roaster.
 """

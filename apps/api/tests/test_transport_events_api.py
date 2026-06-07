@@ -102,4 +102,3 @@ def test_transport_events_reject_non_positive_event_id(client, auth_headers):
 def test_transport_events_reject_non_positive_shipment_filter(client, auth_headers):
     response = client.get("/transport-events/?shipment_id=0", headers=auth_headers)
     assert response.status_code == 422
-

@@ -1,1 +1,1 @@
-﻿"""Assistant domain service layer."""
+"""Assistant domain service layer."""

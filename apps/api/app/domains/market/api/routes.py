@@ -25,7 +25,10 @@ from app.core.security import decode_token
 from app.db.session import SessionLocal, get_db
 from app.models.market import MarketObservation
 from app.models.user import User
-from app.domains.market.schemas.market import MarketObservationCreate, MarketObservationOut
+from app.domains.market.schemas.market import (
+    MarketObservationCreate,
+    MarketObservationOut,
+)
 from app.workers.celery_app import celery
 
 log = structlog.get_logger()
@@ -311,4 +314,3 @@ async def websocket_price(
         log.info("ws_price_disconnect")
     except Exception as exc:
         log.warning("ws_price_error", error=str(exc))
-

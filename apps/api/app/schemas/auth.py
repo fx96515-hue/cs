@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for auth schemas.
+"""Compatibility wrapper for auth schemas.
 
 Canonical implementation lives in app.domains.auth.schemas.auth.
 """

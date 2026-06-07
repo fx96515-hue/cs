@@ -642,4 +642,3 @@ def seed_all_demo_data(db: Session) -> dict[str, Any]:
         "roasters": roasters_result,
         "market": market_result,
     }
-

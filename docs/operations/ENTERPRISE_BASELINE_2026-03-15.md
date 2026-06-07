@@ -1,4 +1,4 @@
-﻿# Enterprise Baseline Audit (2026-03-15)
+# Enterprise Baseline Audit (2026-03-15)
 
 ## Scope
 

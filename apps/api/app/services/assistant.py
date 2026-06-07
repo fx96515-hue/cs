@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for assistant service.
+"""Compatibility wrapper for assistant service.
 
 Canonical implementation lives in app.domains.assistant.services.chat_service.
 """

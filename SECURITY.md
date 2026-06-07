@@ -1,21 +1,16 @@
 # Security Policy
 
-## Supported Versions
+The full, project-specific security policy lives in
+[`docs/security/SECURITY.md`](docs/security/SECURITY.md).
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Related references:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+- [`docs/security/SECURITY_AUDIT_REPORT.md`](docs/security/SECURITY_AUDIT_REPORT.md)
+- [`docs/security/SECURITY_BEST_PRACTICES.md`](docs/security/SECURITY_BEST_PRACTICES.md)
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Please report suspected vulnerabilities privately to the maintainers via a
+[GitHub Security Advisory](../../security/advisories/new) rather than opening a
+public issue. Do not include real secrets, credentials, or production data in
+reports.

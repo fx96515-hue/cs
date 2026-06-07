@@ -205,11 +205,9 @@ def dev_bootstrap(
         ) from e
 
     try:
-        bootstrap_email = (
-            validate_email(
-                settings.BOOTSTRAP_ADMIN_EMAIL, check_deliverability=False
-            ).normalized.lower()
-        )
+        bootstrap_email = validate_email(
+            settings.BOOTSTRAP_ADMIN_EMAIL, check_deliverability=False
+        ).normalized.lower()
     except EmailNotValidError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

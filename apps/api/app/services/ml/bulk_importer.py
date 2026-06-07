@@ -132,7 +132,8 @@ class BulkImportManager:
             seen: set[str] = set()
             for row_number, row in enumerate(reader, start=2):
                 normalized = {
-                    str(key).strip(): (value or "").strip() for key, value in row.items()
+                    str(key).strip(): (value or "").strip()
+                    for key, value in row.items()
                 }
                 if not any(normalized.values()):
                     continue
