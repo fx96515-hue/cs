@@ -3,7 +3,8 @@ ENTERPRISE_COMPOSE ?= infra/deploy/docker-compose.enterprise.yml
 
 .PHONY: help up up-full down logs status migrate bootstrap smoke smoke-win \
         start-enterprise stop-enterprise enterprise-logs enterprise-status enterprise-restart \
-        cleanup-local cleanup-local-apply cleanup-local-docker
+        cleanup-local cleanup-local-apply cleanup-local-docker \
+        dev-services dev-services-down dev-setup dev-migrate dev-bootstrap dev-api dev-web
 
 help:
 	@echo "CoffeeStudio Platform — common targets"
@@ -18,6 +19,12 @@ help:
 	@echo "  make bootstrap     # seed dev admin (requires backend running)"
 	@echo "  make smoke         # run smoke flow against running dev stack"
 	@echo "  make smoke-win     # run smoke (Windows)"
+	@echo ""
+	@echo "Local dev (no Docker for app code — see LOCAL_DEV.md):"
+	@echo "  make dev-services  # start ONLY postgres(pgvector)+redis in docker (optional)"
+	@echo "  make dev-setup     # venv + deps + web install + migrate + admin"
+	@echo "  make dev-api       # uvicorn with --reload on :8000"
+	@echo "  make dev-web       # next dev on :3000"
 	@echo ""
 	@echo "Enterprise stack:"
 	@echo "  make start-enterprise        # start enterprise compose + health checks"
@@ -58,6 +65,41 @@ smoke:
 
 smoke-win:
 	powershell -ExecutionPolicy Bypass -File scripts/win/smoke.ps1
+
+# -----------------------
+# Local dev without Docker (run API + web natively; see LOCAL_DEV.md)
+# -----------------------
+# Optional: run just the two stateful services in containers; the app code runs
+# natively with hot reload. Skip these if you already have local Postgres+Redis.
+DEV_PGVECTOR_IMAGE ?= pgvector/pgvector:pg16
+
+dev-services:
+	docker run -d --name obee-pg -p 5432:5432 \
+		-e POSTGRES_DB=coffeestudio -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+		$(DEV_PGVECTOR_IMAGE) || docker start obee-pg
+	docker run -d --name obee-redis -p 6379:6379 redis:7 || docker start obee-redis
+
+dev-services-down:
+	-docker rm -f obee-pg obee-redis
+
+dev-setup:
+	cd apps/api && $(PYTHON) -m venv .venv && . .venv/bin/activate && \
+		pip install -r requirements.txt -r requirements-dev.txt && alembic upgrade head
+	cd apps/web && npm install
+	$(MAKE) dev-bootstrap
+
+dev-migrate:
+	cd apps/api && . .venv/bin/activate && alembic upgrade head
+
+dev-bootstrap:
+	curl -s -X POST http://localhost:8000/auth/dev/bootstrap | cat || true
+
+dev-api:
+	cd apps/api && . .venv/bin/activate && \
+		uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+dev-web:
+	cd apps/web && NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 
 # -----------------------
 # Enterprise stack (infra/deploy/docker-compose.enterprise.yml)
