@@ -1,6 +1,6 @@
 // Thin client for the CoffeeStudio API. Runs inside the background service
 // worker, which has host_permissions for the API origin.
-import type { RoasterCreated, RoasterDraft, UserOut } from "./types";
+import type { CooperativeDraft, EntityCreated, RoasterDraft, UserOut } from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -78,8 +78,20 @@ export function createRoaster(
   baseUrl: string,
   token: string,
   draft: RoasterDraft,
-): Promise<RoasterCreated> {
-  return request<RoasterCreated>(baseUrl, "/roasters/", {
+): Promise<EntityCreated> {
+  return request<EntityCreated>(baseUrl, "/roasters/", {
+    method: "POST",
+    token,
+    body: JSON.stringify(draft),
+  });
+}
+
+export function createCooperative(
+  baseUrl: string,
+  token: string,
+  draft: CooperativeDraft,
+): Promise<EntityCreated> {
+  return request<EntityCreated>(baseUrl, "/cooperatives/", {
     method: "POST",
     token,
     body: JSON.stringify(draft),

@@ -2,7 +2,13 @@
 // worker via the typed `send` helper. DOM is built with createElement +
 // textContent so clipped page content is never interpolated as HTML.
 import { send } from "../lib/messages";
-import type { AuthStatus, ExtractedPage, RoasterDraft } from "../lib/types";
+import type {
+  AuthStatus,
+  CooperativeDraft,
+  EntityType,
+  ExtractedPage,
+  RoasterDraft,
+} from "../lib/types";
 
 const app = document.getElementById("app") as HTMLElement;
 const userBadge = document.getElementById("user") as HTMLElement;
@@ -104,21 +110,40 @@ function renderClip(_status: AuthStatus): void {
 }
 
 function renderForm(page: ExtractedPage): void {
+  const kind = el("select", {}, [
+    el("option", { value: "roaster", textContent: "Roaster" }),
+    el("option", { value: "cooperative", textContent: "Cooperative" }),
+  ]);
   const name = el("input", { type: "text", value: page.name ?? "" });
   const website = el("input", { type: "url", value: page.website ?? "" });
-  const city = el("input", { type: "text", value: "" });
   const email = el("input", { type: "email", value: page.contactEmail ?? "" });
-  const peru = el("input", { type: "checkbox" });
   const notes = el("textarea", { value: page.description ?? "" });
-  const save = el("button", { className: "primary", textContent: "Save to CoffeeStudio" });
 
+  // Type-specific inputs (created once, shown depending on the selected kind).
+  const city = el("input", { type: "text", value: "" });
+  const peru = el("input", { type: "checkbox" });
+  const peruLabel = el("label", { className: "row check" }, [
+    peru,
+    el("span", { textContent: " Peru focus" }),
+  ]);
+  const region = el("input", { type: "text", value: "" });
+
+  const typeBlock = el("div");
+  const syncTypeBlock = (): void => {
+    if (kind.value === "roaster") typeBlock.replaceChildren(field("City", city), peruLabel);
+    else typeBlock.replaceChildren(field("Region", region));
+  };
+  kind.addEventListener("change", syncTypeBlock);
+  syncTypeBlock();
+
+  const save = el("button", { className: "primary", textContent: "Save to CoffeeStudio" });
   const form = el("form", {}, [
     el("h2", { textContent: "Review & save" }),
+    field("Save as", kind),
     field("Name *", name),
     field("Website", website),
-    field("City", city),
     field("Contact email", email),
-    el("label", { className: "row check" }, [peru, el("span", { textContent: " Peru focus" })]),
+    typeBlock,
     field("Notes", notes),
     save,
     el("p", { className: "source", textContent: page.sourceUrl }),
@@ -131,17 +156,36 @@ function renderForm(page: ExtractedPage): void {
       return;
     }
     save.disabled = true;
-    const draft: RoasterDraft = {
-      name: name.value.trim(),
-      website: website.value.trim() || undefined,
-      city: city.value.trim() || undefined,
-      contact_email: email.value.trim() || undefined,
-      peru_focus: peru.checked,
-      notes: notes.value.trim() || undefined,
-      meta: { source: "obee", source_url: page.sourceUrl, page_title: page.title },
-    };
+    const meta = { source: "obee", source_url: page.sourceUrl, page_title: page.title };
+    const entityType = kind.value as EntityType;
     try {
-      const created = await send({ type: "roaster.create", draft });
+      const created =
+        entityType === "roaster"
+          ? await send({
+              type: "entity.create",
+              entityType: "roaster",
+              draft: {
+                name: name.value.trim(),
+                website: website.value.trim() || undefined,
+                city: city.value.trim() || undefined,
+                contact_email: email.value.trim() || undefined,
+                peru_focus: peru.checked,
+                notes: notes.value.trim() || undefined,
+                meta,
+              } satisfies RoasterDraft,
+            })
+          : await send({
+              type: "entity.create",
+              entityType: "cooperative",
+              draft: {
+                name: name.value.trim(),
+                website: website.value.trim() || undefined,
+                region: region.value.trim() || undefined,
+                contact_email: email.value.trim() || undefined,
+                notes: notes.value.trim() || undefined,
+                meta,
+              } satisfies CooperativeDraft,
+            });
       app.replaceChildren(
         statusLine(`Saved “${created.name}” (#${created.id}).`, "ok"),
         el("button", { className: "primary", textContent: "Clip another", onclick: refresh }),

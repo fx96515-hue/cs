@@ -24,6 +24,8 @@ export interface ExtractedPage {
   description?: string;
 }
 
+export type EntityType = "roaster" | "cooperative";
+
 /** Editable payload the popup sends back; mapped onto RoasterCreate. */
 export interface RoasterDraft {
   name: string;
@@ -35,7 +37,17 @@ export interface RoasterDraft {
   meta?: Record<string, unknown>;
 }
 
-export interface RoasterCreated {
+/** Editable payload mapped onto CooperativeCreate. */
+export interface CooperativeDraft {
+  name: string;
+  website?: string;
+  region?: string;
+  contact_email?: string;
+  notes?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface EntityCreated {
   id: number;
   name: string;
 }

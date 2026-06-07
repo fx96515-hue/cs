@@ -43,10 +43,13 @@ popup (UI)  ──messages──►  background service worker  ──fetch─�
 | ------------- | ------------------- | ----- |
 | Sign in       | `POST /auth/login`  | JSON `{email, password}` → `{access_token}` (5/min limit) |
 | Validate      | `GET /auth/me`      | Bearer; returns `{id,email,role,is_active}` |
-| Save roaster  | `POST /roasters/`   | Bearer; role `admin`/`analyst`; `RoasterCreate` |
+| Save roaster  | `POST /roasters/`     | Bearer; role `admin`/`analyst`; `RoasterCreate` |
+| Save coop     | `POST /cooperatives/` | Bearer; role `admin`/`analyst`; `CooperativeCreate` |
 
-The source URL, page title and `source: "obee"` are stored in the roaster's
-free-form `meta` field for provenance.
+The clip form lets the user save the page as either a **roaster** (City + Peru
+focus) or a **cooperative** (Region). The source URL, page title and
+`source: "obee"` are stored in the entity's free-form `meta` field for
+provenance.
 
 ## Auth & storage
 
@@ -73,7 +76,6 @@ npm run lint       # tsc --noEmit (type gate)
 
 - **Phase 2:** Assistant side panel backed by `POST /assistant`.
 - **Phase 3:** Market/price overlay backed by `/market`.
-- Clip **cooperatives** as well as roasters (`/cooperatives`).
 - Configurable production host (`optional_host_permissions` + request flow)
   instead of pinned localhost hosts.
 - Dedup hint via `/dedup` before saving.

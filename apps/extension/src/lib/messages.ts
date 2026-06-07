@@ -1,7 +1,13 @@
 // Typed message protocol between the popup and the background service worker.
 // The popup never talks to the network directly — it asks the worker, which
 // holds the token and owns host_permissions (so requests bypass page CORS).
-import type { AuthStatus, ExtractedPage, RoasterCreated, RoasterDraft } from "./types";
+import type {
+  AuthStatus,
+  CooperativeDraft,
+  EntityCreated,
+  ExtractedPage,
+  RoasterDraft,
+} from "./types";
 
 export type Request =
   | { type: "auth.status" }
@@ -9,7 +15,8 @@ export type Request =
   | { type: "auth.logout" }
   | { type: "config.setBaseUrl"; baseUrl: string }
   | { type: "page.extract" }
-  | { type: "roaster.create"; draft: RoasterDraft };
+  | { type: "entity.create"; entityType: "roaster"; draft: RoasterDraft }
+  | { type: "entity.create"; entityType: "cooperative"; draft: CooperativeDraft };
 
 export type Response<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -19,7 +26,7 @@ export interface ResultMap {
   "auth.logout": { done: true };
   "config.setBaseUrl": AuthStatus;
   "page.extract": ExtractedPage;
-  "roaster.create": RoasterCreated;
+  "entity.create": EntityCreated;
 }
 
 /** Promise-based wrapper around chrome.runtime.sendMessage with typed results. */
