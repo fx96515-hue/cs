@@ -1,0 +1,68 @@
+/* Side-panel chat layout; reuses variables/buttons from popup.css. */
+body.panel {
+  width: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.thread {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.msg {
+  max-width: 88%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: var(--coffee);
+  color: #fff;
+  border-bottom-right-radius: 2px;
+}
+
+.msg.bot {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 2px;
+}
+
+.msg.bot.pending {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.sources {
+  align-self: flex-start;
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 88%;
+}
+
+.composer {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.composer textarea {
+  flex: 1 1 auto;
+}
+
+.composer button.primary {
+  width: auto;
+  margin-top: 0;
+  padding: 9px 14px;
+}
