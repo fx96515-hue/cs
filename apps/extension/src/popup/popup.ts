@@ -88,7 +88,7 @@ function renderLogin(status: AuthStatus): void {
 function renderClip(_status: AuthStatus): void {
   const readBtn = el("button", { className: "primary", textContent: "Read this page" });
   const container = el("div", {}, [
-    el("h2", { textContent: "Clip a roaster" }),
+    el("h2", { textContent: "Clip a page" }),
     el("p", { className: "muted", textContent: "Pull details from the current tab, review, then save." }),
     readBtn,
   ]);
@@ -105,6 +105,15 @@ function renderClip(_status: AuthStatus): void {
       readBtn.textContent = "Read this page";
     }
   });
+
+  const askBtn = el("button", { className: "link", textContent: "Ask Obee Assistant →" });
+  askBtn.style.marginTop = "12px";
+  askBtn.addEventListener("click", async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.windowId !== undefined) await chrome.sidePanel.open({ windowId: tab.windowId });
+    window.close();
+  });
+  container.append(askBtn);
 
   app.replaceChildren(container);
 }

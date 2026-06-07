@@ -1,6 +1,13 @@
 // Thin client for the CoffeeStudio API. Runs inside the background service
 // worker, which has host_permissions for the API origin.
-import type { CooperativeDraft, EntityCreated, RoasterDraft, UserOut } from "./types";
+import type {
+  AssistantAnswer,
+  AssistantStatus,
+  CooperativeDraft,
+  EntityCreated,
+  RoasterDraft,
+  UserOut,
+} from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -96,4 +103,78 @@ export function createCooperative(
     token,
     body: JSON.stringify(draft),
   });
+}
+
+export function assistantStatus(baseUrl: string, token: string): Promise<AssistantStatus> {
+  return request<AssistantStatus>(baseUrl, "/assistant/status", { token });
+}
+
+interface ChatEvent {
+  type: "session" | "chunk" | "done" | "error";
+  session_id?: string;
+  content?: string;
+  sources?: unknown[];
+  message?: string;
+}
+
+/**
+ * Calls the SSE chat endpoint and accumulates the streamed token chunks into a
+ * single answer. (A live token stream would need a long-lived port; this v1
+ * keeps the message protocol request/response.)
+ */
+export async function assistantChat(
+  baseUrl: string,
+  token: string,
+  message: string,
+  sessionId?: string,
+): Promise<AssistantAnswer> {
+  const res = await fetch(`${baseUrl}/assistant/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ message, session_id: sessionId }),
+  });
+  if (!res.ok) throw new ApiError(await extractError(res), res.status);
+  if (!res.body) throw new ApiError("No response stream", 502);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const answer: AssistantAnswer = { text: "", sources: [], sessionId };
+  let buffer = "";
+
+  const consume = (block: string): void => {
+    for (const line of block.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      let evt: ChatEvent;
+      try {
+        evt = JSON.parse(payload) as ChatEvent;
+      } catch {
+        continue;
+      }
+      if (evt.type === "session" && evt.session_id) answer.sessionId = evt.session_id;
+      else if (evt.type === "chunk" && evt.content) answer.text += evt.content;
+      else if (evt.type === "done")
+        answer.sources = (evt.sources ?? []).map((s) => String(s));
+      else if (evt.type === "error") throw new ApiError(evt.message ?? "Assistant error", 502);
+    }
+  };
+
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let sep: number;
+    while ((sep = buffer.indexOf("\n\n")) !== -1) {
+      consume(buffer.slice(0, sep));
+      buffer = buffer.slice(sep + 2);
+    }
+  }
+  if (buffer.trim()) consume(buffer);
+  return answer;
 }

@@ -51,3 +51,16 @@ export interface EntityCreated {
   id: number;
   name: string;
 }
+
+export interface AssistantStatus {
+  available: boolean;
+  enabled: boolean;
+  provider: string;
+  model: string;
+}
+
+export interface AssistantAnswer {
+  text: string;
+  sessionId?: string;
+  sources: string[];
+}

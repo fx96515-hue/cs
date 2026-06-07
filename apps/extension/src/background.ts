@@ -1,6 +1,14 @@
 // Background service worker: owns the token, talks to the API, and drives
 // on-demand page extraction. The popup communicates with it via messages.ts.
-import { ApiError, createCooperative, createRoaster, fetchMe, login } from "./lib/api";
+import {
+  ApiError,
+  assistantChat,
+  assistantStatus,
+  createCooperative,
+  createRoaster,
+  fetchMe,
+  login,
+} from "./lib/api";
 import {
   clearToken,
   getBaseUrl,
@@ -114,6 +122,20 @@ async function handle(message: Request): Promise<unknown> {
       return message.entityType === "roaster"
         ? createRoaster(baseUrl, token, message.draft)
         : createCooperative(baseUrl, token, message.draft);
+    }
+
+    case "assistant.status": {
+      const baseUrl = await getBaseUrl();
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      return assistantStatus(baseUrl, token);
+    }
+
+    case "assistant.ask": {
+      const baseUrl = await getBaseUrl();
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      return assistantChat(baseUrl, token, message.message, message.sessionId);
     }
   }
 }

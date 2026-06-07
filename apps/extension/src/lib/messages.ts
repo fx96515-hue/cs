@@ -2,6 +2,8 @@
 // The popup never talks to the network directly — it asks the worker, which
 // holds the token and owns host_permissions (so requests bypass page CORS).
 import type {
+  AssistantAnswer,
+  AssistantStatus,
   AuthStatus,
   CooperativeDraft,
   EntityCreated,
@@ -16,7 +18,9 @@ export type Request =
   | { type: "config.setBaseUrl"; baseUrl: string }
   | { type: "page.extract" }
   | { type: "entity.create"; entityType: "roaster"; draft: RoasterDraft }
-  | { type: "entity.create"; entityType: "cooperative"; draft: CooperativeDraft };
+  | { type: "entity.create"; entityType: "cooperative"; draft: CooperativeDraft }
+  | { type: "assistant.status" }
+  | { type: "assistant.ask"; message: string; sessionId?: string };
 
 export type Response<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -27,6 +31,8 @@ export interface ResultMap {
   "config.setBaseUrl": AuthStatus;
   "page.extract": ExtractedPage;
   "entity.create": EntityCreated;
+  "assistant.status": AssistantStatus;
+  "assistant.ask": AssistantAnswer;
 }
 
 /** Promise-based wrapper around chrome.runtime.sendMessage with typed results. */

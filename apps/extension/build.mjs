@@ -13,6 +13,7 @@ const watch = process.argv.includes("--watch");
 const entryPoints = {
   background: resolve(root, "src/background.ts"),
   "popup/popup": resolve(root, "src/popup/popup.ts"),
+  "sidepanel/sidepanel": resolve(root, "src/sidepanel/sidepanel.ts"),
 };
 
 /** Copy the static assets the bundler does not touch. */
@@ -20,6 +21,8 @@ async function copyStatic() {
   await cp(resolve(root, "src/manifest.json"), resolve(outdir, "manifest.json"));
   await cp(resolve(root, "src/popup/popup.html"), resolve(outdir, "popup/popup.html"));
   await cp(resolve(root, "src/popup/popup.css"), resolve(outdir, "popup/popup.css"));
+  await cp(resolve(root, "src/sidepanel/sidepanel.html"), resolve(outdir, "sidepanel/sidepanel.html"));
+  await cp(resolve(root, "src/sidepanel/sidepanel.css"), resolve(outdir, "sidepanel/sidepanel.css"));
   await cp(resolve(root, "src/icons"), resolve(outdir, "icons"), { recursive: true });
 }
 

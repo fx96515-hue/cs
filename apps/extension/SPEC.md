@@ -45,6 +45,7 @@ popup (UI)  ──messages──►  background service worker  ──fetch─�
 | Validate      | `GET /auth/me`      | Bearer; returns `{id,email,role,is_active}` |
 | Save roaster  | `POST /roasters/`     | Bearer; role `admin`/`analyst`; `RoasterCreate` |
 | Save coop     | `POST /cooperatives/` | Bearer; role `admin`/`analyst`; `CooperativeCreate` |
+| Assistant     | `POST /assistant/chat` · `GET /assistant/status` | Bearer; SSE stream accumulated into one answer |
 
 The clip form lets the user save the page as either a **roaster** (City + Peru
 focus) or a **cooperative** (Region). The source URL, page title and
@@ -74,8 +75,8 @@ npm run lint       # tsc --noEmit (type gate)
 
 ## Roadmap / open items
 
-- **Phase 2:** Assistant side panel backed by `POST /assistant`.
 - **Phase 3:** Market/price overlay backed by `/market`.
+- Live token streaming for the assistant (long-lived port instead of accumulate).
 - Configurable production host (`optional_host_permissions` + request flow)
   instead of pinned localhost hosts.
 - Dedup hint via `/dedup` before saving.
