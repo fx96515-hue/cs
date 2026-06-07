@@ -46,6 +46,28 @@ BOOTSTRAP_ADMIN_PASSWORD=ChangeMe_12345
 The web app reads `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000` via
 `make dev-web`).
 
+## Running alongside another local project (avoid port clashes)
+
+Everything binds to `localhost` (same IP), so projects are separated by **port**,
+not IP. If another app (e.g. Trade Desk) already uses 8000/3000/5432/6379, run
+CoffeeStudio on different ports — the targets take overrides:
+
+```bash
+make dev-services PG_PORT=5433 REDIS_PORT=6380
+make dev-api      API_PORT=8001
+make dev-web      API_PORT=8001 WEB_PORT=3001
+```
+
+Then point `apps/api/.env` at the same ports:
+
+```ini
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5433/coffeestudio
+REDIS_URL=redis://localhost:6380/0
+CORS_ORIGINS=http://localhost:3001
+```
+
+(The two apps can also simply run one at a time — then defaults are fine.)
+
 ## Why no Docker for the app code?
 
 - **Faster reloads:** `uvicorn --reload` and `next dev` rebuild on save without

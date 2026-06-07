@@ -72,12 +72,18 @@ smoke-win:
 # Optional: run just the two stateful services in containers; the app code runs
 # natively with hot reload. Skip these if you already have local Postgres+Redis.
 DEV_PGVECTOR_IMAGE ?= pgvector/pgvector:pg16
+# Override these to run alongside another local project (e.g. Trade Desk) without
+# port clashes: `make dev-api API_PORT=8001`, `make dev-services PG_PORT=5433`, …
+API_PORT ?= 8000
+WEB_PORT ?= 3000
+PG_PORT ?= 5432
+REDIS_PORT ?= 6379
 
 dev-services:
-	docker run -d --name obee-pg -p 5432:5432 \
+	docker run -d --name obee-pg -p $(PG_PORT):5432 \
 		-e POSTGRES_DB=coffeestudio -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
 		$(DEV_PGVECTOR_IMAGE) || docker start obee-pg
-	docker run -d --name obee-redis -p 6379:6379 redis:7 || docker start obee-redis
+	docker run -d --name obee-redis -p $(REDIS_PORT):6379 redis:7 || docker start obee-redis
 
 dev-services-down:
 	-docker rm -f obee-pg obee-redis
@@ -92,14 +98,14 @@ dev-migrate:
 	cd apps/api && . .venv/bin/activate && alembic upgrade head
 
 dev-bootstrap:
-	curl -s -X POST http://localhost:8000/auth/dev/bootstrap | cat || true
+	curl -s -X POST http://localhost:$(API_PORT)/auth/dev/bootstrap | cat || true
 
 dev-api:
 	cd apps/api && . .venv/bin/activate && \
-		uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+		uvicorn app.main:app --reload --host 127.0.0.1 --port $(API_PORT)
 
 dev-web:
-	cd apps/web && NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
+	cd apps/web && NEXT_PUBLIC_API_URL=http://localhost:$(API_PORT) npm run dev -- -p $(WEB_PORT)
 
 # -----------------------
 # Enterprise stack (infra/deploy/docker-compose.enterprise.yml)
