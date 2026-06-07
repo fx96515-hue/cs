@@ -159,7 +159,7 @@ jobs:
             --cov-report=xml \
             --cov-report=html \
             --cov-report=term-missing \
-            --cov-fail-under=60  # TODO: Restore to 70% once coverage improves
+            --cov-fail-under=70
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v5
