@@ -1,4 +1,4 @@
-﻿"""Tests for news API routes."""
+"""Tests for news API routes."""
 
 from unittest.mock import patch
 from app.models.news_item import NewsItem

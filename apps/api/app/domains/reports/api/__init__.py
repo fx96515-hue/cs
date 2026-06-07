@@ -1,1 +1,1 @@
-﻿"""Reports domain API."""
+"""Reports domain API."""

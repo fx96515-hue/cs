@@ -1,1 +1,1 @@
-﻿"""Assistant domain API entrypoints."""
+"""Assistant domain API entrypoints."""

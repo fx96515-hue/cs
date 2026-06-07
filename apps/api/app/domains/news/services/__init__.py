@@ -1,1 +1,1 @@
-﻿"""News domain services."""
+"""News domain services."""

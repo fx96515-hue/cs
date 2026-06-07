@@ -1,4 +1,4 @@
-﻿"""Tests for news service."""
+"""Tests for news service."""
 
 from unittest.mock import patch, MagicMock
 from app.services.news import refresh_news

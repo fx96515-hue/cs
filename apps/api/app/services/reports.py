@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for report generation service.
+"""Compatibility wrapper for report generation service.
 
 Canonical implementation lives in app.domains.reports.services.report_builder.
 """

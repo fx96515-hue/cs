@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for assistant schemas.
+"""Compatibility wrapper for assistant schemas.
 
 Canonical implementation lives in app.domains.assistant.schemas.chat.
 """

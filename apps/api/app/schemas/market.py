@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for market schemas.
+"""Compatibility wrapper for market schemas.
 
 Canonical implementation lives in app.domains.market.schemas.market.
 """

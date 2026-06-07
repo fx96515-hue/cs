@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for news schemas.
+"""Compatibility wrapper for news schemas.
 
 Canonical implementation lives in app.domains.news.schemas.news.
 """

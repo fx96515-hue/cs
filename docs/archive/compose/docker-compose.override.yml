@@ -1,4 +1,4 @@
-﻿services:
+services:
   frontend:
     command: ["node", "server.js"]
     environment:

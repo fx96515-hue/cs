@@ -1,1 +1,1 @@
-﻿"""Outreach domain services."""
+"""Outreach domain services."""

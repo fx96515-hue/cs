@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for cooperative schemas.
+"""Compatibility wrapper for cooperative schemas.
 
 Canonical implementation lives in app.domains.cooperatives.schemas.cooperative.
 """

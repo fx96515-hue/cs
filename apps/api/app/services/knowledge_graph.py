@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for knowledge_graph services.
+"""Compatibility wrapper for knowledge_graph services.
 
 Canonical implementation lives in app.domains.knowledge_graph.services.graph_service.
 """

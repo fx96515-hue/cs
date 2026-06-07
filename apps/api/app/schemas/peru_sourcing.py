@@ -1,4 +1,4 @@
-﻿"""Compatibility wrapper for peru_sourcing schemas.
+"""Compatibility wrapper for peru_sourcing schemas.
 
 Canonical implementation lives in app.domains.peru_sourcing.schemas.peru_sourcing.
 """

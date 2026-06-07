@@ -1,4 +1,4 @@
-﻿"""Seed discovery for cooperatives/roasters using Perplexity.
+"""Seed discovery for cooperatives/roasters using Perplexity.
 
 Usage (inside docker):
   docker compose exec backend python scripts/seed_first_run.py --coops --max 50
