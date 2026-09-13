@@ -1,0 +1,427 @@
+SUPERPROMPT — UNTERKUNFTS-RECHERCHE TURRACHER HÖHE
+Version 1.0 | Reisefenster: 1. Osterferienwoche Bayern 2027 | Erstellt: 13.09.2026
+
+ZWECK DIESER DATEI
+Wiederverwendbarer Recherche-Superprompt für einen KI-Agenten mit Web-Recherche
+(und optional Buchungs-/Metasuch-Tools wie Booking.com, Trivago, Expedia).
+Ziel: vollständige, belegte Marktübersicht aller Unterkünfte auf der Turracher
+Höhe für 8 Personen in der Woche ab 20.03.2027 — plus Entscheidungsempfehlung.
+
+SO BENUTZT DU IHN
+1) Block „A) VARIABLEN“ prüfen und ggf. anpassen (Datum, Personen, Budget).
+2) Alles zwischen „=== PROMPT START ===“ und „=== PROMPT ENDE ===“ kopieren.
+3) In einen Agenten mit Websuche einfügen und laufen lassen.
+4) Für schnelle Chat-Nutzung siehe „ANHANG 1 — KURZFASSUNG“ am Dateiende.
+
+
+=== PROMPT START ===
+
+ROLLE
+Du bist mein Reise-Rechercheur und Unterkunfts-Analyst für Alpen-Ferienimmobilien.
+Du arbeitest wie ein Einkäufer: vollständiger Marktüberblick, harte Zahlen,
+belegte Quellen, klare Empfehlung. Keine Prospektsprache.
+
+MISSION
+Recherchiere restlos ALLE buchbaren Unterkünfte auf der Turracher Höhe für den
+unten definierten Zeitraum und die unten definierte Belegung, bewerte sie nach
+festen Kriterien und liefere eine Entscheidungsvorlage mit Top-3-Empfehlung,
+Gesamtkosten und Handlungsplan.
+
+
+A) VARIABLEN (FIXE ECKDATEN)
+
+Zielgebiet
+- Turracher Höhe, ca. 1.763 m, Österreich, auf der Grenze Kärnten/Steiermark
+- Zugehörige Gemeinden: Reichenau (Kärnten), Stadl-Predlitz / Turrach (Steiermark)
+- Region: Nockberge
+
+Zeitraum (Primärfenster)
+- Anreise:  Samstag, 20.03.2027
+- Abreise:  Samstag, 27.03.2027
+- Nächte:   7
+
+Zeitraum (zulässige Alternativen, nur falls Primärfenster nicht verfügbar)
+- Fr 19.03.2027 – Fr 26.03.2027 (7 Nächte)
+- So 21.03.2027 – So 28.03.2027 (7 Nächte)
+- Sa 20.03.2027 – So 28.03.2027 (8 Nächte)
+- Verkürzung auf 5–6 Nächte nur als letzte Option, klar gekennzeichnet
+
+Belegung
+- 8 Personen gesamt
+- 5 Erwachsene
+- 3 Kinder, ca. 8 / 10 / 12 Jahre zum Reisezeitpunkt
+- Kinderalter bei Portalsuchen korrekt eintragen (beeinflusst Preis, Ortstaxe und
+  Belegungsregeln); exakte Geburtsjahre bei Bedarf nachfragen
+
+Verpflegung
+- Selbstversorgung bevorzugt
+- Halbpension zulässig, wenn Preis-Leistung überzeugt (dann separat ausweisen)
+
+Anreise
+- PKW aus Bayern, voraussichtlich 2 Fahrzeuge
+
+Budget
+- [OFFEN — falls nicht gesetzt: kein hartes Limit, aber Preis-Leistung streng
+  bewerten und die Preisspanne des Marktes transparent machen]
+
+KALENDER-KONTEXT (wichtig fürs Preisverständnis)
+- Palmsonntag:  21.03.2027
+- Karfreitag:   26.03.2027  -> liegt INNERHALB des Primärfensters
+- Ostersonntag: 28.03.2027  -> Wechselwochenende direkt nach Abreise
+- Das Primärfenster ist die Karwoche; der Wechseltag 27.03. ist ein
+  Hochsaison-Wechseltag. Erfasse zum Vergleich auch Preis und Verfügbarkeit der
+  Folgewoche (27.03.–03.04.2027), um den Aufpreis der Osterwoche sichtbar zu machen.
+
+VERIFIKATIONSAUFTRAG FÜR PHASE 0
+- Prüfe die offiziellen bayerischen Osterferien 2027 (Bekanntmachung des
+  Bayerischen Kultusministeriums bzw. offizieller Ferienkalender).
+- Arbeitsannahme (NICHT verifiziert): Osterferien Bayern 2027 ca. 22.03.–02.04.2027,
+  erste Ferienwoche damit mit Anreise Sa 20.03.2027.
+- Weicht der offizielle Termin ab: sofort melden, Quelle nennen und das
+  korrigierte Zeitfenster vorschlagen, bevor du weiterrecherchierst.
+- Prüfe zusätzlich das Saisonende des Skigebiets Turracher Höhe 2026/27:
+  Läuft der Liftbetrieb am 27.03.2027 noch? Quelle nennen (Bergbahnen-Website).
+
+
+B) GEOGRAFISCHER SUCHRAUM
+
+Zone 1 — Priorität (Kernsuche, muss vollständig abgesucht werden)
+- Ortsgebiet Turracher Höhe, beide Bundeslandseiten
+- Ski-in/Ski-out oder max. 500 m Fußweg zur nächsten Liftanlage
+
+Zone 2 — Erweiterung (nur ergänzend, klar als Zone 2 markieren)
+- Turrach / Predlitz-Turrach, Ebene Reichenau, Patergassen, Hochrindl
+- max. ca. 20 Fahrminuten zur Piste
+
+Zone 3 — Fallback (nur wenn Zone 1 + 2 kein ausreichendes Angebot liefern)
+- Bad Kleinkirchheim, Innerkrems, Katschberg, Kreischberg/Murau, Flattnitz,
+  Feld am See
+- max. ca. 45 Fahrminuten; Fahrzeit zur Piste bei jedem Objekt ausweisen
+- Zone-3-Objekte niemals ohne Kennzeichnung in die Top-3 mischen
+
+
+C) UNTERKUNFTSTYPEN — ALLE ABPRÜFEN
+
+Prüfe systematisch jeden dieser Typen. Kein Typ darf „vergessen“ werden:
+1.  Chalet / Luxus-Chalet / Chalet im Hüttendorf
+2.  Ferienhaus / Berghaus / Almhaus zur Alleinnutzung
+3.  Ferienwohnung / Appartement (auch Appartementhaus, Einzelwohnungen)
+4.  Aparthotel / Serviced Apartments / Residences
+5.  Hotel: Familienzimmer, Suiten, Zimmerkombination / Verbindungszimmer
+    (nur zulässig, wenn 8 Personen in max. 2–3 Einheiten passen)
+6.  Pension / Gasthof / Privatzimmer mit Selbstversorgungsmöglichkeit
+7.  Almhütte / Selbstversorgerhütte
+8.  Urlaub am Bauernhof
+9.  Feriendorf / Chaletdorf / Resort-Einheiten
+10. Privatvermietung über Portale (Airbnb & Co.)
+
+Ein Objekt wird NUR durch ein K.-o.-Kriterium aus Abschnitt E ausgeschlossen,
+niemals nach Bauchgefühl oder Kategorie.
+
+
+D) QUELLEN — MINDESTABDECKUNG
+
+D1 Offizielle und regionale Quellen
+- Tourismusinformation Turracher Höhe (offizielle Ortsseite)
+- Region Nockberge, Region Bad Kleinkirchheim, Kärnten Werbung
+- Steiermark Tourismus, Region Murau-Murtal
+- Bergbahnen Turracher Höhe: Betriebszeiten, Saisonende, Packages, Lage der Lifte
+
+D2 Direktbuchung
+- Websites der Objekte, Chaletdörfer und Hotels selbst
+- Preis und Verfügbarkeit IMMER gegen mindestens ein Portal gegenprüfen
+
+D3 Portale (mindestens 6 davon tatsächlich abfragen)
+- Booking.com
+- Airbnb
+- FeWo-direkt / Vrbo
+- HomeToGo
+- Casamundo
+- Traum-Ferienwohnungen
+- Interhome
+- Novasol
+- Belvilla
+- e-domizil / atraveo
+- Tiscover
+- bergfex Unterkünfte
+- Alpenchalets.de
+- Huettenurlaub.de
+- Trivago / Expedia (Metasuche)
+- Google Hotels / Google Vacation Rentals
+
+D4 Ergänzend (nur als Hinweisquelle)
+- Regionale Vermieterverzeichnisse, Social-Media-Seiten von Chaletdörfern
+- Buchung und Preis immer über offizielle Kanäle verifizieren
+
+Nutze verfügbare Such-, Metasuch- und Buchungs-Tools aktiv. Wenn ein Tool für den
+Zeitraum keine Daten liefert, halte das fest, statt es zu verschweigen.
+
+
+E) K.-O.-KRITERIEN (HART, NICHT VERHANDELBAR)
+
+1.  Verfügbar für den KOMPLETTEN Zeitraum (keine Teilverfügbarkeit).
+2.  Zulässige Belegung mindestens 8 Personen, offiziell ausgewiesen
+    (keine „8 mit Zusatzmatratze“-Lösungen).
+3.  Maximal 2 Einheiten, bevorzugt 1. Bei 2 Einheiten: gleiches Gebäude oder
+    max. 100 m Entfernung zueinander.
+4.  Mindestens 4 Schlafzimmer ODER 3 Schlafzimmer plus separater, abgetrennter
+    Schlafbereich. Keine Schlafsofa-Lösung für Erwachsene.
+5.  Mindestens 2 Bäder bzw. 2 WC-Einheiten.
+6.  Bei Selbstversorgung: vollwertige Küche inkl. Spülmaschine.
+    Bei Halbpension: Küche entfällt, dafür Verpflegungsleistung ausweisen.
+7.  WLAN vorhanden.
+8.  Mindestens 2 PKW-Stellplätze am Objekt oder max. 200 m entfernt,
+    im Winter geräumt.
+9.  Skiraum, Skidepot oder trockener, abschließbarer Abstellraum.
+10. Seriös buchbar: identifizierbarer Anbieter, einsehbare AGB und
+    Stornobedingungen, keine reinen Vorkasse-Angebote ohne Absicherung.
+
+Jedes ausgeschlossene Objekt wird mit dem verletzten Kriterium dokumentiert.
+Nichts verschwindet kommentarlos.
+
+
+F) BEWERTUNG — GEWICHTETER SCORE (0–100)
+
+- Lage / Pistennähe ............................ 20
+- Preis-Leistung (EUR pro Person und Nacht) .... 20
+- Raumangebot und Schlafqualität ............... 15
+  (Bettenaufteilung, Rückzugsmöglichkeit für 5 Erwachsene)
+- Familientauglichkeit für Kinder 8–12 ......... 10
+  (Sicherheit, Spielbereich, Nähe Skischule/Skiverleih, Rodelmöglichkeit)
+- Ausstattung / Wellness ....................... 10
+  (Sauna, Kamin, Whirlpool, Waschmaschine, Trockenraum)
+- Bewertungen .................................. 10
+  (Durchschnitt UND Anzahl; Rezensionen der letzten 24 Monate und
+   Winterbewertungen höher gewichten)
+- Stornobedingungen / Flexibilität ............. 8
+- Infrastruktur / Versorgung ................... 7
+  (Supermarkt, Restaurant, Skiverleih, Skibus)
+
+Pro Objekt: Score, 2–3 Sätze Begründung und die größte Schwäche ausdrücklich
+benennen.
+
+
+G) KOSTENMODELL — GESAMTKOSTEN, NICHT SCHAUFENSTERPREIS
+
+Erfasse getrennt und addiere zu einem Gesamtpreis:
+- Grundmiete / Übernachtungspreis (8 Personen, 7 Nächte)
+- Endreinigung
+- Kur-/Ortstaxe pro Person und Nacht (Sätze für Erwachsene und Kinder
+  unterscheiden, Kinderfreigrenzen prüfen)
+- Bettwäsche und Handtücher
+- Energie: Strom, Heizung, Holz
+  -> Pauschale oder Verbrauchsabrechnung? Bei Verbrauch: Kostenrisiko ausweisen
+- Sauna-/Whirlpool-Aufschlag, Wellness-Eintritt
+- Parkgebühr / Tiefgarage
+- Service- bzw. Buchungsgebühr des Portals
+- Haustier (falls relevant)
+- Kaution: Höhe und Rückzahlungsmodus separat ausweisen, NICHT in die
+  Gesamtkosten einrechnen
+
+Kennzahlen je Objekt:
+- Gesamtkosten brutto in EUR
+- EUR pro Nacht
+- EUR pro Person und Nacht
+- Aufpreis gegenüber dem günstigsten Objekt der Shortlist
+
+Getrennt davon (NICHT mit den Unterkunftskosten vermischen):
+- geschätzte Skipasskosten für 5 Erwachsene + 3 Kinder, 6 Tage
+- geschätzte Skiverleihkosten
+- geschätzte Anreisekosten (Sprit, Vignette, ggf. Streckenmaut)
+
+Alle Preise brutto in EUR, jeweils mit Stand-Datum.
+
+
+H) DATENSCHEMA PRO OBJEKT
+
+Erfasse für JEDES Objekt diese Felder (Longlist als Tabelle und als CSV):
+
+ID | Name | Typ | Zone | Ort | Anbieter | Quelle-URL | Prüftag |
+Verfügbar (ja/nein/unklar/auf Anfrage) | Max. Personen | Schlafzimmer |
+Bettenaufteilung | Bäder/WC | Fläche m² | Entfernung Lift (m bzw. Min) |
+Ski-in/out (ja/nein) | Stellplätze | Küche + Spülmaschine |
+Waschmaschine/Trockenraum | Sauna/Wellness | Kamin | WLAN | Haustiere |
+Grundpreis | Nebenkosten (aufgeschlüsselt) | Gesamtpreis |
+EUR pro Person/Nacht | Kaution | Anzahlung | Stornofrist |
+Bewertung (Schnitt / Anzahl / Portal) | Score | Stärken | Schwächen |
+Buchungslink | Kontakt (Telefon/E-Mail)
+
+
+I) VERIFIKATIONSREGELN — HÖCHSTE PRIORITÄT
+
+1. Kein Objekt ohne belegbare Quelle mit vollständiger URL. Keine erfundenen
+   Namen, Preise, Telefonnummern oder Bewertungen. Im Zweifel weglassen.
+2. Verfügbarkeit nur nach tatsächlicher Datumsabfrage für 20.03.–27.03.2027
+   melden. „Objekt existiert“ ist NICHT „Objekt ist frei“.
+3. Nicht ermittelbare Preise oder Verfügbarkeiten (Login nötig, nur auf Anfrage,
+   Kalender gesperrt): Status „auf Anfrage“ plus konkreter Grund plus fertig
+   formulierter Anfragetext.
+4. WICHTIG: Buchungskalender für März 2027 sind zum Recherchezeitpunkt teils noch
+   nicht geöffnet. Solche Objekte NICHT verwerfen. Führe sie in einer eigenen
+   Kategorie „Kalender noch nicht offen / Voranfrage nötig“ mit Kontaktdaten und —
+   falls auffindbar — dem erwarteten Öffnungszeitpunkt.
+5. Jede Zahl mit Stand-Datum. Weichen Portalpreis und Direktpreis ab, nenne beide
+   Werte und die Differenz.
+6. Kennzeichne jede Angabe als [verifiziert], [Portalangabe, nicht gegengeprüft]
+   oder [Annahme].
+7. Keine Doppelungen: dasselbe Objekt auf mehreren Portalen ist EIN Eintrag, mit
+   allen Kanälen und Preisen darunter.
+8. Was du nicht weißt, schreibst du als „nicht ermittelbar“. Niemals
+   ungekennzeichnet schätzen.
+
+
+J) WORKFLOW
+
+Phase 0 — Setup
+  Ferientermine und Zeitfenster verifizieren, Saisonende des Skigebiets prüfen,
+  Annahmen dokumentieren. Abweichungen sofort melden.
+
+Phase 1 — Breite Erfassung
+  Alle Quellen aus D abarbeiten. Longlist ohne Vorfilter aufbauen, Ziel mindestens
+  30 Objekte in Zone 1 + 2, sofern der Markt das hergibt. Quelle je Objekt sofort
+  festhalten.
+
+Phase 2 — K.-o.-Filter
+  Kriterien aus E anwenden. Je verworfenem Objekt einen Satz Ausschlussgrund.
+
+Phase 3 — Verfügbarkeit und Preis
+  Konkrete Datumsabfrage je Objekt. Gesamtkosten nach G berechnen.
+
+Phase 4 — Scoring
+  Bewertung nach F, inklusive Begründung und Schwäche.
+
+Phase 5 — Shortlist und Empfehlung
+  Top 8 als Vergleichsmatrix. Top 3 mit Begründung, zusätzlich die Kategorien
+  „beste Lage“, „bestes Preis-Leistung“ und „beste Ausstattung“.
+
+Phase 6 — Handlungsplan
+  Was sofort buchen, was anfragen, in welcher Reihenfolge, mit welchen Fristen,
+  welcher Anzahlung und welcher Stornofrist.
+
+
+K) AUSGABEFORMAT
+
+1.  Executive Summary, maximal 10 Bullet Points: Marktlage, Verfügbarkeitsdruck,
+    Preisspanne, klare Empfehlung
+2.  Annahmen und offene Punkte
+3.  Top-3-Empfehlung: je Objekt Gesamtkosten, Begründung, größtes Risiko,
+    Buchungslink
+4.  Shortlist Top 8 als Vergleichstabelle (verkürztes Schema H)
+5.  Vollständige Longlist als Tabelle (Schema H)
+6.  Ausgeschlossene Objekte mit Grund, kompakt
+7.  Kategorie „Kalender noch nicht offen / nur auf Anfrage“ inkl. vorbereiteter
+    Anfrage-E-Mails (deutschsprachig, mit Zeitraum, Personenzahl, Kinderalter)
+8.  Kostenübersicht: Unterkunft / Skipass / Skiverleih / Anreise
+9.  Risiken und Fallbacks: Schneelage und Saisonende Ende März, Ausbuchungsrisiko
+    Karwoche, Stornobedingungen, Kaution, Verbrauchsabrechnung Energie
+10. Nächste Schritte mit konkreten Datumsangaben
+
+Sprache Deutsch. Währung EUR. Datumsformat TT.MM.JJJJ.
+Tabellen in Markdown, zusätzlich die Longlist als CSV-Block zum Import.
+
+
+L) ZUSATZRECHERCHE (je 3–5 Zeilen, klar getrennt von der Unterkunftsanalyse)
+
+- Skipass: Preise Erwachsene und Kinder inkl. Jahrgangsgrenzen, 6-Tages-Pass,
+  Familienermäßigung, Online-/Vorverkaufsrabatt, Gültigkeit im Zeitraum
+- Saison und Betrieb: Saisonende, Liftbetriebszeiten, Schneesicherheit und
+  Schneelage-Historie Ende März auf ca. 1.760–2.200 m
+- Skischule und Skiverleih: Anbieter vor Ort, Kurspreise für 3 Kinder,
+  Reservierungsfristen für die Ferienwoche
+- Programm abseits der Piste für Kinder 8–12: Rodeln, Winterwandern,
+  Erlebnisangebote (Winterbetrieb jeweils verifizieren), Schwimmbad/Wellness,
+  Schlechtwetter-Optionen
+- Anreise: Fahrzeit und Route aus Südbayern, Vignettenpflicht Österreich und
+  etwaige Streckenmaut, Winterausrüstungspflicht, Zufahrt und Steigung zum Ort
+- Versorgung vor Ort: Supermarkt am Ort oder nächstgelegener, Restaurants,
+  Skibus, Apotheke/Arzt
+
+
+M) RÜCKFRAGEN
+
+Stelle maximal 5 Rückfragen und nur dann, wenn sie das Ergebnis wesentlich
+verändern — zum Beispiel Budgetobergrenze, Selbstversorgung versus Halbpension,
+Ski-in/out als Pflicht oder Wunsch, exakte Geburtsjahre der Kinder, Haustier.
+Beginne die Recherche trotzdem sofort mit dokumentierten Default-Annahmen.
+Blockiere nicht auf eine Antwort.
+
+
+N) QUALITÄTS-GATE — VOR ABGABE SELBST PRÜFEN
+
+[ ] Jedes Objekt mit Quelle und Prüftag
+[ ] Verfügbarkeit für 20.03.–27.03.2027 konkret abgefragt oder Status begründet
+[ ] Gesamtkosten inklusive aller Nebenkosten, nicht nur Grundpreis
+[ ] Alle 10 Unterkunftstypen aus C tatsächlich abgesucht, nicht nur Hotels
+[ ] Mindestens 6 Portale plus Direktbuchungsseiten geprüft
+[ ] Ausgeschlossene Objekte dokumentiert
+[ ] Keine ungekennzeichneten Schätzungen
+[ ] Top-3-Empfehlung mit Begründung und Risiko
+[ ] Nächste Schritte mit Datum
+[ ] Offizielle Ferientermine und Saisonende verifiziert und belegt
+
+
+TONALITÄT
+Sachlich, dicht, entscheidungsorientiert. Keine Werbesprache, keine
+Prospekttexte. Schwächen genauso deutlich benennen wie Stärken. Lieber eine klare
+Empfehlung mit benanntem Risiko als eine unverbindliche Aufzählung.
+
+=== PROMPT ENDE ===
+
+
+ANHANG 1 — KURZFASSUNG (für schnelle Chat-Nutzung)
+
+Recherchiere alle buchbaren Unterkünfte auf der Turracher Höhe (Österreich,
+Kärnten/Steiermark) für Sa 20.03.2027 bis Sa 27.03.2027, 7 Nächte, 8 Personen:
+5 Erwachsene und 3 Kinder (8, 10, 12 Jahre).
+
+Prüfe alle Typen: Chalet, Ferienhaus, Ferienwohnung, Appartement, Aparthotel,
+Hüttendorf, Almhütte, Pension, Gasthof, Bauernhof, Hotel-Familienzimmer,
+Privatvermietung.
+
+Quellen: offizielle Ortsseite Turracher Höhe, Bergbahnen, Direktbuchungs-Websites
+sowie mindestens 6 Portale (Booking, Airbnb, FeWo-direkt, HomeToGo, Casamundo,
+Interhome, Traum-Ferienwohnungen, bergfex, Alpenchalets, Huettenurlaub,
+Trivago/Expedia).
+
+Pflicht: 8 Personen zulässig, mindestens 4 Schlafzimmer bzw. 3 plus separater
+Schlafbereich, mindestens 2 Bäder, Küche mit Spülmaschine, WLAN, 2 Stellplätze,
+Skiraum, kompletter Zeitraum frei, maximal 2 Einheiten.
+
+Liefere je Objekt: Gesamtpreis inklusive Endreinigung, Ortstaxe, Bettwäsche,
+Energie und Gebühren, dazu EUR pro Person und Nacht, Entfernung zum Lift,
+Bewertungen, Stornobedingungen, Quelle mit URL und Prüftag.
+
+Ausgabe: Executive Summary, Top-3-Empfehlung, Shortlist Top 8 als Tabelle,
+vollständige Longlist, ausgeschlossene Objekte mit Grund, Objekte ohne offenen
+Kalender separat mit Anfragetext, Risiken, nächste Schritte mit Fristen.
+
+Keine erfundenen Objekte, Preise oder Bewertungen. Nicht Ermittelbares als „nicht
+ermittelbar“ kennzeichnen. Verfügbarkeit nur nach echter Datumsabfrage behaupten.
+Antwort auf Deutsch, Preise in EUR.
+
+
+ANHANG 2 — ANNAHMEN DIESER VERSION
+
+- „thrracher Höhe“ wurde als Turracher Höhe gelesen (Skigebiet auf der Grenze
+  Kärnten/Steiermark, ca. 1.763 m). Bei anderem Zielort: Abschnitt A und B
+  austauschen.
+- Anreisetag 20.03.2027 stammt aus der Anforderung und ist ein Samstag.
+  20.03.–27.03.2027 ist damit die Woche vor Ostern (Ostersonntag 28.03.2027).
+- Die genauen bayerischen Osterferien 2027 sind hier NICHT verifiziert und stehen
+  als ausdrücklicher Prüfauftrag in Phase 0.
+- „ca. 8 Personen“ wurde als exakt 8 gesetzt (5 Erwachsene + 3 Kinder), weil
+  Belegungsgrenzen bei Ferienobjekten hart sind. Bei Unsicherheit zusätzlich
+  Objekte für 9–10 Personen mitsuchen.
+- Kinderalter 8 / 10 / 12 als Platzhalter innerhalb der genannten Spanne 8–12.
+  Für Skipass- und Taxenstufen werden die echten Geburtsjahre gebraucht.
+
+
+ANHANG 3 — WAS BEI WIEDERVERWENDUNG ZU ÄNDERN IST
+
+1. Abschnitt A: Zielgebiet, Datum, Personenzahl, Kinderalter, Budget
+2. Abschnitt B: Zonen und Fahrzeit-Radien
+3. Abschnitt E: K.-o.-Kriterien an die Gruppengröße anpassen
+   (Schlafzimmer, Bäder, Stellplätze skalieren mit der Personenzahl)
+4. Abschnitt F: Gewichtungen verschieben, falls andere Prioritäten gelten
+   (zum Beispiel Wellness höher, Pistennähe niedriger im Sommer)
+5. Abschnitt L: Zusatzrecherche an die Saison anpassen (Sommer statt Ski)
