@@ -282,18 +282,22 @@ def entry(o):
           + (f" &middot; {o['bad']} Bäder" if o.get("bad") else ""))
     n = o.get("naechte", 7)
     if o.get("gesamt"):
-        r(f"<b>Gesamtkosten geprüft</b>", f"<span class='price'>{eur2(o['gesamt'])}</span> für {n} Nächte"
-          f" &middot; {o['ppn']:.0f} € je Person und Nacht".replace(".", ","))
+        r("<b>Gesamtkosten geprüft</b>",
+          f"<span class='price'>{eur2(o['gesamt'])}</span> für {n} Nächte"
+          f" &middot; {o['ppn']:.0f} € je Person und Nacht")
         if o.get("p7") and abs(o["p7"] - o["gesamt"]) > 1:
-            r("davon Anzeigepreis", f"{eur2(o['p7'])} &middot; Differenz {eur2(o['gesamt']-o['p7'])} Nebenkosten")
+            diff = o["gesamt"] - o["p7"]
+            wie = (f"{eur2(diff)} Nebenkosten kommen hinzu" if diff > 0
+                   else f"{eur2(-diff)} günstiger als der Anzeigepreis, anderer Buchungskanal")
+            r("Anzeigepreis Portal", f"{eur2(o['p7'])} &middot; {wie}")
     elif o.get("p7"):
         r("7 Nächte (Anzeigepreis)", f"<span class='price'>{eur2(o['p7'])}</span> &middot; {ppn(o['p7'],7)} je Person und Nacht")
     if o.get("p5") and not o.get("gesamt"): r("5 Nächte", f"{eur2(o['p5'])} &middot; {ppn(o['p5'],5)} je Person und Nacht")
-    if o.get("nebenkosten"): r("Nebenkosten", esc(o["nebenkosten"])[:300])
-    if o.get("storno"): r("Storno", esc(o["storno"])[:230])
-    if o.get("verfuegbar"): r("Verfügbarkeit", esc(o["verfuegbar"])[:200])
-    if o.get("sz_text") and not o.get("sz"): r("Schlafzimmer", esc(o["sz_text"])[:150])
-    if o.get("bad_text") and not o.get("bad"): r("Bäder", esc(o["bad_text"])[:150])
+    if o.get("nebenkosten"): r("Nebenkosten", esc(o["nebenkosten"])[:150])
+    if o.get("storno"): r("Storno", esc(o["storno"])[:115])
+    if o.get("verfuegbar"): r("Verfügbarkeit", esc(o["verfuegbar"])[:105])
+    if o.get("sz_text") and not o.get("sz"): r("Schlafzimmer", esc(o["sz_text"])[:95])
+    if o.get("bad_text") and not o.get("bad"): r("Bäder", esc(o["bad_text"])[:95])
     if o.get("kanal"): r("Buchungskanal", esc(o["kanal"]))
     if o.get("kaution"): r("Kaution", eur(o["kaution"]))
     if o.get("taxe"): r("Ortstaxe", esc(o["taxe"]))
@@ -309,7 +313,7 @@ def entry(o):
  <div class="ehead">{no}<h3>{esc(o['name'])}</h3><span class="badge" style="background:{c}">{LABEL[o['status']]}</span></div>
  <div class="ebody">{mini(o)}<div class="ekv"><table class="kv">{''.join(rows)}</table></div></div>
  <p class="note">{esc(o.get('hinweis',''))}</p>
- {f'<p class="note" style="color:#7a5a2a"><b>Schwachpunkt:</b> {esc(o["schwaeche"])[:300]}</p>' if o.get("schwaeche") else ""}
+ {f'<p class="note" style="color:#7a5a2a"><b>Schwachpunkt:</b> {esc(o["schwaeche"])[:190]}</p>' if o.get("schwaeche") else ""}
  <p class="links">{' &nbsp;·&nbsp; '.join(lk)}</p>
 </div>"""
 

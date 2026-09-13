@@ -1,70 +1,69 @@
-# Kartendaten Turracher Höhe — Osterferien 2027
+# Karten und Reiseführer — Turracher Höhe, Osterferien 2027
 
-42 Unterkünfte, Stand 13.09.2026. Belegung 8 Personen (5 Erwachsene, 3 Kinder von 8, 10 und 12 Jahren),
-Anreise 20.03.2027, mindestens 5 Nächte.
+## Reisefuehrer-Turracher-Hoehe.html — fang hier an
 
-## Karte-Turracher-Hoehe-OSM.html — fang hier an
+**Doppelklick genügt.** Reiseführer und Karte in einer Datei: oben die OpenTopoMap mit
+Liften, Pisten und Höhenlinien, darunter der vollständige Katalog aller 66 Unterkünfte.
+Die Nummern auf der Karte entsprechen den Katalogeinträgen.
 
-**Doppelklick genügt.** Eine fertige OpenStreetMap-Karte, die im Browser aufgeht. Leaflet ist in die
-Datei eingebacken, es wird nichts nachgeladen außer den Kartenkacheln. Kein Server, keine Installation,
-kein Konto.
+- **Karte anklicken** → Kurzinfo mit Preis, darin ein Sprung zum Katalogeintrag
+- **„Auf der Karte zeigen"** an jedem Katalogeintrag → Karte springt zum Objekt
+- **Kartenstil umschaltbar**: OpenTopoMap, OpenStreetMap, CyclOSM
+- **Ausweichregion** ein- und ausblendbar
 
-Was drin ist:
+### PDF mit sichtbarer Karte
 
-- **42 Marker**, eingefärbt nach Eignung: je dunkler, desto besser passt das Objekt auf acht Personen
-- **Klick auf einen Marker** zeigt Belegung, Schlafzimmer, Bäder, Preis für 7 und 5 Nächte, Preis je
-  Person und Nacht, Kaution, Bewertung, Telefon — dazu Links zum Angebot mit Fotos, zur Direktbuchung
-  und zu Street View
-- **Vier Kartenstile.** Voreingestellt ist OpenTopoMap: Sie zeichnet Lifte, Pisten und Höhenlinien und
-  ist für ein Skigebiet die nützlichste Darstellung. Dazu Standard-OSM, CyclOSM und Humanitarian
-- **Filter nach Eignung** mit laufender Zählung je Gruppe
-- **Preisschieber** — blendet alles über dem eingestellten Höchstpreis aus
-- **Zwei Ansichten**: Ortsgebiet oder alle Objekte inklusive Ausweichregion
-- Maßstabsbalken, Quellenangabe, druckbar (Filterleiste wird beim Drucken ausgeblendet)
+Der Knopf **„Als PDF drucken"** unten rechts wartet, bis die Kacheln geladen sind, und
+öffnet dann den Druckdialog. Dort „Als PDF speichern" wählen. Wichtig: In den
+Druckoptionen **Hintergrundgrafiken aktivieren**, sonst bleibt die Karte weiß.
 
-Funktionstest bestanden: 42 Marker, Filter greifen, Popups öffnen, keine Skriptfehler.
+Automatisch geht es so:
 
-## Warum diese Karte nicht im PDF steckt
+```bash
+npm install playwright && npx playwright install chromium
+node generator/pdf-mit-karte.mjs
+```
 
-Die Ausführungsumgebung dieser Recherche sperrt sämtliche Kartendienste auf Netzwerkebene:
-OSM-Kacheln, die Overpass-API über vier Kanäle, die OpenStreetMap-API, zwei Spiegelserver und zwei
-Browser-Treiber — alles blockiert, leer oder im Timeout. Ich konnte weder Kacheln noch OSM-Geometrie
-in das PDF holen. Auf deinem Rechner gilt diese Sperre nicht, deshalb der Weg über die HTML-Datei.
+Das Skript lädt den Reiseführer, wartet auf alle Kartenkacheln und schreibt
+`Reisefuehrer-Turracher-Hoehe.pdf` mit Seitenzahlen.
 
-Die Karte im PDF ist daher aus den erhobenen Koordinaten selbst gezeichnet — maßstabsgetreu, aber ohne
-Gelände und Straßen.
+## Warum das PDF im Repo keine echte Karte zeigt
 
-## Die drei Datenformate
+Die Umgebung, in der recherchiert wurde, sperrt Kartendienste auf Netzwerkebene —
+OSM-Kacheln, Overpass über vier Kanäle, die OpenStreetMap-API, zwei Spiegelserver und
+zwei Browser-Treiber, alles blockiert. Deshalb ist die Karte im Katalog-PDF aus den
+erhobenen Koordinaten selbst gezeichnet: maßstabsgetreu, aber **ohne Gelände, Straßen
+und Seen**. Sie ist eine Lageskizze, keine topografische Karte.
 
-Für den Fall, dass du die Objekte in ein anderes Werkzeug bringen willst.
+Auf deinem Rechner gilt die Sperre nicht. Der Reiseführer lädt die echten Kacheln,
+und das Skript oben macht daraus ein PDF, in dem die Karte sichtbar ist.
 
-**turracher-hoehe-unterkuenfte.geojson** — https://geojson.io öffnen und Datei hineinziehen.
-Ebenso für uMap (https://umap.openstreetmap.fr, dauerhaft teilbar), QGIS, Felt, kepler.gl.
+## Die Dateien
 
-**turracher-hoehe-unterkuenfte.gpx** — für Organic Maps und OsmAnd (beide OSM-basiert und
-offlinefähig), Komoot, Garmin und die meisten Navigationsgeräte.
+| Datei | Zweck |
+|---|---|
+| `Reisefuehrer-Turracher-Hoehe.html` | Karte und Katalog zusammen, druckbar |
+| `Turracher-Hoehe-Katalog-Ostern-2027.pdf` | Katalog mit Lageskizze, 32 Seiten |
+| `Karte-Turracher-Hoehe-OSM.html` | Nur die Karte, mit Preisfilter |
+| `daten/*.geojson` | geojson.io, uMap, QGIS |
+| `daten/*.gpx` | Organic Maps, OsmAnd, Garmin |
+| `daten/*.kml` | Google My Maps, Google Earth |
 
-**turracher-hoehe-unterkuenfte.kml** — für Google My Maps (https://mymaps.google.com, Karte
-erstellen, Importieren) und Google Earth, dort nach Eignung in ein- und ausblendbare Ebenen gruppiert.
+## Fünf geschätzte Positionen und vierzehn abgeleitete
 
-## Wichtig: fünf geschätzte Positionen
+19 der 56 Marker stehen auf geschätzten Koordinaten, abgeleitet aus der Siedlung oder
+benachbarten Hausnummern. Sie sind überall gekennzeichnet: **gestrichelter Rand** auf
+den Karten, `lage_geschaetzt: true` im GeoJSON samt Schätzbasis. Sie können einige
+hundert Meter danebenliegen. Die übrigen 37 Koordinaten stammen von den Buchungsportalen.
 
-Fünf Objekte wurden nur über die Kartensuche gefunden und haben keine verifizierten Koordinaten. Ihre
-Lage ist aus benachbarten Hausnummern abgeleitet und überall gekennzeichnet — in der HTML-Karte und im
-PDF durch einen **gestrichelten Rand**, im GeoJSON durch `lage_geschaetzt: true` samt Schätzbasis. Sie
-können einige hundert Meter danebenliegen:
-
-- Alpin-Hütten auf der Turracherhöhe — Turracherhöhe 141
-- Turracher Zirbenlodges — Barbarasiedlung 406/411
-- Chalet Kornock — Turracherhöhe 177
-- BärenHütte — Barbarasiedlung 324
-- Mountain lodge Chalet-Turrach — Maierbruggersiedlung 361
-
-Alle übrigen 37 Koordinaten stammen direkt von den Buchungsportalen.
+Zehn Objekte haben gar keine Koordinaten und fehlen deshalb auf den Karten; im Katalog
+stehen sie mit Adresse.
 
 ## Preise
 
-Alle Preise sind Portal-Anzeigepreise für die gesamte Gruppe, ohne Nebenkosten (Endreinigung,
-Ortstaxe, Bettwäsche, Energie). Stand 13.09.2026, Änderungen vorbehalten.
+Bei 24 Objekten sind die **Gesamtkosten** durchgerechnet — Grundpreis plus Endreinigung,
+Ortstaxe, Wäsche und Energie, soweit der Anbieter sie ausweist. Bei allen übrigen stehen
+**Anzeigepreise ohne Nebenkosten**; dort fehlen erfahrungsgemäß 250 bis 600 €.
+Stand 13.09.2026.
 
 Kartendaten © OpenStreetMap-Mitwirkende (ODbL). OpenTopoMap-Darstellung CC-BY-SA.
