@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document>
+<name>Turracher Höhe – Unterkünfte Osterferien 2027</name>
+<description>8 Personen, Anreise 20.03.2027, ab 5 Nächte. Stand 13.09.2026.</description>
+<Style id="s_ok"><IconStyle><color>ff6b360d</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ff6b360d</color></LabelStyle></Style>
+<Style id="s_grenzwertig"><IconStyle><color>ff954f18</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ff954f18</color></LabelStyle></Style>
+<Style id="s_neu"><IconStyle><color>ffbf6a25</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ffbf6a25</color></LabelStyle></Style>
+<Style id="s_unklar"><IconStyle><color>ffbf6a25</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ffbf6a25</color></LabelStyle></Style>
+<Style id="s_zwei"><IconStyle><color>ffe58739</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ffe58739</color></LabelStyle></Style>
+<Style id="s_ko"><IconStyle><color>ffeca76d</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ffeca76d</color></LabelStyle></Style>
+<Style id="s_fallback"><IconStyle><color>ffaea49a</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/lodging.png</href></Icon></IconStyle><LabelStyle><color>ffaea49a</color></LabelStyle></Style>
+<Folder><name>Erfüllt alle Kernkriterien</name>
+<Placemark>
+<name>Ibex panorama Lodge</name>
+<description><![CDATA[Erfüllt alle Kernkriterien<br>Typ: Lodge<br>Adresse: 8864 Turracher Höhe<br>Belegung: max. 10 Personen, 4 Schlafzimmer, 4 Bäder<br>7 Nächte: 3.780,05 €  (68 € je Person und Nacht)<br>5 Nächte: 2.874,04 €<br>Bewertung: 9,1 aus 15 (Booking.com)<br>4 Schlafzimmer und 4 Bäder – bestes Verhältnis Bäder je Person im Feld. Wenige Bewertungen.<br>Angebot: https://www.booking.com/hotel/at/ibex-lodge-turracher-hohe.html]]></description>
+<styleUrl>#s_ok</styleUrl>
+<Point><coordinates>13.869593,46.933243,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Zirbenwald Lodge</name>
+<description><![CDATA[Erfüllt alle Kernkriterien<br>Typ: Lodge<br>Adresse: Barbarasiedlung 200 8864 Turracher Höhe<br>Belegung: max. 12 Personen, 4 Schlafzimmer, 4 Bäder<br>7 Nächte: 3.822,50 €  (68 € je Person und Nacht)<br>Bewertung: 9,3 aus 16 (Booking.com)<br>4 Bäder, Sauna, Wellnessbereich, Spielzimmer, Skiverleih und Skipass-Verkauf im Haus.<br>Angebot: https://www.booking.com/hotel/at/zirbenwald-lodge.html]]></description>
+<styleUrl>#s_ok</styleUrl>
+<Point><coordinates>13.870886,46.928641,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Naturchalets Turracher Höhe by ALPS RESORTS</name>
+<description><![CDATA[Erfüllt alle Kernkriterien<br>Typ: Chalet<br>Adresse: Turracherhöhe 271 8864 Turracher Höhe<br>Belegung: max. 8 Personen, 4 Schlafzimmer, 2 Bäder<br>7 Nächte: 3.846,76 €  (69 € je Person und Nacht)<br>5 Nächte: 2.862,68 €<br>Kaution: 500 €<br>Bewertung: 9,2 aus 309 (Booking.com)<br>Telefon: +43 3537 2005050<br>Passt exakt auf 8 Personen, kein Puffer. Mit 309 Bewertungen die belastbarste Datenlage im Feld.<br>Angebot: https://www.booking.com/hotel/at/naturchalets-turracher-hohe-by-alps-resorts.html<br>Direkt: https://alps-resorts.com/urlaubsresorts/details/naturchalets-turracher-hoehe]]></description>
+<styleUrl>#s_ok</styleUrl>
+<Point><coordinates>13.863705,46.927799,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Alpenpark Turrach by ALPS RESORTS</name>
+<description><![CDATA[Erfüllt alle Kernkriterien<br>Typ: Chalet<br>Adresse: Maierbruggersiedlung 392 8864 Turracher Höhe<br>Belegung: max. 12 Personen, 5 Schlafzimmer, 2 Bäder<br>7 Nächte: 3.868,91 €  (69 € je Person und Nacht)<br>5 Nächte: 2.888,89 €<br>Kaution: 350 €<br>Ortstaxe: 2,50 €/Nacht/Erwachsener<br>Bewertung: 8,7 aus 257 (Booking.com)<br>Telefon: +43 3537 2005050<br>5 Schlafzimmer bei nur 2 Bädern – viel Platz, aber morgens Engpass.<br>Angebot: https://www.booking.com/hotel/at/alpenpark-turrach.html<br>Direkt: https://www.alps-resorts.com/urlaubsresorts/details/alpenpark-turracher-hoehe]]></description>
+<styleUrl>#s_ok</styleUrl>
+<Point><coordinates>13.869537,46.926220,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Luxalps Turrach Alm Chalets Nr. 1–4 Grünsee</name>
+<description><![CDATA[Erfüllt alle Kernkriterien<br>Typ: Chalet<br>Adresse: Turracherhöhe 175 9565 Turracher Höhe<br>Belegung: max. 8 Personen, 4 Schlafzimmer, 2 Bäder<br>7 Nächte: 4.009,08 €  (72 € je Person und Nacht)<br>5 Nächte: 2.972,20 €<br>Kaution: 200 €<br>Bewertung: 9,1 aus 91 (Booking.com)<br>Niedrigste Kaution im Feld. Lage am Grünsee, südlicher Ortsrand.<br>Angebot: https://www.booking.com/hotel/at/turrach-chalets-grunsee.html]]></description>
+<styleUrl>#s_ok</styleUrl>
+<Point><coordinates>13.879814,46.909618,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Hollmann am Berg Ski-in Ski-out</name>
+<description><![CDATA[Erfüllt alle Kernkriterien<br>Typ: Chalet<br>Adresse: Turracher Höhe 163–166 9565 Turracher Höhe<br>Belegung: max. 10 Personen, 4 Schlafzimmer, 2 Bäder<br>7 Nächte: 5.608,50 €  (100 € je Person und Nacht)<br>Kaution: 800 €<br>Bewertung: 10,0 aus 5 (Booking.com)<br>Direkter Pistenzugang, Skiverleih und Minimarkt im Haus. Teuerstes Objekt der Auswahl, Kaution 800 €, nur 5 Bewertungen.<br>Angebot: https://www.booking.com/hotel/at/hollmann-am-berg.html]]></description>
+<styleUrl>#s_ok</styleUrl>
+<Point><coordinates>13.875000,46.914444,0</coordinates></Point>
+</Placemark>
+</Folder>
+<Folder><name>Grenzfall</name>
+<Placemark>
+<name>Turrach Lodges by ALPS RESORTS</name>
+<description><![CDATA[Grenzfall<br>Typ: Lodge<br>Adresse: Barbarasiedlung 409 8864 Turracher Höhe<br>Belegung: max. 10 Personen, 3 Schlafzimmer, 2 Bäder<br>5 Nächte: 2.542,84 €<br>Kaution: 350 €<br>Bewertung: 8,9 aus 333 (Booking.com)<br>Telefon: +43 3537 2005050<br>Günstigste der drei ALPS-Anlagen, aber nur 3 Schlafzimmer für 8 Personen.<br>Angebot: https://www.booking.com/hotel/at/turrach-lodges.html<br>Direkt: https://www.alps-resorts.com/urlaubsresorts/details/turrach-lodges]]></description>
+<styleUrl>#s_grenzwertig</styleUrl>
+<Point><coordinates>13.869849,46.926558,0</coordinates></Point>
+</Placemark>
+</Folder>
+<Folder><name>Nur über Kartensuche (Lage geschätzt)</name>
+<Placemark>
+<name>Alpin-Hütten auf der Turracherhöhe</name>
+<description><![CDATA[Nur über Kartensuche<br>Typ: Almhütte<br>Adresse: Turracherhöhe 141 9565 Turracher Höhe<br>Google: 4,6 (46)<br>Telefon: +43 664 8229000<br>Auf keinem Portal gelistet. Nur direkt buchbar.<br>ACHTUNG Lage geschätzt, nicht verifiziert. Basis: Nachbarschaft zu Turracherhöhe 138 (46,92723 / 13,86960)<br>Angebot: http://www.alpinchalets.at/]]></description>
+<styleUrl>#s_neu</styleUrl>
+<Point><coordinates>13.869800,46.927300,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Turracher Zirbenlodges</name>
+<description><![CDATA[Nur über Kartensuche<br>Typ: Lodge<br>Adresse: Barbarasiedlung 406/411 8864 Turracher Höhe<br>Google: 4,7 (16)<br>Telefon: +49 40 399098721<br>Auf keinem Portal gelistet. Deutsche Kontaktnummer.<br>ACHTUNG Lage geschätzt, nicht verifiziert. Basis: Nachbarschaft zu Barbarasiedlung 409 (46,92656 / 13,86985)<br>Angebot: https://www.turracher-zirbenlodges.at/]]></description>
+<styleUrl>#s_neu</styleUrl>
+<Point><coordinates>13.869900,46.926600,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Chalet Kornock</name>
+<description><![CDATA[Nur über Kartensuche<br>Typ: Chalet<br>Adresse: Turracherhöhe 177 Turracher Höhe<br>Google: 4,7 (3)<br>Auf keinem Portal gelistet. Sehr wenige Bewertungen.<br>ACHTUNG Lage geschätzt, nicht verifiziert. Basis: Nachbarschaft zu Turracherhöhe 175 (46,90962 / 13,87981)<br>Angebot: http://chalet-kornock.com/]]></description>
+<styleUrl>#s_neu</styleUrl>
+<Point><coordinates>13.879800,46.909600,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>BärenHütte</name>
+<description><![CDATA[Nur über Kartensuche<br>Typ: Almhütte<br>Adresse: Barbarasiedlung 324 8864 Turracher Höhe<br>Google: 4,6 (16)<br>Telefon: +31 181 418809<br>Auf keinem Portal gelistet. Niederländische Kontaktnummer, vermutlich private Vermietung.<br>ACHTUNG Lage geschätzt, nicht verifiziert. Basis: zwischen Barbarasiedlung 200 und 409<br>Angebot: https://www.baerenhutte.com/]]></description>
+<styleUrl>#s_neu</styleUrl>
+<Point><coordinates>13.870300,46.927400,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Mountain lodge Chalet-Turrach</name>
+<description><![CDATA[Nur über Kartensuche<br>Typ: Lodge<br>Adresse: Maierbruggersiedlung 361 8864 Turracher Höhe<br>Google: 4,6 (32)<br>Telefon: +31 6 51602589<br>Auf keinem Portal gelistet. Niederländische Kontaktnummer.<br>ACHTUNG Lage geschätzt, nicht verifiziert. Basis: Nachbarschaft zu Maierbruggersiedlung 392 (46,92622 / 13,86954)<br>Angebot: https://www.chalet-turracherhoehe.at/]]></description>
+<styleUrl>#s_neu</styleUrl>
+<Point><coordinates>13.869500,46.926300,0</coordinates></Point>
+</Placemark>
+</Folder>
+<Folder><name>Belegung unverifiziert</name>
+<Placemark>
+<name>Superior Chalet # 25 mit Sauna</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 4.180,00 €  (75 € je Person und Nacht)<br>Bewertung: 9,3 aus 15 (Airbnb über Trivago)<br>Belegung und Zimmerzahl nicht verifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-25-mit-sauna-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.866620,46.930110,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Superior Chalet # 10 mit Sauna &amp; Hot Tub</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 4.354,00 €  (78 € je Person und Nacht)<br>Bewertung: 9,5 aus 12 (Airbnb über Trivago)<br>Belegung nicht verifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-10-mit-sauna-hot-tub-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.866620,46.930110,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Superior Chalet # 15 mit Sauna &amp; Hot Tub</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 4.354,00 €  (78 € je Person und Nacht)<br>Bewertung: 8,6 aus 5 (Airbnb über Trivago)<br>Belegung nicht verifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-15-mit-sauna-hot-tub-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.866620,46.930110,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Superior Chalet mit Sauna &amp; Hot Tub</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 4.438,00 €  (79 € je Person und Nacht)<br>Bewertung: 9,6 aus 27 (Airbnb über Trivago)<br>Beste Bewertung der Superior-Chalet-Serie.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-mit-sauna-hot-tub-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.867300,46.926590,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Superior Chalet with Hot Tub</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 4.050,00 €  (72 € je Person und Nacht)<br>Bewertung: 9,7 aus 8 (FeWo-direkt über Trivago)<br>Höchste Bewertung im gesamten Feld, aber nur 8 Rezensionen.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-with-hot-tub-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.867300,46.926590,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Ski-in Ski-out Chalet with Sauna and Nice View</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 3.761,00 €  (67 € je Person und Nacht)<br>Bewertung: 9,4 aus 10 (FeWo-direkt über Trivago)<br>Günstigstes Chalet mit guter Bewertung, Belegung unverifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-ski-in-ski-out-chalet-with-sauna-and-nice-view-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.871080,46.926200,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Lavish Chalet with Finnish Sauna</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 3.449,00 €  (62 € je Person und Nacht)<br>Günstigster Chalet-Treffer im Ort überhaupt, aber ohne Bewertungen und ohne verifizierte Belegung.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-lavish-chalet-with-finnish-sauna-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.870100,46.922950,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>MarktlAlm Almhüttendorf</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Hüttendorf<br>Adresse: Marktlsiedlung 500 8864 Turracher Höhe<br>7 Nächte: 6.787,00 €  (121 € je Person und Nacht)<br>Bewertung: 9,0 aus 68 (Booking.com)<br>Google: 4,5 (408)<br>Telefon: +43 4275 8411<br>Hüttendorf mit Restaurant und kostenlosem Ski-Shuttle. Portalpreis vermutlich für mehrere Hütten.<br>Angebot: https://www.booking.com/searchresults.html?ss=Marktlalm+Turracher+H%C3%B6he<br>Direkt: https://www.marktlalm.at/]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.871620,46.932232,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Relax Chalet Turracher Höhe</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Turracher Höhe<br>7 Nächte: 7.074,00 €  (126 € je Person und Nacht)<br>Teuerstes Einzelobjekt im Ort, keine Bewertungen.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-relax-chalet-turracher-höhe]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.864360,46.926380,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Ferienhaus für bis zu 10 Personen mit private Spa</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Ferienhaus<br>Adresse: Predlitz-Turrach<br>Belegung: max. 10 Personen<br>7 Nächte: 3.514,00 €  (63 € je Person und Nacht)<br>Bewertung: 8,9 aus 29 (Airbnb über Trivago)<br>10 Personen zulässig, Zimmerzahl unverifiziert. Günstig für die Kapazität.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-ferienhaus-für-bis-zu-10-personen-mit-private-spa-predlitz]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.865050,46.925080,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Ferienhaus für bis zu 11 Personen mit private Spa</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Ferienhaus<br>Adresse: Predlitz-Turrach<br>Belegung: max. 11 Personen<br>7 Nächte: 3.648,00 €  (65 € je Person und Nacht)<br>Bewertung: 9,0 aus 39 (Airbnb über Trivago)<br>11 Personen zulässig – viel Puffer für 8 Gäste.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-ferienhaus-für-bis-zu-11-personen-mit-private-spa-predlitz]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.865050,46.925080,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Schöne und sehr luxuriöse Panoramalodge mit Sauna</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Lodge<br>Adresse: Predlitz-Turrach<br>7 Nächte: 3.910,00 €  (70 € je Person und Nacht)<br>Bewertung: 9,7 aus 32 (Airbnb über Trivago)<br>Bewertung 9,7 bei 32 Rezensionen – die belastbarste Spitzenbewertung im Feld.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-schöne-und-sehr-luxuriöse-panoramalodge-mit-saun-predlitz]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.869140,46.933170,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Atemberaubende Luxus-Lodge mit Panoramablick</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Lodge<br>Adresse: Predlitz-Turrach<br>7 Nächte: 3.889,00 €  (69 € je Person und Nacht)<br>Bewertung: 9,3 aus 20 (Airbnb über Trivago)<br>Belegung unverifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-mit-panoramablick-predlitz]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.869050,46.933090,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Atemberaubende Luxus-Lodge am Turracher Höhe</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Lodge<br>Adresse: Predlitz-Turrach<br>7 Nächte: 3.789,00 €  (68 € je Person und Nacht)<br>Bewertung: 9,1 aus 16 (Airbnb über Trivago)<br>Belegung unverifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-am-turracher-höhe-predlitz]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.869050,46.933090,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Chalet mit Sauna und Whirlpool nahe Skipiste</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Chalet<br>Adresse: Predlitz-Turrach<br>7 Nächte: 4.003,00 €  (71 € je Person und Nacht)<br>Bewertung: 8,8 aus 9 (Airbnb über Trivago)<br>Belegung unverifiziert.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-chalet-mit-sauna-und-whirlpool-nahe-skipiste-predlitz]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.870080,46.928020,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Meizeit Hüttendorf</name>
+<description><![CDATA[Belegung unverifiziert<br>Typ: Hüttendorf<br>Adresse: Turracherhöhe 98 9565 Ebene Reichenau<br>7 Nächte: 4.325,00 €  (77 € je Person und Nacht)<br>Bewertung: 8,6 aus 560 (Booking.com über Trivago)<br>Google: 4,2 (439)<br>Telefon: +43 664 5754189<br>Google-Bewertung 4,2 fällt gegenüber Portalwert 8,6 deutlich ab – Diskrepanz prüfen.<br>Angebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-meizeit-hüttendorf-ebene-reichenau<br>Direkt: http://www.meizeit.at/]]></description>
+<styleUrl>#s_unklar</styleUrl>
+<Point><coordinates>13.879720,46.916780,0</coordinates></Point>
+</Placemark>
+</Folder>
+<Folder><name>Zwei Einheiten nötig</name>
+<Placemark>
+<name>Bergheim Schmidt Ski-In Ski-Out Appartements</name>
+<description><![CDATA[Zwei Einheiten nötig<br>Typ: Appartement<br>Adresse: Turracher Höhe 30 9565 Turracher Höhe<br>Belegung: max. 6 Personen, 2 Schlafzimmer, 1 Bäder<br>7 Nächte: 2.834,50 €  (51 € je Person und Nacht)<br>5 Nächte: 2.162,50 €<br>Bewertung: 9,1 aus 91 (Booking.com)<br>Größte Einheit fasst 6 Personen. Für 8 sind zwei Einheiten nötig. Direkter Pistenzugang, Skischule und Spielgeräte.<br>Angebot: https://www.booking.com/hotel/at/almhutte-schmidt.html]]></description>
+<styleUrl>#s_zwei</styleUrl>
+<Point><coordinates>13.873101,46.913963,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Appartementhaus Turracher Höhe</name>
+<description><![CDATA[Zwei Einheiten nötig<br>Typ: Appartementhaus<br>Adresse: Turracherhöhe 218 8864 Turracher Höhe<br>Belegung: max. 6 Personen, 2 Schlafzimmer, 1 Bäder<br>7 Nächte: 3.872,50 €  (69 € je Person und Nacht)<br>Bewertung: 9,3 aus 20 (Booking.com)<br>Zwei Einheiten nötig. Achtung: Strom nach Verbrauch mit 0,25 €/kWh – Kostenrisiko im Winter.<br>Angebot: https://www.booking.com/hotel/at/appartementhaus-turracher-hohe.html]]></description>
+<styleUrl>#s_zwei</styleUrl>
+<Point><coordinates>13.873392,46.918345,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Apparthotel SILBERSEE</name>
+<description><![CDATA[Zwei Einheiten nötig<br>Typ: Aparthotel<br>Adresse: Nr. 344 8864 Turracher Höhe<br>Belegung: max. 6 Personen, 2 Schlafzimmer, 1 Bäder<br>5 Nächte: 3.558,00 €<br>Bewertung: 9,5 aus 259 (Booking.com)<br>Sehr gut bewertet, direkter Pistenzugang, Dampfbad, Indoorspielbereich. Zwei Einheiten nötig. 60 € Gebühr bei Anreise nach 22 Uhr.<br>Angebot: https://www.booking.com/hotel/at/apparthotel-silbersee.html]]></description>
+<styleUrl>#s_zwei</styleUrl>
+<Point><coordinates>13.872113,46.922945,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Panorama Hotel Turracher Höhe</name>
+<description><![CDATA[Zwei Einheiten nötig<br>Typ: Hotel<br>Adresse: Turracher Höhe 24 9565 Turracher Höhe<br>Belegung: max. 4 Personen, 1 Schlafzimmer, 1 Bäder<br>5 Nächte: 5.360,86 €<br>Hotel mit Hallenbad, Wasserrutsche, Kinderprogramm und Halbpension. Für 8 Personen mindestens 2 Zimmer.<br>Angebot: https://www.booking.com/hotel/at/panorama-turracher-haphe.html]]></description>
+<styleUrl>#s_zwei</styleUrl>
+<Point><coordinates>13.873203,46.916166,0</coordinates></Point>
+</Placemark>
+</Folder>
+<Folder><name>Kriterium verfehlt</name>
+<Placemark>
+<name>Alpin Peaks Lifestyle Aparthotel</name>
+<description><![CDATA[Kriterium verfehlt<br>Typ: Aparthotel<br>Adresse: Jägerwirtsiedlung 82 8864 Turracher Höhe<br>Belegung: max. 8 Personen, 2 Schlafzimmer, 2 Bäder<br>5 Nächte: 5.483,54 €<br>Google: 4,7 (167)<br>Telefon: +43 664 5212080<br>Nur 2 Schlafzimmer für 8 Personen – erfüllt das Schlafzimmer-Kriterium nicht.<br>Angebot: https://www.booking.com/hotel/at/alpin-peaks.html<br>Direkt: https://alpinpeaks.at/]]></description>
+<styleUrl>#s_ko</styleUrl>
+<Point><coordinates>13.871657,46.922521,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Idyllische Zirbenholz Alpin Hütte</name>
+<description><![CDATA[Kriterium verfehlt<br>Typ: Almhütte<br>Adresse: Turracherhöhe 138 8864 Turracher Höhe<br>Belegung: max. 8 Personen, 3 Schlafzimmer, 1 Bäder<br>7 Nächte: 4.174,75 €  (75 € je Person und Nacht)<br>Bewertung: 8,2 aus 6 (Booking.com)<br>Nur 1 Bad für 8 Personen.<br>Angebot: https://www.booking.com/hotel/at/idilische-zirbenholz-alpin-hutte-nahe-skipiste.html]]></description>
+<styleUrl>#s_ko</styleUrl>
+<Point><coordinates>13.869601,46.927226,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Chalet in Turracher Höhe with Ski Slope Access</name>
+<description><![CDATA[Kriterium verfehlt<br>Typ: Chalet<br>Adresse: 9565 Turracher Höhe<br>Belegung: max. 8 Personen, 3 Schlafzimmer, 1 Bäder<br>7 Nächte: 3.859,23 €  (69 € je Person und Nacht)<br>5 Nächte: 2.866,30 €<br>Bewertung: 8,8 aus 5 (Booking.com)<br>Nur 1 Bad, keine Waschmaschine.<br>Angebot: https://www.booking.com/hotel/at/alpine-chalet-with-sauna-panoramic-view.html]]></description>
+<styleUrl>#s_ko</styleUrl>
+<Point><coordinates>13.878694,46.909427,0</coordinates></Point>
+</Placemark>
+</Folder>
+<Folder><name>Ausweichregion</name>
+<Placemark>
+<name>Ferienhaus Vier Jahreszeiten</name>
+<description><![CDATA[Ausweichregion<br>Typ: Ferienhaus<br>Adresse: Falkertsee 171 9564 Falkertsee / Reichenau<br>7 Nächte: 1.637,00 €  (29 € je Person und Nacht)<br>Bewertung: 8,8 aus 22 (Booking.com)<br>Günstigstes Objekt der gesamten Recherche. Ohne Pistenanbindung Turracher Höhe.<br>Angebot: https://www.booking.com/hotel/at/ferienhaus-vier-jahreszeiten.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.838673,46.860540,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Gemütliches Almhaus auf 1800 m mit Sauna und Kamin</name>
+<description><![CDATA[Ausweichregion<br>Typ: Almhaus<br>Adresse: Falkertsee 117 9564 Falkertsee<br>7 Nächte: 1.700,00 €  (30 € je Person und Nacht)<br>Bewertung: 9,1 aus 12 (Booking.com)<br>1.800 m Höhenlage, Sauna, Kamin. Fahrzeit zur Turracher Höhe nicht verifiziert.<br>Angebot: https://www.booking.com/hotel/at/ferienhaus-natberger-hutte.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.840972,46.859997,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Haus Kremser</name>
+<description><![CDATA[Ausweichregion<br>Typ: Ferienhaus<br>Adresse: Koschatweg 4 und 6 9546 Bad Kleinkirchheim<br>7 Nächte: 1.988,77 €  (36 € je Person und Nacht)<br>Bewertung: 9,1 aus 76 (Booking.com)<br>Eigenes Skigebiet Bad Kleinkirchheim vor der Tür.<br>Angebot: https://www.booking.com/hotel/at/haus-kremser.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.811583,46.815097,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Residence Margerithenweg</name>
+<description><![CDATA[Ausweichregion<br>Typ: Residence<br>Adresse: Margerithenweg 8 und 10 9546 Bad Kleinkirchheim<br>7 Nächte: 2.237,50 €  (40 € je Person und Nacht)<br>Bewertung: 8,6 aus 42 (Booking.com)<br>Skischule und Skipass-Verkauf im Haus.<br>Angebot: https://www.booking.com/hotel/at/residence-margerithenweg.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.796221,46.815087,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Berghaus Traumblick</name>
+<description><![CDATA[Ausweichregion<br>Typ: Ferienhaus<br>Adresse: Habichtweg 5 9546 Bad Kleinkirchheim<br>7 Nächte: 2.302,50 €  (41 € je Person und Nacht)<br>Bewertung: 9,6 aus 85 (Booking.com)<br>Bewertung 9,6 bei 85 Rezensionen – bester Fallback nach Qualität.<br>Angebot: https://www.booking.com/hotel/at/berghaus-traumblick-bad-kleinkirchheim1.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.770686,46.820122,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Nordic Lodge – Suite Hotel</name>
+<description><![CDATA[Ausweichregion<br>Typ: Suite-Hotel<br>Adresse: Thermenstraße 21 9546 Bad Kleinkirchheim<br>7 Nächte: 3.683,50 €  (66 € je Person und Nacht)<br>Bewertung: 9,0 aus 106 (Booking.com)<br>Hallenbad, Spa, an der Therme.<br>Angebot: https://www.booking.com/hotel/at/landhaus-coloseus.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.785786,46.814618,0</coordinates></Point>
+</Placemark>
+<Placemark>
+<name>Villa Bostele, 5 SZ, Indoor-Pool, 2 Saunen</name>
+<description><![CDATA[Ausweichregion<br>Typ: Villa<br>Adresse: Obertscherner Weg 35 9546 Bad Kleinkirchheim<br>7 Nächte: 7.326,33 €  (131 € je Person und Nacht)<br>Bewertung: 9,8 aus 15 (Booking.com)<br>Bestbewertetes Objekt der gesamten Recherche (9,8). Eigener Innenpool und zwei Saunen, entsprechend teuer.<br>Angebot: https://www.booking.com/hotel/at/villa-bostele-with-seven-bedrooms-indoor-pool-and-two-saunas.html]]></description>
+<styleUrl>#s_fallback</styleUrl>
+<Point><coordinates>13.768279,46.814438,0</coordinates></Point>
+</Placemark>
+</Folder>
+</Document></kml>
