@@ -7,7 +7,8 @@ META, OBJ = D["meta"], D["objekte"]
 SURF = "#fcfcfb"
 
 # Ordinale Eignungs-Rampe (validiert: monoton, Delta-L, Hellende 2,44:1, ein Farbton)
-RANK = {"ok": 0, "grenzwertig": 1, "neu": 2, "unklar": 2, "zwei": 3, "ko": 4, "fallback": 2}
+RANK = {"ok": 0, "grenzwertig": 1, "anfrage": 2, "neu": 2, "unklar": 2, "belegt": 3,
+        "zwei": 3, "ko": 4, "fallback": 2}
 RAMP = ["#0d366b", "#184f95", "#256abf", "#3987e5", "#6da7ec"]
 LABEL = {
     "ok":          "Erfüllt alle Kernkriterien",
@@ -17,8 +18,10 @@ LABEL = {
     "zwei":        "Zwei Einheiten nötig",
     "ko":          "Kriterium verfehlt",
     "fallback":    "Ausweichregion",
+    "anfrage":     "Nur auf Anfrage",
+    "belegt":      "Im Zeitraum belegt",
 }
-ORDER = ["ok", "grenzwertig", "neu", "unklar", "zwei", "ko", "fallback"]
+ORDER = ["ok", "grenzwertig", "anfrage", "neu", "unklar", "belegt", "zwei", "ko", "fallback"]
 col   = lambda o: RAMP[RANK[o["status"]]]
 
 def lum(hx):
@@ -277,8 +280,21 @@ def entry(o):
         r("Belegung", f"max. {o['max']} Personen"
           + (f" &middot; {o['sz']} Schlafzimmer" if o.get("sz") else "")
           + (f" &middot; {o['bad']} Bäder" if o.get("bad") else ""))
-    if o.get("p7"): r("7 Nächte", f"<span class='price'>{eur2(o['p7'])}</span> &middot; {ppn(o['p7'],7)} je Person und Nacht")
-    if o.get("p5"): r("5 Nächte", f"{eur2(o['p5'])} &middot; {ppn(o['p5'],5)} je Person und Nacht")
+    n = o.get("naechte", 7)
+    if o.get("gesamt"):
+        r(f"<b>Gesamtkosten geprüft</b>", f"<span class='price'>{eur2(o['gesamt'])}</span> für {n} Nächte"
+          f" &middot; {o['ppn']:.0f} € je Person und Nacht".replace(".", ","))
+        if o.get("p7") and abs(o["p7"] - o["gesamt"]) > 1:
+            r("davon Anzeigepreis", f"{eur2(o['p7'])} &middot; Differenz {eur2(o['gesamt']-o['p7'])} Nebenkosten")
+    elif o.get("p7"):
+        r("7 Nächte (Anzeigepreis)", f"<span class='price'>{eur2(o['p7'])}</span> &middot; {ppn(o['p7'],7)} je Person und Nacht")
+    if o.get("p5") and not o.get("gesamt"): r("5 Nächte", f"{eur2(o['p5'])} &middot; {ppn(o['p5'],5)} je Person und Nacht")
+    if o.get("nebenkosten"): r("Nebenkosten", esc(o["nebenkosten"])[:300])
+    if o.get("storno"): r("Storno", esc(o["storno"])[:230])
+    if o.get("verfuegbar"): r("Verfügbarkeit", esc(o["verfuegbar"])[:200])
+    if o.get("sz_text") and not o.get("sz"): r("Schlafzimmer", esc(o["sz_text"])[:150])
+    if o.get("bad_text") and not o.get("bad"): r("Bäder", esc(o["bad_text"])[:150])
+    if o.get("kanal"): r("Buchungskanal", esc(o["kanal"]))
     if o.get("kaution"): r("Kaution", eur(o["kaution"]))
     if o.get("taxe"): r("Ortstaxe", esc(o["taxe"]))
     if o.get("rating"): r("Bewertung", f"{num(o['rating'])} aus {o['reviews']} Rezensionen, {esc(o['quelle'])}")
@@ -293,6 +309,7 @@ def entry(o):
  <div class="ehead">{no}<h3>{esc(o['name'])}</h3><span class="badge" style="background:{c}">{LABEL[o['status']]}</span></div>
  <div class="ebody">{mini(o)}<div class="ekv"><table class="kv">{''.join(rows)}</table></div></div>
  <p class="note">{esc(o.get('hinweis',''))}</p>
+ {f'<p class="note" style="color:#7a5a2a"><b>Schwachpunkt:</b> {esc(o["schwaeche"])[:300]}</p>' if o.get("schwaeche") else ""}
  <p class="links">{' &nbsp;·&nbsp; '.join(lk)}</p>
 </div>"""
 
@@ -301,16 +318,21 @@ def rowsof(objs, dist=False):
     for o in objs:
         rat = (f"{num(o['rating'])} ({o['reviews']})" if o.get("rating") else (o.get("google") or "—"))
         d = (f"{o['_d']:.1f} km".replace(".", ",") if o.get("_d") else "—")
+        preis = o.get("gesamt") or o.get("p7")
+        marke = " ●" if o.get("gesamt") else ""
         out.append(f"<tr><td><a href='{esc(o['url'])}'>{esc(o['name'])}</a></td><td>{esc(o['typ'])}</td>"
                    f"<td>{esc(o['ort'])}</td><td>{o.get('max') or '—'}</td>"
                    f"<td>{(str(o['sz'])+'/'+str(o['bad'])) if o.get('sz') and o.get('bad') else '—'}</td>"
                    + (f"<td class='num'>{d}</td>" if dist else "")
-                   + f"<td class='num'>{eur(o.get('p7'))}</td><td class='num'>{ppn(o.get('p7'),7)}</td>"
+                   + f"<td class='num'>{eur(preis)}{marke}</td>"
+                     f"<td class='num'>{(('%.0f €' % o['ppn']) if o.get('ppn') else ppn(o.get('p7'),7))}</td>"
                      f"<td>{rat}</td><td class='src'>{esc(o['quelle'])}</td></tr>")
     return "".join(out)
 
 by  = lambda st: [o for o in OBJ if o["status"] == st]
-top = sorted(by("ok"), key=lambda o: o.get("p7") or 9e9)
+top = sorted(by("ok"), key=lambda o: o.get("gesamt") or o.get("p7") or 9e9)
+top7 = [o for o in top if o.get("gesamt") and o.get("naechte", 7) == 7]
+GEPRUEFT = [o for o in OBJ if o.get("gesamt")]
 
 def median(v):
     v = sorted(v); n = len(v)
@@ -363,32 +385,40 @@ rankleg = "".join(f'<span><i style="background:{RAMP[RANK[st]]}"></i>{LABEL[st]}
 
 P.append(f"""<div class="page">
  <h2>Das Wichtigste zuerst</h2>
- <p class="lead">Im Ortsgebiet der Turracher Höhe sind für die Woche ab dem 20. März 2027
- <b>{len(PY)} Objekte</b> mit Preis buchbar, die Spanne reicht von {eur(min(PY))} bis {eur(max(PY))}
- für sieben Nächte und die ganze Gruppe. Entscheidend ist aber nicht der Listenpreis, sondern die Belegung:
- Von vierzehn im Detail abgefragten Häusern nehmen nur <b>sechs</b> acht Personen in einer einzigen Einheit auf.</p>
+ <p class="lead">Erfasst sind <b>{len(OBJ)} Objekte</b>. Bei <b>{len(GEPRUEFT)}</b> davon wurde die
+ Verfügbarkeit für den Zeitraum einzeln abgefragt und die <b>Gesamtkosten inklusive aller Nebenkosten</b>
+ durchgerechnet — das ist der Unterschied zwischen Anzeigepreis und dem, was am Ende zu zahlen ist.
+ <b>{len(top7)} Objekte</b> sind frei und erfüllen alle acht Kernkriterien.</p>
  <div class="kbox"><h4>Empfehlung</h4>
-  <p><b>{esc(top[0]['name'])}</b> und <b>{esc(top[1]['name'])}</b> führen das Feld an. Beide haben vier Schlafzimmer
-  und <b>vier Bäder</b> — bei fünf Erwachsenen und drei Kindern der Unterschied, den man jeden Morgen merkt — und sind
-  mit {eur2(top[0]['p7'])} beziehungsweise {eur2(top[1]['p7'])} zugleich die günstigsten Objekte, die alle
-  Kernkriterien erfüllen.</p></div>
- <h3 style="margin:14px 0 5px">Vier Befunde, die die Entscheidung verschieben</h3>
+  <p><b>{esc(top7[0]["name"].split("(")[0].strip())}</b> mit <b>{eur2(top7[0]["gesamt"])}</b> Gesamtkosten
+  ({top7[0]["ppn"]:.0f} € je Person und Nacht). Es ist das günstigste Objekt, das alle acht Kernkriterien erfüllt
+  und im Zeitraum frei ist: vier Schlafzimmer, zwei Bäder, Carport für zwei Autos, Skiraum mit beheiztem
+  Schuhtrockner. Entscheidend ist eine Besonderheit der Abrechnung — <b>die Endreinigung von 222 € schließt Strom,
+  Wasser und Brennholz ein</b>, es gibt also kein Nachzahlungsrisiko. Kostenfreie Stornierung bis 18.02.2027.</p>
+  <p style="margin-top:7px">Der Nachteil: exakt acht Schlafplätze ohne jede Reserve, Zustellbetten sind
+  ausgeschlossen.</p></div>
+ <h3 style="margin:14px 0 5px">Fünf Befunde, die die Entscheidung verschieben</h3>
  <ul>
-  <li><b>Bäder sind der Engpass, nicht Betten.</b> Vier Häuser nehmen formal acht Gäste auf, haben aber nur ein Bad.
-      Der Aufpreis von einem Zwei-Bad- auf ein Vier-Bad-Haus beträgt im Feld weniger als 100 €.</li>
-  <li><b>Sieben Nächte sind pro Nacht billiger als fünf.</b> Naturchalets: {eur2(2862.68)} für fünf gegenüber
-      {eur2(3846.76)} für sieben Nächte, also 573 € gegen 550 € pro Nacht. Die kurze Variante spart absolut
-      rund 980 €, kostet pro Nacht aber mehr.</li>
-  <li><b>Fünf Häuser stehen auf keinem Buchungsportal.</b> Erst die Kartensuche hat sie sichtbar gemacht, alle mit
-      Google-Bewertungen zwischen 4,6 und 4,7. Wer nur Booking und Airbnb durchsucht, sieht sie nie.</li>
-  <li><b>Die Karwoche ist der teure Teil der Ferien.</b> Der 20. März ist der Wechselsamstag in Ferienwoche eins,
-      Karfreitag fällt auf den 26. März.</li>
+  <li><b>Der Anzeigepreis ist nicht der Preis.</b> Erst die Einzelprüfung zeigt die Gesamtkosten. Beim
+      Appartementhaus Lerchbaumer kommen zu 2.030 € Grundmiete 260 € Endreinigung und 122,50 € Ortstaxe —
+      und die drei Kinder sind von der Taxe befreit, weil sie erst ab 15 Jahren anfällt.</li>
+  <li><b>Direktbuchung spart bis zu 19 %.</b> Bei ALPS RESORTS liegt die Ersparnis gegenüber dem Portal
+      bei 748 € (Alpenpark) und 782 € (Superior Chalet 25). Bei Ibex und Hollmann ist es umgekehrt: dort
+      ist das Portal günstiger. Pauschal gilt keine der beiden Richtungen.</li>
+  <li><b>Bäder sind der Engpass, nicht Betten.</b> Das mit Abstand günstigste Objekt — die Zirbenhütte für
+      2.412,50 €, also 43 € je Person und Nacht — hat vier Schlafzimmer, aber nur <b>ein</b> Bad für acht
+      Personen. Es scheitert an genau diesem einen Kriterium.</li>
+  <li><b>Fünf Nächte sind nicht billiger.</b> Turrach Lodges kostet für fünf Nächte 3.006 €, das sind
+      75 € je Person und Nacht — mehr als jedes der zehn vollständig geeigneten Sieben-Nächte-Angebote.
+      Für acht Personen sind dort sieben Nächte gar nicht verfügbar.</li>
+  <li><b>Das offizielle Ortsverzeichnis ist vollständig erfasst</b> — 55 Betriebe — und die Siedlungssuche
+      hat darüber hinaus Häuser gefunden, die auf keinem Portal stehen.</li>
  </ul>
  <div class="kbox warn"><h4>Belastbarkeit dieser Zahlen</h4>
-  <p>Die Preise sind <b>Portal-Anzeigepreise</b>. Endreinigung, Ortstaxe, Bettwäsche und Energie sind nicht
-  durchgängig enthalten. Belegt sind bisher nur zwei Nebenkosten: Ortstaxe 2,50 € je Erwachsenem und Nacht beim
-  Alpenpark Turrach sowie Strom nach Verbrauch mit 0,25 €/kWh beim Appartementhaus — Letzteres ein echtes
-  Kostenrisiko im März. Bei sechzehn Objekten ist die zulässige Belegung nicht verifiziert.
+  <p>Bei <b>{len(GEPRUEFT)} Objekten</b> sind die Gesamtkosten durchgerechnet und mit einem Punkt im Register
+  markiert. Bei allen übrigen stehen <b>Portal-Anzeigepreise ohne Nebenkosten</b> — dort fehlen Endreinigung,
+  Ortstaxe, Bettwäsche und Energie, was erfahrungsgemäß 250 bis 600 € ausmacht. Die Ortstaxe beträgt je nach
+  Gemeinde 2,50 bis 3,50 € pro Erwachsenem und Nacht; Kinder sind teils befreit.
   Fotos ließen sich nicht einbetten: die Netzwerk-Policy dieser Umgebung sperrt sämtliche externen Bildhosts
   und Kartendienste. Jeder Objektname führt per Link direkt zur Anzeige mit Bildern.</p></div>
 </div>""")
@@ -436,11 +466,15 @@ SECT = [
      "Preis und Bewertung liegen vor, die zulässige Personenzahl und die Zimmeraufteilung aber nicht. Vor einer Buchung zwingend nachfragen."),
     ("zwei",        "Zwei Einheiten nötig",
      "Die größte Einzeleinheit fasst weniger als acht Personen. Machbar, aber die Gruppe wird geteilt."),
+    ("anfrage",     "Nur auf Anfrage buchbar",
+     "Kein öffentlicher Buchungskalender für den Zeitraum. Belegung und Ausstattung sind teils geprüft, die Verfügbarkeit muss telefonisch oder per E-Mail geklärt werden."),
+    ("belegt",      "Im Zeitraum belegt",
+     "Geprüft und für 20.–27.03.2027 nicht verfügbar. Dokumentiert, weil eine Direktanfrage bei Stornierungen lohnen kann."),
     ("ko",          "Kriterium verfehlt",
      "Vollständigkeitshalber dokumentiert, nicht empfohlen — mit Angabe des verfehlten Kriteriums."),
 ]
 for st, title, intro in SECT:
-    grp = sorted(by(st), key=lambda o: (o.get("p7") or 9e9))
+    grp = sorted(by(st), key=lambda o: (o.get("ppn") or (o["p7"]/56 if o.get("p7") else 9e9)))
     if not grp: continue
     P.append(f'<div class="page"><h2>{title}</h2><p class="small">{intro}</p>'
              + "".join(entry(o) for o in grp) + '</div>')
@@ -449,7 +483,7 @@ for st, title, intro in SECT:
 allobj = sorted(OBJ, key=lambda o: (RANK[o["status"]], o.get("p7") or 9e9))
 reg = []
 for st, title, _ in SECT:
-    g = sorted(by(st), key=lambda o: o.get("p7") or 9e9)
+    g = sorted(by(st), key=lambda o: o.get("gesamt") or o.get("p7") or 9e9)
     if g: reg.append(f'<tr class="grp"><td colspan="9">{title}</td></tr>' + rowsof(g))
 P.append(f"""<div class="page">
  <h2>Register</h2>
@@ -460,7 +494,7 @@ P.append(f"""<div class="page">
  <tbody>{''.join(reg)}</tbody></table>
 </div>""")
 
-fb = sorted(by("fallback"), key=lambda o: o.get("p7") or 9e9)
+fb = sorted(by("fallback"), key=lambda o: o.get("gesamt") or o.get("p7") or 9e9)
 P.append(f"""<div class="page">
  <h2>Ausweichregion</h2>
  <p class="lead">Wer auf die Pistenanbindung der Turracher Höhe verzichtet, zahlt deutlich weniger. Das günstigste

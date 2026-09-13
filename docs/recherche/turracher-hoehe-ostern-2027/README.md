@@ -3,6 +3,9 @@
 Ergebnisse einer Recherche vom 13.09.2026. Gesichert aus einer Cloud-Session, deren
 Arbeitsverzeichnis nicht dauerhaft ist.
 
+**Fängst du hier neu an? Lies zuerst `UEBERGABE.md`.** Dort steht Empfehlung, Rangfolge,
+was offen ist und wie du lokal weiterbaust.
+
 ## Suchauftrag
 
 | | |
@@ -31,16 +34,23 @@ Arbeitsverzeichnis nicht dauerhaft ist.
 | `daten/turracher-hoehe-unterkuenfte.gpx` | Für Organic Maps, OsmAnd, Garmin |
 | `daten/turracher-hoehe-unterkuenfte.kml` | Für Google My Maps, Google Earth |
 | `daten/ota-rohdaten-turrach.md` | Rohbefunde der Portalabfragen, inklusive Korrekturen |
+| `daten/rohdaten/verifiziert.json` | Die 30 Einzelprüfungen strukturiert |
+| `daten/rohdaten/wf2_kandidaten.json` | 59 neue Objekte ab 8 Personen aus dem Siedlungs-Sweep |
+| `daten/rohdaten/wf*_ergebnis.json.gz` | Vollständige Agenten-Ergebnisse |
 
 ## Kernbefunde
 
-1. **Bäder sind der Engpass, nicht Betten.** Von 14 im Detail abgefragten Häusern nehmen
-   nur 6 acht Personen in einer Einheit auf. Vier scheitern an einem einzigen Bad.
-2. **Eignung kostet keinen Aufschlag.** Median der voll geeigneten Objekte 3.858 €,
-   Median der Gruppe mit unverifizierter Belegung 4.026 € — die sichere Wahl ist im
-   Mittel rund 170 € günstiger.
-3. **Sieben Nächte sind pro Nacht billiger als fünf.** 573 €/Nacht gegen 550 €/Nacht.
-4. **Fünf Häuser stehen auf keinem Buchungsportal**, nur über die Kartensuche auffindbar.
+1. **Empfehlung: Chalet Claassen**, 3.401,80 € Gesamtkosten, 61 € je Person und Nacht.
+   Einziges Objekt, das alle acht K.-o.-Kriterien erfüllt und zugleich am günstigsten ist.
+   Endreinigung schließt Strom, Wasser und Brennholz ein, kostenfreie Stornierung bis 18.02.2027.
+2. **Der Anzeigepreis ist nicht der Preis.** Nebenkosten machen 250 bis 600 € aus. Bei 24 von
+   66 Objekten sind die Gesamtkosten durchgerechnet.
+3. **Direktbuchung spart bis zu 19 %** — aber nicht überall. Bei ALPS RESORTS 748 bis 782 €
+   günstiger, bei Ibex und Hollmann ist das Portal günstiger.
+4. **Bäder sind der Engpass.** Das günstigste Objekt überhaupt (Zirbenhütte, 2.412,50 €,
+   43 €/Person/Nacht) hat vier Schlafzimmer, aber nur ein Bad für acht Personen.
+5. **Fünf Nächte sind nicht billiger** — Turrach Lodges kostet auf die Nacht gerechnet mehr
+   als jedes Sieben-Nächte-Angebot.
 
 ## Reproduzieren
 

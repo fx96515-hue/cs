@@ -10,7 +10,8 @@
   "kinder": "3 (8, 10, 12 Jahre)",
   "ferien": "Osterferien Bayern 2027: 22.03.–02.04.2027",
   "karfreitag": "26.03.2027",
-  "ostersonntag": "28.03.2027"
+  "ostersonntag": "28.03.2027",
+  "verifiziert": "26 Objekte mit geprüften Gesamtkosten"
  },
  "objekte": [
   {
@@ -31,7 +32,12 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/ibex-lodge-turracher-hohe.html",
    "status": "ok",
-   "hinweis": "4 Schlafzimmer und 4 Bäder – bestes Verhältnis Bäder je Person im Feld. Wenige Bewertungen."
+   "hinweis": "4 Schlafzimmer und 4 Bäder – bestes Verhältnis Bäder je Person im Feld. Wenige Bewertungen.",
+   "gesamt": 3780.05,
+   "ppn": 67.5,
+   "verifiziert": true,
+   "kanal": "Booking, 52,50 € günstiger als direkt",
+   "naechte": 7
   },
   {
    "name": "Zirbenwald Lodge",
@@ -52,7 +58,12 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/zirbenwald-lodge.html",
    "status": "ok",
-   "hinweis": "4 Bäder, Sauna, Wellnessbereich, Spielzimmer, Skiverleih und Skipass-Verkauf im Haus."
+   "hinweis": "4 Bäder, Sauna, Wellnessbereich, Spielzimmer, Skiverleih und Skipass-Verkauf im Haus.",
+   "gesamt": 3920.5,
+   "ppn": 70.0,
+   "verifiziert": true,
+   "kanal": "nur über Booking buchbar, kein Direktkanal",
+   "naechte": 7
   },
   {
    "name": "Naturchalets Turracher Höhe by ALPS RESORTS",
@@ -76,7 +87,18 @@
    "tel": "+43 3537 2005050",
    "kaution": 500,
    "status": "ok",
-   "hinweis": "Passt exakt auf 8 Personen, kein Puffer. Mit 309 Bewertungen die belastbarste Datenlage im Feld."
+   "hinweis": "Passt exakt auf 8 Personen, kein Puffer. Mit 309 Bewertungen die belastbarste Datenlage im Feld.",
+   "gesamt": 3847.0,
+   "ppn": 68.7,
+   "verifiziert": true,
+   "ko_text": "erfüllt (mit 2 nicht verifizierbaren Nebenpunkten). Im Einzelnen: 8 Personen zulässig = JA (\"bis zu 8 Personen\", Booking.com \"Erwachsene max.: 8\"). Mind. 4 Schlafzimmer = JA (4 SZ bei allen Superior-/Premium-Typen; nur der Deluxe-Typ #32 hat 3 SZ und ist ohnehin belegt). Mind. 2 Bäder = JA, deutlich…",
+   "storno": "Direktbuchung (Avantio-Stornostaffel der Objektseite, wörtlich): vom Buchungsdatum bis 61 Tage vor Anreise 0 % des Mietpreises; von 60 bis 31 Tage vorher 70 %; von 30 bis 14 Tage v…",
+   "nebenkosten": "Pflichtpositionen laut Objektseite der Direktbuchungsmaschine (Avantio, Superior Chalet # 4): • Endreinigung: 290,00 € pro Buchung (verpflichtend) • Bettwäsche: 16,90 € pro Person (verpflichtend) = 135,20 € bei 8 Personen • Handtücher: inklusive • Parkplatz im…",
+   "verfuegbar": "frei – 20.03.–27.03.2027 (7 Nächte) ist buchbar. Doppelt verifiziert: (a) Direktbuchungsmaschine (Avantio) – von 15 gelisteten Chalets sind …",
+   "schwaeche": "• Sehr knappe Verfügbarkeit: Von 15 im Direktportal gelisteten Chalets sind nur 2 (#4 und #24) im Zeitraum frei; auf Booking.com sind es bei den meisten Kategorien nur 1 Einheit, beim günstigsten Typ …",
+   "sz_text": "4 Schlafzimmer bei allen im Zeitraum verfügbaren Typen (Superior Chalet mit Whirlpool-Bade…",
+   "bad_text": "3 bis 4 Badezimmer laut Booking.com je nach Kategorie. Die Direktbuchungsmaschine gibt für…",
+   "naechte": 7
   },
   {
    "name": "Alpenpark Turrach by ALPS RESORTS",
@@ -101,7 +123,8 @@
    "kaution": 350,
    "taxe": "2,50 €/Nacht/Erwachsener",
    "status": "ok",
-   "hinweis": "5 Schlafzimmer bei nur 2 Bädern – viel Platz, aber morgens Engpass."
+   "hinweis": "5 Schlafzimmer bei nur 2 Bädern – viel Platz, aber morgens Engpass.",
+   "naechte": 7
   },
   {
    "name": "Luxalps Turrach Alm Chalets Nr. 1–4 Grünsee",
@@ -123,7 +146,12 @@
    "url": "https://www.booking.com/hotel/at/turrach-chalets-grunsee.html",
    "kaution": 200,
    "status": "ok",
-   "hinweis": "Niedrigste Kaution im Feld. Lage am Grünsee, südlicher Ortsrand."
+   "hinweis": "Niedrigste Kaution im Feld. Lage am Grünsee, südlicher Ortsrand.",
+   "gesamt": 4166.58,
+   "ppn": 74.4,
+   "verifiziert": true,
+   "kanal": "Direktpreis nicht abrufbar",
+   "naechte": 7
   },
   {
    "name": "Turrach Lodges by ALPS RESORTS",
@@ -146,8 +174,19 @@
    "direkt": "https://www.alps-resorts.com/urlaubsresorts/details/turrach-lodges",
    "tel": "+43 3537 2005050",
    "kaution": 350,
-   "status": "grenzwertig",
-   "hinweis": "Günstigste der drei ALPS-Anlagen, aber nur 3 Schlafzimmer für 8 Personen."
+   "status": "ok",
+   "hinweis": "ACHTUNG: Der Preis gilt für 5 Nächte (20.–25.03.2027). Für 8 Personen sind 7 Nächte laut Betreiber NICHT verfügbar. Günstigste der drei ALPS-Anlagen, aber nur 3 Schlafzimmer für 8 Personen.",
+   "gesamt": 3005.54,
+   "ppn": 75.1,
+   "verifiziert": true,
+   "ko_text": "erfüllt – aber nur für die 5-Nächte-Variante (20.–25.03.2027). Da laut Vorgabe 5 Nächte ab 20.03. zulässig sind, ist das K.-o.-Kriterium \"kompletter Zeitraum frei\" formal erfüllt. Für den bevorzugten 7-Nächte-Zeitraum (20.–27.03.) ist es NICHT erfüllt. Einzelprüfung am Referenzobjekt \"Superior Ferie…",
+   "storno": "Stornostaffel laut Buchungsmaschine des Betreibers (bezogen auf den Mietpreis): ab Buchungsdatum bis 61 Tage vor Anreise 0 %; von 60 bis 31 Tage vorher 70 %; von 30 bis 14 Tage vor…",
+   "nebenkosten": "Einzeln aus der Buchungsmaschine des Betreibers ausgelesen. VERBINDLICH: Bettwäsche 16,90 EUR pro Person (bei 8 Personen = 135,20 EUR); Endreinigung 290,00 EUR pro Buchung beim \"Superior Ferienhaus für 8 Personen mit Sauna\" bzw. 160,00 EUR pro Buchung beim \"Fe…",
+   "verfuegbar": "frei – ABER NUR FÜR 5 NÄCHTE. Verifiziert am 13.09.2026 über Booking.com für 8 Personen: Sa 20.03.–Do 25.03.2027 (5 Nächte) = VERFÜGBAR, 2.5…",
+   "schwaeche": "Erstens und entscheidend: Der Wunschzeitraum von 7 Nächten (20.–27.03.2027) ist für 8 Personen NICHT verfügbar, ebenso wenig 6 oder 8 Nächte und ebenso wenig die Ausweich-Anreisetage Freitag 19.03. un…",
+   "sz_text": "4 Schlafzimmer bei allen für 8 Personen geeigneten Ferienhäusern (Superior Ferienhaus 8 Pe…",
+   "bad_text": "Beim \"Superior Ferienhaus für 8 Personen mit Sauna\": 5 Badezimmer plus 1 separates WC. Auf…",
+   "naechte": 5
   },
   {
    "name": "Hollmann am Berg Ski-in Ski-out",
@@ -169,7 +208,12 @@
    "url": "https://www.booking.com/hotel/at/hollmann-am-berg.html",
    "kaution": 800,
    "status": "ok",
-   "hinweis": "Direkter Pistenzugang, Skiverleih und Minimarkt im Haus. Teuerstes Objekt der Auswahl, Kaution 800 €, nur 5 Bewertungen."
+   "hinweis": "Direkter Pistenzugang, Skiverleih und Minimarkt im Haus. Teuerstes Objekt der Auswahl, Kaution 800 €, nur 5 Bewertungen.",
+   "gesamt": 5881.5,
+   "ppn": 105.0,
+   "verifiziert": true,
+   "kanal": "Portal günstiger als direkt",
+   "naechte": 7
   },
   {
    "name": "Superior Chalet # 25 mit Sauna",
@@ -188,7 +232,12 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-25-mit-sauna-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Belegung und Zimmerzahl nicht verifiziert."
+   "hinweis": "Belegung und Zimmerzahl nicht verifiziert.",
+   "gesamt": 3398.25,
+   "ppn": 60.7,
+   "verifiziert": true,
+   "kanal": "DIREKT buchen: 782 € günstiger als Portal",
+   "naechte": 7
   },
   {
    "name": "Superior Chalet # 10 mit Sauna & Hot Tub",
@@ -207,7 +256,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-10-mit-sauna-hot-tub-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Belegung nicht verifiziert."
+   "hinweis": "Belegung nicht verifiziert.",
+   "naechte": 7
   },
   {
    "name": "Superior Chalet # 15 mit Sauna & Hot Tub",
@@ -226,7 +276,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-15-mit-sauna-hot-tub-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Belegung nicht verifiziert."
+   "hinweis": "Belegung nicht verifiziert.",
+   "naechte": 7
   },
   {
    "name": "Superior Chalet mit Sauna & Hot Tub",
@@ -245,7 +296,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-mit-sauna-hot-tub-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Beste Bewertung der Superior-Chalet-Serie."
+   "hinweis": "Beste Bewertung der Superior-Chalet-Serie.",
+   "naechte": 7
   },
   {
    "name": "Superior Chalet with Hot Tub",
@@ -264,7 +316,8 @@
    "quelle": "FeWo-direkt über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-superior-chalet-with-hot-tub-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Höchste Bewertung im gesamten Feld, aber nur 8 Rezensionen."
+   "hinweis": "Höchste Bewertung im gesamten Feld, aber nur 8 Rezensionen.",
+   "naechte": 7
   },
   {
    "name": "Ski-in Ski-out Chalet with Sauna and Nice View",
@@ -283,7 +336,8 @@
    "quelle": "FeWo-direkt über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-ski-in-ski-out-chalet-with-sauna-and-nice-view-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Günstigstes Chalet mit guter Bewertung, Belegung unverifiziert."
+   "hinweis": "Günstigstes Chalet mit guter Bewertung, Belegung unverifiziert.",
+   "naechte": 7
   },
   {
    "name": "Lavish Chalet with Finnish Sauna",
@@ -302,7 +356,8 @@
    "quelle": "FeWo-direkt über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-lavish-chalet-with-finnish-sauna-turracher-höhe",
    "status": "unklar",
-   "hinweis": "Günstigster Chalet-Treffer im Ort überhaupt, aber ohne Bewertungen und ohne verifizierte Belegung."
+   "hinweis": "Günstigster Chalet-Treffer im Ort überhaupt, aber ohne Bewertungen und ohne verifizierte Belegung.",
+   "naechte": 7
   },
   {
    "name": "MarktlAlm Almhüttendorf",
@@ -326,7 +381,8 @@
    "direkt": "https://www.marktlalm.at/",
    "tel": "+43 4275 8411",
    "status": "unklar",
-   "hinweis": "Hüttendorf mit Restaurant und kostenlosem Ski-Shuttle. Portalpreis vermutlich für mehrere Hütten."
+   "hinweis": "Hüttendorf mit Restaurant und kostenlosem Ski-Shuttle. Portalpreis vermutlich für mehrere Hütten.",
+   "naechte": 7
   },
   {
    "name": "Relax Chalet Turracher Höhe",
@@ -344,8 +400,19 @@
    "reviews": 0,
    "quelle": "Booking.com über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-relax-chalet-turracher-höhe",
-   "status": "unklar",
-   "hinweis": "Teuerstes Einzelobjekt im Ort, keine Bewertungen."
+   "status": "ok",
+   "hinweis": "Teuerstes Einzelobjekt im Ort, keine Bewertungen.",
+   "gesamt": 7171.5,
+   "ppn": 128.1,
+   "verifiziert": true,
+   "ko_text": "erfüllt – alle 8 K.-o.-Kriterien erfüllt: (1) 8 Pers. zulässig (Max. 10 laut AGB §9); (2) 5 Schlafzimmer (gefordert 4); (3) 2 Vollbäder + separates Gäste-WC im EG + eigene Dusche/WC im Saunabereich (gefordert 2); (4) hochwertige Küche mit Spülmaschine (Booking-Ausstattung \"Spülmaschine\"; Geschirrspü…",
+   "storno": "Die Bedingungen unterscheiden sich stark je nach Buchungsweg – der Portalweg ist hier deutlich besser. BOOKING.COM (für den konkret abgefragten Zeitraum): kostenlose Stornierung bi…",
+   "nebenkosten": "Endreinigung: im Booking.com-Gesamtpreis bereits enthalten; rechnerisch abgeleitet 280,00 EUR (dauerunabhängiger Fixbetrag). Bei Direktbuchung laut AGB §3.4 ausdrücklich extra und verpflichtend – konkreter Betrag nicht veröffentlicht, also nicht ermittelbar. |…",
+   "verfuegbar": "frei – Wunschzeitraum 20.03.–27.03.2027 (7 Nächte) ist VERFÜGBAR und buchbar. Alle vier geprüften Varianten sind frei.",
+   "schwaeche": "Direktpreis NICHT ERMITTELBAR – damit ist der geforderte Direkt-gegen-Portal-Vergleich offen: Die Buchungsmaske auf relaxchalet.at/buchen ist ein rein clientseitig gerendertes Smoobu-Widget (Booking-T…",
+   "sz_text": "5 Schlafzimmer auf 3 Etagen. Alle Schlafzimmer mit direktem Zugang zu Badezimmer und Balko…",
+   "bad_text": "2 moderne Vollbäder + 1 separates Gäste-WC im Erdgeschoss + zusätzlich eigene Dusche und e…",
+   "naechte": 7
   },
   {
    "name": "Alpin Peaks Lifestyle Aparthotel",
@@ -369,7 +436,18 @@
    "direkt": "https://alpinpeaks.at/",
    "tel": "+43 664 5212080",
    "status": "ko",
-   "hinweis": "Nur 2 Schlafzimmer für 8 Personen – erfüllt das Schlafzimmer-Kriterium nicht."
+   "hinweis": "Nur 2 Schlafzimmer für 8 Personen – erfüllt das Schlafzimmer-Kriterium nicht.",
+   "gesamt": 7790.35,
+   "ppn": 139.1,
+   "verifiziert": true,
+   "ko_text": "nicht erfüllt - genau EIN Kriterium scheitert: \"mind. 4 Schlafzimmer ODER 3 plus separater Schlafbereich\". Die größte Einheit \"Free Spirit\" (71 m², max. 8 Personen) hat nur 2 Schlafzimmer + 1 Schlafnische. ALLE übrigen K.-o.-Kriterien sind erfüllt: 8 Personen offiziell zulässig (in EINER Einheit, si…",
+   "storno": "Direktbuchung (Website und Buchungssystem übereinstimmend): bis 3 Monate vor Anreise kostenfrei; ab 3 Monaten bis 1 Monat vor Anreise 40 % des Gesamtpreises; bis 1 Woche vor Anreis…",
+   "nebenkosten": "Endreinigung: KEINE gesonderte Endreinigungspauschale ausgewiesen - die Apartments werden während des Aufenthalts alle 4 Tage gereinigt, im Preis enthalten. Bettwäsche/Handtücher: inklusive, alle Apartments mit Allergiker-Bettwäsche ausgestattet. Frühstück: ve…",
+   "verfuegbar": "frei - 20.03.-27.03.2027 (7 Nächte) live buchbar. Booking.com Live-Abfrage am 13.09.2026 für 5 Erwachsene + 3 Kinder (8/10/12) liefert bestä…",
+   "schwaeche": "1) K.-O.-KRITERIUM SCHLAFZIMMER VERFEHLT: Free Spirit hat nur 2 Schlafzimmer + 1 Schlafnische, nicht 4 Schlafzimmer bzw. 3 + separater Schlafbereich. Vier der acht Personen schlafen in Stockbetten in …",
+   "sz_text": "Free Spirit (71 m²): 2 Schlafzimmer + 1 Schlafnische. Damit KEINE 4 Schlafzimmer und auch …",
+   "bad_text": "2 Bäder im Free Spirit: ein Schlafzimmer mit separatem (en-suite) Bad plus ein weiteres Ba…",
+   "naechte": 7
   },
   {
    "name": "Idyllische Zirbenholz Alpin Hütte",
@@ -390,7 +468,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/idilische-zirbenholz-alpin-hutte-nahe-skipiste.html",
    "status": "ko",
-   "hinweis": "Nur 1 Bad für 8 Personen."
+   "hinweis": "Nur 1 Bad für 8 Personen.",
+   "naechte": 7
   },
   {
    "name": "Chalet in Turracher Höhe with Ski Slope Access",
@@ -410,7 +489,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/alpine-chalet-with-sauna-panoramic-view.html",
    "status": "ko",
-   "hinweis": "Nur 1 Bad, keine Waschmaschine."
+   "hinweis": "Nur 1 Bad, keine Waschmaschine.",
+   "naechte": 7
   },
   {
    "name": "Bergheim Schmidt Ski-In Ski-Out Appartements",
@@ -431,7 +511,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/almhutte-schmidt.html",
    "status": "zwei",
-   "hinweis": "Größte Einheit fasst 6 Personen. Für 8 sind zwei Einheiten nötig. Direkter Pistenzugang, Skischule und Spielgeräte."
+   "hinweis": "Größte Einheit fasst 6 Personen. Für 8 sind zwei Einheiten nötig. Direkter Pistenzugang, Skischule und Spielgeräte.",
+   "naechte": 7
   },
   {
    "name": "Appartementhaus Turracher Höhe",
@@ -452,7 +533,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/appartementhaus-turracher-hohe.html",
    "status": "zwei",
-   "hinweis": "Zwei Einheiten nötig. Achtung: Strom nach Verbrauch mit 0,25 €/kWh – Kostenrisiko im Winter."
+   "hinweis": "Zwei Einheiten nötig. Achtung: Strom nach Verbrauch mit 0,25 €/kWh – Kostenrisiko im Winter.",
+   "naechte": 7
   },
   {
    "name": "Apparthotel SILBERSEE",
@@ -473,7 +555,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/apparthotel-silbersee.html",
    "status": "zwei",
-   "hinweis": "Sehr gut bewertet, direkter Pistenzugang, Dampfbad, Indoorspielbereich. Zwei Einheiten nötig. 60 € Gebühr bei Anreise nach 22 Uhr."
+   "hinweis": "Sehr gut bewertet, direkter Pistenzugang, Dampfbad, Indoorspielbereich. Zwei Einheiten nötig. 60 € Gebühr bei Anreise nach 22 Uhr.",
+   "naechte": 7
   },
   {
    "name": "Panorama Hotel Turracher Höhe",
@@ -493,8 +576,19 @@
    "reviews": 0,
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/panorama-turracher-haphe.html",
-   "status": "zwei",
-   "hinweis": "Hotel mit Hallenbad, Wasserrutsche, Kinderprogramm und Halbpension. Für 8 Personen mindestens 2 Zimmer."
+   "status": "ko",
+   "hinweis": "Hotel mit Hallenbad, Wasserrutsche, Kinderprogramm und Halbpension. Für 8 Personen mindestens 2 Zimmer.",
+   "gesamt": 7773.96,
+   "ppn": 138.8,
+   "verifiziert": true,
+   "ko_text": "NICHT ERFÜLLT. Drei K.-o.-Kriterien verfehlt: (1) KÜCHE MIT SPÜLMASCHINE fehlt vollständig — reines Hotelhaus, alle Zimmerkategorien inkl. Zirbenwaldapartment haben laut Anbieterbeschreibung nur einen Kühlschrank, keine Küche und keine Spülmaschine. (2) MIND. 4 SCHLAFZIMMER bzw. 3 + separater Schlaf…",
+   "storno": "ZWEI unterschiedliche Regelungen je nach Kanal. Booking.com (für alle angebotenen Raten des Zeitraums einheitlich): Kostenlose Stornierung bis vor dem 06.03.2027; keine Zahlung vor…",
+   "nebenkosten": "Energiekostenzuschlag: 4,50 EUR pro Zimmer und Nacht (Anbieterangabe, als separates \"Extra\" im Direktbuchungssystem ausgewiesen) = 3 Zimmer x 7 Nächte = 94,50 EUR. | Ortstaxe/Nächtigungsabgabe: 6,00 EUR pro Person und Nacht (wörtlich im hoteleigenen Buchungssy…",
+   "verfuegbar": "frei (20.03.–27.03.2027, 7 Nächte, verfügbar — aber NUR als 3 separate Doppelzimmer, NICHT als die bisher angenommenen 2 Apartment-Einheiten…",
+   "schwaeche": "KEINE KÜCHE UND KEINE SPÜLMASCHINE — hartes K.-o.-Kriterium, in keiner Zimmerkategorie erfüllbar; nur Kühlschrank/Minibar. Für eine Gruppe, die Selbstversorgung wünscht, ist das Objekt ungeeignet. | D…",
+   "sz_text": "3 (in der buchbaren Konfiguration: 3 separate Doppelzimmer). 4. Zimmer zubuchbar (Budget D…",
+   "bad_text": "3 (jedes Zimmer eigenes Bad mit Dusche oder Badewanne, WC, Föhn). Bei 4 Zimmern: 4 Bäder. …",
+   "naechte": 7
   },
   {
    "name": "Alpin-Hütten auf der Turracherhöhe",
@@ -519,7 +613,8 @@
    "status": "neu",
    "hinweis": "Auf keinem Portal gelistet. Nur direkt buchbar.",
    "lat_geschaetzt": true,
-   "schaetzbasis": "Nachbarschaft zu Turracherhöhe 138 (46,92723 / 13,86960)"
+   "schaetzbasis": "Nachbarschaft zu Turracherhöhe 138 (46,92723 / 13,86960)",
+   "naechte": 7
   },
   {
    "name": "Turracher Zirbenlodges",
@@ -544,7 +639,8 @@
    "status": "neu",
    "hinweis": "Auf keinem Portal gelistet. Deutsche Kontaktnummer.",
    "lat_geschaetzt": true,
-   "schaetzbasis": "Nachbarschaft zu Barbarasiedlung 409 (46,92656 / 13,86985)"
+   "schaetzbasis": "Nachbarschaft zu Barbarasiedlung 409 (46,92656 / 13,86985)",
+   "naechte": 7
   },
   {
    "name": "Chalet Kornock",
@@ -567,7 +663,8 @@
    "status": "neu",
    "hinweis": "Auf keinem Portal gelistet. Sehr wenige Bewertungen.",
    "lat_geschaetzt": true,
-   "schaetzbasis": "Nachbarschaft zu Turracherhöhe 175 (46,90962 / 13,87981)"
+   "schaetzbasis": "Nachbarschaft zu Turracherhöhe 175 (46,90962 / 13,87981)",
+   "naechte": 7
   },
   {
    "name": "BärenHütte",
@@ -592,7 +689,8 @@
    "status": "neu",
    "hinweis": "Auf keinem Portal gelistet. Niederländische Kontaktnummer, vermutlich private Vermietung.",
    "lat_geschaetzt": true,
-   "schaetzbasis": "zwischen Barbarasiedlung 200 und 409"
+   "schaetzbasis": "zwischen Barbarasiedlung 200 und 409",
+   "naechte": 7
   },
   {
    "name": "Mountain lodge Chalet-Turrach",
@@ -617,7 +715,8 @@
    "status": "neu",
    "hinweis": "Auf keinem Portal gelistet. Niederländische Kontaktnummer.",
    "lat_geschaetzt": true,
-   "schaetzbasis": "Nachbarschaft zu Maierbruggersiedlung 392 (46,92622 / 13,86954)"
+   "schaetzbasis": "Nachbarschaft zu Maierbruggersiedlung 392 (46,92622 / 13,86954)",
+   "naechte": 7
   },
   {
    "name": "Ferienhaus für bis zu 10 Personen mit private Spa",
@@ -636,7 +735,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-ferienhaus-für-bis-zu-10-personen-mit-private-spa-predlitz",
    "status": "unklar",
-   "hinweis": "10 Personen zulässig, Zimmerzahl unverifiziert. Günstig für die Kapazität."
+   "hinweis": "10 Personen zulässig, Zimmerzahl unverifiziert. Günstig für die Kapazität.",
+   "naechte": 7
   },
   {
    "name": "Ferienhaus für bis zu 11 Personen mit private Spa",
@@ -655,7 +755,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-ferienhaus-für-bis-zu-11-personen-mit-private-spa-predlitz",
    "status": "unklar",
-   "hinweis": "11 Personen zulässig – viel Puffer für 8 Gäste."
+   "hinweis": "11 Personen zulässig – viel Puffer für 8 Gäste.",
+   "naechte": 7
   },
   {
    "name": "Schöne und sehr luxuriöse Panoramalodge mit Sauna",
@@ -674,7 +775,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-schöne-und-sehr-luxuriöse-panoramalodge-mit-saun-predlitz",
    "status": "unklar",
-   "hinweis": "Bewertung 9,7 bei 32 Rezensionen – die belastbarste Spitzenbewertung im Feld."
+   "hinweis": "Bewertung 9,7 bei 32 Rezensionen – die belastbarste Spitzenbewertung im Feld.",
+   "naechte": 7
   },
   {
    "name": "Atemberaubende Luxus-Lodge mit Panoramablick",
@@ -692,8 +794,19 @@
    "reviews": 20,
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-mit-panoramablick-predlitz",
-   "status": "unklar",
-   "hinweis": "Belegung unverifiziert."
+   "status": "ok",
+   "hinweis": "Belegung unverifiziert. Geprüft als „Chalet Vista Lodge“ über Villa for You.",
+   "gesamt": 3663.59,
+   "ppn": 65.4,
+   "verifiziert": true,
+   "ko_text": "erfuellt - alle acht K.-o.-Kriterien erfüllt, mehrere davon mit Reserve. (1) 8 Personen offiziell zulässig (\"Max. 8 persons\" / Booking.com \"Erwachsene max.: 8\") - erfüllt. (2) Mindestens 4 Schlafzimmer: 4 vorhanden - erfüllt. (3) Mindestens 2 Bäder: 4 Badezimmer plus 3 separate Gäste-WCs - deutlich …",
+   "storno": "Zwei Preisoptionen zur Wahl. (1) Tarif \"Best price\" 3.663,59 EUR: keine kostenlose Stornierung, es gelten die Staffel-Stornogebühren von Villa for You als Prozentsatz des Mietpreis…",
+   "nebenkosten": "Im Gesamtpreis von 3.663,59 EUR bereits ENTHALTEN und damit nicht zusätzlich zu zahlen: Endreinigung, Bettwäsche, Handtücher, Geschirrtücher, Ortstaxe (wörtlich: \"Including: Final Cleaning, Bed linen, Towels, Dishcloths, Tourist tax\"). Das ist der wesentliche …",
+   "verfuegbar": "frei - kompletter Wunschzeitraum 20.03.-27.03.2027 (7 Nächte, Sa-Sa) verfügbar und sofort buchbar. Doppelt verifiziert: (1) Buchungsmaschine…",
+   "schwaeche": "1) GRÖSSTE SCHWÄCHE - Bettenaufteilung: Alle 4 Schlafzimmer haben ausschließlich französische Doppelbetten (ca. 140 cm), keine Einzelbetten, keine Etagenbetten, kein Schlafsofa, und Zustellbetten sind…",
+   "sz_text": "4 Schlafzimmer, verteilt auf zwei Ebenen. Zwischengeschoss: 3 Schlafzimmer, jedes mit eige…",
+   "bad_text": "4 Badezimmer plus 3 separate Gäste-WCs mit Waschbecken - ein für 8 Personen sehr komfortab…",
+   "naechte": 7
   },
   {
    "name": "Atemberaubende Luxus-Lodge am Turracher Höhe",
@@ -711,8 +824,9 @@
    "reviews": 16,
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-am-turracher-höhe-predlitz",
+   "hinweis": "Belegung unverifiziert. Nicht zu verwechseln mit der Schwester-Lodge „mit Panoramablick“, die geprüft wurde.",
    "status": "unklar",
-   "hinweis": "Belegung unverifiziert."
+   "naechte": 7
   },
   {
    "name": "Chalet mit Sauna und Whirlpool nahe Skipiste",
@@ -731,7 +845,8 @@
    "quelle": "Airbnb über Trivago",
    "url": "https://www.trivago.de/de/lm/ganzes-haus-apartment-chalet-mit-sauna-und-whirlpool-nahe-skipiste-predlitz",
    "status": "unklar",
-   "hinweis": "Belegung unverifiziert."
+   "hinweis": "Belegung unverifiziert.",
+   "naechte": 7
   },
   {
    "name": "Meizeit Hüttendorf",
@@ -755,7 +870,8 @@
    "direkt": "http://www.meizeit.at/",
    "tel": "+43 664 5754189",
    "status": "unklar",
-   "hinweis": "Google-Bewertung 4,2 fällt gegenüber Portalwert 8,6 deutlich ab – Diskrepanz prüfen."
+   "hinweis": "Google-Bewertung 4,2 fällt gegenüber Portalwert 8,6 deutlich ab – Diskrepanz prüfen.",
+   "naechte": 7
   },
   {
    "name": "Ferienhaus Vier Jahreszeiten",
@@ -776,7 +892,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/ferienhaus-vier-jahreszeiten.html",
    "status": "fallback",
-   "hinweis": "Günstigstes Objekt der gesamten Recherche. Ohne Pistenanbindung Turracher Höhe."
+   "hinweis": "Günstigstes Objekt der gesamten Recherche. Ohne Pistenanbindung Turracher Höhe.",
+   "naechte": 7
   },
   {
    "name": "Gemütliches Almhaus auf 1800 m mit Sauna und Kamin",
@@ -797,7 +914,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/ferienhaus-natberger-hutte.html",
    "status": "fallback",
-   "hinweis": "1.800 m Höhenlage, Sauna, Kamin. Fahrzeit zur Turracher Höhe nicht verifiziert."
+   "hinweis": "1.800 m Höhenlage, Sauna, Kamin. Fahrzeit zur Turracher Höhe nicht verifiziert.",
+   "naechte": 7
   },
   {
    "name": "Haus Kremser",
@@ -818,7 +936,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/haus-kremser.html",
    "status": "fallback",
-   "hinweis": "Eigenes Skigebiet Bad Kleinkirchheim vor der Tür."
+   "hinweis": "Eigenes Skigebiet Bad Kleinkirchheim vor der Tür.",
+   "naechte": 7
   },
   {
    "name": "Residence Margerithenweg",
@@ -839,7 +958,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/residence-margerithenweg.html",
    "status": "fallback",
-   "hinweis": "Skischule und Skipass-Verkauf im Haus."
+   "hinweis": "Skischule und Skipass-Verkauf im Haus.",
+   "naechte": 7
   },
   {
    "name": "Berghaus Traumblick",
@@ -860,7 +980,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/berghaus-traumblick-bad-kleinkirchheim1.html",
    "status": "fallback",
-   "hinweis": "Bewertung 9,6 bei 85 Rezensionen – bester Fallback nach Qualität."
+   "hinweis": "Bewertung 9,6 bei 85 Rezensionen – bester Fallback nach Qualität.",
+   "naechte": 7
   },
   {
    "name": "Nordic Lodge – Suite Hotel",
@@ -881,7 +1002,8 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/landhaus-coloseus.html",
    "status": "fallback",
-   "hinweis": "Hallenbad, Spa, an der Therme."
+   "hinweis": "Hallenbad, Spa, an der Therme.",
+   "naechte": 7
   },
   {
    "name": "Villa Bostele, 5 SZ, Indoor-Pool, 2 Saunen",
@@ -902,7 +1024,520 @@
    "quelle": "Booking.com",
    "url": "https://www.booking.com/hotel/at/villa-bostele-with-seven-bedrooms-indoor-pool-and-two-saunas.html",
    "status": "fallback",
-   "hinweis": "Bestbewertetes Objekt der gesamten Recherche (9,8). Eigener Innenpool und zwei Saunen, entsprechend teuer."
+   "hinweis": "Bestbewertetes Objekt der gesamten Recherche (9,8). Eigener Innenpool und zwei Saunen, entsprechend teuer.",
+   "naechte": 7
+  },
+  {
+   "name": "Peters Alm - Apartmenthaus mit 2 Ferienwohnungen",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "Direktanfrage",
+   "gesamt": null,
+   "ppn": null,
+   "verifiziert": true,
+   "status": "anfrage",
+   "ko_text": "erfuellt - ABER NUR bei Buchung BEIDER Wohnungen (Birkhuhn + Auerhahn = ganzes Haus); Verfuegbarkeit selbst nicht bestaetigbar Pruefung im Detail (Basis: ganzes Haus): 1) 8 Personen zulaessig: ERFUELLT. Birkhuhn bis 4 Pers. (Anbieterseite) bzw. 4-6 (Portalangabe), Auerhahn 4-6 Pers. -> gemeinsam 8-1…",
+   "storno": "nicht ermittelbar. Auf petersalm.at sind keine AGB, Stornobedingungen oder Zahlungsbedingungen veroeffentlicht (die Seite fuehrt nur Startseite, Datenschutz, Impressum sowie das An…",
+   "nebenkosten": "Einzeln aufgeschluesselt: 1) ENDREINIGUNG: 90,00 EUR pro Aufenthalt und Wohnung (identisch auf beiden Apartmentseiten ausgewiesen: \"Fuer den Aufenthalt wird eine Endreinigungsgebuehr von 90,00 EUR verrechnet\"). Bei Buchung beider Wohnungen also 2 x 90 = 180,00…",
+   "verfuegbar": "auf Anfrage Kein Online-Buchungskalender vorhanden. Die Anbieterseite petersalm.at bietet ausschliesslich ein unverbindliches Anfrageformula…",
+   "schwaeche": "Gesamtpreis nicht beziffert. - VERFUEGBARKEIT NICHT PRUEFBAR (Hauptproblem): Es existiert KEIN Online-Buchungskalender. petersalm.at bietet nur ein unverbindliches Anfrageformular, Booking.com fuehrt fuer die gesamte Wintersaison…",
+   "sz_text": "Ganzes Haus: 4 Schlafzimmer (je Wohnung 2 grosse Doppelschlafzimmer), zusaetzlich in JEDEM…",
+   "bad_text": "Ganzes Haus: 2 Baeder + 2 separate WC (je Wohnung 1 Bad mit Dusche und 1 separates WC). Mi…",
+   "naechte": 7
+  },
+  {
+   "name": "AlpenChalet ZirbenDuft – \"Superior Chalet # 51 mit Sauna &",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "https://booking.alps-resorts.com/vermietung/chalet-turrach-superior-chalet-51-mit-sauna-hot-tub-585923.html",
+   "gesamt": null,
+   "ppn": null,
+   "verifiziert": true,
+   "status": "anfrage",
+   "ko_text": "erfuellt (alle physischen K.-o.-Kriterien), Verfuegbarkeit offen. Im Einzelnen: 8 Personen offiziell zulaessig = JA (max. 8 Gaeste). Mind. 4 Schlafzimmer ODER 3 + separater Schlafbereich = JA, 4 vollwertige Schlafzimmer (3 EG + Master-Suite OG). Mind. 2 Baeder = JA, 4 Badezimmer + 1 separates WC. Ku…",
+   "storno": "Staffel laut Avantio-Buchungssystem des Betreibers (Stand Abruf): ab Buchungsdatum bis 61 Tage vor Anreise = 0 % des Mietpreises (kostenfrei); 60 bis 31 Tage vorher = 70 %; 30 bis …",
+   "nebenkosten": "Alle Positionen verifiziert aus Buchungssystem + Eigentuemer-Website, gerechnet fuer 8 Personen / 7 Naechte (5 Erwachsene ab 15 Jahren, 3 Kinder mit 8, 10 und 12 Jahren): (1) ENDREINIGUNG, verpflichtend: 290,00 EUR pro Buchung. (2) WAESCHESET (Bettwaesche und …",
+   "verfuegbar": "auf Anfrage — Der objektgenaue Kalender fuer Maerz 2027 war nicht auslesbar (siehe weaknesses). Indirekte, aber konkret abgefragte Belege, d…",
+   "schwaeche": "Gesamtpreis nicht beziffert. GROESSTE SCHWAECHE — PREIS UND VERFUEGBARKEIT NICHT VERIFIZIERBAR: Die Avantio-Buchungsmaschine veroeffentlicht nur ein rollierendes Preisfenster von ca. drei Wochen und einen Verfuegbarkeitskalender,…",
+   "sz_text": "4 Schlafzimmer. Erdgeschoss: 3 Schlafzimmer. Obergeschoss: 1 Master-Suite/Schlafzimmer dir…",
+   "bad_text": "4 Badezimmer + 1 separates WC. Badezimmer 1: WC + Dusche, en suite in Schlafzimmer 1. Bade…",
+   "naechte": 7
+  },
+  {
+   "name": "Appartementhaus Lerchbaumer – Zirbenhütte",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9185,
+   "lon": 13.8735,
+   "quelle": "Einzelprüfung",
+   "url": "https://turrach-ferienhaus.at/buchen/?nd_booking_archive_form_date_range_from=03%2F20%2F2027&nd_booking_archive_form_date_range_to=03%2F27%2F2027&nd_booking_archive_form_guests=8",
+   "gesamt": 2412.5,
+   "ppn": 43.1,
+   "verifiziert": true,
+   "status": "ko",
+   "ko_text": "NICHT ERFÜLLT – ein einziges Kriterium scheitert: \"mind. 2 Bäder\". Laut Raumbeschreibung gibt es nur EIN Bad (1. Stock: Bad mit Runddusche, WC mit Waschbecken). Im Erdgeschoss befindet sich lediglich ein WC mit Waschbecken (kein Bad) sowie eine Dusche in der Kräutersauna. Faktisch also 1 Vollbad + 1…",
+   "storno": "Klar geregelt in den AGB des Vermieters. RÜCKTRITT ist jederzeit möglich, muss aber IMMER SCHRIFTLICH erfolgen. Stornostaffel: bis 2 Monate vor Ankunft 25 % des Mietpreises, innerh…",
+   "nebenkosten": "Einzeln aufgeschlüsselt laut offizieller Preisliste des Anbieters: (1) ENDREINIGUNG: 260,00 EUR pauschal pro Aufenthalt – einmalig, unabhängig von der Aufenthaltsdauer. (2) ORTSTAXE/KURTAXE: 3,50 EUR pro Person und Tag, ausdrücklich NUR für Personen AB 15 JAHR…",
+   "verfuegbar": "frei – VERIFIZIERT im Live-Buchungssystem des Anbieters. Die Zirbenhütte wird für 20.03.–27.03.2027 (7 Nächte) mit 8 Gästen OHNE den Sperrve…",
+   "schwaeche": "1) NUR EIN BADEZIMMER – das einzige K.o.-Kriterium, das scheitert. 1 Bad mit Runddusche im OG, im EG lediglich ein WC mit Waschbecken sowie eine Dusche in der Sauna. Bei 5 Erwachsenen und 3 Kindern is…",
+   "sz_text": "4 Schlafzimmer, allesamt im 1. Stock und ausdrücklich \"getrennt vom Wohnbereich\": 3 Doppel…",
+   "bad_text": "Nur 1 echtes Bad – das ist die entscheidende Schwachstelle. 1. Stock: Bad mit Runddusche s…",
+   "naechte": 7,
+   "adresse": "Turracher Höhe 90",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Apartment nahe Skigebiet",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "https://www.belvilla.de/at/100125699/",
+   "gesamt": 2611.0,
+   "ppn": 46.6,
+   "verifiziert": true,
+   "status": "belegt",
+   "ko_text": "nicht erfuellt - drei harte K.-o.-Verstoesse. (1) Kompletter Zeitraum NICHT frei: alle sechs geprueften Datumsvarianten belegt. (2) Nur 2 Schlafzimmer - gefordert sind mind. 4 SZ oder 3 plus separater Schlafbereich. (3) Nur 1 Badezimmer - gefordert sind mind. 2. Erfuellt waeren lediglich: 8 Personen…",
+   "storno": "Objektspezifische Stornofrist nicht ermittelbar - Belvilla blendet die Stornopolicy auf der Objektseite technisch aus (Flag \"hideCancelPolicies\": true) und verweist auf die Buchung…",
+   "nebenkosten": "Besonders guenstige Struktur - praktisch alles ist im Preis enthalten. Belvilla \"Preis beinhaltet\": Endreinigung (Cleaning), Kurtaxe/Ortstaxe, Strom, WLAN, Buchungskosten, Reiseunterstuetzung. In der Preisaufschluesselung der Kontrollwoche ist die Ortstaxe mit…",
+   "verfuegbar": "belegt - fuer KEINE der geforderten Varianten frei. Geprueft und jeweils \"Diese Eigenschaft ist an ausgewaehlten Daten nicht verfuegbar\": 20…",
+   "schwaeche": "AUSSCHLUSSGRUND 1 - Zeitraum belegt: Das Objekt ist fuer den gesamten Zielkorridor gesperrt. Sechs Varianten wurden einzeln abgefragt (20.03. mit 5, 6, 7 und 8 Naechten sowie Anreise 19.03. und 21.03.…",
+   "sz_text": "2 Schlafzimmer (bestaetigt doppelt: Seitenangabe \"2 Schlafzimmer\" und schema.org \"numberOf…",
+   "bad_text": "1 Badezimmer (Dusche und WC), bestaetigt durch Seitenangabe \"1 Badezimmer\" und schema.org …",
+   "naechte": 7,
+   "adresse": "Belvilla-Objekt-ID 100125699)"
+  },
+  {
+   "name": "Chalet Golden Eagle",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9276,
+   "lon": 13.8704,
+   "quelle": "Einzelprüfung",
+   "url": "Direktanfrage",
+   "gesamt": 3182.5,
+   "ppn": 56.8,
+   "verifiziert": true,
+   "status": "belegt",
+   "ko_text": "nicht erfuellt - einziges gerissenes Kriterium ist \"kompletter Zeitraum frei\" (laut Kalender belegt). ALLE uebrigen 7 K.-o.-Kriterien sind erfuellt und verifiziert: 8 Personen zulaessig (offiziell \"8 + 1\") JA | 4 Schlafzimmer (gefordert min. 4) JA | 3 Badezimmer (gefordert min. 2) JA | Kueche mit Ge…",
+   "storno": "Veroeffentlichte Stornostaffel (Roundwood Chalets, Seite RATES/PREISE): bis 4 Wochen vor Anreise volle Rueckerstattung der Anzahlung abzueglich 30 EUR Bearbeitungsgebuehr; 3-4 Woch…",
+   "nebenkosten": "Servicegebuehr/Endreinigung pro Buchung (Golden Eagle): 210,00 EUR. | Bettwaesche + Handtuecher: 15,00 EUR pro Person = 8 x 15 = 120,00 EUR. | Ortstaxe Turracher Hoehe: 2,50 EUR pro Person ueber 15 Jahre und Tag - hier nur die 5 Erwachsenen (Kinder 8, 10 und 1…",
+   "verfuegbar": "belegt - ABER Direktanfrage dringend empfohlen (Begruendung unter weaknesses). Der Verfuegbarkeitskalender (bergfex-Feed ID 11772, eingebund…",
+   "schwaeche": "HAUPTPROBLEM - Verfuegbarkeit: Der Kalender weist den kompletten Winter 05.12.2026 bis 01.04.2027 als belegt aus, damit auch jede der vier geforderten Aufenthaltsvarianten und beide Alternativanreiset…",
+   "sz_text": "4 Schlafzimmer",
+   "bad_text": "3 Badezimmer (3 Duschen, 1 Badewanne), ausgestattet mit beheizten Handtuchhaltern und Foeh…",
+   "naechte": 7,
+   "adresse": "Barbarasiedlung 339, 8864 Turracher Höhe",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Barbarasiedlung (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Superior Chalet # 42a mit Sauna & Hot Tub",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "Direkt",
+   "gesamt": 3206.0,
+   "ppn": 57.2,
+   "verifiziert": true,
+   "status": "anfrage",
+   "ko_text": "NICHT ERFUELLT fuer den Primaerwunsch - zwei Kriterien reissen: (1) \"kompletter Zeitraum frei\": 20.03.-27.03.2027 (7 N) ist belegt, ebenso 6 und 8 Naechte ab 20.03.; frei sind nur die ebenfalls zulaessigen Varianten 5 N (20.-25.03.) und 6 N (19.-25.03.). (2) \"Skiraum\": kein Skiraum/Skidepot ausgewie…",
+   "storno": "Stornostaffel der Direktbuchung (Avantio-Objektseite, woertlich uebernommen): vom Buchungsdatum bis 61 Tage vor Anreise 0 % des Mietpreises; von 60 bis 31 Tage vorher 70 %; von 30 …",
+   "nebenkosten": "Bei DIREKTBUCHUNG (verbindliche bzw. inbegriffene Leistungen laut Avantio-Objektseite): Endreinigung 290,00 EUR pro Buchung (verbindlich); Bettwaesche 16,90 EUR pro Person (verbindlich) = 135,20 EUR bei 8 Personen; Handtuecher inklusive; Parkplatz im Freien in…",
+   "verfuegbar": "TEILWEISE FREI - Wunschzeitraum 20.03.-27.03.2027 (7 Naechte) ist BELEGT. Konkret abgefragt auf Airbnb (Originalinserat des Vermieters, 8 Ga…",
+   "schwaeche": "HAUPTPROBLEM: Der Wunschzeitraum 20.03.-27.03.2027 ist belegt. Buchbar sind nur 5 Naechte 20.-25.03. (3.206 EUR) oder 6 Naechte 19.-25.03. (3.780 EUR) - in beiden Faellen muss man vor Palmsonntag/Karw…",
+   "sz_text": "4 Schlafzimmer",
+   "bad_text": "4 Badezimmer. Aufteilung laut Buchungssystem: Badezimmer 1 mit Dusche (en suite im Schlafz…",
+   "naechte": 7
+  },
+  {
+   "name": "Chalet Claassen",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9322,
+   "lon": 13.8716,
+   "quelle": "Einzelprüfung",
+   "url": "Guenstigste",
+   "gesamt": 3401.8,
+   "ppn": 60.7,
+   "verifiziert": true,
+   "status": "ok",
+   "ko_text": "erfuellt - alle 8 K.-o.-Kriterien bestanden. (1) 8 Personen zulaessig: JA, max. 8 Pers., Booking weist \"Erwachsene max.: 8\" aus und empfiehlt die Einheit ausdruecklich fuer \"5 Erwachsene, 3 Kinder\". (2) Mind. 4 Schlafzimmer: JA, exakt 4. (3) Mind. 2 Baeder: JA, 2 (EG: Dusche/WC/Sauna; OG: Badewanne+…",
+   "storno": "Tiscover (guenstigste Variante): kostenfrei stornierbar bis 18.02.2027; ab dem 18.02.2027 werden 100 % Stornogebuehr faellig (bei der 7-Naechte-Buchung als 3.369,80 EUR beziffert).…",
+   "nebenkosten": "Alle Positionen einzeln aus dem Tiscover-Warenkorb verifiziert und ueber vier Quotes gegengerechnet: (1) ENDREINIGUNG 222,00 EUR - Fixbetrag, verpflichtend, identisch bei 5/6/7/8 Naechten und bei jeder Personenzahl. Laut Objektbeschreibung sind in dieser Reini…",
+   "verfuegbar": "frei - kompletter Wunschzeitraum 20.03.-27.03.2027 (7 Nächte) buchbar. Live abgefragt am 13.09.2026 auf Tiscover (Preis + Buchen-Button akti…",
+   "schwaeche": "Exakt 8 Schlafplaetze ohne jede Reserve - Baby- und Zustellbetten sind laut Booking.com ausdruecklich NICHT verfuegbar. Die Gruppe passt genau, aber ein neunter Mitreisender oder ein Ausweichbett ist …",
+   "sz_text": "4 Schlafzimmer, alle im Obergeschoss gelegen",
+   "bad_text": "2 Badezimmer. Erdgeschoss: Badezimmer mit Dusche, WC und integrierter Sauna. Obergeschoss:…",
+   "naechte": 7,
+   "adresse": "Marktlsiedlung 347, 8864 Turrach",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Marktlsiedlung (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Alpenpark Turracher Höhe by ALPS RESORTS",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9262,
+   "lon": 13.8695,
+   "quelle": "Einzelprüfung",
+   "url": "Direkt",
+   "gesamt": 3868.91,
+   "ppn": 69.1,
+   "verifiziert": true,
+   "status": "ok",
+   "ko_text": "erfüllt - mit einer Einschränkung: Skiraum nicht ausgewiesen. Im Detail: 8 Personen zulässig JA (mehrere Einheitstypen für 8-12 Personen im Zeitraum verfügbar); mind. 4 Schlafzimmer JA (alle verfügbaren Einheiten 4-5 SZ, Resort bis 6 SZ); mind. 2 Bäder JA (3-4 Badezimmer je nach Einheit); Küche mit …",
+   "storno": "DIREKT (Stornostaffel auf der Avantio-Objektseite Ferienhaus #11): vom Buchungsdatum bis 61 Tage vor Anreise 0 % des Mietpreises; 60 bis 31 Tage vorher 70 %; 30 bis 14 Tage vorher …",
+   "nebenkosten": "DIREKT bei ALPS RESORTS (Avantio-Objektseiten Ferienhaus #11/#12, identisch): Verbindliche Leistungen - Endreinigung 290,00 EUR pro Buchung; Bettwäsche 16,90 EUR pro Person (bei 8 Personen = 135,20 EUR); Handtücher inklusive. Sonstige Leistungen - Kinderbett 1…",
+   "verfuegbar": "frei",
+   "schwaeche": "1) KEIN SKIRAUM AUSGEWIESEN - das einzige nicht belegbare K.-o.-Kriterium; auf keiner der drei Quellen als Ausstattung geführt, vor Buchung telefonisch klären. 2) Kein Ski-in/Ski-out: ca. 1 km bzw. 10…",
+   "sz_text": "4 bis 5 Schlafzimmer bei den im Zeitraum verfügbaren Einheiten (Resort insgesamt 4-6 Schla…",
+   "bad_text": "3 bis 4 Badezimmer je nach Einheit (Direktseite Ferienhaus #11: \"3 Badezimmer mit Dusche\" …",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Alpenpark (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Wildererhütte Turracher Höhe",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9262,
+   "lon": 13.8695,
+   "quelle": "Einzelprüfung",
+   "url": "Keine",
+   "gesamt": 4087.5,
+   "ppn": 73.0,
+   "verifiziert": true,
+   "status": "ko",
+   "ko_text": "nicht erfuellt - Kriterium \"mind. 4 Schlafzimmer ODER 3 plus separater Schlafbereich\" ist nicht erfüllt: das Chalet hat genau 3 Schlafräume (Wilderersuite, Bergsteigersuite, Stockbettstüberl) und keinen dokumentierten zusätzlichen separaten Schlafbereich. ALLE übrigen K.-o.-Kriterien sind erfüllt: 8…",
+   "storno": "Direktbuchung (offizielle Preisliste Winter 2026/2027): Anzahlung 30 % des Buchungswertes nach erfolgter Buchung (bei 4.087,50 EUR also ca. 1.226,25 EUR), Restbetrag vor Reiseantri…",
+   "nebenkosten": "Endreinigungspauschale 275,00 EUR je Aufenthalt. Wäschepauschale 100,00 EUR je Aufenthalt (Bettwäsche/Handtücher sind damit abgedeckt). Kurtaxe und Tourismusvereinsabgabe 3,50 EUR pro Tag je Gast ab dem 15. Lebensjahr - die 3 Kinder (8, 10, 12 Jahre) sind dami…",
+   "verfuegbar": "frei - Belegungskalender zeigt 20.-27.03.2027 durchgehend \"verfügbar\"; Buchung jedoch nur auf Anfrage (kein Online-Buchungssystem beim Direk…",
+   "schwaeche": "K.-o.-Kriterium verfehlt: nur 3 Schlafräume (2 Suiten + Stockbettstüberl) statt geforderter 4 Schlafzimmer bzw. 3 plus separatem Schlafbereich. Konkrete Folge für die Gruppe: nur 2 Doppelbetten für 5 …",
+   "sz_text": "3 Schlafräume je Chalet: Wilderersuite (Doppelbett), Bergsteigersuite (Doppelbett) und Sto…",
+   "bad_text": "2 Badezimmer - je ein privates Bad direkt an der Wilderersuite und an der Bergsteigersuite…",
+   "naechte": 7,
+   "adresse": "Maierbruggersiedlung 142 a-c",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Maierbruggersiedlung (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Deluxe Superior Chalet # 32 mit Sauna & Hot Tub",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "https://booking.alps-resorts.com/vermietung/chalet-turrach-deluxe-superior-chalet-32-mit-sauna-hot-tub-531615.html",
+   "gesamt": 4641.8,
+   "ppn": 82.9,
+   "verifiziert": true,
+   "status": "ok",
+   "ko_text": "erfuellt – mit einer Einschraenkung beim Kriterium \"Skiraum\". Im Einzelnen: 8 Personen zulaessig = ERFUELLT (max. 8, offiziell \"Maximal 8 in dieser Unterkunft moeglich, inklusive Kindern\"). Mind. 4 Schlafzimmer ODER 3 plus separater Schlafbereich = ERFUELLT ueber Variante 2: 3 Schlafzimmer plus eine…",
+   "storno": "Kostenlose Stornierung bis rund 30 Tage vor Anreise, danach gestaffelt. Konkret auf die Zielwoche gerechnet (Anzeige Traum-Ferienwohnungen fuer das 7-Naechte-Fenster): kostenlose S…",
+   "nebenkosten": "Aufstellung laut Direktanbieter (Rubriken \"Mandatory or included services\", \"Optional services\", \"Taxes\"), einzeln: ENDREINIGUNG 290,00 € pro Buchung (verpflichtend). BETTWAESCHE 16,90 € pro Person (verpflichtend; bei 8 Personen 135,20 €). HANDTUECHER inklusiv…",
+   "verfuegbar": "frei – 7 Nächte im Zielzeitraum buchbar (Sofortbuchung). Datierte Abfrage auf Traum-Ferienwohnungen (Objekt 757558) für Anreise 20.03.2027 /…",
+   "schwaeche": "Preis ist die zentrale Schwaeche: mit rund 4.642 bis 4.966 € fuer 7 Naechte das Premium-Signature-Chalet der Anlage – im selben Resort und Zeitraum sind bei Booking.com Chalets fuer 8 Personen ab 3.09…",
+   "sz_text": "3 Schlafzimmer (uebereinstimmend auf Direktseite, fewo-direkt und Traum-Ferienwohnungen). …",
+   "bad_text": "4 Baeder plus 2 separate WC/Gaeste-WC (Direktangabe: \"4 bathrooms and 2 toilets/half bathr…",
+   "naechte": 7,
+   "adresse": "Turracher Höhe by ALP"
+  },
+  {
+   "name": "Hotel Turracherhof",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9185,
+   "lon": 13.8735,
+   "quelle": "Einzelprüfung",
+   "url": "https://www.booking.com/hotel/at/turracherhof.html?checkin=2027-03-20&checkout=2027-03-27&no_rooms=3&group_adults=5&group_children=3&age=8&age=10&age=12&selected_currency=EUR",
+   "gesamt": 6348.8,
+   "ppn": 113.4,
+   "verifiziert": true,
+   "status": "ko",
+   "ko_text": "NICHT ERFUELLT - zwei harte Kriterien scheitern: (1) KUECHE MIT SPUELMASCHINE: nicht vorhanden. Reiner Hotelbetrieb ohne Kueche/Kitchenette in den Zimmern. Verpflegung ueber Fruehstuecksbuffet (inkl.) bzw. optionale Halbpension. K.-o. (2) MIND. 4 SCHLAFZIMMER ODER 3 PLUS SEPARATER SCHLAFBEREICH: In …",
+   "storno": "Zwei unterschiedliche Regelwerke - je nach Buchungsweg: A) BOOKING.COM (fuer 20.-27.03.2027 konkret ausgewiesen): Kostenlose Stornierung bis vor dem 06.03.2027. Keine Vorauszahlung…",
+   "nebenkosten": "Einzeln aufgeschluesselt: - ENDREINIGUNG: entfaellt (Hotelbetrieb, taegliche Reinigung inklusive). Keine Reinigungspauschale ausgewiesen. - ORTSTAXE / NAECHTIGUNGSABGABE: 2,50 EUR pro Person/Nacht ab dem 15. Lebensjahr (Hotelwebsite \"Allgemeine Informationen\")…",
+   "verfuegbar": "frei - 20.03.-27.03.2027 (7 Naechte) fuer 5 Erwachsene + 3 Kinder (8/10/12) in 3 Zimmern auf Booking.com live buchbar (Stand 13.09.2026). Au…",
+   "schwaeche": "- K.-O.: KEINE KUECHE UND KEINE SPUELMASCHINE. Reiner Hotelbetrieb, Selbstversorgung fuer eine 8-koepfige Gruppe unmoeglich. Wer das Kriterium hart auslegt, muss das Objekt hier ausscheiden. - K.-O. (…",
+   "sz_text": "3 separate Zimmer in der buchbaren Standardkombination (keine 4 Schlafzimmer). Davon 1 kla…",
+   "bad_text": "3 Baeder - jedes der drei Zimmer hat ein eigenes Badezimmer im Zimmer. Standard-Doppelzimm…",
+   "naechte": 7,
+   "adresse": "Turracherhöhe 106",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Chalet Helmut",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "https://www.booking.com/hotel/at/wildererhutte-chalet-helmut.html?checkin=2027-03-20&checkout=2027-03-27&group_adults=5&group_children=3&age=8&age=10&age=12&no_rooms=1&selected_currency=EUR",
+   "gesamt": 6640.5,
+   "ppn": 118.6,
+   "verifiziert": true,
+   "status": "ko",
+   "ko_text": "nicht erfuellt - Ausschlusskriterium: SCHLAFZIMMERZAHL. Gefordert sind mind. 4 Schlafzimmer ODER 3 Schlafzimmer plus separater Schlafbereich. Das Chalet hat nur 3 Schlafzimmer und KEINEN dokumentierten separaten Schlafbereich (kein Schlafsofa im Wohnbereich gelistet), und Booking.com weist ausdrueck…",
+   "storno": "ACHTUNG, hier unterscheiden sich Portal und Direktbuchung deutlich. BOOKING.COM: Der fuer den Zeitraum angebotene Tarif ist zu 100 % nicht erstattbar. Wortlaut der Angebotsseite: \"…",
+   "nebenkosten": "Vollstaendige Aufschluesselung aus der Booking.com-Angebotsseite fuer 20.03.-27.03.2027 (alle Positionen sind im Gesamtpreis von 6.640,50 EUR BEREITS ENTHALTEN, es kommt nichts mehr obendrauf ausser der Kaution): (1) 10 % Mehrwertsteuer = 560,00 EUR; (2) Reini…",
+   "verfuegbar": "frei - und zwar in ALLEN vier geprueften Varianten ab Sa 20.03.2027. Ueber die Booking.com-Suche konkret mit 5 Erwachsenen + 3 Kindern (8/10…",
+   "schwaeche": "1) K.-O.-KRITERIUM VERFEHLT: nur 3 Schlafzimmer, kein separater Schlafbereich. Der 5. Erwachsene muss ins Stockbettzimmer zu den drei Kindern - fuer eine Gruppe aus 5 Erwachsenen wenig attraktiv. 2) K…",
+   "sz_text": "3 Schlafzimmer (uebereinstimmend Booking.com, a-hotel.com, Betreiberseite und Tourismusver…",
+   "bad_text": "2 Badezimmer mit Dusche laut Booking.com und a-hotel.com (\"2 Badezimmer mit einer Dusche\")…",
+   "naechte": 7,
+   "adresse": "auf Booking.com gelistet als \"Wildererhütte Chalet Helmut\"), Mai"
+  },
+  {
+   "name": "Genießer-Schlosshotel Seewirt ****",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9185,
+   "lon": 13.8735,
+   "quelle": "Einzelprüfung",
+   "url": "Direktbuchung",
+   "gesamt": 6650.0,
+   "ppn": 118.8,
+   "verifiziert": true,
+   "status": "anfrage",
+   "ko_text": "nicht erfuellt - HARTES K.-o.: \"Kueche mit Spuelmaschine\". Das Objekt ist ein 4-Sterne-Hotel mit Gourmet-Halbpension; KEINE Zimmerkategorie (Suite/Familienzimmer/Juniorsuite Koenig Ludwig, Erzherzog Johann, Richard Loewenherz) verfuegt ueber eine Kochgelegenheit oder Geschirrspueler - laut Ausstattu…",
+   "storno": "Vollstaendige Stornostaffel des Anbieters (identisch auf Preisseite und allen Zimmerseiten): bis 31 Tage vor Anreise keine Stornokosten; 30-21 Tage vor Anreise 40 % des Gesamtpreis…",
+   "nebenkosten": "Naechtigungsabgabe 2,50 EUR + Innovationsbeitrag 1,00 EUR = 3,50 EUR pro Person und Tag, aber AUSDRUECKLICH nur ab 15 Jahren - die drei Kinder (8, 10, 12) sind befreit, es zahlen nur die 5 Erwachsenen: 3,50 x 5 x 7 = 122,50 EUR fuer 7 Naechte. KEINE Endreinigu…",
+   "verfuegbar": "auf Anfrage - fuer 20.-27.03.2027 NICHT verifizierbar. Begruendung: (1) Der Direktbuchungs-Engine (HUGO Hotelsoftware, booking.s9.hotellogin…",
+   "schwaeche": "1) K.-o. KUECHE - keinerlei Kochgelegenheit oder Spuelmaschine in irgendeiner Kategorie; das geforderte Kriterium ist bei diesem Objekttyp strukturell unerfuellbar. Wer Selbstverpflegung braucht, ist …",
+   "sz_text": "Keine Einheit mit 4 Schlafzimmern. Pro Kategorie (Anbieterangaben): Familienzimmer Koenig …",
+   "bad_text": "1 Bad pro Einheit, bei der noetigen 2-Zimmer-Loesung also 2 Baeder - Kriterium damit erfue…",
+   "naechte": 7,
+   "adresse": "Turracher Höhe 33, 8864 Turracher Höhe",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Hotel Kornock ****",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": 46.9185,
+   "lon": 13.8735,
+   "quelle": "Einzelprüfung",
+   "url": "https://booking.kornock.at/websLINE-ABM/Homepage/Booking",
+   "gesamt": 9159.5,
+   "ppn": 163.6,
+   "verifiziert": true,
+   "status": "anfrage",
+   "ko_text": "nicht erfuellt - K.-o. durch Kriterium \"Kueche mit Spuelmaschine\": Das Kornock ist ein klassisches 4-Sterne-Hotel mit Halbpension (HP ist im Zimmerpreis inkludiert). Es gibt in KEINER Zimmerkategorie eine Kueche, Kochnische oder Spuelmaschine - weder auf der Anbieterseite noch bei Booking.com/Holida…",
+   "storno": "Es gelten die Oesterreichischen Hotelvertragsbedingungen OeHVB / AGBH 2006 in der Fassung vom 15.11.2006, die das Haus als seine AGB veroeffentlicht. Stornostaffel bei Ruecktritt d…",
+   "nebenkosten": "Endreinigung: entfaellt (Hotel, keine Endreinigungspauschale). Bettwaesche/Handtuecher: inklusive, zusaetzlich 1 Bademantel und Badeschuhe pro Gast am Zimmer sowie Spa-Handtuecher im Wellnessbereich gratis. Energiekosten: entfallen (im Zimmerpreis enthalten). …",
+   "verfuegbar": "auf Anfrage",
+   "schwaeche": "1) K.-O.: KEINE KUECHE UND KEINE SPUELMASCHINE. Als Hotel mit Halbpension erfuellt das Kornock das Selbstversorger-Kriterium prinzipiell nicht - in keiner Zimmerkategorie gibt es eine Kochgelegenheit.…",
+   "sz_text": "Bei der empfohlenen Konstellation 2x Panorama-Zirben-Familienzimmer: 4 getrennte Schlafrae…",
+   "bad_text": "2 Baeder bei 2 Familienzimmern (1 Bad je Zimmer). Ausstattung Familienzimmer: grosszuegige…",
+   "naechte": 7,
+   "adresse": "Turracher Höhe 120, 8864 Turracher Höhe",
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Seehotel Jägerwirt ****s",
+   "typ": "siehe Prüfbericht",
+   "ort": "Turracher Höhe",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "quelle": "Einzelprüfung",
+   "url": "Portal",
+   "gesamt": 12036.5,
+   "ppn": 214.9,
+   "verifiziert": true,
+   "status": "ko",
+   "ko_text": "NICHT ERFUELLT - genau ein Kriterium scheitert: \"Kueche mit Spuelmaschine\". Der Jaegerwirt ist ein reiner Hotelbetrieb mit Dreiviertelpension; es gibt keine Zimmerkueche und keine Spuelmaschine. Laut FAQ existiert lediglich eine gemeinschaftliche \"Elternkueche\" (fuer Babynahrung o.ae.) - keine priva…",
+   "storno": "Direktbuchung - Stornostaffel laut Anbieter-FAQ, basierend auf den AGBH der Oesterreichischen Hotellerie: Verwaltungskostenpauschale 30,00 EUR; ab 4 Wochen vor Anreise 40% des Buch…",
+   "nebenkosten": "Endreinigung: entfaellt (Hotelbetrieb, taegliche Reinigung inklusive). Bettwaesche/Handtuecher: entfaellt, inklusive - zusaetzlich Badekorb mit Handtuechern, Bademaentel und Saunatuecher im Zimmer, Badeschlapfen auf Anfrage. Energie/Heizung: entfaellt, inklusi…",
+   "verfuegbar": "frei - alle vier geprueften Varianten ab Sa 20.03.2027 sind buchbar (Live-Abfrage Booking.com, 13.09.2026). Bevorzugte Variante 7 Naechte 20…",
+   "schwaeche": "1) K.-o.-KRITERIUM VERLETZT: keine Kueche und keine Spuelmaschine - reiner Hotelbetrieb. Die in der FAQ genannte \"Elternkueche\" ist eine Gemeinschaftseinrichtung fuer Babynahrung, kein Selbstversorger…",
+   "sz_text": "Bei der empfohlenen 3-Zimmer-Kombination 5-6 Schlafraeume. Verfuegbare Kategorien mit sepa…",
+   "bad_text": "Mind. 2, bei der empfohlenen Kombination 3-4. Seepanorama-Familien-Suite: 2 Baeder + 2 WCs…",
+   "naechte": 7
+  },
+  {
+   "name": "Wildbach Chalet Turrach",
+   "typ": "Ferienhaus / Chalet (Selbstversorger)",
+   "ort": "Turracher Höhe",
+   "adresse": "Turrach 15, 8863 Predlitz",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "http://www.wildbach-chalet.at/",
+   "tel": "nicht ermittelbar (Kontakt nur per E-Mail office@wildbach-chalet.at)",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Sehr gute Passung für 8 Personen mit viel Reserve. Umbau 2020 gezielt für Familien und größere Freundesgruppen. Eigenes Kinder-Spielzimmer, Schischuh-/Umkleideraum, Abstellraum für große Proviantmengen, 2",
+   "naechte": 7
+  },
+  {
+   "name": "WaldChalet",
+   "typ": "Ferienhaus / Chalet (freistehend)",
+   "ort": "Turracher Höhe",
+   "adresse": "Alpenpark Turracher Höhe 09 (Familie Lander), 8864 Turracherhöhe",
+   "zone": 1,
+   "lat": 46.9262,
+   "lon": 13.8695,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "http://www.waldchalet.com/",
+   "tel": "+31 6 22075556",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Freistehendes Chalet, Baujahr 2011, im Alpenpark Turracher Höhe zwischen Zirben gelegen, 350 m zur Piste, eigene Rezeption mit Ski- und Skischuhkeller. Für 8 Personen deutlich ausreichend (bis 10 Pers). W",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Alpenpark (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Ferienhaus Turrach fuer 1-10 Personen mit 4 Schlafzimmern",
+   "typ": "Ferienhaus",
+   "ort": "Turracher Höhe",
+   "adresse": "Turracher Hoehe (Koordinaten 46",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "nicht ermittelbar",
+   "tel": "nicht ermittelbar",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. KAPAZITAET PASST (1-10 Personen, 4 Schlafzimmer). Entfernung zur Piste: nur 1,3 km Luftlinie (berechnet aus 46,93448 N / 13,87233 O) - liegt auf dem Hochplateau, nicht im Tal. Anbieter und Buchungsweg lie",
+   "naechte": 7
+  },
+  {
+   "name": "Peak Existence Chalet (Superior Chalet 31)",
+   "typ": "Luxus-Chalet",
+   "ort": "Turracher Höhe",
+   "adresse": "Maierbruggersiedlung 531, 8864 Turrach",
+   "zone": 1,
+   "lat": 46.9262,
+   "lon": 13.8695,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "https://peakexistencechalet.com/",
+   "tel": "+386 31 448 905",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Exakte Passung auf 8 Personen. 135 m² auf zwei Ebenen, zwei Balkone, private finnische Sauna, Hot Tub auf der Terrasse (ohne Whirlfunktion), Skirückfahrt direkt zum Chalet von Kornockbahn, Schaffalmbahn o",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Maierbruggersiedlung (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "JuJa Lodge",
+   "typ": "Lodge / Chalet (Panorama-Lodge)",
+   "ort": "Turracher Höhe",
+   "adresse": "Steinturrach 438/2, 8864 Turracherhöhe",
+   "zone": 1,
+   "lat": 46.933,
+   "lon": 13.869,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "http://www.jujalodge.nl/",
+   "tel": "+31 6 53452324",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Sehr gute Passung: 8+1 Personen, 160 m². Eine von sechs neuen Panorama-Lodges, 1.700 m Höhe. Sauna- und Wellnessbereich, 2 überdachte Terrassen, Wohnzimmer mit Holzofen, Küche mit Backofen/Mikrowelle/Nesp",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Steinturrach (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Vista Lodge",
+   "typ": "Lodge / Chalet (Doppelhaushälfte)",
+   "ort": "Turracher Höhe",
+   "adresse": "Steinturrach 439",
+   "zone": 1,
+   "lat": 46.933,
+   "lon": 13.869,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "http://www.vistalodge.nl/",
+   "tel": "nicht ermittelbar (Kontakt über Website und villaforyou)",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Neubau, fertiggestellt März 2022. 165 m², Zweifamilien-/Doppelhaushälften-Chalet in authentischem Alpine-Design mit Naturstein, Holz und Glas. Offener Kamin, voll ausgestattete Küche, Balkon nach Südosten",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Steinturrach (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Turracher Höhe Chalet Bergliebe",
+   "typ": "Chalet",
+   "ort": "Turracher Höhe",
+   "adresse": "Turracherhöhe 271, 8864 Turracherhöhe",
+   "zone": 1,
+   "lat": 46.9185,
+   "lon": 13.8735,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "https://www.turracherhoehe-chalet.at/ (deutsch: https://de.turracherhoehe-chalet.at/)",
+   "tel": "+43 676 443 12 45",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Sehr gute Passung für 5 Erwachsene + 3 Kinder: Kapazität 8 Erwachsene + 2 Kinder. Sauna und Hot Tub, offene Küche, High-Speed-WLAN, virtuelle 3D-Tour auf der Website. Wenige hundert Meter von der Rezeptio",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Ferien-Appartementhaus Lerchbaumer",
+   "typ": "Ferienhaus / Almchalet / Appartementhaus (Pr",
+   "ort": "Turracher Höhe",
+   "adresse": "Marktlsiedlung 90, 8864 Turrach",
+   "zone": 1,
+   "lat": 46.9322,
+   "lon": 13.8716,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "https://turrach-ferienhaus.at/",
+   "tel": "+43 660 7708807 (Büro Wien: +43 1 3104440)",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. Sehr gut passend für 5 Erwachsene + 3 Kinder: 4 Schlafzimmer, Privatsauna, eigener Carport (auch bei starkem Schneefall erreichbar), 2 SAT-TV, privates WLAN. 3D-Rundgang verfügbar. E-Mail lerchbaumer@turr",
+   "naechte": 7,
+   "lat_geschaetzt": true,
+   "schaetzbasis": "Mittelpunkt der Marktlsiedlung (Hausnummer nicht aufgelöst)"
+  },
+  {
+   "name": "Alpine Chalet Turrach",
+   "typ": "Chalet / Luxus-Ferienhaus",
+   "ort": "Turracher Höhe",
+   "adresse": "Turracher Höhe (genaue Hausnummer nicht ermittelbar)",
+   "zone": 1,
+   "lat": null,
+   "lon": null,
+   "max": null,
+   "quelle": "Kartensuche",
+   "url": "https://alpinechalet-turrach.at/ (Domain zum Abrufzeitpunkt nicht auflösbar)",
+   "tel": "nicht ermittelbar",
+   "status": "neu",
+   "hinweis": "4+ Schlafzimmer laut Anbieter. NEU. BELASTBARKEIT NIEDRIG – bitte vor jeder Zahlung eigenständig verifizieren. Gefunden ausschließlich über Instagram (@chalets_turrach, Profilname „Natural Chalet Turrach Rental\") und die zugehörige Website-",
+   "naechte": 7
   }
  ]
 }

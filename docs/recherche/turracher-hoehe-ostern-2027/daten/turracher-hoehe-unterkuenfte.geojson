@@ -203,8 +203,8 @@
    "properties": {
     "title": "Turrach Lodges by ALPS RESORTS",
     "name": "Turrach Lodges by ALPS RESORTS",
-    "description": "Grenzfall\nTyp: Lodge\nAdresse: Barbarasiedlung 409 8864 Turracher Höhe\nBelegung: max. 10 Personen, 3 Schlafzimmer, 2 Bäder\n5 Nächte: 2.542,84 €\nKaution: 350 €\nBewertung: 8,9 aus 333 (Booking.com)\nTelefon: +43 3537 2005050\nGünstigste der drei ALPS-Anlagen, aber nur 3 Schlafzimmer für 8 Personen.\nAngebot: https://www.booking.com/hotel/at/turrach-lodges.html\nDirekt: https://www.alps-resorts.com/urlaubsresorts/details/turrach-lodges",
-    "eignung": "Grenzfall",
+    "description": "Erfüllt alle Kernkriterien\nTyp: Lodge\nAdresse: Barbarasiedlung 409 8864 Turracher Höhe\nBelegung: max. 10 Personen, 3 Schlafzimmer, 2 Bäder\n5 Nächte: 2.542,84 €\nKaution: 350 €\nBewertung: 8,9 aus 333 (Booking.com)\nTelefon: +43 3537 2005050\nACHTUNG: Der Preis gilt für 5 Nächte (20.–25.03.2027). Für 8 Personen sind 7 Nächte laut Betreiber NICHT verfügbar. Günstigste der drei ALPS-Anlagen, aber nur 3 Schlafzimmer für 8 Personen.\nAngebot: https://www.booking.com/hotel/at/turrach-lodges.html\nDirekt: https://www.alps-resorts.com/urlaubsresorts/details/turrach-lodges",
+    "eignung": "Erfüllt alle Kernkriterien",
     "typ": "Lodge",
     "ort": "Turracher Höhe",
     "zone": 1,
@@ -223,7 +223,7 @@
     "quelle": "Booking.com",
     "lage_geschaetzt": false,
     "schaetzbasis": null,
-    "marker-color": "#184f95",
+    "marker-color": "#0d366b",
     "marker-size": "medium",
     "marker-symbol": "lodging"
    }
@@ -573,8 +573,8 @@
    "properties": {
     "title": "Relax Chalet Turracher Höhe",
     "name": "Relax Chalet Turracher Höhe",
-    "description": "Belegung unverifiziert\nTyp: Chalet\nAdresse: Turracher Höhe\n7 Nächte: 7.074,00 €  (126 € je Person und Nacht)\nTeuerstes Einzelobjekt im Ort, keine Bewertungen.\nAngebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-relax-chalet-turracher-höhe",
-    "eignung": "Belegung unverifiziert",
+    "description": "Erfüllt alle Kernkriterien\nTyp: Chalet\nAdresse: Turracher Höhe\n7 Nächte: 7.074,00 €  (126 € je Person und Nacht)\nTeuerstes Einzelobjekt im Ort, keine Bewertungen.\nAngebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-relax-chalet-turracher-höhe",
+    "eignung": "Erfüllt alle Kernkriterien",
     "typ": "Chalet",
     "ort": "Turracher Höhe",
     "zone": 1,
@@ -593,8 +593,8 @@
     "quelle": "Booking.com über Trivago",
     "lage_geschaetzt": false,
     "schaetzbasis": null,
-    "marker-color": "#256abf",
-    "marker-size": "small",
+    "marker-color": "#0d366b",
+    "marker-size": "medium",
     "marker-symbol": "lodging"
    }
   },
@@ -832,8 +832,8 @@
    "properties": {
     "title": "Panorama Hotel Turracher Höhe",
     "name": "Panorama Hotel Turracher Höhe",
-    "description": "Zwei Einheiten nötig\nTyp: Hotel\nAdresse: Turracher Höhe 24 9565 Turracher Höhe\nBelegung: max. 4 Personen, 1 Schlafzimmer, 1 Bäder\n5 Nächte: 5.360,86 €\nHotel mit Hallenbad, Wasserrutsche, Kinderprogramm und Halbpension. Für 8 Personen mindestens 2 Zimmer.\nAngebot: https://www.booking.com/hotel/at/panorama-turracher-haphe.html",
-    "eignung": "Zwei Einheiten nötig",
+    "description": "Kriterium verfehlt\nTyp: Hotel\nAdresse: Turracher Höhe 24 9565 Turracher Höhe\nBelegung: max. 4 Personen, 1 Schlafzimmer, 1 Bäder\n5 Nächte: 5.360,86 €\nHotel mit Hallenbad, Wasserrutsche, Kinderprogramm und Halbpension. Für 8 Personen mindestens 2 Zimmer.\nAngebot: https://www.booking.com/hotel/at/panorama-turracher-haphe.html",
+    "eignung": "Kriterium verfehlt",
     "typ": "Hotel",
     "ort": "Turracher Höhe",
     "zone": 1,
@@ -852,7 +852,7 @@
     "quelle": "Booking.com",
     "lage_geschaetzt": false,
     "schaetzbasis": null,
-    "marker-color": "#3987e5",
+    "marker-color": "#6da7ec",
     "marker-size": "small",
     "marker-symbol": "lodging"
    }
@@ -1165,8 +1165,8 @@
    "properties": {
     "title": "Atemberaubende Luxus-Lodge mit Panoramablick",
     "name": "Atemberaubende Luxus-Lodge mit Panoramablick",
-    "description": "Belegung unverifiziert\nTyp: Lodge\nAdresse: Predlitz-Turrach\n7 Nächte: 3.889,00 €  (69 € je Person und Nacht)\nBewertung: 9,3 aus 20 (Airbnb über Trivago)\nBelegung unverifiziert.\nAngebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-mit-panoramablick-predlitz",
-    "eignung": "Belegung unverifiziert",
+    "description": "Erfüllt alle Kernkriterien\nTyp: Lodge\nAdresse: Predlitz-Turrach\n7 Nächte: 3.889,00 €  (69 € je Person und Nacht)\nBewertung: 9,3 aus 20 (Airbnb über Trivago)\nBelegung unverifiziert. Geprüft als „Chalet Vista Lodge“ über Villa for You.\nAngebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-mit-panoramablick-predlitz",
+    "eignung": "Erfüllt alle Kernkriterien",
     "typ": "Lodge",
     "ort": "Predlitz-Turrach",
     "zone": 1,
@@ -1185,8 +1185,8 @@
     "quelle": "Airbnb über Trivago",
     "lage_geschaetzt": false,
     "schaetzbasis": null,
-    "marker-color": "#256abf",
-    "marker-size": "small",
+    "marker-color": "#0d366b",
+    "marker-size": "medium",
     "marker-symbol": "lodging"
    }
   },
@@ -1202,7 +1202,7 @@
    "properties": {
     "title": "Atemberaubende Luxus-Lodge am Turracher Höhe",
     "name": "Atemberaubende Luxus-Lodge am Turracher Höhe",
-    "description": "Belegung unverifiziert\nTyp: Lodge\nAdresse: Predlitz-Turrach\n7 Nächte: 3.789,00 €  (68 € je Person und Nacht)\nBewertung: 9,1 aus 16 (Airbnb über Trivago)\nBelegung unverifiziert.\nAngebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-am-turracher-höhe-predlitz",
+    "description": "Belegung unverifiziert\nTyp: Lodge\nAdresse: Predlitz-Turrach\n7 Nächte: 3.789,00 €  (68 € je Person und Nacht)\nBewertung: 9,1 aus 16 (Airbnb über Trivago)\nBelegung unverifiziert. Nicht zu verwechseln mit der Schwester-Lodge „mit Panoramablick“, die geprüft wurde.\nAngebot: https://www.trivago.de/de/lm/ganzes-haus-apartment-atemberaubende-luxus-lodge-am-turracher-höhe-predlitz",
     "eignung": "Belegung unverifiziert",
     "typ": "Lodge",
     "ort": "Predlitz-Turrach",
@@ -1556,6 +1556,524 @@
     "lage_geschaetzt": false,
     "schaetzbasis": null,
     "marker-color": "#9aa4ae",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8735,
+     46.9185
+    ]
+   },
+   "properties": {
+    "title": "Appartementhaus Lerchbaumer – Zirbenhütte",
+    "name": "Appartementhaus Lerchbaumer – Zirbenhütte",
+    "description": "Kriterium verfehlt\nTyp: siehe Prüfbericht\nAdresse: Turracher Höhe 90 Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)\nAngebot: https://turrach-ferienhaus.at/buchen/?nd_booking_archive_form_date_range_from=03%2F20%2F2027&nd_booking_archive_form_date_range_to=03%2F27%2F2027&nd_booking_archive_form_guests=8",
+    "eignung": "Kriterium verfehlt",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "https://turrach-ferienhaus.at/buchen/?nd_booking_archive_form_date_range_from=03%2F20%2F2027&nd_booking_archive_form_date_range_to=03%2F27%2F2027&nd_booking_archive_form_guests=8",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)",
+    "marker-color": "#6da7ec",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8704,
+     46.9276
+    ]
+   },
+   "properties": {
+    "title": "Chalet Golden Eagle",
+    "name": "Chalet Golden Eagle",
+    "description": "Im Zeitraum belegt\nTyp: siehe Prüfbericht\nAdresse: Barbarasiedlung 339, 8864 Turracher Höhe Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Barbarasiedlung (Hausnummer nicht aufgelöst)\nAngebot: Direktanfrage",
+    "eignung": "Im Zeitraum belegt",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "Direktanfrage",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Barbarasiedlung (Hausnummer nicht aufgelöst)",
+    "marker-color": "#3987e5",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8716,
+     46.9322
+    ]
+   },
+   "properties": {
+    "title": "Chalet Claassen",
+    "name": "Chalet Claassen",
+    "description": "Erfüllt alle Kernkriterien\nTyp: siehe Prüfbericht\nAdresse: Marktlsiedlung 347, 8864 Turrach Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Marktlsiedlung (Hausnummer nicht aufgelöst)\nAngebot: Guenstigste",
+    "eignung": "Erfüllt alle Kernkriterien",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "Guenstigste",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Marktlsiedlung (Hausnummer nicht aufgelöst)",
+    "marker-color": "#0d366b",
+    "marker-size": "medium",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8695,
+     46.9262
+    ]
+   },
+   "properties": {
+    "title": "Alpenpark Turracher Höhe by ALPS RESORTS",
+    "name": "Alpenpark Turracher Höhe by ALPS RESORTS",
+    "description": "Erfüllt alle Kernkriterien\nTyp: siehe Prüfbericht\nAdresse: Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Alpenpark (Hausnummer nicht aufgelöst)\nAngebot: Direkt",
+    "eignung": "Erfüllt alle Kernkriterien",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "Direkt",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Alpenpark (Hausnummer nicht aufgelöst)",
+    "marker-color": "#0d366b",
+    "marker-size": "medium",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8695,
+     46.9262
+    ]
+   },
+   "properties": {
+    "title": "Wildererhütte Turracher Höhe",
+    "name": "Wildererhütte Turracher Höhe",
+    "description": "Kriterium verfehlt\nTyp: siehe Prüfbericht\nAdresse: Maierbruggersiedlung 142 a-c Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Maierbruggersiedlung (Hausnummer nicht aufgelöst)\nAngebot: Keine",
+    "eignung": "Kriterium verfehlt",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "Keine",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Maierbruggersiedlung (Hausnummer nicht aufgelöst)",
+    "marker-color": "#6da7ec",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8735,
+     46.9185
+    ]
+   },
+   "properties": {
+    "title": "Hotel Turracherhof",
+    "name": "Hotel Turracherhof",
+    "description": "Kriterium verfehlt\nTyp: siehe Prüfbericht\nAdresse: Turracherhöhe 106 Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)\nAngebot: https://www.booking.com/hotel/at/turracherhof.html?checkin=2027-03-20&checkout=2027-03-27&no_rooms=3&group_adults=5&group_children=3&age=8&age=10&age=12&selected_currency=EUR",
+    "eignung": "Kriterium verfehlt",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "https://www.booking.com/hotel/at/turracherhof.html?checkin=2027-03-20&checkout=2027-03-27&no_rooms=3&group_adults=5&group_children=3&age=8&age=10&age=12&selected_currency=EUR",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)",
+    "marker-color": "#6da7ec",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8735,
+     46.9185
+    ]
+   },
+   "properties": {
+    "title": "Genießer-Schlosshotel Seewirt ****",
+    "name": "Genießer-Schlosshotel Seewirt ****",
+    "description": "Nur auf Anfrage\nTyp: siehe Prüfbericht\nAdresse: Turracher Höhe 33, 8864 Turracher Höhe Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)\nAngebot: Direktbuchung",
+    "eignung": "Nur auf Anfrage",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "Direktbuchung",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8735,
+     46.9185
+    ]
+   },
+   "properties": {
+    "title": "Hotel Kornock ****",
+    "name": "Hotel Kornock ****",
+    "description": "Nur auf Anfrage\nTyp: siehe Prüfbericht\nAdresse: Turracher Höhe 120, 8864 Turracher Höhe Turracher Höhe\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)\nAngebot: https://booking.kornock.at/websLINE-ABM/Homepage/Booking",
+    "eignung": "Nur auf Anfrage",
+    "typ": "siehe Prüfbericht",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": null,
+    "url": "https://booking.kornock.at/websLINE-ABM/Homepage/Booking",
+    "direktbuchung": null,
+    "quelle": "Einzelprüfung",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8695,
+     46.9262
+    ]
+   },
+   "properties": {
+    "title": "WaldChalet",
+    "name": "WaldChalet",
+    "description": "Nur über Kartensuche\nTyp: Ferienhaus / Chalet (freistehend)\nAdresse: Alpenpark Turracher Höhe 09 (Familie Lander), 8864 Turracherhöhe Turracher Höhe\nTelefon: +31 6 22075556\n4+ Schlafzimmer laut Anbieter. NEU. Freistehendes Chalet, Baujahr 2011, im Alpenpark Turracher Höhe zwischen Zirben gelegen, 350 m zur Piste, eigene Rezeption mit Ski- und Skischuhkeller. Für 8 Personen deutlich ausreichend (bis 10 Pers). W\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Alpenpark (Hausnummer nicht aufgelöst)\nAngebot: http://www.waldchalet.com/",
+    "eignung": "Nur über Kartensuche",
+    "typ": "Ferienhaus / Chalet (freistehend)",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": "+31 6 22075556",
+    "url": "http://www.waldchalet.com/",
+    "direktbuchung": null,
+    "quelle": "Kartensuche",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Alpenpark (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8695,
+     46.9262
+    ]
+   },
+   "properties": {
+    "title": "Peak Existence Chalet (Superior Chalet 31)",
+    "name": "Peak Existence Chalet (Superior Chalet 31)",
+    "description": "Nur über Kartensuche\nTyp: Luxus-Chalet\nAdresse: Maierbruggersiedlung 531, 8864 Turrach Turracher Höhe\nTelefon: +386 31 448 905\n4+ Schlafzimmer laut Anbieter. NEU. Exakte Passung auf 8 Personen. 135 m² auf zwei Ebenen, zwei Balkone, private finnische Sauna, Hot Tub auf der Terrasse (ohne Whirlfunktion), Skirückfahrt direkt zum Chalet von Kornockbahn, Schaffalmbahn o\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Maierbruggersiedlung (Hausnummer nicht aufgelöst)\nAngebot: https://peakexistencechalet.com/",
+    "eignung": "Nur über Kartensuche",
+    "typ": "Luxus-Chalet",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": "+386 31 448 905",
+    "url": "https://peakexistencechalet.com/",
+    "direktbuchung": null,
+    "quelle": "Kartensuche",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Maierbruggersiedlung (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.869,
+     46.933
+    ]
+   },
+   "properties": {
+    "title": "JuJa Lodge",
+    "name": "JuJa Lodge",
+    "description": "Nur über Kartensuche\nTyp: Lodge / Chalet (Panorama-Lodge)\nAdresse: Steinturrach 438/2, 8864 Turracherhöhe Turracher Höhe\nTelefon: +31 6 53452324\n4+ Schlafzimmer laut Anbieter. NEU. Sehr gute Passung: 8+1 Personen, 160 m². Eine von sechs neuen Panorama-Lodges, 1.700 m Höhe. Sauna- und Wellnessbereich, 2 überdachte Terrassen, Wohnzimmer mit Holzofen, Küche mit Backofen/Mikrowelle/Nesp\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Steinturrach (Hausnummer nicht aufgelöst)\nAngebot: http://www.jujalodge.nl/",
+    "eignung": "Nur über Kartensuche",
+    "typ": "Lodge / Chalet (Panorama-Lodge)",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": "+31 6 53452324",
+    "url": "http://www.jujalodge.nl/",
+    "direktbuchung": null,
+    "quelle": "Kartensuche",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Steinturrach (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.869,
+     46.933
+    ]
+   },
+   "properties": {
+    "title": "Vista Lodge",
+    "name": "Vista Lodge",
+    "description": "Nur über Kartensuche\nTyp: Lodge / Chalet (Doppelhaushälfte)\nAdresse: Steinturrach 439 Turracher Höhe\nTelefon: nicht ermittelbar (Kontakt über Website und villaforyou)\n4+ Schlafzimmer laut Anbieter. NEU. Neubau, fertiggestellt März 2022. 165 m², Zweifamilien-/Doppelhaushälften-Chalet in authentischem Alpine-Design mit Naturstein, Holz und Glas. Offener Kamin, voll ausgestattete Küche, Balkon nach Südosten\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Steinturrach (Hausnummer nicht aufgelöst)\nAngebot: http://www.vistalodge.nl/",
+    "eignung": "Nur über Kartensuche",
+    "typ": "Lodge / Chalet (Doppelhaushälfte)",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": "nicht ermittelbar (Kontakt über Website und villaforyou)",
+    "url": "http://www.vistalodge.nl/",
+    "direktbuchung": null,
+    "quelle": "Kartensuche",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Steinturrach (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8735,
+     46.9185
+    ]
+   },
+   "properties": {
+    "title": "Turracher Höhe Chalet Bergliebe",
+    "name": "Turracher Höhe Chalet Bergliebe",
+    "description": "Nur über Kartensuche\nTyp: Chalet\nAdresse: Turracherhöhe 271, 8864 Turracherhöhe Turracher Höhe\nTelefon: +43 676 443 12 45\n4+ Schlafzimmer laut Anbieter. NEU. Sehr gute Passung für 5 Erwachsene + 3 Kinder: Kapazität 8 Erwachsene + 2 Kinder. Sauna und Hot Tub, offene Küche, High-Speed-WLAN, virtuelle 3D-Tour auf der Website. Wenige hundert Meter von der Rezeptio\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)\nAngebot: https://www.turracherhoehe-chalet.at/ (deutsch: https://de.turracherhoehe-chalet.at/)",
+    "eignung": "Nur über Kartensuche",
+    "typ": "Chalet",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": "+43 676 443 12 45",
+    "url": "https://www.turracherhoehe-chalet.at/ (deutsch: https://de.turracherhoehe-chalet.at/)",
+    "direktbuchung": null,
+    "quelle": "Kartensuche",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Ortsmitte Turracher Höhe (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
+    "marker-size": "small",
+    "marker-symbol": "lodging"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     13.8716,
+     46.9322
+    ]
+   },
+   "properties": {
+    "title": "Ferien-Appartementhaus Lerchbaumer",
+    "name": "Ferien-Appartementhaus Lerchbaumer",
+    "description": "Nur über Kartensuche\nTyp: Ferienhaus / Almchalet / Appartementhaus (Pr\nAdresse: Marktlsiedlung 90, 8864 Turrach Turracher Höhe\nTelefon: +43 660 7708807 (Büro Wien: +43 1 3104440)\n4+ Schlafzimmer laut Anbieter. NEU. Sehr gut passend für 5 Erwachsene + 3 Kinder: 4 Schlafzimmer, Privatsauna, eigener Carport (auch bei starkem Schneefall erreichbar), 2 SAT-TV, privates WLAN. 3D-Rundgang verfügbar. E-Mail lerchbaumer@turr\nACHTUNG Lage geschätzt, nicht verifiziert. Basis: Mittelpunkt der Marktlsiedlung (Hausnummer nicht aufgelöst)\nAngebot: https://turrach-ferienhaus.at/",
+    "eignung": "Nur über Kartensuche",
+    "typ": "Ferienhaus / Almchalet / Appartementhaus (Pr",
+    "ort": "Turracher Höhe",
+    "zone": 1,
+    "max_personen": null,
+    "schlafzimmer": null,
+    "baeder": null,
+    "preis_7_naechte_eur": null,
+    "preis_5_naechte_eur": null,
+    "eur_pro_person_nacht": null,
+    "bewertung": null,
+    "bewertungen": null,
+    "kaution_eur": null,
+    "telefon": "+43 660 7708807 (Büro Wien: +43 1 3104440)",
+    "url": "https://turrach-ferienhaus.at/",
+    "direktbuchung": null,
+    "quelle": "Kartensuche",
+    "lage_geschaetzt": true,
+    "schaetzbasis": "Mittelpunkt der Marktlsiedlung (Hausnummer nicht aufgelöst)",
+    "marker-color": "#256abf",
     "marker-size": "small",
     "marker-symbol": "lodging"
    }

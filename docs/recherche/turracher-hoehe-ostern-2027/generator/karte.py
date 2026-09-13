@@ -11,12 +11,13 @@ css = css.replace("url(images/", "url(data:,#")
 
 GJ = json.dumps(gj, ensure_ascii=False).replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
 
-RANG = ["Erfüllt alle Kernkriterien", "Grenzfall", "Nur über Kartensuche",
-        "Belegung unverifiziert", "Zwei Einheiten nötig", "Kriterium verfehlt", "Ausweichregion"]
+RANG = ["Erfüllt alle Kernkriterien", "Grenzfall", "Nur auf Anfrage", "Nur über Kartensuche",
+        "Belegung unverifiziert", "Im Zeitraum belegt", "Zwei Einheiten nötig",
+        "Kriterium verfehlt", "Ausweichregion"]
 FARBE = {"Erfüllt alle Kernkriterien": "#0d366b", "Grenzfall": "#184f95",
          "Nur über Kartensuche": "#256abf", "Belegung unverifiziert": "#256abf",
          "Zwei Einheiten nötig": "#3987e5", "Kriterium verfehlt": "#6da7ec",
-         "Ausweichregion": "#9aa4ae"}
+         "Ausweichregion": "#9aa4ae", "Nur auf Anfrage": "#256abf", "Im Zeitraum belegt": "#3987e5"}
 
 HTML = """<!doctype html>
 <html lang="de"><head><meta charset="utf-8">

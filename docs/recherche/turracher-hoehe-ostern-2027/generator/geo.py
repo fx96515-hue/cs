@@ -5,10 +5,10 @@ D=json.load(open(os.path.join(BASE,"objekte.json"),encoding="utf-8"))
 OBJ=D["objekte"]
 
 FARBE={"ok":"#0d366b","grenzwertig":"#184f95","neu":"#256abf","unklar":"#256abf",
-       "zwei":"#3987e5","ko":"#6da7ec","fallback":"#9aa4ae"}
+       "zwei":"#3987e5","ko":"#6da7ec","fallback":"#9aa4ae","anfrage":"#256abf","belegt":"#3987e5"}
 LABEL={"ok":"Erfüllt alle Kernkriterien","grenzwertig":"Grenzfall",
        "neu":"Nur über Kartensuche","unklar":"Belegung unverifiziert",
-       "zwei":"Zwei Einheiten nötig","ko":"Kriterium verfehlt","fallback":"Ausweichregion"}
+       "zwei":"Zwei Einheiten nötig","ko":"Kriterium verfehlt","fallback":"Ausweichregion","anfrage":"Nur auf Anfrage","belegt":"Im Zeitraum belegt"}
 def eur(v): return "—" if v is None else f"{v:,.2f} €".replace(",","X").replace(".",",").replace("X",".")
 
 mitGeo=[o for o in OBJ if o.get("lat")]
@@ -91,7 +91,7 @@ for st,c in FARBE.items():
 from collections import defaultdict
 grp=defaultdict(list)
 for o in mitGeo: grp[o["status"]].append(o)
-for st in ["ok","grenzwertig","neu","unklar","zwei","ko","fallback"]:
+for st in ["ok","grenzwertig","anfrage","neu","unklar","belegt","zwei","ko","fallback"]:
     if not grp[st]: continue
     zusatz = " (Lage geschätzt)" if st == "neu" else ""
     k.append(f'<Folder><name>{LABEL[st]}{zusatz}</name>')
